@@ -66,9 +66,14 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "enabled": False,
         "host": "192.168.0.201",
         "port": 1883,
-        "username": "",
-        "password": "",
+        "username": "mqttvenus",
+        "password": "mqttpw",
         "topic_prefix": "solar",
+    },
+    "victron_mqtt": {
+        "enabled": True,
+        "vrm_id": "b827eb79321c",
+        "instances": [288, 289],
     },
     "influx": {
         "enabled": False,
@@ -88,7 +93,7 @@ async def get_config() -> Dict[str, Any]:
     doc.pop("_id", None)
     # merge missing keys
     cfg = {**DEFAULT_CONFIG, **doc}
-    for k in ["devices", "mqtt", "influx"]:
+    for k in ["devices", "mqtt", "influx", "victron_mqtt"]:
         cfg[k] = {**DEFAULT_CONFIG[k], **(doc.get(k) or {})}
     return cfg
 
@@ -278,6 +283,65 @@ async def fetch_victron(ip: str) -> Optional[Dict[str, Any]]:
     return {"online": True, "mppts": data.get("mppts", []), "total_power": data.get("pv_power", 0)}
 
 
+# ---------- Victron via MQTT (VenusOS Large) ----------
+
+# In-memory state populated by the MQTT subscriber.
+# Structure: { instance_int: { "Pv/V": 96.2, "Yield/Power": 712.3, ... , "_ts": iso } }
+_victron_mqtt: Dict[str, Any] = {
+    "instances": {},   # keyed by int(instance)
+    "system_pv_power": None,
+    "last_msg": None,
+}
+
+_VICTRON_STATE_NAMES = {
+    0: "Off", 1: "Low Power", 2: "Fault", 3: "Bulk",
+    4: "Absorption", 5: "Float", 6: "Storage", 7: "Equalize",
+    245: "Wakeup", 247: "Auto-equalize", 252: "Ext. control",
+}
+
+
+def fetch_victron_from_mqtt(cfg_victron: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Build Victron payload from the MQTT-derived state."""
+    if not cfg_victron.get("enabled"):
+        return None
+    instances = cfg_victron.get("instances", []) or []
+    mppts = []
+    total = 0.0
+    any_data = False
+    for inst in instances:
+        st = _victron_mqtt["instances"].get(int(inst), {})
+        if not st:
+            mppts.append({
+                "id": int(inst), "name": f"MPPT 150/35 [{inst}]",
+                "pv_power": 0, "pv_voltage": 0, "battery_voltage": 0,
+                "yield_today": 0, "state": "–",
+            })
+            continue
+        any_data = True
+        p = st.get("Yield/Power", 0) or 0
+        total += p
+        state_code = st.get("State")
+        state_name = _VICTRON_STATE_NAMES.get(int(state_code), str(state_code)) if state_code is not None else "–"
+        mppts.append({
+            "id": int(inst),
+            "name": f"MPPT 150/35 [{inst}]",
+            "pv_power": round(p, 1),
+            "pv_voltage": round(st.get("Pv/V", 0) or 0, 1),
+            "battery_voltage": round(st.get("Dc/0/Voltage", 0) or 0, 2),
+            "yield_today": round(st.get("History/Daily/0/Yield", 0) or 0, 3),
+            "state": state_name,
+        })
+    if not any_data:
+        return None
+    sys_pv = _victron_mqtt.get("system_pv_power")
+    return {
+        "online": True,
+        "via_mqtt": True,
+        "mppts": mppts,
+        "total_power": round(sys_pv if sys_pv is not None else total, 1),
+    }
+
+
 # ---------- Aggregator ----------
 
 async def collect_live() -> Dict[str, Any]:
@@ -304,7 +368,15 @@ async def collect_live() -> Dict[str, Any]:
         cfg["devices"]["ahoy"]["enabled"],
     )
     trucki_task = safe(lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]), mock_trucki, cfg["devices"]["trucki"]["enabled"])
-    victron_task = safe(lambda: fetch_victron(cfg["devices"]["victron"]["ip"]), mock_victron, cfg["devices"]["victron"]["enabled"])
+
+    async def victron_factory():
+        # Prefer MQTT data when victron_mqtt integration is enabled and has data
+        mqtt_data = fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {})
+        if mqtt_data is not None:
+            return mqtt_data
+        return await fetch_victron(cfg["devices"]["victron"]["ip"])
+
+    victron_task = safe(victron_factory, mock_victron, cfg["devices"]["victron"]["enabled"])
 
     shelly, ahoy, trucki, victron = await asyncio.gather(shelly_task, ahoy_task, trucki_task, victron_task)
 
@@ -339,6 +411,7 @@ class ConfigUpdate(BaseModel):
     devices: Optional[Dict[str, Any]] = None
     mqtt: Optional[Dict[str, Any]] = None
     influx: Optional[Dict[str, Any]] = None
+    victron_mqtt: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):
@@ -512,10 +585,22 @@ async def control_trucki(cmd: TruckiControl):
 
 @api_router.get("/integrations/status")
 async def integrations_status():
+    inst_summary = {}
+    for inst, st in _victron_mqtt.get("instances", {}).items():
+        inst_summary[str(inst)] = {
+            "fields": len([k for k in st.keys() if not k.startswith("_")]),
+            "last_msg": st.get("_ts"),
+            "pv_power": st.get("Yield/Power"),
+        }
     return {
         "mqtt": {"connected": _mqtt_state["connected"], "last_error": _mqtt_state["last_error"], "messages": _mqtt_state["messages"]},
         "influx": {"connected": _influx_state["connected"], "last_error": _influx_state["last_error"], "writes": _influx_state["writes"]},
         "poller": {"running": _poller_state["running"], "last_write": _poller_state["last_write"], "count": _poller_state["count"]},
+        "victron_mqtt": {
+            "last_msg": _victron_mqtt.get("last_msg"),
+            "system_pv_power": _victron_mqtt.get("system_pv_power"),
+            "instances": inst_summary,
+        },
     }
 
 
@@ -525,6 +610,7 @@ _poller_state = {"running": False, "last_write": None, "count": 0}
 _mqtt_state: Dict[str, Any] = {"connected": False, "last_error": None, "messages": 0, "client": None}
 _influx_state: Dict[str, Any] = {"connected": False, "last_error": None, "writes": 0, "client": None, "write_api": None}
 _poll_task: Optional[asyncio.Task] = None
+_keepalive_task: Optional[asyncio.Task] = None
 
 
 async def poller_loop():
@@ -577,7 +663,7 @@ def _mqtt_disconnect():
     _mqtt_state["connected"] = False
 
 
-def _mqtt_setup(cfg_mqtt: Dict[str, Any]):
+def _mqtt_setup(cfg_mqtt: Dict[str, Any], cfg_victron: Dict[str, Any]):
     _mqtt_disconnect()
     if mqtt is None or not cfg_mqtt.get("enabled"):
         return
@@ -585,18 +671,62 @@ def _mqtt_setup(cfg_mqtt: Dict[str, Any]):
     if cfg_mqtt.get("username"):
         cl.username_pw_set(cfg_mqtt["username"], cfg_mqtt.get("password", ""))
 
+    vrm_id = (cfg_victron or {}).get("vrm_id") or ""
+    victron_enabled = bool((cfg_victron or {}).get("enabled") and vrm_id)
+    victron_instances = {int(i) for i in (cfg_victron or {}).get("instances", []) or []}
+
     def on_connect(client_, userdata, flags, rc):
         if rc == 0:
             _mqtt_state["connected"] = True
             _mqtt_state["last_error"] = None
             prefix = cfg_mqtt.get("topic_prefix", "solar")
             client_.subscribe(f"{prefix}/#")
+            if victron_enabled:
+                # Subscribe to each MPPT instance's full subtree + system PV power
+                for inst in victron_instances:
+                    client_.subscribe(f"N/{vrm_id}/solarcharger/{inst}/#")
+                client_.subscribe(f"N/{vrm_id}/system/0/Dc/Pv/Power")
+                # Immediate keep-alive so VenusOS starts publishing
+                try:
+                    client_.publish(f"R/{vrm_id}/keepalive", "", qos=0)
+                except Exception:
+                    pass
         else:
             _mqtt_state["connected"] = False
             _mqtt_state["last_error"] = f"rc={rc}"
 
     def on_message(client_, userdata, msg):
         _mqtt_state["messages"] += 1
+        topic = msg.topic
+        # Victron VenusOS topics
+        if victron_enabled and topic.startswith(f"N/{vrm_id}/"):
+            try:
+                payload = msg.payload.decode("utf-8", errors="ignore").strip()
+                value = None
+                if payload:
+                    try:
+                        obj = json.loads(payload)
+                        value = obj.get("value") if isinstance(obj, dict) else obj
+                    except Exception:
+                        value = payload
+                _victron_mqtt["last_msg"] = datetime.now(timezone.utc).isoformat()
+                parts = topic.split("/")
+                # N / <vrm> / <service> / <inst> / <path...>
+                if len(parts) >= 5:
+                    service = parts[2]
+                    try:
+                        inst = int(parts[3])
+                    except ValueError:
+                        return
+                    path = "/".join(parts[4:])
+                    if service == "solarcharger" and inst in victron_instances:
+                        st = _victron_mqtt["instances"].setdefault(inst, {})
+                        st[path] = value
+                        st["_ts"] = _victron_mqtt["last_msg"]
+                    elif service == "system" and path == "Dc/Pv/Power":
+                        _victron_mqtt["system_pv_power"] = value
+            except Exception as e:
+                logger.debug(f"victron mqtt parse error: {e}")
 
     def on_disconnect(client_, userdata, rc):
         _mqtt_state["connected"] = False
@@ -608,6 +738,7 @@ def _mqtt_setup(cfg_mqtt: Dict[str, Any]):
         cl.connect_async(cfg_mqtt.get("host", "127.0.0.1"), int(cfg_mqtt.get("port", 1883)), keepalive=30)
         cl.loop_start()
         _mqtt_state["client"] = cl
+        _mqtt_state["vrm_id"] = vrm_id if victron_enabled else None
     except Exception as e:
         _mqtt_state["last_error"] = str(e)
 
@@ -650,8 +781,25 @@ def _influx_setup(cfg_influx: Dict[str, Any]):
 
 async def restart_integrations():
     cfg = await get_config()
-    _mqtt_setup(cfg.get("mqtt", {}))
+    _mqtt_setup(cfg.get("mqtt", {}), cfg.get("victron_mqtt", {}))
     _influx_setup(cfg.get("influx", {}))
+
+
+async def victron_keepalive_loop():
+    """VenusOS only publishes data while it receives periodic keep-alive messages."""
+    while True:
+        try:
+            cfg = await get_config()
+            vmq = cfg.get("victron_mqtt") or {}
+            cl = _mqtt_state.get("client")
+            if vmq.get("enabled") and vmq.get("vrm_id") and cl and _mqtt_state.get("connected"):
+                try:
+                    cl.publish(f"R/{vmq['vrm_id']}/keepalive", "", qos=0)
+                except Exception as e:
+                    logger.debug(f"keepalive publish error: {e}")
+        except Exception:
+            pass
+        await asyncio.sleep(30)
 
 
 # ---------- App lifecycle ----------
@@ -670,8 +818,9 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup():
     await get_config()
-    global _poll_task
+    global _poll_task, _keepalive_task
     _poll_task = asyncio.create_task(poller_loop())
+    _keepalive_task = asyncio.create_task(victron_keepalive_loop())
     await restart_integrations()
     logger.info("Solar dashboard started")
 
@@ -680,6 +829,8 @@ async def on_startup():
 async def on_shutdown():
     if _poll_task:
         _poll_task.cancel()
+    if _keepalive_task:
+        _keepalive_task.cancel()
     _mqtt_disconnect()
     _influx_disconnect()
     client.close()

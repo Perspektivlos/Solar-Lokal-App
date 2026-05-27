@@ -35,7 +35,7 @@ export default function Integrations() {
   const save = async () => {
     setSaving(true);
     try {
-      const r = await putConfig({ mqtt: cfg.mqtt, influx: cfg.influx });
+      const r = await putConfig({ mqtt: cfg.mqtt, influx: cfg.influx, victron_mqtt: cfg.victron_mqtt });
       setCfg(r);
       toast.success("Integrationen aktualisiert");
     } catch (e) {
@@ -60,9 +60,10 @@ export default function Integrations() {
       </div>
 
       {/* Status */}
-      <div className="border border-black bg-white p-4 grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="status-row">
+      <div className="border border-black bg-white p-4 grid grid-cols-1 md:grid-cols-4 gap-4" data-testid="status-row">
         <StatusBadge connected={status?.mqtt?.connected} label="MQTT" testid="status-mqtt" />
         <StatusBadge connected={status?.influx?.connected} label="InfluxDB" testid="status-influx" />
+        <StatusBadge connected={!!status?.victron_mqtt?.last_msg} label="Victron-MQTT" testid="status-victron-mqtt" />
         <div className="flex items-center gap-2 font-mono text-xs" data-testid="status-poller">
           <span className={`w-2.5 h-2.5 ${status?.poller?.running ? "bg-green-500 dot-pulse" : "bg-gray-400"}`} />
           <span className="uppercase tracking-[0.15em]">Poller: {status?.poller?.count ?? 0} Snapshots</span>
@@ -99,6 +100,52 @@ export default function Integrations() {
           {status?.mqtt?.last_error && (
             <div className="md:col-span-2 font-mono text-xs text-red-600 border border-red-600 p-2">
               Fehler: {status.mqtt.last_error}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Victron MQTT Bridge */}
+      <div className="border border-black bg-white" data-testid="card-victron-mqtt">
+        <div className="border-b border-black px-4 py-2 flex items-center justify-between">
+          <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">Victron VenusOS · MQTT-Bridge</div>
+          <Switch checked={cfg.victron_mqtt?.enabled} onCheckedChange={(v) => upd("victron_mqtt", { enabled: v })} data-testid="switch-victron-mqtt-enabled" />
+        </div>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2 font-mono text-[11px] text-gray-600 leading-relaxed">
+            Liest die beiden MPPT 150/35 live aus VenusOS via MQTT (über Mosquitto-Bridge oben).
+            Topics: <code className="bg-gray-100 px-1">N/&lt;VRM-ID&gt;/solarcharger/&lt;Instance&gt;/#</code>.
+            Keep-Alive wird automatisch alle 30 s gesendet.
+          </div>
+          <div>
+            <Label className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">VRM Portal-ID</Label>
+            <Input value={cfg.victron_mqtt?.vrm_id || ""} onChange={(e) => upd("victron_mqtt", { vrm_id: e.target.value })} className={inputCls} data-testid="input-victron-vrmid" />
+          </div>
+          <div>
+            <Label className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">Device-Instances (kommagetrennt)</Label>
+            <Input
+              value={(cfg.victron_mqtt?.instances || []).join(",")}
+              onChange={(e) =>
+                upd("victron_mqtt", {
+                  instances: e.target.value
+                    .split(",")
+                    .map((s) => Number(s.trim()))
+                    .filter((n) => Number.isFinite(n)),
+                })
+              }
+              className={inputCls}
+              data-testid="input-victron-instances"
+            />
+          </div>
+          {status?.victron_mqtt && (
+            <div className="md:col-span-2 font-mono text-[11px] text-gray-700 border-t border-gray-200 pt-3">
+              <div>Letzte Nachricht: <span className="text-black">{status.victron_mqtt.last_msg || "–"}</span></div>
+              <div>System PV-Power: <span className="text-[#EAB308]">{status.victron_mqtt.system_pv_power ?? "–"} W</span></div>
+              {Object.entries(status.victron_mqtt.instances || {}).map(([id, info]) => (
+                <div key={id} data-testid={`victron-mqtt-inst-${id}`}>
+                  Instance {id}: {info.fields} Felder · Yield/Power = <span className="text-[#EAB308]">{info.pv_power ?? "–"} W</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
