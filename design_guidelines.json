@@ -1,0 +1,80 @@
+{
+  "theme": "light",
+  "archetype": "4_swiss_high_contrast",
+  "typography": {
+    "fonts": {
+      "heading": "IBM Plex Sans, sans-serif",
+      "body": "IBM Plex Sans, sans-serif",
+      "mono": "IBM Plex Mono, monospace"
+    },
+    "hierarchy": {
+      "h1": "text-2xl sm:text-3xl font-bold tracking-tight text-black",
+      "h2": "text-xl sm:text-2xl font-semibold tracking-tight text-black",
+      "h3": "text-lg font-medium text-black",
+      "body": "text-sm sm:text-base text-gray-900",
+      "metric_label": "text-xs font-bold uppercase tracking-[0.2em] text-gray-600",
+      "metric_value": "font-mono text-2xl sm:text-4xl font-medium text-black"
+    },
+    "instructions": "Import IBM Plex Sans and IBM Plex Mono via Google Fonts or standard @import in index.css. Use font-mono strictly for all numeric values, metrics, IPs, and states."
+  },
+  "colors": {
+    "background": "#FFFFFF",
+    "surface": "#F9FAFB",
+    "border": "#000000",
+    "text": {
+      "primary": "#000000",
+      "secondary": "#374151"
+    },
+    "functional": {
+      "pv_solar": "#EAB308",
+      "grid_import": "#EF4444",
+      "grid_export": "#22C55E",
+      "battery": "#3B82F6"
+    },
+    "instructions": "Use black (#000000) for all dividing lines, borders, and main text. Functional colors must only be used for charts, status indicators, and the energy flow diagram to represent their respective domains. Never use purple or violet gradients."
+  },
+  "layout_and_spacing": {
+    "style": "scada_control_room",
+    "grid_system": "Dense, utilitarian bento-style grids. Use grid and flexbox to create tight, dashboard-like layouts.",
+    "border_radius": "rounded-none",
+    "borders": "border border-black",
+    "spacing": "Tight padding inside widgets (p-4 or p-6). Emphasize structural hierarchy with solid black lines.",
+    "navigation": "Top navigation bar (Dashboard | Verlauf | Steuerung | Geräte | Integrationen), border-b border-black, sticky top-0, bg-white, z-50."
+  },
+  "components": {
+    "cards": "Remove all shadows. Use solid white backgrounds with 1px black borders. Apply rounded-none.",
+    "buttons": "Square edges (rounded-none), solid black background with white text for primary, or white background with black border for secondary. Hover states invert colors or darken.",
+    "tables": "Strict table look. 1px solid black lines separating rows and columns. font-mono for data cells.",
+    "charts": "Use Recharts. Use functional colors for lines/bars (Yellow/Red/Green/Blue). Remove rounded corners from tooltips, use black borders for tooltips. Grid lines should be subtle but present.",
+    "inputs": "rounded-none, border border-black, focus:ring-1 focus:ring-black focus:border-black, font-mono for IP addresses.",
+    "shadcn_overrides": "Override all rounded-md or rounded-lg to rounded-none. Remove ring-offset shadows if they distract from the flat UI."
+  },
+  "animations": {
+    "energy_flow": "Use SVG paths with stroke-dasharray and animated stroke-dashoffset to simulate energy flowing between nodes (PV, Haus, Netz, Akku). Use the functional colors for the respective flow lines.",
+    "ui_interactions": "Minimal. Fast, snappy hover states. Pure functional control room feel."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "instructions": "Use sharp, clean icons with stroke-width of 1.5 or 2."
+  },
+  "specific_views_instructions": {
+    "dashboard": "Live Energy Flow diagram centrally located. 3-Phase Shelly Pro 3EM details in a dense table/grid. Hoymiles channels, Trucki SoC, and Victron MPPT details arrayed around. Tageswerte-Karten for daily stats.",
+    "history": "Recharts line charts showing PV/Netz/Akku/Haus over time + SoC. Toggle buttons for 1h/6h/12h/24h timeframes. Minimalist chart UI.",
+    "device_config": "Forms for IPs per device (Shelly, Hoymiles, Trucki, Victron). IP input fields must use font-mono. Demo-mode toggle switch.",
+    "device_control": "Buttons to Limit/Start/Stop/Restart Hoymiles. Toggle switches/buttons for Trucki AC-Output/ZEPC/Restart. Actions must have clear state indication.",
+    "integration_config": "MQTT & InfluxDB inputs (Broker IP, ports). Status indicator (Connected/Disconnected) using red/green dots."
+  },
+  "testing": {
+    "data_testid": "Apply `data-testid` to all interactive elements, navigation links, and form inputs (e.g., `data-testid=\"nav-dashboard\"`, `data-testid=\"input-shelly-ip\"`, `data-testid=\"btn-hoymiles-start\"`)."
+  },
+  "instructions_to_main_agent": [
+    "Build a pure React application. Use React Router for navigation.",
+    "Strictly adhere to the SCADA/Control Room aesthetic: no gradients, no rounded corners, stark black borders, pure functional colors.",
+    "Ensure the entire UI is in German (deutsche Oberfläche) as requested.",
+    "Import Google Fonts: 'IBM Plex Sans' and 'IBM Plex Mono' in the global CSS.",
+    "For the animated energy flow diagram, build a custom SVG component where nodes are black-bordered boxes and lines are animated paths.",
+    "Use standard `.jsx` files (not TSX).",
+    "Do NOT use placeholder text. Ensure all variables and placeholders reflect real energy metrics (W, kW, kWh, V, A).",
+    "All navigation links and major actions must have `data-testid`."
+  ]
+}
