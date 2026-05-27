@@ -434,7 +434,9 @@ async def today():
     exp_kwh = grid_exp_wh / 1000.0
     self_consumption_kwh = max(0, pv_kwh - exp_kwh)
     autarky = (self_consumption_kwh / house_kwh * 100) if house_kwh > 0 else 0
+    autarky = max(0.0, min(100.0, autarky))
     self_cons_pct = (self_consumption_kwh / pv_kwh * 100) if pv_kwh > 0 else 0
+    self_cons_pct = max(0.0, min(100.0, self_cons_pct))
 
     duration_h = (datetime.fromisoformat(rows[-1]["ts"]) - datetime.fromisoformat(rows[0]["ts"])).total_seconds() / 3600.0
     avg_pv = (pv_wh / duration_h) if duration_h > 0 else 0
