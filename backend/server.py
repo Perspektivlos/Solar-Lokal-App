@@ -347,7 +347,8 @@ class HoymilesControl(BaseModel):
 
 
 class TruckiControl(BaseModel):
-    action: str  # ac_on | ac_off | zepc_on | zepc_off | restart
+    action: str  # limit | zepc_on | zepc_off | restart
+    value: Optional[int] = None
 
 
 # ---------- Endpoints ----------
@@ -485,18 +486,25 @@ async def control_hoymiles(cmd: HoymilesControl):
 async def control_trucki(cmd: TruckiControl):
     cfg = await get_config()
     if cfg.get("demo_mode"):
-        return {"ok": True, "demo": True, "response": {"action": cmd.action, "result": "Simuliert"}}
+        return {"ok": True, "demo": True, "response": {"action": cmd.action, "value": cmd.value, "result": "Simuliert"}}
     ip = cfg["devices"]["trucki"]["ip"]
-    endpoint_map = {
-        "ac_on": "/ac/on", "ac_off": "/ac/off",
-        "zepc_on": "/zepc/on", "zepc_off": "/zepc/off",
-        "restart": "/restart",
-    }
-    if cmd.action not in endpoint_map:
-        raise HTTPException(400, f"Unknown action {cmd.action}")
+    # Trucki2Shelly HTTP endpoints
+    if cmd.action == "limit":
+        if cmd.value is None:
+            raise HTTPException(400, "value (W) erforderlich für limit")
+        url = f"http://{ip}/Limit?L={int(cmd.value)}"
+    else:
+        endpoint_map = {
+            "zepc_on": "/zepc/on",
+            "zepc_off": "/zepc/off",
+            "restart": "/restart",
+        }
+        if cmd.action not in endpoint_map:
+            raise HTTPException(400, f"Unknown action {cmd.action}")
+        url = f"http://{ip}{endpoint_map[cmd.action]}"
     try:
         async with httpx.AsyncClient(timeout=3.0) as c:
-            r = await c.get(f"http://{ip}{endpoint_map[cmd.action]}")
+            r = await c.get(url)
             return {"ok": r.status_code == 200, "response": r.text}
     except Exception as e:
         raise HTTPException(502, f"Trucki unreachable: {e}")

@@ -16,6 +16,7 @@ function Result({ res }) {
 
 export default function Control() {
   const [limit, setLimit] = useState(100);
+  const [truLimit, setTruLimit] = useState(800);
   const [hoyResult, setHoyResult] = useState(null);
   const [truResult, setTruResult] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -32,11 +33,11 @@ export default function Control() {
       setBusy(false);
     }
   };
-  const runTru = async (action) => {
+  const runTru = async (action, value) => {
     setBusy(true);
     setTruResult({ pending: true, action });
     try {
-      const r = await controlTrucki(action);
+      const r = await controlTrucki(action, value);
       setTruResult(r);
     } catch (e) {
       setTruResult({ ok: false, error: e?.response?.data?.detail || e.message });
@@ -108,13 +109,28 @@ export default function Control() {
             Trucki2Shelly Gateway
           </div>
           <div className="p-4 space-y-4">
+            <div>
+              <Label className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">Power-Limit (W)</Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  type="number"
+                  min="0"
+                  max="2400"
+                  step="10"
+                  value={truLimit}
+                  onChange={(e) => setTruLimit(Number(e.target.value))}
+                  className="rounded-none border-black font-mono"
+                  data-testid="input-tru-limit"
+                />
+                <Button onClick={() => runTru("limit", truLimit)} disabled={busy} className={primary} data-testid="btn-tru-limit">
+                  <Send size={14} className="mr-1.5" /> Senden
+                </Button>
+              </div>
+              <div className="font-mono text-[10px] text-gray-500 mt-1">
+                Begrenzt die AC-Ausgangsleistung in Watt (Trucki HTTP /Limit?L=…).
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
-              <Button onClick={() => runTru("ac_on")} disabled={busy} className={btn} data-testid="btn-tru-ac-on">
-                AC-Output ON
-              </Button>
-              <Button onClick={() => runTru("ac_off")} disabled={busy} className={btn} data-testid="btn-tru-ac-off">
-                AC-Output OFF
-              </Button>
               <Button onClick={() => runTru("zepc_on")} disabled={busy} className={btn} data-testid="btn-tru-zepc-on">
                 ZEPC ON
               </Button>
