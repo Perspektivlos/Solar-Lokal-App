@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 3 backend testing. Added 5 new pytest cases for /api/diagnostics/run and /api/diagnostics/raw; fixed stale /api/control/trucki test (action 'ac_on' -> 'zepc_on' to match current TruckiControl spec). 22 passed, 1 skipped (poller-grew-in-20s, transient/non-critical), 0 failed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/today", "issue": "autarky_pct still not clamped to [0,100] (carried over from iteration 1, not retested here)"},
+      {"endpoint": "/api/diagnostics/run", "issue": "When demo_mode=true the device sub-tests still report ok=false (HTTP ConnectTimeout) instead of being skipped or reflecting demo data. Cosmetic: in demo mode it could be more user-friendly to mark device tests as ok=null with detail 'Demo-Modus aktiv' rather than fail. Functional spec is met (true/false/null all used) – flagging as UX nit."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_solar_dashboard.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional UX) In /api/diagnostics/run, when cfg.demo_mode==True, mark device sub-tests with ok=null and detail 'Demo-Modus aktiv' instead of ConnectTimeout failures. Currently the 4 device tests fail in cloud preview because real IPs aren't reachable, which is technically correct but confusing for demo users.",
+    "Still pending from iter1: clamp autarky_pct to [0,100] in /api/today.",
+    "server.py is now 1164 lines (was 675). Splitting into modules (routes/, devices/, mqtt/, influx/, models/) is overdue."
+  ],
+  "critical_code_review_comments": [
+    "server.py grew from 675 → 1164 lines. Strongly recommend modularisation (well past the 700-line guideline).",
+    "/api/diagnostics/run uses asyncio.gather over 4 ping_http tasks with httpx timeout=1.5s each → worst case ~1.5s (parallel). Observed 3.4s in cloud (4 ConnectTimeouts in parallel). Acceptable, but consider timeout=1.0 for snappier UX.",
+    "/api/diagnostics/raw exposes raw MQTT state. No PII risk in current schema, but it does expose VRM-ID and instance ids via /api/config; consider whether this endpoint needs any auth gating in production.",
+    "Mongo ObjectId never leaked (good – all reads use {'_id': 0} projection, config.find_one pops _id).",
+    "Diagnostics correctly uses ok=True/False/None tri-state as spec'd.",
+    "/api/control/trucki TruckiControl model only accepts limit|zepc_on|zepc_off|restart — there is NO ac_on action (frontend should call zepc_on instead). Old test was outdated; updated."
+  ],
+  "updated_files": ["/app/backend/tests/test_solar_dashboard.py"],
+  "success_rate": {"backend": "100% (22/22 executed pass, 1 conditional skip)", "frontend": "not tested (backend-only)"},
+  "test_credentials": "none (no auth)",
+  "seed_data_creation": "Test toggles demo_mode off then restores back; transient shelly IP change then restore. No persistent test data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 3 backend is healthy. /api/diagnostics/run returns 9 checks (Backend, MongoDB, Poller, MQTT, InfluxDB + 4 devices) with tri-state ok and correct summary aggregation. /api/diagnostics/raw responds in <200ms with ahoy/shelly/trucki/victron sub-objects. In current cloud preview, device sub-tests legitimately fail (ConnectTimeout) because no real devices on LAN — this is expected per agent note. MongoDB snapshots collection healthy (1317+ docs, growing). Test file: /app/backend/tests/test_solar_dashboard.py (23 tests across 9 classes). pytest_results.xml regenerated.",
+  "rca_of_the_issue": "N/A – no failing tests."
+}

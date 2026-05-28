@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
 import Control from "./pages/Control";
 import Devices from "./pages/Devices";
+import Diagnose from "./pages/Diagnose";
 import Integrations from "./pages/Integrations";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="verlauf" element={<History />} />
             <Route path="steuerung" element={<Control />} />
             <Route path="geraete" element={<Devices />} />
+            <Route path="diagnose" element={<Diagnose />} />
             <Route path="integrationen" element={<Integrations />} />
           </Route>
         </Routes>

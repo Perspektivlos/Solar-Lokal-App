@@ -140,12 +140,88 @@ class TestControl:
         data = r.json()
         assert data.get("ok") is True
 
-    def test_trucki_ac_on(self, client):
+    def test_trucki_zepc_on(self, client):
         r = client.post(f"{API}/control/trucki",
-                        json={"action": "ac_on"}, timeout=15)
+                        json={"action": "zepc_on"}, timeout=15)
         assert r.status_code == 200, r.text
         data = r.json()
         assert data.get("ok") is True
+
+
+# ---------- /api/diagnostics/* (Iteration 3) ----------
+class TestDiagnosticsRun:
+    def test_diagnostics_run_structure(self, client):
+        t0 = time.time()
+        r = client.post(f"{API}/diagnostics/run", timeout=30)
+        elapsed = time.time() - t0
+        assert r.status_code == 200, r.text
+        data = r.json()
+        for k in ("timestamp", "duration_ms", "summary", "tests"):
+            assert k in data, f"missing key {k}"
+        # Summary
+        s = data["summary"]
+        for k in ("pass", "fail", "skip", "total"):
+            assert k in s
+            assert isinstance(s[k], int)
+        assert s["pass"] + s["fail"] + s["skip"] == s["total"]
+        # Duration is reasonable
+        assert isinstance(data["duration_ms"], int)
+        assert elapsed < 25, f"diagnostics too slow: {elapsed}s"
+
+    def test_diagnostics_run_required_checks(self, client):
+        data = client.post(f"{API}/diagnostics/run", timeout=30).json()
+        tests = data["tests"]
+        assert len(tests) == data["summary"]["total"]
+        names = [t["name"] for t in tests]
+        # Backend, MongoDB, Poller, MQTT, InfluxDB checks
+        assert any("Backend" in n for n in names), names
+        assert any("MongoDB" in n for n in names), names
+        assert any("Poller" in n for n in names), names
+        assert any("MQTT" in n for n in names), names
+        assert any("Influx" in n for n in names), names
+        # 4 device tests
+        assert any("Shelly" in n for n in names), names
+        assert any("Ahoy" in n or "Hoymiles" in n for n in names), names
+        assert any("Trucki" in n for n in names), names
+        assert any("Victron" in n for n in names), names
+
+    def test_diagnostics_ok_field_types(self, client):
+        data = client.post(f"{API}/diagnostics/run", timeout=30).json()
+        for t in data["tests"]:
+            assert "name" in t and "ok" in t and "detail" in t and "ms" in t
+            assert t["ok"] in (True, False, None), f"ok must be true/false/null: {t}"
+            assert isinstance(t["name"], str)
+            assert isinstance(t["detail"], str)
+
+    def test_diagnostics_backend_and_mongo_pass(self, client):
+        data = client.post(f"{API}/diagnostics/run", timeout=30).json()
+        by_name = {t["name"]: t for t in data["tests"]}
+        backend = next((t for n, t in by_name.items() if "Backend" in n), None)
+        mongo = next((t for n, t in by_name.items() if "MongoDB" in n), None)
+        assert backend and backend["ok"] is True
+        assert mongo and mongo["ok"] is True
+
+
+class TestDiagnosticsRaw:
+    def test_diagnostics_raw_structure(self, client):
+        t0 = time.time()
+        r = client.get(f"{API}/diagnostics/raw", timeout=10)
+        elapsed = time.time() - t0
+        assert r.status_code == 200, r.text
+        assert elapsed < 2.0, f"raw too slow: {elapsed}s"
+        data = r.json()
+        for dev in ("ahoy", "shelly", "trucki", "victron"):
+            assert dev in data, f"missing {dev}"
+            assert "_ts" in data[dev]
+        # ahoy/trucki have raw dict
+        assert "raw" in data["ahoy"]
+        assert "raw" in data["trucki"]
+        # shelly has phases/online/total_power
+        for k in ("online", "total_power", "phases"):
+            assert k in data["shelly"]
+        # victron has system/grid/instances
+        for k in ("system", "grid", "instances"):
+            assert k in data["victron"]
 
 
 # ---------- /api/integrations/status ----------

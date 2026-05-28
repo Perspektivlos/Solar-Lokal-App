@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Zap, Activity, Sliders, Cpu, PlugZap } from "lucide-react";
+import { Zap, Activity, Sliders, Cpu, PlugZap, Stethoscope } from "lucide-react";
 
 const links = [
   { to: "/", label: "Dashboard", icon: Zap, testid: "nav-dashboard", end: true },
   { to: "/verlauf", label: "Verlauf", icon: Activity, testid: "nav-history" },
   { to: "/steuerung", label: "Steuerung", icon: Sliders, testid: "nav-control" },
   { to: "/geraete", label: "Geräte", icon: Cpu, testid: "nav-devices" },
+  { to: "/diagnose", label: "Diagnose", icon: Stethoscope, testid: "nav-diagnose" },
   { to: "/integrationen", label: "Integrationen", icon: PlugZap, testid: "nav-integrations" },
 ];
 

@@ -828,6 +828,134 @@ async def integrations_status():
     }
 
 
+# ---------- Diagnostics / Self-Test ----------
+
+@api_router.post("/diagnostics/run")
+async def diagnostics_run():
+    """Runs a series of health checks against backend, MongoDB, MQTT,
+    InfluxDB and each configured device. Returns one result per check."""
+    cfg = await get_config()
+    started = time.time()
+    results: List[Dict[str, Any]] = []
+
+    def add(name: str, ok: Optional[bool], detail: str, ms: Optional[int] = None):
+        results.append({"name": name, "ok": ok, "detail": detail, "ms": ms})
+
+    # 1. Backend itself
+    add("Backend API", True, "läuft", 0)
+
+    # 2. MongoDB
+    t = time.time()
+    try:
+        await db.command("ping")
+        snap_count = await db.snapshots.count_documents({})
+        add("MongoDB", True, f"Ping OK · {snap_count} Snapshots gespeichert", int((time.time() - t) * 1000))
+    except Exception as e:
+        add("MongoDB", False, f"{type(e).__name__}: {e}", int((time.time() - t) * 1000))
+
+    # 3. Poller
+    add("Snapshot-Poller", bool(_poller_state.get("running")),
+        f"{_poller_state.get('count', 0)} Snapshots · letzter Schreibvorgang: {_poller_state.get('last_write') or '–'}")
+
+    # 4. MQTT
+    mq_cfg = cfg.get("mqtt") or {}
+    if not mq_cfg.get("enabled"):
+        add("MQTT", None, "deaktiviert in Config")
+    else:
+        ok = bool(_mqtt_state.get("connected"))
+        detail = (f"verbunden mit {mq_cfg.get('host')}:{mq_cfg.get('port')} · "
+                  f"{_mqtt_state.get('messages', 0)} Nachrichten") if ok else \
+                 f"{mq_cfg.get('host')}:{mq_cfg.get('port')} – {_mqtt_state.get('last_error') or 'nicht verbunden'}"
+        add("MQTT (Mosquitto)", ok, detail)
+
+    # 5. InfluxDB
+    inf_cfg = cfg.get("influx") or {}
+    if not inf_cfg.get("enabled"):
+        add("InfluxDB", None, "deaktiviert in Config")
+    else:
+        ok = bool(_influx_state.get("connected"))
+        detail = (f"verbunden · {_influx_state.get('writes', 0)} Writes") if ok else \
+                 f"{inf_cfg.get('url')} – {_influx_state.get('last_error') or 'nicht verbunden'}"
+        add("InfluxDB", ok, detail)
+
+    # 6. Devices — check MQTT freshness first, else HTTP ping
+    fresh_window_s = 90  # data younger than this counts as live
+    now_dt = datetime.now(timezone.utc)
+
+    def is_fresh(ts: Optional[str]) -> bool:
+        if not ts:
+            return False
+        try:
+            return (now_dt - datetime.fromisoformat(ts)).total_seconds() < fresh_window_s
+        except Exception:
+            return False
+
+    async def ping_http(label: str, ip: str, paths: List[str], key: str, mqtt_ts: Optional[str], extra: str = ""):
+        if not cfg["devices"][key]["enabled"]:
+            add(label, None, "deaktiviert in Config")
+            return
+        if is_fresh(mqtt_ts):
+            add(label, True, f"MQTT-Daten frisch · zuletzt {mqtt_ts}{extra}")
+            return
+        # try HTTP
+        last_err = ""
+        for p in paths:
+            url = f"http://{ip}{p}"
+            t0 = time.time()
+            try:
+                async with httpx.AsyncClient(timeout=1.5) as c:
+                    r = await c.get(url)
+                    ms = int((time.time() - t0) * 1000)
+                    if r.status_code < 500:
+                        add(label, True, f"HTTP {r.status_code} · {ip}{p}{extra}", ms)
+                        return
+                    last_err = f"HTTP {r.status_code} bei {p}"
+            except Exception as e:
+                last_err = f"{type(e).__name__}: {str(e)[:60]}"
+        add(label, False, f"{ip} nicht erreichbar – {last_err}{extra}")
+
+    devs = cfg["devices"]
+    await asyncio.gather(
+        ping_http("Shelly Pro 3EM", devs["shelly"]["ip"], ["/rpc/EM.GetStatus?id=0", "/"], "shelly", _mqtt_data["shelly"]["_ts"]),
+        ping_http("Ahoy DTU (Hoymiles)", devs["ahoy"]["ip"], ["/api/system", "/"], "ahoy", _mqtt_data["ahoy"]["_ts"]),
+        ping_http("Trucki2Shelly", devs["trucki"]["ip"], ["/status", "/"], "trucki", _mqtt_data["trucki"]["_ts"]),
+        ping_http("Victron VenusOS", devs["victron"]["ip"], ["/api/v1/system", "/"], "victron", _mqtt_data["victron"]["_ts"]),
+    )
+
+    # Summary
+    n_pass = sum(1 for r in results if r["ok"] is True)
+    n_fail = sum(1 for r in results if r["ok"] is False)
+    n_skip = sum(1 for r in results if r["ok"] is None)
+    return {
+        "timestamp": now_dt.isoformat(),
+        "duration_ms": int((time.time() - started) * 1000),
+        "summary": {"pass": n_pass, "fail": n_fail, "skip": n_skip, "total": len(results)},
+        "tests": results,
+    }
+
+
+@api_router.get("/diagnostics/raw")
+async def diagnostics_raw():
+    """Returns all raw MQTT-collected state for the deep-inspection view."""
+    return {
+        "ahoy": {"_ts": _mqtt_data["ahoy"]["_ts"], "raw": _mqtt_data["ahoy"]["raw"]},
+        "shelly": {
+            "_ts": _mqtt_data["shelly"]["_ts"],
+            "online": _mqtt_data["shelly"]["online"],
+            "total_power": _mqtt_data["shelly"]["total_power"],
+            "phases": _mqtt_data["shelly"]["phases"],
+        },
+        "trucki": {"_ts": _mqtt_data["trucki"]["_ts"], "raw": _mqtt_data["trucki"]["raw"]},
+        "victron": {
+            "_ts": _mqtt_data["victron"]["_ts"],
+            "system": _mqtt_data["victron"]["system"],
+            "grid": _mqtt_data["victron"]["grid"],
+            "instances": {str(k): v for k, v in _mqtt_data["victron"]["instances"].items()},
+        },
+    }
+
+
+
 # ---------- Background poller ----------
 
 _poller_state = {"running": False, "last_write": None, "count": 0}
