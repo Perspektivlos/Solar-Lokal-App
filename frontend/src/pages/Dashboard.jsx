@@ -193,7 +193,7 @@ export default function Dashboard() {
         <Card title="Trucki2Shelly · Speicher" testid="card-trucki" right={<StatusDot online={trucki.online} />}>
           <div className="space-y-3">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">SoC</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">SoC (aus VBAT geschätzt)</div>
               <div className="flex items-center gap-3 mt-1">
                 <div className="flex-1 h-3 border border-black relative">
                   <div className="absolute inset-y-0 left-0 bg-[#3B82F6]" style={{ width: `${trucki.soc}%` }} />
@@ -202,9 +202,19 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Metric label="Batterie" value={trucki.battery_voltage?.toFixed(2)} unit="V" />
-              <Metric label="Leistung" value={Math.abs(trucki.battery_power).toFixed(0)} unit={`W ${trucki.battery_power >= 0 ? "↓" : "↑"}`} color="text-[#3B82F6]" />
+              <Metric label="VBAT" value={trucki.battery_voltage?.toFixed(2)} unit="V" />
+              <Metric label="METER" value={Math.abs(trucki.battery_power).toFixed(0)} unit={`W ${trucki.battery_power >= 0 ? "↓" : "↑"}`} color="text-[#3B82F6]" />
             </div>
+            {(trucki.target_w !== undefined) && (
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-200 font-mono text-[11px]">
+                <div>TARGET<br/><span className="text-black text-sm">{trucki.target_w?.toFixed(0)} W</span></div>
+                <div>MIN<br/><span className="text-black text-sm">{trucki.min_power_w?.toFixed(0)} W</span></div>
+                <div>MAX<br/><span className="text-black text-sm">{trucki.max_power_w?.toFixed(0)} W</span></div>
+                <div>TAG<br/><span className="text-black text-sm">{trucki.day_energy_kwh?.toFixed(2)} kWh</span></div>
+                <div>GESAMT<br/><span className="text-black text-sm">{trucki.total_energy_kwh?.toFixed(1)} kWh</span></div>
+                <div>TEMP<br/><span className="text-black text-sm">{trucki.temperature?.toFixed(0)} °C</span></div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200">
               <div className="font-mono text-xs">AC-Output: <span className={trucki.ac_output ? "text-[#22C55E]" : "text-gray-500"}>{trucki.ac_output ? "EIN" : "AUS"}</span></div>
               <div className="font-mono text-xs">ZEPC: <span className={trucki.zepc ? "text-[#22C55E]" : "text-gray-500"}>{trucki.zepc ? "EIN" : "AUS"}</span></div>

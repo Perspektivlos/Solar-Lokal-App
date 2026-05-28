@@ -138,14 +138,22 @@ export default function Integrations() {
             />
           </div>
           {status?.victron_mqtt && (
-            <div className="md:col-span-2 font-mono text-[11px] text-gray-700 border-t border-gray-200 pt-3">
+            <div className="md:col-span-2 font-mono text-[11px] text-gray-700 border-t border-gray-200 pt-3 space-y-1">
               <div>Letzte Nachricht: <span className="text-black">{status.victron_mqtt.last_msg || "–"}</span></div>
               <div>System PV-Power: <span className="text-[#EAB308]">{status.victron_mqtt.system_pv_power ?? "–"} W</span></div>
               {Object.entries(status.victron_mqtt.instances || {}).map(([id, info]) => (
                 <div key={id} data-testid={`victron-mqtt-inst-${id}`}>
-                  Instance {id}: {info.fields} Felder · Yield/Power = <span className="text-[#EAB308]">{info.pv_power ?? "–"} W</span>
+                  Instance {id}: {info.fields} Felder · Yield/Power = <span className="text-[#EAB308]">{info.pv_power ?? "–"} W</span> · VBatt {info.battery_voltage ?? "–"} V · State {info.state ?? "–"}
                 </div>
               ))}
+            </div>
+          )}
+          {status?.device_mqtt && (
+            <div className="md:col-span-2 font-mono text-[11px] text-gray-700 border-t border-gray-200 pt-3 space-y-0.5" data-testid="device-mqtt-status">
+              <div className="uppercase tracking-[0.2em] text-gray-500 mb-1">Weitere Geräte via MQTT</div>
+              <div>Shelly: <span className="text-black">{status.device_mqtt.shelly_last || "–"}</span></div>
+              <div>Ahoy DTU: <span className="text-black">{status.device_mqtt.ahoy_last || "–"}</span></div>
+              <div>Trucki: <span className="text-black">{status.device_mqtt.trucki_last || "–"}</span> ({status.device_mqtt.trucki_keys?.length || 0} Keys)</div>
             </div>
           )}
         </div>

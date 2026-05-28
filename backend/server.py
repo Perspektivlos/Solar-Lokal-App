@@ -283,13 +283,19 @@ async def fetch_victron(ip: str) -> Optional[Dict[str, Any]]:
     return {"online": True, "mppts": data.get("mppts", []), "total_power": data.get("pv_power", 0)}
 
 
-# ---------- Victron via MQTT (VenusOS Large) ----------
+# ---------- Unified MQTT State (all devices) ----------
 
-# In-memory state populated by the MQTT subscriber.
-# Structure: { instance_int: { "Pv/V": 96.2, "Yield/Power": 712.3, ... , "_ts": iso } }
-_victron_mqtt: Dict[str, Any] = {
-    "instances": {},   # keyed by int(instance)
-    "system_pv_power": None,
+# Single in-memory store populated by the MQTT subscriber.
+_mqtt_data: Dict[str, Any] = {
+    "ahoy":   {"raw": {}, "_ts": None},
+    "shelly": {"phases": [], "total_power": 0.0, "online": False, "_ts": None},
+    "trucki": {"raw": {}, "_ts": None},
+    "victron": {
+        "instances": {},   # {288: {"Pv/V":..., "Yield/Power":..., "_ts": iso}}
+        "system": {},      # battery_voltage, grid_power per phase, consumption, etc.
+        "grid": {},        # Ac/Power, Ac/Lx/Power, ...
+        "_ts": None,
+    },
     "last_msg": None,
 }
 
@@ -300,8 +306,195 @@ _VICTRON_STATE_NAMES = {
 }
 
 
+def _parse_mqtt_payload(payload: bytes) -> Any:
+    text = payload.decode("utf-8", errors="ignore").strip()
+    if not text:
+        return None
+    # Try JSON first (Victron + Shelly + Ahoy 'total' use JSON)
+    try:
+        obj = json.loads(text)
+        if isinstance(obj, dict) and "value" in obj and len(obj) <= 2:
+            return obj["value"]
+        return obj
+    except Exception:
+        pass
+    # Plain numeric (Trucki)
+    try:
+        if "." in text:
+            return float(text)
+        return int(text)
+    except ValueError:
+        return text
+
+
+def _dispatch_mqtt_message(topic: str, payload: bytes) -> None:
+    """Route an MQTT message to the right device state."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    _mqtt_data["last_msg"] = now_iso
+
+    # ---- Victron VenusOS (N/<vrm>/...) ----
+    if topic.startswith("N/"):
+        parts = topic.split("/")
+        if len(parts) < 5:
+            return
+        service = parts[2]
+        inst_raw = parts[3]
+        path = "/".join(parts[4:])
+        value = _parse_mqtt_payload(payload)
+        _mqtt_data["victron"]["_ts"] = now_iso
+        if service == "solarcharger":
+            try:
+                inst = int(inst_raw)
+            except ValueError:
+                return
+            st = _mqtt_data["victron"]["instances"].setdefault(inst, {})
+            st[path] = value
+            st["_ts"] = now_iso
+        elif service == "system" and inst_raw == "0":
+            _mqtt_data["victron"]["system"][path] = value
+        elif service == "grid":
+            _mqtt_data["victron"]["grid"][path] = value
+        return
+
+    # ---- Shelly via VenusOS bridge ----
+    if topic.startswith("venus/grid/shellypro/"):
+        sub = topic[len("venus/grid/shellypro/"):]
+        if sub == "status/em:0":
+            try:
+                obj = json.loads(payload.decode("utf-8", errors="ignore"))
+                phases = []
+                for i, ch in enumerate(["a", "b", "c"]):
+                    phases.append({
+                        "phase": f"L{i+1}",
+                        "power": float(obj.get(f"{ch}_act_power", 0) or 0),
+                        "voltage": float(obj.get(f"{ch}_voltage", 0) or 0),
+                        "current": float(obj.get(f"{ch}_current", 0) or 0),
+                        "pf": float(obj.get(f"{ch}_pf", 0) or 0),
+                    })
+                _mqtt_data["shelly"]["phases"] = phases
+                _mqtt_data["shelly"]["total_power"] = float(obj.get("total_act_power", sum(p["power"] for p in phases)) or 0)
+                _mqtt_data["shelly"]["_ts"] = now_iso
+            except Exception as e:
+                logger.debug(f"shelly mqtt parse: {e}")
+        elif sub == "online":
+            _mqtt_data["shelly"]["online"] = payload.decode("utf-8", errors="ignore").strip().lower() == "true"
+        return
+
+    # ---- Ahoy DTU ----
+    if topic.startswith("venus/pv/ahoydtu/"):
+        sub = topic[len("venus/pv/ahoydtu/"):]
+        _mqtt_data["ahoy"]["raw"][sub] = _parse_mqtt_payload(payload)
+        _mqtt_data["ahoy"]["_ts"] = now_iso
+        return
+
+    # ---- Trucki ----
+    if topic.startswith("Trucki/"):
+        sub = topic[len("Trucki/"):]
+        _mqtt_data["trucki"]["raw"][sub] = _parse_mqtt_payload(payload)
+        _mqtt_data["trucki"]["_ts"] = now_iso
+        return
+
+
+def fetch_shelly_from_mqtt() -> Optional[Dict[str, Any]]:
+    s = _mqtt_data["shelly"]
+    if not s.get("phases"):
+        return None
+    return {
+        "online": s.get("online", True),
+        "total_power": round(s["total_power"], 1),
+        "phases": [
+            {"phase": p["phase"],
+             "power": round(p["power"], 1),
+             "voltage": round(p["voltage"], 1),
+             "current": round(p["current"], 3),
+             "pf": round(p["pf"], 2)}
+            for p in s["phases"]
+        ],
+        "_via_mqtt": True,
+    }
+
+
+def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
+    raw = _mqtt_data["ahoy"]["raw"]
+    if not raw:
+        return None
+    total = raw.get("HM1500/total") or raw.get("total") or {}
+    if not isinstance(total, dict):
+        total = {}
+    available = int(raw.get("HM1500/available", 0) or 0)
+    p_ac = float(total.get("P_AC", 0) or 0)
+    yield_day_wh = float(total.get("YieldDay", 0) or 0)  # Wh
+    # Per-channel data not always published — expose aggregated channel for now
+    channels = []
+    for ch in range(1, 5):
+        chp = raw.get(f"HM1500/ch{ch}/P_DC")
+        chu = raw.get(f"HM1500/ch{ch}/U_DC")
+        chi = raw.get(f"HM1500/ch{ch}/I_DC")
+        chy = raw.get(f"HM1500/ch{ch}/YieldDay")
+        if chp is not None or chu is not None:
+            channels.append({
+                "ch": ch,
+                "power": round(float(chp or 0), 1),
+                "voltage": round(float(chu or 0), 1),
+                "current": round(float(chi or 0), 2),
+                "yield_day": round(float(chy or 0) / 1000.0, 3),
+            })
+    if not channels:
+        # Single aggregated channel if no per-ch data
+        channels = [{
+            "ch": 0, "power": round(p_ac, 1),
+            "voltage": 0, "current": 0,
+            "yield_day": round(yield_day_wh / 1000.0, 3),
+        }]
+    return {
+        "online": available > 0,
+        "total_power": round(p_ac, 1),
+        "limit_percent": int(raw.get("HM1500/power_limit_read", 100) or 100),
+        "yield_day_kwh": round(yield_day_wh / 1000.0, 3),
+        "channels": channels,
+        "_via_mqtt": True,
+    }
+
+
+def _trucki_soc_from_voltage(vbat: float) -> float:
+    """LiFePO4 16S simple voltage→SoC approximation (resting voltage).
+    48.0V → 0%, 54.4V → 100%; clamped."""
+    if vbat <= 0:
+        return 0.0
+    pct = (vbat - 48.0) / (54.4 - 48.0) * 100.0
+    return max(0.0, min(100.0, pct))
+
+
+def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
+    raw = _mqtt_data["trucki"]["raw"]
+    if not raw:
+        return None
+    vbat = float(raw.get("VBAT", 0) or 0)
+    meter = float(raw.get("METER", 0) or 0)
+    state_on = str(raw.get("STATE", "")).upper() == "ON"
+    zepc_raw = str(raw.get("ZEPC", "0"))
+    zepc_on = zepc_raw in ("1", "ON", "On", "TRUE", "True", "true")
+    return {
+        "online": True,
+        "soc": round(_trucki_soc_from_voltage(vbat), 1),
+        "battery_voltage": round(vbat, 2),
+        # METER is the injection power (W). >0 means discharging into grid.
+        # For consistency with our flow model we treat charging as positive.
+        # Trucki injects from battery → battery is discharging → negative.
+        "battery_power": -round(meter, 1) if state_on else 0.0,
+        "ac_output": state_on,
+        "zepc": zepc_on,
+        "target_w": float(raw.get("TARGET", 0) or 0),
+        "min_power_w": float(raw.get("MINPOWER", 0) or 0),
+        "max_power_w": float(raw.get("MAXPOWER", 0) or 0),
+        "day_energy_kwh": float(raw.get("DAYENERGY", 0) or 0),
+        "total_energy_kwh": float(raw.get("TOTALENERGY", 0) or 0),
+        "temperature": float(raw.get("TEMPERATURE", 0) or 0),
+        "_via_mqtt": True,
+    }
+
+
 def fetch_victron_from_mqtt(cfg_victron: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Build Victron payload from the MQTT-derived state."""
     if not cfg_victron.get("enabled"):
         return None
     instances = cfg_victron.get("instances", []) or []
@@ -309,7 +502,7 @@ def fetch_victron_from_mqtt(cfg_victron: Dict[str, Any]) -> Optional[Dict[str, A
     total = 0.0
     any_data = False
     for inst in instances:
-        st = _victron_mqtt["instances"].get(int(inst), {})
+        st = _mqtt_data["victron"]["instances"].get(int(inst), {})
         if not st:
             mppts.append({
                 "id": int(inst), "name": f"MPPT 150/35 [{inst}]",
@@ -318,27 +511,30 @@ def fetch_victron_from_mqtt(cfg_victron: Dict[str, Any]) -> Optional[Dict[str, A
             })
             continue
         any_data = True
-        p = st.get("Yield/Power", 0) or 0
+        p = float(st.get("Yield/Power", 0) or 0)
         total += p
         state_code = st.get("State")
-        state_name = _VICTRON_STATE_NAMES.get(int(state_code), str(state_code)) if state_code is not None else "–"
+        try:
+            state_name = _VICTRON_STATE_NAMES.get(int(state_code), str(state_code)) if state_code is not None else "–"
+        except Exception:
+            state_name = str(state_code or "–")
         mppts.append({
             "id": int(inst),
             "name": f"MPPT 150/35 [{inst}]",
             "pv_power": round(p, 1),
-            "pv_voltage": round(st.get("Pv/V", 0) or 0, 1),
-            "battery_voltage": round(st.get("Dc/0/Voltage", 0) or 0, 2),
-            "yield_today": round(st.get("History/Daily/0/Yield", 0) or 0, 3),
+            "pv_voltage": round(float(st.get("Pv/V", 0) or 0), 1),
+            "battery_voltage": round(float(st.get("Dc/0/Voltage", 0) or 0), 2),
+            "yield_today": round(float(st.get("History/Daily/0/Yield", 0) or 0), 3),
             "state": state_name,
         })
     if not any_data:
         return None
-    sys_pv = _victron_mqtt.get("system_pv_power")
+    sys_pv = _mqtt_data["victron"]["system"].get("Dc/Pv/Power")
     return {
         "online": True,
-        "via_mqtt": True,
+        "_via_mqtt": True,
         "mppts": mppts,
-        "total_power": round(sys_pv if sys_pv is not None else total, 1),
+        "total_power": round(float(sys_pv) if sys_pv is not None else total, 1),
     }
 
 
@@ -347,38 +543,54 @@ def fetch_victron_from_mqtt(cfg_victron: Dict[str, Any]) -> Optional[Dict[str, A
 async def collect_live() -> Dict[str, Any]:
     cfg = await get_config()
     demo = cfg.get("demo_mode", True)
+    mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
 
-    async def safe(real_factory, mock_fn, enabled):
+    async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
         if not enabled:
             return {"online": False}
         if demo:
             return mock_fn()
-        data = await real_factory()
-        if data is None:
+        # 1. Prefer MQTT
+        if mqtt_enabled:
+            try:
+                d = mqtt_fn()
+                if d is not None:
+                    return d
+            except Exception as e:
+                logger.debug(f"mqtt fetch error: {e}")
+        # 2. HTTP fallback
+        d = await http_factory()
+        if d is None:
             mocked = mock_fn()
             mocked["online"] = False
             mocked["_fallback"] = True
             return mocked
-        return data
+        return d
 
-    shelly_task = safe(lambda: fetch_shelly(cfg["devices"]["shelly"]["ip"]), mock_shelly, cfg["devices"]["shelly"]["enabled"])
-    ahoy_task = safe(
+    shelly = await get_dev(
+        fetch_shelly_from_mqtt,
+        lambda: fetch_shelly(cfg["devices"]["shelly"]["ip"]),
+        mock_shelly,
+        cfg["devices"]["shelly"]["enabled"],
+    )
+    ahoy = await get_dev(
+        fetch_ahoy_from_mqtt,
         lambda: fetch_ahoy(cfg["devices"]["ahoy"]["ip"], cfg["devices"]["ahoy"].get("inverter_id", 0)),
         mock_ahoy,
         cfg["devices"]["ahoy"]["enabled"],
     )
-    trucki_task = safe(lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]), mock_trucki, cfg["devices"]["trucki"]["enabled"])
-
-    async def victron_factory():
-        # Prefer MQTT data when victron_mqtt integration is enabled and has data
-        mqtt_data = fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {})
-        if mqtt_data is not None:
-            return mqtt_data
-        return await fetch_victron(cfg["devices"]["victron"]["ip"])
-
-    victron_task = safe(victron_factory, mock_victron, cfg["devices"]["victron"]["enabled"])
-
-    shelly, ahoy, trucki, victron = await asyncio.gather(shelly_task, ahoy_task, trucki_task, victron_task)
+    trucki = await get_dev(
+        fetch_trucki_from_mqtt,
+        lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]),
+        mock_trucki,
+        cfg["devices"]["trucki"]["enabled"],
+    )
+    victron = await get_dev(
+        lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
+        lambda: fetch_victron(cfg["devices"]["victron"]["ip"]),
+        mock_victron,
+        cfg["devices"]["victron"]["enabled"],
+    )
 
     pv_power = (ahoy.get("total_power", 0) or 0) + (victron.get("total_power", 0) or 0)
     grid_power = shelly.get("total_power", 0) or 0  # >0 import, <0 export
@@ -586,19 +798,29 @@ async def control_trucki(cmd: TruckiControl):
 @api_router.get("/integrations/status")
 async def integrations_status():
     inst_summary = {}
-    for inst, st in _victron_mqtt.get("instances", {}).items():
+    for inst, st in _mqtt_data["victron"]["instances"].items():
         inst_summary[str(inst)] = {
             "fields": len([k for k in st.keys() if not k.startswith("_")]),
             "last_msg": st.get("_ts"),
             "pv_power": st.get("Yield/Power"),
+            "pv_voltage": st.get("Pv/V"),
+            "battery_voltage": st.get("Dc/0/Voltage"),
+            "state": st.get("State"),
         }
     return {
         "mqtt": {"connected": _mqtt_state["connected"], "last_error": _mqtt_state["last_error"], "messages": _mqtt_state["messages"]},
         "influx": {"connected": _influx_state["connected"], "last_error": _influx_state["last_error"], "writes": _influx_state["writes"]},
         "poller": {"running": _poller_state["running"], "last_write": _poller_state["last_write"], "count": _poller_state["count"]},
+        "device_mqtt": {
+            "ahoy_last": _mqtt_data["ahoy"]["_ts"],
+            "shelly_last": _mqtt_data["shelly"]["_ts"],
+            "trucki_last": _mqtt_data["trucki"]["_ts"],
+            "victron_last": _mqtt_data["victron"]["_ts"],
+            "trucki_keys": list((_mqtt_data["trucki"]["raw"] or {}).keys()),
+        },
         "victron_mqtt": {
-            "last_msg": _victron_mqtt.get("last_msg"),
-            "system_pv_power": _victron_mqtt.get("system_pv_power"),
+            "last_msg": _mqtt_data["victron"]["_ts"],
+            "system_pv_power": _mqtt_data["victron"]["system"].get("Dc/Pv/Power"),
             "instances": inst_summary,
         },
     }
@@ -673,20 +895,21 @@ def _mqtt_setup(cfg_mqtt: Dict[str, Any], cfg_victron: Dict[str, Any]):
 
     vrm_id = (cfg_victron or {}).get("vrm_id") or ""
     victron_enabled = bool((cfg_victron or {}).get("enabled") and vrm_id)
-    victron_instances = {int(i) for i in (cfg_victron or {}).get("instances", []) or []}
 
     def on_connect(client_, userdata, flags, rc):
         if rc == 0:
             _mqtt_state["connected"] = True
             _mqtt_state["last_error"] = None
+            # Generic prefix (user-defined extra topics)
             prefix = cfg_mqtt.get("topic_prefix", "solar")
-            client_.subscribe(f"{prefix}/#")
+            if prefix:
+                client_.subscribe(f"{prefix}/#")
+            # Device topics seen in user's network
+            client_.subscribe("venus/pv/ahoydtu/#")
+            client_.subscribe("venus/grid/shellypro/#")
+            client_.subscribe("Trucki/#")
             if victron_enabled:
-                # Subscribe to each MPPT instance's full subtree + system PV power
-                for inst in victron_instances:
-                    client_.subscribe(f"N/{vrm_id}/solarcharger/{inst}/#")
-                client_.subscribe(f"N/{vrm_id}/system/0/Dc/Pv/Power")
-                # Immediate keep-alive so VenusOS starts publishing
+                client_.subscribe(f"N/{vrm_id}/#")
                 try:
                     client_.publish(f"R/{vrm_id}/keepalive", "", qos=0)
                 except Exception:
@@ -697,36 +920,10 @@ def _mqtt_setup(cfg_mqtt: Dict[str, Any], cfg_victron: Dict[str, Any]):
 
     def on_message(client_, userdata, msg):
         _mqtt_state["messages"] += 1
-        topic = msg.topic
-        # Victron VenusOS topics
-        if victron_enabled and topic.startswith(f"N/{vrm_id}/"):
-            try:
-                payload = msg.payload.decode("utf-8", errors="ignore").strip()
-                value = None
-                if payload:
-                    try:
-                        obj = json.loads(payload)
-                        value = obj.get("value") if isinstance(obj, dict) else obj
-                    except Exception:
-                        value = payload
-                _victron_mqtt["last_msg"] = datetime.now(timezone.utc).isoformat()
-                parts = topic.split("/")
-                # N / <vrm> / <service> / <inst> / <path...>
-                if len(parts) >= 5:
-                    service = parts[2]
-                    try:
-                        inst = int(parts[3])
-                    except ValueError:
-                        return
-                    path = "/".join(parts[4:])
-                    if service == "solarcharger" and inst in victron_instances:
-                        st = _victron_mqtt["instances"].setdefault(inst, {})
-                        st[path] = value
-                        st["_ts"] = _victron_mqtt["last_msg"]
-                    elif service == "system" and path == "Dc/Pv/Power":
-                        _victron_mqtt["system_pv_power"] = value
-            except Exception as e:
-                logger.debug(f"victron mqtt parse error: {e}")
+        try:
+            _dispatch_mqtt_message(msg.topic, msg.payload)
+        except Exception as e:
+            logger.debug(f"dispatch error topic={msg.topic}: {e}")
 
     def on_disconnect(client_, userdata, rc):
         _mqtt_state["connected"] = False
