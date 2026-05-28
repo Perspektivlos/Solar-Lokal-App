@@ -201,7 +201,7 @@ def mock_victron() -> Dict[str, Any]:
 
 # ---------- Real fetchers (best effort, short timeout) ----------
 
-async def _http_get(url: str, timeout: float = 1.5) -> Optional[Dict[str, Any]]:
+async def _http_get(url: str, timeout: float = 1.0) -> Optional[Dict[str, Any]]:
     try:
         async with httpx.AsyncClient(timeout=timeout) as c:
             r = await c.get(url)
@@ -567,29 +567,31 @@ async def collect_live() -> Dict[str, Any]:
             return mocked
         return d
 
-    shelly = await get_dev(
-        fetch_shelly_from_mqtt,
-        lambda: fetch_shelly(cfg["devices"]["shelly"]["ip"]),
-        mock_shelly,
-        cfg["devices"]["shelly"]["enabled"],
-    )
-    ahoy = await get_dev(
-        fetch_ahoy_from_mqtt,
-        lambda: fetch_ahoy(cfg["devices"]["ahoy"]["ip"], cfg["devices"]["ahoy"].get("inverter_id", 0)),
-        mock_ahoy,
-        cfg["devices"]["ahoy"]["enabled"],
-    )
-    trucki = await get_dev(
-        fetch_trucki_from_mqtt,
-        lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]),
-        mock_trucki,
-        cfg["devices"]["trucki"]["enabled"],
-    )
-    victron = await get_dev(
-        lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
-        lambda: fetch_victron(cfg["devices"]["victron"]["ip"]),
-        mock_victron,
-        cfg["devices"]["victron"]["enabled"],
+    shelly, ahoy, trucki, victron = await asyncio.gather(
+        get_dev(
+            fetch_shelly_from_mqtt,
+            lambda: fetch_shelly(cfg["devices"]["shelly"]["ip"]),
+            mock_shelly,
+            cfg["devices"]["shelly"]["enabled"],
+        ),
+        get_dev(
+            fetch_ahoy_from_mqtt,
+            lambda: fetch_ahoy(cfg["devices"]["ahoy"]["ip"], cfg["devices"]["ahoy"].get("inverter_id", 0)),
+            mock_ahoy,
+            cfg["devices"]["ahoy"]["enabled"],
+        ),
+        get_dev(
+            fetch_trucki_from_mqtt,
+            lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]),
+            mock_trucki,
+            cfg["devices"]["trucki"]["enabled"],
+        ),
+        get_dev(
+            lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
+            lambda: fetch_victron(cfg["devices"]["victron"]["ip"]),
+            mock_victron,
+            cfg["devices"]["victron"]["enabled"],
+        ),
     )
 
     pv_power = (ahoy.get("total_power", 0) or 0) + (victron.get("total_power", 0) or 0)

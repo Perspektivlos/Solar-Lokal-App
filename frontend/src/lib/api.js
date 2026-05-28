@@ -3,7 +3,7 @@ import axios from "axios";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
 
-export const api = axios.create({ baseURL: API, timeout: 8000 });
+export const api = axios.create({ baseURL: API, timeout: 15000 });
 
 export const getLive = () => api.get("/live").then((r) => r.data);
 export const getHistory = (range) => api.get(`/history?range=${range}`).then((r) => r.data);
