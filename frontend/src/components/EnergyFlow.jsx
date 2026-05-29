@@ -63,7 +63,7 @@ function FlowLabel({ d, color, watts }) {
     <g>
       <rect x={x - 38} y={y - 12} width="76" height="24" fill="white" stroke={color} strokeWidth="1.5" />
       <text x={x} y={y + 5} textAnchor="middle" fontSize="13" fontFamily="IBM Plex Mono" fill={color} fontWeight="700">
-        {Math.round(Math.abs(watts))} W
+        {`${Math.round(Math.abs(watts))} W`}
       </text>
     </g>
   );
@@ -134,7 +134,7 @@ export default function EnergyFlow({ summary }) {
           <g>
             <rect x={340} y={355} width={120} height={28} fill="white" stroke="#000" strokeWidth="1" />
             <text x={400} y={373} textAnchor="middle" fontSize="11" fontFamily="IBM Plex Mono" fontWeight="600">
-              {Math.round(Math.max(0, house))} W VERBRAUCH
+              {`${Math.round(Math.max(0, house))} W VERBRAUCH`}
             </text>
           </g>
         </svg>

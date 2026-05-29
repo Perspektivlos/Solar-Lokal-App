@@ -881,6 +881,7 @@ async def diagnostics_run():
     # 6. Devices — check MQTT freshness first, else HTTP ping
     fresh_window_s = 90  # data younger than this counts as live
     now_dt = datetime.now(timezone.utc)
+    demo = bool(cfg.get("demo_mode"))
 
     def is_fresh(ts: Optional[str]) -> bool:
         if not ts:
@@ -893,6 +894,9 @@ async def diagnostics_run():
     async def ping_http(label: str, ip: str, paths: List[str], key: str, mqtt_ts: Optional[str], extra: str = ""):
         if not cfg["devices"][key]["enabled"]:
             add(label, None, "deaktiviert in Config")
+            return
+        if demo:
+            add(label, None, f"Demo-Modus aktiv · Mock-Werte für {ip}")
             return
         if is_fresh(mqtt_ts):
             add(label, True, f"MQTT-Daten frisch · zuletzt {mqtt_ts}{extra}")
