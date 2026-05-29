@@ -4,6 +4,41 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContai
 
 const RANGES = ["1h", "6h", "12h", "24h"];
 
+// Chart styling constants — extracted to module scope so they keep stable
+// references across renders (avoids unnecessary Recharts re-renders).
+const TICK_STYLE = { fontSize: 10, fontFamily: "IBM Plex Mono" };
+const Y_LABEL_W = { value: "W", angle: -90, position: "insideLeft", fontSize: 10 };
+const Y_LABEL_PCT = { value: "%", angle: -90, position: "insideLeft", fontSize: 10 };
+const Y_DOMAIN_SOC = [0, 100];
+const TOOLTIP_STYLE = { borderRadius: 0, border: "1px solid #000", fontFamily: "IBM Plex Mono", fontSize: 11 };
+const LEGEND_STYLE = { fontFamily: "IBM Plex Sans", fontSize: 11 };
+
+function ChartBody({ loading, data }) {
+  if (loading) return <div className="font-mono text-sm text-gray-600">Lade Verlauf...</div>;
+  if (data.length === 0) {
+    return (
+      <div className="font-mono text-sm text-gray-600" data-testid="history-empty">
+        Noch keine Snapshots im Zeitraum.
+      </div>
+    );
+  }
+  return (
+    <ResponsiveContainer>
+      <LineChart data={data}>
+        <CartesianGrid strokeDasharray="2 4" stroke="#E5E7EB" />
+        <XAxis dataKey="ts" tick={TICK_STYLE} stroke="#000" />
+        <YAxis tick={TICK_STYLE} stroke="#000" label={Y_LABEL_W} />
+        <Tooltip contentStyle={TOOLTIP_STYLE} />
+        <Legend wrapperStyle={LEGEND_STYLE} />
+        <Line type="monotone" dataKey="PV" stroke="#EAB308" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="Netz" stroke="#EF4444" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="Akku" stroke="#3B82F6" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="Haus" stroke="#000000" strokeWidth={2} dot={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
 export default function History() {
   const [range, setRange] = useState("1h");
   const [data, setData] = useState([]);
@@ -56,27 +91,7 @@ export default function History() {
           Leistung · {range}
         </div>
         <div className="p-4" style={{ height: 360 }}>
-          {loading ? (
-            <div className="font-mono text-sm text-gray-600">Lade Verlauf...</div>
-          ) : data.length === 0 ? (
-            <div className="font-mono text-sm text-gray-600" data-testid="history-empty">
-              Noch keine Snapshots im Zeitraum.
-            </div>
-          ) : (
-            <ResponsiveContainer>
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="2 4" stroke="#E5E7EB" />
-                <XAxis dataKey="ts" tick={{ fontSize: 10, fontFamily: "IBM Plex Mono" }} stroke="#000" />
-                <YAxis tick={{ fontSize: 10, fontFamily: "IBM Plex Mono" }} stroke="#000" label={{ value: "W", angle: -90, position: "insideLeft", fontSize: 10 }} />
-                <Tooltip contentStyle={{ borderRadius: 0, border: "1px solid #000", fontFamily: "IBM Plex Mono", fontSize: 11 }} />
-                <Legend wrapperStyle={{ fontFamily: "IBM Plex Sans", fontSize: 11 }} />
-                <Line type="monotone" dataKey="PV" stroke="#EAB308" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="Netz" stroke="#EF4444" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="Akku" stroke="#3B82F6" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="Haus" stroke="#000000" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+          <ChartBody loading={loading} data={data} />
         </div>
       </div>
 
@@ -89,9 +104,9 @@ export default function History() {
             <ResponsiveContainer>
               <LineChart data={data}>
                 <CartesianGrid strokeDasharray="2 4" stroke="#E5E7EB" />
-                <XAxis dataKey="ts" tick={{ fontSize: 10, fontFamily: "IBM Plex Mono" }} stroke="#000" />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 10, fontFamily: "IBM Plex Mono" }} stroke="#000" label={{ value: "%", angle: -90, position: "insideLeft", fontSize: 10 }} />
-                <Tooltip contentStyle={{ borderRadius: 0, border: "1px solid #000", fontFamily: "IBM Plex Mono", fontSize: 11 }} />
+                <XAxis dataKey="ts" tick={TICK_STYLE} stroke="#000" />
+                <YAxis domain={Y_DOMAIN_SOC} tick={TICK_STYLE} stroke="#000" label={Y_LABEL_PCT} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <Line type="monotone" dataKey="SoC" stroke="#3B82F6" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>

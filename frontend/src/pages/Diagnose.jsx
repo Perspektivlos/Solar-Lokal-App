@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Check, X, Minus, PlayCircle, RefreshCw, ChevronRight } from "lucide-react";
@@ -6,20 +6,38 @@ import { Check, X, Minus, PlayCircle, RefreshCw, ChevronRight } from "lucide-rea
 const runTests = () => api.post("/diagnostics/run", {}).then((r) => r.data);
 const getRaw = () => api.get("/diagnostics/raw").then((r) => r.data);
 
+function getResultIcon(ok) {
+  if (ok === true) return Check;
+  if (ok === false) return X;
+  return Minus;
+}
+
+function getResultClass(ok) {
+  if (ok === true) return "border-l-[#22C55E] bg-green-50/40";
+  if (ok === false) return "border-l-[#EF4444] bg-red-50/40";
+  return "border-l-gray-400 bg-gray-50/40";
+}
+
+function getResultIconClass(ok) {
+  if (ok === true) return "text-[#22C55E]";
+  if (ok === false) return "text-[#EF4444]";
+  return "text-gray-500";
+}
+
+function formatFieldValue(v) {
+  if (v === null || v === undefined) return "–";
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+
 function ResultRow({ name, ok, detail, ms }) {
-  const Icon = ok === true ? Check : ok === false ? X : Minus;
-  const cls = ok === true
-    ? "border-l-[#22C55E] bg-green-50/40"
-    : ok === false
-    ? "border-l-[#EF4444] bg-red-50/40"
-    : "border-l-gray-400 bg-gray-50/40";
-  const iconCls = ok === true ? "text-[#22C55E]" : ok === false ? "text-[#EF4444]" : "text-gray-500";
+  const Icon = getResultIcon(ok);
   return (
     <div
-      className={`flex items-center gap-3 border border-black border-l-[6px] ${cls} px-3 py-2`}
+      className={`flex items-center gap-3 border border-black border-l-[6px] ${getResultClass(ok)} px-3 py-2`}
       data-testid={`diag-${name.replace(/\s+/g, "-").toLowerCase()}`}
     >
-      <Icon size={16} strokeWidth={3} className={iconCls} />
+      <Icon size={16} strokeWidth={3} className={getResultIconClass(ok)} />
       <div className="flex-1 min-w-0">
         <div className="font-medium text-sm">{name}</div>
         <div className="font-mono text-[11px] text-gray-600 truncate">{detail}</div>
@@ -42,13 +60,7 @@ function FieldTable({ obj, testid }) {
         {entries.map(([k, v]) => (
           <tr key={k} className="border-b border-gray-200 last:border-b-0">
             <td className="py-1 pr-3 text-gray-600 w-1/2 truncate">{k}</td>
-            <td className="py-1 text-black break-all">
-              {v === null || v === undefined
-                ? "–"
-                : typeof v === "object"
-                ? JSON.stringify(v)
-                : String(v)}
-            </td>
+            <td className="py-1 text-black break-all">{formatFieldValue(v)}</td>
           </tr>
         ))}
       </tbody>
@@ -78,13 +90,15 @@ export default function Diagnose() {
   const [result, setResult] = useState(null);
   const [raw, setRaw] = useState(null);
 
-  const reloadRaw = () => getRaw().then(setRaw).catch(() => {});
+  const reloadRaw = useCallback(() => {
+    getRaw().then(setRaw).catch(() => {});
+  }, []);
 
   useEffect(() => {
     reloadRaw();
     const id = setInterval(reloadRaw, 5000);
     return () => clearInterval(id);
-  }, []);
+  }, [reloadRaw]);
 
   const run = async () => {
     setRunning(true);

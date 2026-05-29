@@ -83,6 +83,13 @@ export default function EnergyFlow({ summary }) {
   const batteryDischarge = battery < -20;
   const houseActive = house > 5;
 
+  // Helpers extracted to avoid nested ternaries inside JSX
+  const gridLabel = importActive ? "Bezug" : exportActive ? "Einspeisung" : "balanced";
+  const gridColor = grid >= 0 ? COLOR.grid_import : COLOR.grid_export;
+  let batteryMode = "idle";
+  if (batteryCharge) batteryMode = "lädt";
+  else if (batteryDischarge) batteryMode = "entlädt";
+
   return (
     <div className="bg-white border border-black" style={{ borderLeftWidth: 6, borderLeftColor: "#000" }}>
       <div className="border-b border-black px-4 py-2 flex items-center justify-between">
@@ -110,14 +117,14 @@ export default function EnergyFlow({ summary }) {
           <Node x={400} y={230} label="Haus" value={Math.round(house)} unit="W" color="#000" Icon={Home} testid="flow-house"
                 sub={houseActive ? "Verbrauch" : "Standby"} accent="#000" />
           <Node x={140} y={230} label="Netz" value={Math.round(Math.abs(grid))} unit="W"
-                color={grid >= 0 ? COLOR.grid_import : COLOR.grid_export}
+                color={gridColor}
                 Icon={Cable} testid="flow-grid"
-                sub={importActive ? "Bezug" : exportActive ? "Einspeisung" : "balanced"}
-                accent={grid >= 0 ? COLOR.grid_import : COLOR.grid_export} />
+                sub={gridLabel}
+                accent={gridColor} />
           <Node x={660} y={230} label="Akku" value={Math.round(Math.abs(battery))} unit="W"
                 color={COLOR.battery}
                 Icon={BatteryCharging} testid="flow-battery"
-                sub={`${Math.round(soc)}% · ${batteryCharge ? "lädt" : batteryDischarge ? "entlädt" : "idle"}`}
+                sub={`${Math.round(soc)}% · ${batteryMode}`}
                 accent={COLOR.battery} />
 
           {/* Flow lines */}
