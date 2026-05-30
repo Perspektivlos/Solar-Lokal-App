@@ -12,16 +12,18 @@ const links = [
 
 export default function Layout() {
   return (
-    <div className="min-h-screen bg-[#F9FAFB] text-black">
-      <header className="sticky top-0 z-50 bg-white border-b border-black">
-        <div className="max-w-[1600px] mx-auto px-6 flex items-center justify-between h-14">
+    <div className="min-h-screen text-white">
+      <header className="sticky top-0 z-50 glass-strong border-0 border-b border-white/10">
+        <div className="max-w-[1600px] mx-auto px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-3" data-testid="brand">
-            <div className="w-7 h-7 border border-black flex items-center justify-center">
-              <Zap size={16} strokeWidth={2} />
+            <div className="relative w-9 h-9 rounded-md flex items-center justify-center"
+                 style={{ background: "linear-gradient(135deg, rgba(250,204,21,0.25), rgba(6,182,212,0.15))",
+                          border: "1px solid rgba(250,204,21,0.30)" }}>
+              <Zap size={18} strokeWidth={2.5} className="text-yellow-300 neon-yellow" />
             </div>
             <div>
-              <div className="font-semibold tracking-tight text-sm leading-none">SOLAR · LOKAL</div>
-              <div className="font-mono text-[10px] text-gray-600 uppercase tracking-[0.2em] mt-0.5">Control Room</div>
+              <div className="font-semibold tracking-tight text-sm leading-none text-white">SOLAR · LOKAL</div>
+              <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.2em] mt-1">Control Room</div>
             </div>
           </div>
           <nav className="flex items-stretch h-full" data-testid="nav-menu">
@@ -34,26 +36,36 @@ export default function Layout() {
                   end={l.end}
                   data-testid={l.testid}
                   className={({ isActive }) =>
-                    `px-4 h-14 flex items-center gap-2 text-sm border-l border-black uppercase tracking-wider font-medium transition-colors ${
-                      isActive ? "bg-black text-white" : "hover:bg-black hover:text-white"
+                    `px-4 h-16 flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-medium transition-all relative ${
+                      isActive
+                        ? "text-white"
+                        : "text-white/55 hover:text-white"
                     }`
                   }
                 >
-                  <Icon size={14} strokeWidth={2} />
-                  <span className="hidden sm:inline">{l.label}</span>
+                  {({ isActive }) => (
+                    <>
+                      <Icon size={14} strokeWidth={2} />
+                      <span className="hidden sm:inline">{l.label}</span>
+                      {isActive && (
+                        <span className="absolute bottom-0 left-2 right-2 h-[2px]"
+                              style={{ background: "linear-gradient(90deg, transparent, #06B6D4, transparent)" }} />
+                      )}
+                    </>
+                  )}
                 </NavLink>
               );
             })}
           </nav>
         </div>
       </header>
-      <main className="max-w-[1600px] mx-auto px-6 py-6">
+      <main className="max-w-[1600px] mx-auto px-6 py-6 relative z-10">
         <Outlet />
       </main>
-      <footer className="border-t border-black bg-white">
-        <div className="max-w-[1600px] mx-auto px-6 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600 flex justify-between">
+      <footer className="mt-12 border-t border-white/5">
+        <div className="max-w-[1600px] mx-auto px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 flex justify-between flex-wrap gap-2">
           <span>Lokale Steuerung · Mosquitto · InfluxDB · MongoDB</span>
-          <span>v1.0 · {new Date().getFullYear()}</span>
+          <span>v1.1 · {new Date().getFullYear()}</span>
         </div>
       </footer>
     </div>

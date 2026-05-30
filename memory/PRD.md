@@ -44,6 +44,7 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - ✅ Diagnose-Seite: Selbst-Test (Backend/MongoDB/Poller/MQTT/Influx/4 Geräte) + Geräte-Rohdaten-Tabellen
 - ✅ Proxmox LXC Deployment-Scripts: /app/deploy/proxmox/{pve-create-lxc.sh, install.sh, build-app.sh, README.md}
 - ✅ Tests: 22/22 backend tests grün (Iteration 1+2+3)
+- ✅ Iteration 4 Design: Dark Glassmorphism (#0f172a + radial Yellow/Cyan-Glow), Neon-Akzente (PV gelb, Bezug rot, Einspeisung emerald, Akku cyan), Neon-Drop-Shadows auf Recharts-Linien, neumorphische Buttons, IntroCard mit zusammenklappbarer Doku pro Tab (Zweck/Parameter/Rückgabe/Beispiele/Fehler/Einschränkungen)
 
 ## Mocked vs. Live
 - **MOCKED** im Demo-Modus: Shelly, Ahoy, Trucki, Victron-Werte aus Generatoren (Sonnen-Kurve, 3-Phasen-Last, SoC).
