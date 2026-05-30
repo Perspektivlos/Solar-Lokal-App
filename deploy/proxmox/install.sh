@@ -53,7 +53,13 @@ if ! command -v node >/dev/null || [[ "$(node -v | cut -d. -f1)" != "v20" ]]; th
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y -qq nodejs
 fi
-npm install -g yarn --silent
+# Node 20 bringt corepack — aktiviert yarn classic ohne globales npm install
+if command -v corepack >/dev/null; then
+  corepack enable
+  corepack prepare yarn@1.22.22 --activate || npm install -g yarn --silent
+else
+  npm install -g yarn --silent
+fi
 ok "Node $(node -v), Yarn $(yarn -v)"
 
 # ---- App-User ---------------------------------------------------------------

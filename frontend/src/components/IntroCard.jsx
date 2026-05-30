@@ -41,8 +41,8 @@ export default function IntroCard({ title, subtitle, sections = [], defaultOpen 
       </button>
       {open && (
         <div className="border-t border-white/10 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          {sections.map((s, i) => (
-            <div key={i} data-testid={`intro-section-${i}`}>
+          {sections.map((s) => (
+            <div key={s.label} data-testid={`intro-section-${s.label}`}>
               <div
                 className="font-mono text-[10px] uppercase tracking-[0.22em] mb-1.5 pb-1 border-b"
                 style={{ color: accent, borderColor: `${accent}33` }}
