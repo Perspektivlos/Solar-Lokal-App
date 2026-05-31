@@ -137,7 +137,7 @@ def mock_shelly() -> Dict[str, Any]:
         })
     return {
         "online": True,
-        "total_power": round(sum(p["power"] for p in phases), 1),
+        "total_power": round(sum(ph["power"] for ph in phases), 1),
         "phases": phases,
     }
 
@@ -327,72 +327,82 @@ def _parse_mqtt_payload(payload: bytes) -> Any:
         return text
 
 
+def _handle_victron_topic(topic: str, payload: bytes, now_iso: str) -> None:
+    parts = topic.split("/")
+    if len(parts) < 5:
+        return
+    service = parts[2]
+    inst_raw = parts[3]
+    path = "/".join(parts[4:])
+    value = _parse_mqtt_payload(payload)
+    _mqtt_data["victron"]["_ts"] = now_iso
+    if service == "solarcharger":
+        try:
+            inst = int(inst_raw)
+        except ValueError:
+            return
+        st = _mqtt_data["victron"]["instances"].setdefault(inst, {})
+        st[path] = value
+        st["_ts"] = now_iso
+    elif service == "system" and inst_raw == "0":
+        _mqtt_data["victron"]["system"][path] = value
+    elif service == "grid":
+        _mqtt_data["victron"]["grid"][path] = value
+
+
+def _handle_shelly_topic(topic: str, payload: bytes, now_iso: str) -> None:
+    sub = topic[len("venus/grid/shellypro/"):]
+    if sub == "status/em:0":
+        try:
+            obj = json.loads(payload.decode("utf-8", errors="ignore"))
+        except Exception as e:
+            logger.debug(f"shelly mqtt parse: {e}")
+            return
+        phases = []
+        for i, ch in enumerate(["a", "b", "c"]):
+            phases.append({
+                "phase": f"L{i+1}",
+                "power": float(obj.get(f"{ch}_act_power", 0) or 0),
+                "voltage": float(obj.get(f"{ch}_voltage", 0) or 0),
+                "current": float(obj.get(f"{ch}_current", 0) or 0),
+                "pf": float(obj.get(f"{ch}_pf", 0) or 0),
+            })
+        _mqtt_data["shelly"]["phases"] = phases
+        _mqtt_data["shelly"]["total_power"] = float(
+            obj.get("total_act_power", sum(p["power"] for p in phases)) or 0
+        )
+        _mqtt_data["shelly"]["_ts"] = now_iso
+    elif sub == "online":
+        _mqtt_data["shelly"]["online"] = (
+            payload.decode("utf-8", errors="ignore").strip().lower() == "true"
+        )
+
+
+def _handle_ahoy_topic(topic: str, payload: bytes, now_iso: str) -> None:
+    sub = topic[len("venus/pv/ahoydtu/"):]
+    _mqtt_data["ahoy"]["raw"][sub] = _parse_mqtt_payload(payload)
+    _mqtt_data["ahoy"]["_ts"] = now_iso
+
+
+def _handle_trucki_topic(topic: str, payload: bytes, now_iso: str) -> None:
+    sub = topic[len("Trucki/"):]
+    _mqtt_data["trucki"]["raw"][sub] = _parse_mqtt_payload(payload)
+    _mqtt_data["trucki"]["_ts"] = now_iso
+
+
 def _dispatch_mqtt_message(topic: str, payload: bytes) -> None:
-    """Route an MQTT message to the right device state."""
+    """Route an MQTT message to the right device-specific handler."""
     now_iso = datetime.now(timezone.utc).isoformat()
     _mqtt_data["last_msg"] = now_iso
 
-    # ---- Victron VenusOS (N/<vrm>/...) ----
     if topic.startswith("N/"):
-        parts = topic.split("/")
-        if len(parts) < 5:
-            return
-        service = parts[2]
-        inst_raw = parts[3]
-        path = "/".join(parts[4:])
-        value = _parse_mqtt_payload(payload)
-        _mqtt_data["victron"]["_ts"] = now_iso
-        if service == "solarcharger":
-            try:
-                inst = int(inst_raw)
-            except ValueError:
-                return
-            st = _mqtt_data["victron"]["instances"].setdefault(inst, {})
-            st[path] = value
-            st["_ts"] = now_iso
-        elif service == "system" and inst_raw == "0":
-            _mqtt_data["victron"]["system"][path] = value
-        elif service == "grid":
-            _mqtt_data["victron"]["grid"][path] = value
-        return
-
-    # ---- Shelly via VenusOS bridge ----
-    if topic.startswith("venus/grid/shellypro/"):
-        sub = topic[len("venus/grid/shellypro/"):]
-        if sub == "status/em:0":
-            try:
-                obj = json.loads(payload.decode("utf-8", errors="ignore"))
-                phases = []
-                for i, ch in enumerate(["a", "b", "c"]):
-                    phases.append({
-                        "phase": f"L{i+1}",
-                        "power": float(obj.get(f"{ch}_act_power", 0) or 0),
-                        "voltage": float(obj.get(f"{ch}_voltage", 0) or 0),
-                        "current": float(obj.get(f"{ch}_current", 0) or 0),
-                        "pf": float(obj.get(f"{ch}_pf", 0) or 0),
-                    })
-                _mqtt_data["shelly"]["phases"] = phases
-                _mqtt_data["shelly"]["total_power"] = float(obj.get("total_act_power", sum(p["power"] for p in phases)) or 0)
-                _mqtt_data["shelly"]["_ts"] = now_iso
-            except Exception as e:
-                logger.debug(f"shelly mqtt parse: {e}")
-        elif sub == "online":
-            _mqtt_data["shelly"]["online"] = payload.decode("utf-8", errors="ignore").strip().lower() == "true"
-        return
-
-    # ---- Ahoy DTU ----
-    if topic.startswith("venus/pv/ahoydtu/"):
-        sub = topic[len("venus/pv/ahoydtu/"):]
-        _mqtt_data["ahoy"]["raw"][sub] = _parse_mqtt_payload(payload)
-        _mqtt_data["ahoy"]["_ts"] = now_iso
-        return
-
-    # ---- Trucki ----
-    if topic.startswith("Trucki/"):
-        sub = topic[len("Trucki/"):]
-        _mqtt_data["trucki"]["raw"][sub] = _parse_mqtt_payload(payload)
-        _mqtt_data["trucki"]["_ts"] = now_iso
-        return
+        _handle_victron_topic(topic, payload, now_iso)
+    elif topic.startswith("venus/grid/shellypro/"):
+        _handle_shelly_topic(topic, payload, now_iso)
+    elif topic.startswith("venus/pv/ahoydtu/"):
+        _handle_ahoy_topic(topic, payload, now_iso)
+    elif topic.startswith("Trucki/"):
+        _handle_trucki_topic(topic, payload, now_iso)
 
 
 def fetch_shelly_from_mqtt() -> Optional[Dict[str, Any]]:
@@ -881,6 +891,7 @@ async def diagnostics_run():
     # 6. Devices — check MQTT freshness first, else HTTP ping
     fresh_window_s = 90  # data younger than this counts as live
     now_dt = datetime.now(timezone.utc)
+    demo = bool(cfg.get("demo_mode"))
 
     def is_fresh(ts: Optional[str]) -> bool:
         if not ts:
@@ -893,6 +904,9 @@ async def diagnostics_run():
     async def ping_http(label: str, ip: str, paths: List[str], key: str, mqtt_ts: Optional[str], extra: str = ""):
         if not cfg["devices"][key]["enabled"]:
             add(label, None, "deaktiviert in Config")
+            return
+        if demo:
+            add(label, None, f"Demo-Modus aktiv · Mock-Werte für {ip}")
             return
         if is_fresh(mqtt_ts):
             add(label, True, f"MQTT-Daten frisch · zuletzt {mqtt_ts}{extra}")

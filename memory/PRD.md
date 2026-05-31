@@ -30,15 +30,21 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Demo-Modus als Default für Cloud-Demo (Mock-Generatoren)
 
 ## Implemented (2026-02)
-- ✅ Backend Endpoints: /api/live, /api/history, /api/today, /api/config (GET/PUT), /api/control/hoymiles, /api/control/trucki, /api/integrations/status
+- ✅ Backend Endpoints: /api/live, /api/history, /api/today, /api/config (GET/PUT), /api/control/hoymiles, /api/control/trucki, /api/integrations/status, /api/diagnostics/run, /api/diagnostics/raw
 - ✅ Mock-Generatoren mit realistischer Sonnen-Kurve, 3-Phasen-Last, Akku-SoC
 - ✅ Echte Fetcher (Shelly /rpc/EM.GetStatus, Ahoy /api/live + /api/inverter, Trucki /status, Victron /api/v1/system) mit Fallback
 - ✅ Background-Poller 15s + MongoDB Snapshots + optional InfluxDB-Write
-- ✅ MQTT Subscriber (paho) mit Topic-Prefix
-- ✅ Frontend: Dashboard, Verlauf, Steuerung, Geräte, Integrationen
-- ✅ Energiefluss-SVG (animierte stroke-dasharray)
-- ✅ Tageswerte-Karten (kWh + Autarkie/Eigenverbrauch %, geclamped 0–100)
-- ✅ Tests: 18/18 backend tests grün
+- ✅ MQTT Subscriber (paho) mit Topic-Prefix + Victron-Bridge (N/<vrm>/solarcharger/<inst>/#)
+- ✅ Zentraler _mqtt_data Store für ALLE 4 Geräte aus MQTT (Ahoy/Shelly/Trucki/Victron)
+- ✅ Trucki SoC-Schätzung aus VBAT (LiFePO4 16S linear)
+- ✅ Frontend: Dashboard, Verlauf, Steuerung, Geräte, Diagnose, Integrationen
+- ✅ Energiefluss-SVG (animierte stroke-dasharray + Watt-Labels + accent bars)
+- ✅ Tageswerte-Karten mit Mini-Sparklines (kWh + Autarkie/Eigenverbrauch %, 0–100 clamped)
+- ✅ Live-Cards mit Trend-Deltas (▲/▼), Sparklines, Datenquellen-Badge (MQTT/LIVE/DEMO/FALLBACK)
+- ✅ Diagnose-Seite: Selbst-Test (Backend/MongoDB/Poller/MQTT/Influx/4 Geräte) + Geräte-Rohdaten-Tabellen
+- ✅ Proxmox LXC Deployment-Scripts: /app/deploy/proxmox/{pve-create-lxc.sh, install.sh, build-app.sh, README.md}
+- ✅ Tests: 22/22 backend tests grün (Iteration 1+2+3)
+- ✅ Iteration 4 Design: Dark Glassmorphism (#0f172a + radial Yellow/Cyan-Glow), Neon-Akzente (PV gelb, Bezug rot, Einspeisung emerald, Akku cyan), Neon-Drop-Shadows auf Recharts-Linien, neumorphische Buttons, IntroCard mit zusammenklappbarer Doku pro Tab (Zweck/Parameter/Rückgabe/Beispiele/Fehler/Einschränkungen)
 
 ## Mocked vs. Live
 - **MOCKED** im Demo-Modus: Shelly, Ahoy, Trucki, Victron-Werte aus Generatoren (Sonnen-Kurve, 3-Phasen-Last, SoC).

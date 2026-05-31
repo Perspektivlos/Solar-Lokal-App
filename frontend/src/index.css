@@ -4,13 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+    min-height: 100%;
+}
+
 body {
     margin: 0;
     font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: #F9FAFB;
-    color: #000;
+    color: #f1f5f9;
+    background-color: #0f172a;
+    background-image:
+        radial-gradient(900px circle at 15% -10%, rgba(250, 204, 21, 0.08), transparent 55%),
+        radial-gradient(900px circle at 85% 110%, rgba(6, 182, 212, 0.10), transparent 55%),
+        radial-gradient(700px circle at 50% 50%, rgba(99, 102, 241, 0.05), transparent 70%);
+    background-attachment: fixed;
+    min-height: 100vh;
 }
 
 .font-mono, code {
@@ -19,26 +29,26 @@ body {
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 0%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 0%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 0%;
-        --primary: 0 0% 0%;
-        --primary-foreground: 0 0% 100%;
-        --secondary: 0 0% 98%;
-        --secondary-foreground: 0 0% 0%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 30%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 0%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 100%;
-        --border: 0 0% 0%;
-        --input: 0 0% 0%;
-        --ring: 0 0% 0%;
-        --radius: 0rem;
+        --background: 222 47% 11%;          /* #0f172a */
+        --foreground: 210 40% 96%;
+        --card: 222 47% 14%;
+        --card-foreground: 210 40% 96%;
+        --popover: 222 47% 14%;
+        --popover-foreground: 210 40% 96%;
+        --primary: 210 40% 96%;
+        --primary-foreground: 222 47% 11%;
+        --secondary: 217 33% 18%;
+        --secondary-foreground: 210 40% 96%;
+        --muted: 217 33% 18%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 217 33% 18%;
+        --accent-foreground: 210 40% 96%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 210 40% 96%;
+        --border: 217 33% 22%;
+        --input: 217 33% 22%;
+        --ring: 215 28% 65%;
+        --radius: 0.375rem;
     }
 }
 
@@ -46,35 +56,94 @@ body {
     * {
         @apply border-border;
     }
-    body {
-        @apply bg-background text-foreground;
+}
+
+/* ---------- Glass utility classes ---------- */
+@layer components {
+    .glass {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px) saturate(160%);
+        -webkit-backdrop-filter: blur(12px) saturate(160%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px -10px rgba(0, 0, 0, 0.4);
+        border-radius: 6px;
     }
+    .glass-strong {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+        border-radius: 6px;
+    }
+    .glass-inset {
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+    }
+    .glass-input {
+        background: rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        color: #f1f5f9 !important;
+        border-radius: 4px !important;
+    }
+    .glass-input:focus {
+        border-color: rgba(6, 182, 212, 0.50) !important;
+        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.15) !important;
+        outline: none !important;
+    }
+    /* Neumorphic-ish primary button */
+    .btn-neo {
+        background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02));
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.15),
+            0 2px 8px -2px rgba(0, 0, 0, 0.4);
+        color: #f1f5f9;
+        border-radius: 4px;
+        transition: all 0.15s ease;
+    }
+    .btn-neo:hover {
+        background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+        border-color: rgba(255, 255, 255, 0.20);
+    }
+    .btn-neo:active, .btn-neo[aria-pressed="true"] {
+        background: rgba(0, 0, 0, 0.30);
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+    }
+    /* Neon drop-shadows */
+    .neon-yellow { filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.5)); }
+    .neon-green  { filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5)); }
+    .neon-red    { filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.55)); }
+    .neon-cyan   { filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.55)); }
+    .neon-text-yellow { text-shadow: 0 0 8px rgba(250, 204, 21, 0.45); }
+    .neon-text-green  { text-shadow: 0 0 8px rgba(16, 185, 129, 0.45); }
+    .neon-text-red    { text-shadow: 0 0 8px rgba(239, 68, 68, 0.45); }
+    .neon-text-cyan   { text-shadow: 0 0 8px rgba(6, 182, 212, 0.45); }
 }
 
-/* Force flat industrial look across shadcn */
-.rounded, .rounded-md, .rounded-lg, .rounded-sm, .rounded-xl, .rounded-2xl {
-    border-radius: 0 !important;
-}
-
-/* Energy flow animation */
+/* Energy flow line animation */
 @keyframes dash {
     to { stroke-dashoffset: -40; }
 }
 .flow-line {
-    stroke-dasharray: 8 4;
-    animation: dash 1.2s linear infinite;
+    stroke-dasharray: 10 6;
+    animation: dash 1.4s linear infinite;
 }
 .flow-line.reverse {
-    animation: dash 1.2s linear infinite reverse;
+    animation: dash 1.4s linear infinite reverse;
 }
 
-/* Status dot pulse */
+/* Pulse dot */
 @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+    50%      { opacity: 0.55; box-shadow: 0 0 0 4px transparent; }
 }
-.dot-pulse { animation: pulse-dot 1.6s ease-in-out infinite; }
+.dot-pulse { animation: pulse-dot 1.8s ease-in-out infinite; }
 
-@layer base {
-    [data-debug-wrapper="true"] { display: contents !important; }
-}
+/* Subtle scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
