@@ -29,18 +29,21 @@ apt-get install -y -qq \
   python3 python3-venv python3-pip \
   software-properties-common
 
-# ---- MongoDB 7 --------------------------------------------------------------
-log "Installiere MongoDB 7 …"
+# ---- MongoDB --------------------------------------------------------------
+# MongoDB 7.0 hat (Stand 2026) noch kein offizielles Repo für Ubuntu 24.04 (Noble).
+# Wir nehmen die Major-Version passend zur Ubuntu-Version: 8.0 für noble, 7.0 sonst.
+log "Installiere MongoDB …"
 if ! command -v mongod >/dev/null; then
-  curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
   UBU_CODENAME=$(lsb_release -cs)
-  # MongoDB unterstützt offiziell jammy/noble — bei neueren Ubuntu auf noble fallback
   case "$UBU_CODENAME" in
-    noble|jammy|focal) MONGO_CODENAME="$UBU_CODENAME" ;;
-    *)                 MONGO_CODENAME="jammy" ;;
+    noble)         MONGO_VER="8.0"; MONGO_CODENAME="noble" ;;
+    jammy|focal)   MONGO_VER="7.0"; MONGO_CODENAME="$UBU_CODENAME" ;;
+    *)             MONGO_VER="7.0"; MONGO_CODENAME="jammy" ;;
   esac
-  echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu ${MONGO_CODENAME}/mongodb-org/7.0 multiverse" \
-    > /etc/apt/sources.list.d/mongodb-org-7.0.list
+  curl -fsSL "https://www.mongodb.org/static/pgp/server-${MONGO_VER}.asc" | \
+    gpg -o "/usr/share/keyrings/mongodb-server-${MONGO_VER}.gpg" --dearmor
+  echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-${MONGO_VER}.gpg ] https://repo.mongodb.org/apt/ubuntu ${MONGO_CODENAME}/mongodb-org/${MONGO_VER} multiverse" \
+    > "/etc/apt/sources.list.d/mongodb-org-${MONGO_VER}.list"
   apt-get update -qq
   apt-get install -y -qq mongodb-org
 fi
