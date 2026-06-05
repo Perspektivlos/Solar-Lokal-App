@@ -2,7 +2,7 @@ import { useState } from "react";
 import { controlHoymiles, controlTrucki } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import { Slider } from "../components/ui/slider";
-import { Power, Play, Square, RotateCw, Send, Sliders as SlidersIcon } from "lucide-react";
+import { Power, RotateCw, Send } from "lucide-react";
 
 const INTRO_SECTIONS = [
   {
@@ -11,15 +11,15 @@ const INTRO_SECTIONS = [
   },
   {
     label: "Hoymiles · Parameter",
-    body: <span><b>Limit (%)</b>: 0–100, nicht-persistent, mit Live-Slider · <b>Power ON/OFF</b>: schaltet WR an/aus · <b>Start/Stop</b>: synonym · <b>Restart</b>: WR-Neustart (Verbindungsabbruch ~30 s). Endpoint: <code className="text-cyan-300">POST /api/control/hoymiles</code> {"{action, value}"}.</span>,
+    body: <span><b>Limit (%)</b>: 0–100, nicht-persistent, mit Live-Slider · <b>Power ON/OFF</b>: schaltet WR an/aus · <b>Restart</b>: WR-Neustart (Verbindungsabbruch ~30 s). Endpoint: <code className="text-cyan-300">POST /api/control/hoymiles</code> {"{action, value}"}.</span>,
   },
   {
-    label: "Trucki · Steuerung",
+    label: "Trucki · AC-Steuerung",
     body: <span><b>AC-Setpoint (W)</b>: Ziel-Einspeise-Leistung (0–MAX). Sendet zu MQTT-Topic <code className="text-cyan-300">Trucki/ACSETPOINTOVR</code>. <b>ZEPC ON/OFF</b> → <code className="text-cyan-300">Trucki/ZEPCOVR</code>. <b>Restart</b> → <code className="text-cyan-300">Trucki/REBOOTOVR</code>.</span>,
   },
   {
     label: "Trucki · Settings",
-    body: <span><b>TARGET</b>: Soll-Bezugswert für ZEPC (W) → <code className="text-cyan-300">Trucki/TARGETOVR</code> · <b>MIN/MAX</b>: untere und obere Leistungsschranke → <code className="text-cyan-300">Trucki/MINPOWEROVR</code> / <code className="text-cyan-300">MAXPOWEROVR</code>. Diese Settings überschreiben die im Trucki-Webinterface gesetzten Werte.</span>,
+    body: <span><b>TARGET</b>: Soll-Netzbezug für ZEPC (W) → <code className="text-cyan-300">Trucki/TARGETOVR</code> · <b>MIN/MAX</b>: untere und obere Leistungsschranke → <code className="text-cyan-300">Trucki/MINPOWEROVR</code> / <code className="text-cyan-300">MAXPOWEROVR</code>. Überschreiben dauerhaft die im Trucki-Webinterface gesetzten Werte.</span>,
   },
   {
     label: "Rückgabewerte",
@@ -68,10 +68,6 @@ function PrimaryButton({ children, accent = "#06B6D4", ...props }) {
   );
 }
 
-/**
- * Slider with live numeric value + send button.
- * Two-stage UX: user moves slider → value shown in real-time → only on "Senden" wird gepublished.
- */
 function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, step = 1, unit = "%", accent = "#06B6D4", busy, testid }) {
   return (
     <div className="space-y-2">
@@ -82,23 +78,23 @@ function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, ste
           <span className="text-white/45 text-xs ml-1">{unit}</span>
         </span>
       </div>
-      <Slider
-        value={[value]}
-        onValueChange={(v) => onChange(v[0])}
-        min={min}
-        max={max}
-        step={step}
-        className="my-3"
-        data-testid={`${testid}-slider`}
-      />
+      <Slider value={[value]} onValueChange={(v) => onChange(v[0])} min={min} max={max} step={step} className="my-3" data-testid={`${testid}-slider`} />
       <div className="flex items-center justify-between">
-        <div className="font-mono text-[10px] text-white/40">
-          {min}{unit} ─ {max}{unit}
-        </div>
+        <div className="font-mono text-[10px] text-white/40">{min}{unit} ─ {max}{unit}</div>
         <PrimaryButton onClick={onSend} disabled={busy} accent={accent} data-testid={`${testid}-send`}>
           <Send size={12} className="mr-1.5" /> Senden
         </PrimaryButton>
       </div>
+    </div>
+  );
+}
+
+function Divider({ label }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <div className="flex-1 h-px bg-white/10" />
+      <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">{label}</span>
+      <div className="flex-1 h-px bg-white/10" />
     </div>
   );
 }
@@ -111,7 +107,6 @@ export default function Control() {
   const [truMax, setTruMax] = useState(800);
   const [hoyResult, setHoyResult] = useState(null);
   const [truResult, setTruResult] = useState(null);
-  const [truSettingsResult, setTruSettingsResult] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const runHoy = async (action, value) => {
@@ -120,10 +115,10 @@ export default function Control() {
     catch (e) { setHoyResult({ ok: false, error: e?.response?.data?.detail || e.message }); }
     finally { setBusy(false); }
   };
-  const runTru = async (action, value, setter = setTruResult) => {
-    setBusy(true); setter({ pending: true, action });
-    try { setter(await controlTrucki(action, value)); }
-    catch (e) { setter({ ok: false, error: e?.response?.data?.detail || e.message }); }
+  const runTru = async (action, value) => {
+    setBusy(true); setTruResult({ pending: true, action });
+    try { setTruResult(await controlTrucki(action, value)); }
+    catch (e) { setTruResult({ ok: false, error: e?.response?.data?.detail || e.message }); }
     finally { setBusy(false); }
   };
 
@@ -137,7 +132,7 @@ export default function Control() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Hoymiles */}
+        {/* Hoymiles — kompakter */}
         <Panel title="Hoymiles HM1500 · Ahoy DTU" accent="#FACC15" testid="control-hoymiles">
           <SliderControl
             label="Power-Limit"
@@ -147,28 +142,24 @@ export default function Control() {
             min={0} max={100} step={1} unit="%" accent="#FACC15"
             busy={busy} testid="hoy-limit"
           />
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+          <Divider label="Aktionen" />
+          <div className="grid grid-cols-3 gap-2">
             <NeoButton onClick={() => runHoy("power_on")} disabled={busy} data-testid="btn-hoy-on">
-              <Power size={14} className="mr-1.5 text-emerald-300" /> Power ON
+              <Power size={14} className="mr-1.5 text-emerald-300" /> ON
             </NeoButton>
             <NeoButton onClick={() => runHoy("power_off")} disabled={busy} data-testid="btn-hoy-off">
-              <Power size={14} className="mr-1.5 text-red-300" /> Power OFF
+              <Power size={14} className="mr-1.5 text-red-300" /> OFF
             </NeoButton>
-            <NeoButton onClick={() => runHoy("start")} disabled={busy} data-testid="btn-hoy-start">
-              <Play size={14} className="mr-1.5" /> Start
-            </NeoButton>
-            <NeoButton onClick={() => runHoy("stop")} disabled={busy} data-testid="btn-hoy-stop">
-              <Square size={14} className="mr-1.5" /> Stop
-            </NeoButton>
-            <NeoButton onClick={() => runHoy("restart")} disabled={busy} data-testid="btn-hoy-restart" className="col-span-2">
+            <NeoButton onClick={() => runHoy("restart")} disabled={busy} data-testid="btn-hoy-restart">
               <RotateCw size={14} className="mr-1.5" /> Restart
             </NeoButton>
           </div>
           <Result res={hoyResult} />
         </Panel>
 
-        {/* Trucki Steuerung */}
-        <Panel title="Trucki2Shelly · Steuerung" accent="#06B6D4" testid="control-trucki">
+        {/* Trucki — UNIFIED: Steuerung + Settings */}
+        <Panel title="Trucki2Shelly · Steuerung & Settings" accent="#06B6D4" testid="control-trucki">
+          {/* Live AC-Setpoint */}
           <SliderControl
             label="AC-Setpoint (Einspeise-Leistung)"
             value={truLimit}
@@ -177,33 +168,25 @@ export default function Control() {
             min={0} max={2400} step={10} unit=" W" accent="#06B6D4"
             busy={busy} testid="tru-limit"
           />
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+          <Divider label="ZEPC & Restart" />
+          <div className="grid grid-cols-3 gap-2">
             <NeoButton onClick={() => runTru("zepc_on")} disabled={busy} data-testid="btn-tru-zepc-on">
               <Power size={14} className="mr-1.5 text-emerald-300" /> ZEPC ON
             </NeoButton>
             <NeoButton onClick={() => runTru("zepc_off")} disabled={busy} data-testid="btn-tru-zepc-off">
               <Power size={14} className="mr-1.5 text-red-300" /> ZEPC OFF
             </NeoButton>
-            <NeoButton onClick={() => runTru("restart")} disabled={busy} data-testid="btn-tru-restart" className="col-span-2">
+            <NeoButton onClick={() => runTru("restart")} disabled={busy} data-testid="btn-tru-restart">
               <RotateCw size={14} className="mr-1.5" /> Restart
             </NeoButton>
           </div>
-          <Result res={truResult} />
-        </Panel>
-      </div>
 
-      {/* Trucki Settings Editor */}
-      <Panel title="Trucki · Settings-Editor (MQTT-Overrides)" accent="#A78BFA" testid="control-trucki-settings">
-        <div className="font-mono text-[11px] text-white/55 -mt-2 flex items-center gap-1.5">
-          <SlidersIcon size={12} className="text-purple-300" />
-          Diese Werte überschreiben dauerhaft die im Trucki-Webinterface konfigurierten Settings.
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Divider label="Settings · MQTT-Overrides" />
           <SliderControl
             label="TARGET (Netzbezug-Soll)"
             value={truTarget}
             onChange={setTruTarget}
-            onSend={() => runTru("target", truTarget, setTruSettingsResult)}
+            onSend={() => runTru("target", truTarget)}
             min={-200} max={500} step={5} unit=" W" accent="#A78BFA"
             busy={busy} testid="tru-target"
           />
@@ -211,7 +194,7 @@ export default function Control() {
             label="MIN-Power"
             value={truMin}
             onChange={setTruMin}
-            onSend={() => runTru("min", truMin, setTruSettingsResult)}
+            onSend={() => runTru("min", truMin)}
             min={0} max={500} step={10} unit=" W" accent="#A78BFA"
             busy={busy} testid="tru-min"
           />
@@ -219,13 +202,13 @@ export default function Control() {
             label="MAX-Power"
             value={truMax}
             onChange={setTruMax}
-            onSend={() => runTru("max", truMax, setTruSettingsResult)}
+            onSend={() => runTru("max", truMax)}
             min={0} max={2400} step={10} unit=" W" accent="#A78BFA"
             busy={busy} testid="tru-max"
           />
-        </div>
-        <Result res={truSettingsResult} />
-      </Panel>
+          <Result res={truResult} />
+        </Panel>
+      </div>
     </div>
   );
 }
