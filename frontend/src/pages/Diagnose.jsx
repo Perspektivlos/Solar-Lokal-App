@@ -207,6 +207,14 @@ export default function Diagnose() {
 
         <DeviceBlock title="Trucki2Shelly Gateway" accent="#06B6D4" ts={raw?.trucki?._ts}>
           <FieldTable obj={raw?.trucki?.raw} testid="raw-trucki" />
+          {raw?.trucki?.settings && Object.keys(raw.trucki.settings).length > 0 && (
+            <>
+              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 mt-3 mb-1">
+                Settings / Overrides (MQTT-Write)
+              </div>
+              <FieldTable obj={raw.trucki.settings} testid="raw-trucki-settings" />
+            </>
+          )}
         </DeviceBlock>
 
         <DeviceBlock title="Victron VenusOS · System" accent="#34D399" ts={raw?.victron?._ts}>

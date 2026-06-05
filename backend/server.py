@@ -479,27 +479,31 @@ def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
     raw = _mqtt_data["trucki"]["raw"]
     if not raw:
         return None
-    vbat = float(raw.get("VBAT", 0) or 0)
-    meter = float(raw.get("METER", 0) or 0)
-    state_on = str(raw.get("STATE", "")).upper() == "ON"
-    zepc_raw = str(raw.get("ZEPC", "0"))
-    zepc_on = zepc_raw in ("1", "ON", "On", "TRUE", "True", "true")
+    # Only consider live values, filter overrides (settings)
+    live = {k: v for k, v in raw.items() if "OVR" not in k}
+    vbat = float(live.get("VBAT", 0) or 0)
+    meter = float(live.get("METER", 0) or 0)
+    state_on = str(live.get("STATE", "")).upper() == "ON"
+    # ZEPC kann sein: "1", "(ENABLED) 1", "(DISABLED) 0", "ON", "0", "1"
+    zepc_raw = str(live.get("ZEPC", "0")).upper()
+    zepc_on = ("ENABLED" in zepc_raw) or zepc_raw.strip() in ("1", "ON", "TRUE")
+    # Temperatur: TEMPERATURE (Standard-Topic) oder TEMP (neuere Firmware)
+    temp = float(live.get("TEMPERATURE", live.get("TEMP", 0)) or 0)
     return {
         "online": True,
         "soc": round(_trucki_soc_from_voltage(vbat), 1),
         "battery_voltage": round(vbat, 2),
-        # METER is the injection power (W). >0 means discharging into grid.
-        # For consistency with our flow model we treat charging as positive.
-        # Trucki injects from battery → battery is discharging → negative.
         "battery_power": -round(meter, 1) if state_on else 0.0,
         "ac_output": state_on,
         "zepc": zepc_on,
-        "target_w": float(raw.get("TARGET", 0) or 0),
-        "min_power_w": float(raw.get("MINPOWER", 0) or 0),
-        "max_power_w": float(raw.get("MAXPOWER", 0) or 0),
-        "day_energy_kwh": float(raw.get("DAYENERGY", 0) or 0),
-        "total_energy_kwh": float(raw.get("TOTALENERGY", 0) or 0),
-        "temperature": float(raw.get("TEMPERATURE", 0) or 0),
+        "target_w": float(live.get("TARGET", 0) or 0),
+        "min_power_w": float(live.get("MINPOWER", 0) or 0),
+        "max_power_w": float(live.get("MAXPOWER", live.get("POWERLIMIT", 0)) or 0),
+        "ac_setpoint_w": float(live.get("ACSETPOINT", 0) or 0),
+        "ac_display_w": float(live.get("ACDISPLAY", 0) or 0),
+        "day_energy_kwh": float(live.get("DAYENERGY", 0) or 0),
+        "total_energy_kwh": float(live.get("TOTALENERGY", 0) or 0),
+        "temperature": temp,
         "_via_mqtt": True,
     }
 
@@ -606,10 +610,11 @@ async def collect_live() -> Dict[str, Any]:
 
     pv_power = (ahoy.get("total_power", 0) or 0) + (victron.get("total_power", 0) or 0)
     grid_power = shelly.get("total_power", 0) or 0  # >0 import, <0 export
-    battery_power = trucki.get("battery_power", 0) or 0  # >0 charging
-    house_power = pv_power - grid_power - battery_power
-    if grid_power < 0:
-        house_power = pv_power + grid_power - battery_power
+    battery_power = trucki.get("battery_power", 0) or 0  # >0 charging, <0 discharging
+    # Energy balance: PV + Grid_in + Battery_discharge = House
+    # With signed conventions: house = pv + grid - battery_power
+    house_power = pv_power + grid_power - battery_power
+    house_power = max(0.0, house_power)
 
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -784,25 +789,45 @@ async def control_trucki(cmd: TruckiControl):
     cfg = await get_config()
     if cfg.get("demo_mode"):
         return {"ok": True, "demo": True, "response": {"action": cmd.action, "value": cmd.value, "result": "Simuliert"}}
+
+    # Neue Trucki-Firmware: Steuerung via MQTT-OVR-Topics statt HTTP
+    topic_map = {
+        "limit":    ("Trucki/ACSETPOINTOVR", str(int(cmd.value or 0))),
+        "zepc_on":  ("Trucki/ZEPCOVR",       "1"),
+        "zepc_off": ("Trucki/ZEPCOVR",       "0"),
+        "restart":  ("Trucki/REBOOTOVR",     "1"),
+        "max":      ("Trucki/MAXPOWEROVR",   str(int(cmd.value or 0))),
+        "min":      ("Trucki/MINPOWEROVR",   str(int(cmd.value or 0))),
+        "target":   ("Trucki/TARGETOVR",     str(int(cmd.value or 0))),
+    }
+    if cmd.action == "limit" and cmd.value is None:
+        raise HTTPException(400, "value (W) erforderlich für limit")
+    if cmd.action not in topic_map:
+        raise HTTPException(400, f"Unknown action {cmd.action}")
+
+    mqtt_cl = _mqtt_state.get("client")
+    if mqtt_cl and _mqtt_state.get("connected"):
+        topic, payload = topic_map[cmd.action]
+        try:
+            info = mqtt_cl.publish(topic, payload, qos=0, retain=False)
+            return {"ok": True, "via": "mqtt", "response": {"topic": topic, "payload": payload, "mid": info.mid}}
+        except Exception as e:
+            raise HTTPException(502, f"MQTT publish failed: {e}")
+
+    # Fallback: alte HTTP-Firmware (Legacy)
     ip = cfg["devices"]["trucki"]["ip"]
-    # Trucki2Shelly HTTP endpoints
     if cmd.action == "limit":
-        if cmd.value is None:
-            raise HTTPException(400, "value (W) erforderlich für limit")
         url = f"http://{ip}/Limit?L={int(cmd.value)}"
+    elif cmd.action in ("zepc_on", "zepc_off"):
+        url = f"http://{ip}/{cmd.action.replace('_', '/')}"
+    elif cmd.action == "restart":
+        url = f"http://{ip}/restart"
     else:
-        endpoint_map = {
-            "zepc_on": "/zepc/on",
-            "zepc_off": "/zepc/off",
-            "restart": "/restart",
-        }
-        if cmd.action not in endpoint_map:
-            raise HTTPException(400, f"Unknown action {cmd.action}")
-        url = f"http://{ip}{endpoint_map[cmd.action]}"
+        raise HTTPException(400, f"Action {cmd.action} requires MQTT (not connected)")
     try:
         async with httpx.AsyncClient(timeout=3.0) as c:
             r = await c.get(url)
-            return {"ok": r.status_code == 200, "response": r.text}
+            return {"ok": r.status_code == 200, "via": "http", "response": r.text}
     except Exception as e:
         raise HTTPException(502, f"Trucki unreachable: {e}")
 
@@ -959,7 +984,11 @@ async def diagnostics_raw():
             "total_power": _mqtt_data["shelly"]["total_power"],
             "phases": _mqtt_data["shelly"]["phases"],
         },
-        "trucki": {"_ts": _mqtt_data["trucki"]["_ts"], "raw": _mqtt_data["trucki"]["raw"]},
+        "trucki": {
+            "_ts": _mqtt_data["trucki"]["_ts"],
+            "raw": {k: v for k, v in _mqtt_data["trucki"]["raw"].items() if "OVR" not in k},
+            "settings": {k: v for k, v in _mqtt_data["trucki"]["raw"].items() if "OVR" in k},
+        },
         "victron": {
             "_ts": _mqtt_data["victron"]["_ts"],
             "system": _mqtt_data["victron"]["system"],
