@@ -466,13 +466,51 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     }
 
 
-def _trucki_soc_from_voltage(vbat: float) -> float:
-    """LiFePO4 16S simple voltage→SoC approximation (resting voltage).
-    48.0V → 0%, 54.4V → 100%; clamped."""
+def _trucki_soc_from_voltage(vbat: float, discharge_w: float = 0.0) -> float:
+    """LiFePO4 16S piecewise SoC-from-voltage with load compensation.
+
+    Calibrated against typical 16S LiFePO4 discharge curve. Flat middle region
+    (40-90%) gets finer resolution where most cycling happens.
+
+    Load compensation: when discharging (discharge_w > 0), the voltage sags due
+    to internal resistance (~100 mΩ for 16S LiFePO4). We back-compute the rest
+    voltage assuming I = P/V, ΔV = I × R.
+    """
     if vbat <= 0:
         return 0.0
-    pct = (vbat - 48.0) / (54.4 - 48.0) * 100.0
-    return max(0.0, min(100.0, pct))
+    # Load compensation
+    v_rest = vbat
+    if discharge_w > 50 and vbat > 30:
+        current_a = discharge_w / vbat
+        r_internal = 0.10  # 100 mΩ typical for 16S LiFePO4 pack with BMS
+        v_rest = vbat + current_a * r_internal
+    # (voltage, soc) anchor points - resting voltage
+    curve = [
+        (48.0,   0.0),
+        (50.4,   5.0),
+        (51.2,  10.0),
+        (52.0,  20.0),
+        (52.32, 30.0),
+        (52.48, 40.0),
+        (52.64, 50.0),
+        (52.80, 60.0),
+        (52.96, 70.0),
+        (53.20, 80.0),
+        (53.60, 90.0),
+        (54.00, 95.0),
+        (54.40, 100.0),
+    ]
+    if v_rest <= curve[0][0]:
+        return 0.0
+    if v_rest >= curve[-1][0]:
+        return 100.0
+    for i in range(len(curve) - 1):
+        v1, s1 = curve[i]
+        v2, s2 = curve[i + 1]
+        if v1 <= v_rest <= v2:
+            frac = (v_rest - v1) / (v2 - v1) if v2 > v1 else 0
+            return s1 + frac * (s2 - s1)
+    return 0.0
 
 
 def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
@@ -484,6 +522,9 @@ def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
     vbat = float(live.get("VBAT", 0) or 0)
     meter = float(live.get("METER", 0) or 0)
     state_on = str(live.get("STATE", "")).upper() == "ON"
+    # METER ist die aktuelle AC-Einspeise-Leistung. SoC-Last-Kompensation
+    # bekommt diesen Wert nur wenn Trucki gerade aktiv entlädt.
+    discharge_w = meter if state_on else 0.0
     # ZEPC kann sein: "1", "(ENABLED) 1", "(DISABLED) 0", "ON", "0", "1"
     zepc_raw = str(live.get("ZEPC", "0")).upper()
     zepc_on = ("ENABLED" in zepc_raw) or zepc_raw.strip() in ("1", "ON", "TRUE")
@@ -491,7 +532,7 @@ def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
     temp = float(live.get("TEMPERATURE", live.get("TEMP", 0)) or 0)
     return {
         "online": True,
-        "soc": round(_trucki_soc_from_voltage(vbat), 1),
+        "soc": round(_trucki_soc_from_voltage(vbat, discharge_w), 1),
         "battery_voltage": round(vbat, 2),
         "battery_power": -round(meter, 1) if state_on else 0.0,
         "ac_output": state_on,

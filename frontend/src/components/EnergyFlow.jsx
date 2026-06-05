@@ -86,7 +86,7 @@ function FlowLabel({ d, color, watts }) {
   );
 }
 
-export default function EnergyFlow({ summary }) {
+export default function EnergyFlow({ summary, trucki }) {
   const pv = summary?.pv_power || 0;
   const grid = summary?.grid_power || 0;
   const battery = summary?.battery_power || 0;
@@ -105,6 +105,12 @@ export default function EnergyFlow({ summary }) {
   let batteryMode = "idle";
   if (batteryCharge) batteryMode = "lädt";
   else if (batteryDischarge) batteryMode = "entlädt";
+
+  // Akku-Sub-Text: ZEPC-Limit anzeigen wenn aktiv (Trucki im ZEPC-Modus)
+  let batterySub = `${Math.round(soc)}% · ${batteryMode}`;
+  if (trucki?.zepc && trucki?.ac_setpoint_w) {
+    batterySub = `${Math.round(soc)}% · ZEPC ${Math.round(trucki.ac_setpoint_w)}W`;
+  }
 
   return (
     <div className="glass-strong">
@@ -134,7 +140,7 @@ export default function EnergyFlow({ summary }) {
                 color={gridColor} Icon={Cable} testid="flow-grid" sub={gridLabel} glow={importActive || exportActive} />
           <Node x={660} y={230} label="Akku" value={Math.round(Math.abs(battery))} unit="W"
                 color={COLOR.battery} Icon={BatteryCharging} testid="flow-battery"
-                sub={`${Math.round(soc)}% · ${batteryMode}`}
+                sub={batterySub}
                 glow={batteryCharge || batteryDischarge} />
 
           <Flow d="M 400 103 L 400 187" color={COLOR.pv} active={pvActive} watts={pvActive ? pv : undefined} />
