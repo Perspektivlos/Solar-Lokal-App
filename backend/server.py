@@ -82,6 +82,14 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "org": "home",
         "bucket": "solar",
     },
+    "forecast": {
+        "enabled": True,
+        "latitude": 51.34,
+        "longitude": 12.37,
+        "peak_kwp": 1.5,
+        "tilt_deg": 30,
+        "azimuth_deg": 180,
+    },
 }
 
 
@@ -93,7 +101,7 @@ async def get_config() -> Dict[str, Any]:
     doc.pop("_id", None)
     # merge missing keys
     cfg = {**DEFAULT_CONFIG, **doc}
-    for k in ["devices", "mqtt", "influx", "victron_mqtt"]:
+    for k in ["devices", "mqtt", "influx", "victron_mqtt", "forecast"]:
         cfg[k] = {**DEFAULT_CONFIG[k], **(doc.get(k) or {})}
     return cfg
 
@@ -466,13 +474,51 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     }
 
 
-def _trucki_soc_from_voltage(vbat: float) -> float:
-    """LiFePO4 16S simple voltage→SoC approximation (resting voltage).
-    48.0V → 0%, 54.4V → 100%; clamped."""
+def _trucki_soc_from_voltage(vbat: float, discharge_w: float = 0.0) -> float:
+    """LiFePO4 16S piecewise SoC-from-voltage with load compensation.
+
+    Calibrated against typical 16S LiFePO4 discharge curve. Flat middle region
+    (40-90%) gets finer resolution where most cycling happens.
+
+    Load compensation: when discharging (discharge_w > 0), the voltage sags due
+    to internal resistance (~100 mΩ for 16S LiFePO4). We back-compute the rest
+    voltage assuming I = P/V, ΔV = I × R.
+    """
     if vbat <= 0:
         return 0.0
-    pct = (vbat - 48.0) / (54.4 - 48.0) * 100.0
-    return max(0.0, min(100.0, pct))
+    # Load compensation
+    v_rest = vbat
+    if discharge_w > 50 and vbat > 30:
+        current_a = discharge_w / vbat
+        r_internal = 0.10  # 100 mΩ typical for 16S LiFePO4 pack with BMS
+        v_rest = vbat + current_a * r_internal
+    # (voltage, soc) anchor points - resting voltage
+    curve = [
+        (48.0,   0.0),
+        (50.4,   5.0),
+        (51.2,  10.0),
+        (52.0,  20.0),
+        (52.32, 30.0),
+        (52.48, 40.0),
+        (52.64, 50.0),
+        (52.80, 60.0),
+        (52.96, 70.0),
+        (53.20, 80.0),
+        (53.60, 90.0),
+        (54.00, 95.0),
+        (54.40, 100.0),
+    ]
+    if v_rest <= curve[0][0]:
+        return 0.0
+    if v_rest >= curve[-1][0]:
+        return 100.0
+    for i in range(len(curve) - 1):
+        v1, s1 = curve[i]
+        v2, s2 = curve[i + 1]
+        if v1 <= v_rest <= v2:
+            frac = (v_rest - v1) / (v2 - v1) if v2 > v1 else 0
+            return s1 + frac * (s2 - s1)
+    return 0.0
 
 
 def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
@@ -484,6 +530,9 @@ def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
     vbat = float(live.get("VBAT", 0) or 0)
     meter = float(live.get("METER", 0) or 0)
     state_on = str(live.get("STATE", "")).upper() == "ON"
+    # METER ist die aktuelle AC-Einspeise-Leistung. SoC-Last-Kompensation
+    # bekommt diesen Wert nur wenn Trucki gerade aktiv entlädt.
+    discharge_w = meter if state_on else 0.0
     # ZEPC kann sein: "1", "(ENABLED) 1", "(DISABLED) 0", "ON", "0", "1"
     zepc_raw = str(live.get("ZEPC", "0")).upper()
     zepc_on = ("ENABLED" in zepc_raw) or zepc_raw.strip() in ("1", "ON", "TRUE")
@@ -491,7 +540,7 @@ def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
     temp = float(live.get("TEMPERATURE", live.get("TEMP", 0)) or 0)
     return {
         "online": True,
-        "soc": round(_trucki_soc_from_voltage(vbat), 1),
+        "soc": round(_trucki_soc_from_voltage(vbat, discharge_w), 1),
         "battery_voltage": round(vbat, 2),
         "battery_power": -round(meter, 1) if state_on else 0.0,
         "ac_output": state_on,
@@ -641,6 +690,7 @@ class ConfigUpdate(BaseModel):
     mqtt: Optional[Dict[str, Any]] = None
     influx: Optional[Dict[str, Any]] = None
     victron_mqtt: Optional[Dict[str, Any]] = None
+    forecast: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):
@@ -996,6 +1046,97 @@ async def diagnostics_raw():
             "instances": {str(k): v for k, v in _mqtt_data["victron"]["instances"].items()},
         },
     }
+
+
+# ---------- PV Forecast via Open-Meteo ----------
+
+_forecast_cache: Dict[str, Any] = {"data": None, "fetched_at": None}
+
+
+@api_router.get("/forecast")
+async def forecast():
+    """Return 48h hourly PV-Forecast based on Open-Meteo solar radiation.
+
+    Combines GHI (global horizontal irradiance) with a simple capacity estimate.
+    Cached for 15 min to avoid hammering the public API.
+    """
+    cfg = await get_config()
+    fc_cfg = cfg.get("forecast") or {}
+    if not fc_cfg.get("enabled"):
+        return {"enabled": False, "hourly": [], "summary": {}}
+
+    now = datetime.now(timezone.utc)
+    cached = _forecast_cache.get("fetched_at")
+    if cached and (now - datetime.fromisoformat(cached)).total_seconds() < 900 and _forecast_cache.get("data"):
+        return _forecast_cache["data"]
+
+    lat = float(fc_cfg.get("latitude", 51.34))
+    lon = float(fc_cfg.get("longitude", 12.37))
+    peak_kwp = float(fc_cfg.get("peak_kwp", 1.5))
+    url = (
+        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+        f"&hourly=temperature_2m,cloudcover,shortwave_radiation,direct_radiation,diffuse_radiation"
+        f"&timezone=auto&forecast_days=2"
+    )
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as c:
+            r = await c.get(url)
+            if r.status_code != 200:
+                raise HTTPException(502, f"Open-Meteo: HTTP {r.status_code}")
+            om = r.json()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(502, f"Open-Meteo unreachable: {e}")
+
+    times = om.get("hourly", {}).get("time", [])
+    ghi = om.get("hourly", {}).get("shortwave_radiation", [])  # W/m²
+    direct = om.get("hourly", {}).get("direct_radiation", [])
+    cloud = om.get("hourly", {}).get("cloudcover", [])
+    temp = om.get("hourly", {}).get("temperature_2m", [])
+
+    # Simplified PV power estimate: P = GHI/1000 * peak_kwp * pr (performance ratio ~0.80)
+    # Temperature derating: -0.4%/K above 25°C panel temperature
+    hourly = []
+    total_kwh_today = 0.0
+    total_kwh_tomorrow = 0.0
+    today_str = now.astimezone().strftime("%Y-%m-%d")
+    pr_base = 0.80
+    for i, t in enumerate(times):
+        ghi_i = float(ghi[i] if i < len(ghi) else 0)
+        temp_i = float(temp[i] if i < len(temp) else 20)
+        # Panel temp ~ ambient + 25K under full sun
+        panel_temp = temp_i + (ghi_i / 1000.0) * 25.0
+        temp_factor = max(0.6, 1.0 - 0.004 * max(0, panel_temp - 25))
+        power_kw = (ghi_i / 1000.0) * peak_kwp * pr_base * temp_factor
+        hourly.append({
+            "time": t,
+            "ghi": round(ghi_i, 1),
+            "direct": round(float(direct[i] if i < len(direct) else 0), 1),
+            "cloud": round(float(cloud[i] if i < len(cloud) else 0), 1),
+            "temp": round(temp_i, 1),
+            "pv_w": round(power_kw * 1000.0, 1),
+        })
+        # Each hour contributes power_kw * 1h to daily total
+        if t.startswith(today_str):
+            total_kwh_today += power_kw
+        else:
+            total_kwh_tomorrow += power_kw
+
+    out = {
+        "enabled": True,
+        "location": {"lat": lat, "lon": lon, "peak_kwp": peak_kwp},
+        "fetched_at": now.isoformat(),
+        "hourly": hourly,
+        "summary": {
+            "kwh_today_forecast": round(total_kwh_today, 2),
+            "kwh_tomorrow_forecast": round(total_kwh_tomorrow, 2),
+        },
+    }
+    _forecast_cache["data"] = out
+    _forecast_cache["fetched_at"] = now.isoformat()
+    return out
+
 
 
 

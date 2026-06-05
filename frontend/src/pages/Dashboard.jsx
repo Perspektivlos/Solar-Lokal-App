@@ -265,7 +265,7 @@ export default function Dashboard() {
 
       {/* Energy flow + summary metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2"><EnergyFlow summary={summary} /></div>
+        <div className="lg:col-span-2"><EnergyFlow summary={summary} trucki={trucki} /></div>
         <div className="space-y-4">
           <GlassCard title="PV-Erzeugung" accent={COLOR.pv} testid="live-pv">
             <MetricBig label="aktuell" value={formatNum(summary.pv_power, 0)} unit="W"

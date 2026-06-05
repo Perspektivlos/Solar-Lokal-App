@@ -1,36 +1,33 @@
 import { useState } from "react";
 import { controlHoymiles, controlTrucki } from "../lib/api";
 import IntroCard from "../components/IntroCard";
-import { Power, Play, Square, RotateCw, Send } from "lucide-react";
+import { Slider } from "../components/ui/slider";
+import { Power, RotateCw, Send } from "lucide-react";
 
 const INTRO_SECTIONS = [
   {
     label: "Zweck & Funktion",
-    body: "Direkte Befehle an den Hoymiles HM1500 (via Ahoy DTU /api/ctrl) und den Trucki-Speicher (HTTP-Endpunkte). Jeder Befehl wird einmalig gesendet und das Roh-JSON/Text-Response unter dem jeweiligen Panel angezeigt.",
+    body: "Direkte Befehle an den Hoymiles HM1500 (via Ahoy DTU /api/ctrl) und den Trucki-Speicher (MQTT-Overrides). Jeder Befehl wird einmalig gesendet und das Roh-JSON/Text-Response unter dem jeweiligen Panel angezeigt.",
   },
   {
     label: "Hoymiles · Parameter",
-    body: <span><b>Limit (%)</b>: 0–100, nicht-persistent · <b>Power ON/OFF</b>: schaltet WR an/aus · <b>Start/Stop</b>: synonym · <b>Restart</b>: WR-Neustart (Verbindungsabbruch ~30 s). Endpoint: <code className="text-cyan-300">POST /api/control/hoymiles</code> {"{action, value}"}.</span>,
+    body: <span><b>Limit (%)</b>: 0–100, nicht-persistent, mit Live-Slider · <b>Power ON/OFF</b>: schaltet WR an/aus · <b>Restart</b>: WR-Neustart (Verbindungsabbruch ~30 s). Endpoint: <code className="text-cyan-300">POST /api/control/hoymiles</code> {"{action, value}"}.</span>,
   },
   {
-    label: "Trucki · Parameter",
-    body: <span><b>Limit (W)</b>: Ziel-Einspeise-Leistung (0–MAX). Endpoint: <code className="text-cyan-300">GET http://{`<trucki-ip>`}/Limit?L=&lt;watt&gt;</code> · <b>ZEPC ON/OFF</b>: Zero-Export-Power-Controller · <b>Restart</b>.</span>,
+    label: "Trucki · AC-Steuerung",
+    body: <span><b>AC-Setpoint (W)</b>: Ziel-Einspeise-Leistung (0–MAX). Sendet zu MQTT-Topic <code className="text-cyan-300">Trucki/ACSETPOINTOVR</code>. <b>ZEPC ON/OFF</b> → <code className="text-cyan-300">Trucki/ZEPCOVR</code>. <b>Restart</b> → <code className="text-cyan-300">Trucki/REBOOTOVR</code>.</span>,
+  },
+  {
+    label: "Trucki · Settings",
+    body: <span><b>TARGET</b>: Soll-Netzbezug für ZEPC (W) → <code className="text-cyan-300">Trucki/TARGETOVR</code> · <b>MIN/MAX</b>: untere und obere Leistungsschranke → <code className="text-cyan-300">Trucki/MINPOWEROVR</code> / <code className="text-cyan-300">MAXPOWEROVR</code>. Überschreiben dauerhaft die im Trucki-Webinterface gesetzten Werte.</span>,
   },
   {
     label: "Rückgabewerte",
-    body: <span>Antwort als JSON: <code className="text-cyan-300">{"{ok:true|false, response:…}"}</code> · im Demo-Modus zusätzlich <code className="text-cyan-300">demo:true</code>. Sichtbar unter jedem Panel als JSON-Block.</span>,
-  },
-  {
-    label: "Beispiele",
-    body: <span>‚Power-Limit 60 %' an Hoymiles drosselt sofort die AC-Ausgabe. ‚Trucki-Limit 200 W' begrenzt die Einspeisung. ‚Restart' eignet sich bei MQTT-Verbindungsstörungen.</span>,
+    body: <span>Antwort als JSON: <code className="text-cyan-300">{"{ok:true|false, via:'mqtt'|'http', response:…}"}</code> · im Demo-Modus zusätzlich <code className="text-cyan-300">demo:true</code>.</span>,
   },
   {
     label: "Mögliche Fehler",
-    body: "HTTP 502 = Gerät nicht erreichbar (IP-Adresse / Stromzufuhr prüfen). HTTP 400 = ungültige Aktion. Im Demo-Modus geben alle Befehle eine simulierte Erfolgs-Antwort zurück und es passiert physikalisch nichts.",
-  },
-  {
-    label: "Einschränkungen",
-    body: "Hoymiles-Limit ist nicht-persistent — nach WR-Reboot ist es wieder 100 %. Für persistente Werte über Ahoy-DTU-Web-UI ‚limit_persistent_absolute' nutzen.",
+    body: "HTTP 502 = MQTT-Broker oder Gerät nicht erreichbar. HTTP 400 = ungültige Aktion. Im Demo-Modus geben alle Befehle eine simulierte Erfolgs-Antwort zurück und es passiert physikalisch nichts.",
   },
 ];
 
@@ -62,18 +59,52 @@ function NeoButton({ children, ...props }) {
   );
 }
 
-function PrimaryButton({ children, ...props }) {
+function PrimaryButton({ children, accent = "#06B6D4", ...props }) {
   return (
     <button {...props} className={`px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] rounded text-slate-900 font-semibold disabled:opacity-50 ${props.className || ""}`}
-      style={{ background: "linear-gradient(180deg, #67e8f9, #06B6D4)", boxShadow: "0 0 12px rgba(6,182,212,0.45)" }}>
+      style={{ background: `linear-gradient(180deg, ${accent}cc, ${accent})`, boxShadow: `0 0 12px ${accent}73` }}>
       {children}
     </button>
   );
 }
 
+function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, step = 1, unit = "%", accent = "#06B6D4", busy, testid }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
+        <span>{label}</span>
+        <span className="text-white font-mono text-base normal-case tracking-normal">
+          <span style={{ color: accent }} className="font-semibold">{value}</span>
+          <span className="text-white/45 text-xs ml-1">{unit}</span>
+        </span>
+      </div>
+      <Slider value={[value]} onValueChange={(v) => onChange(v[0])} min={min} max={max} step={step} className="my-3" data-testid={`${testid}-slider`} />
+      <div className="flex items-center justify-between">
+        <div className="font-mono text-[10px] text-white/40">{min}{unit} ─ {max}{unit}</div>
+        <PrimaryButton onClick={onSend} disabled={busy} accent={accent} data-testid={`${testid}-send`}>
+          <Send size={12} className="mr-1.5" /> Senden
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+function Divider({ label }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <div className="flex-1 h-px bg-white/10" />
+      <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40">{label}</span>
+      <div className="flex-1 h-px bg-white/10" />
+    </div>
+  );
+}
+
 export default function Control() {
   const [limit, setLimit] = useState(100);
-  const [truLimit, setTruLimit] = useState(800);
+  const [truLimit, setTruLimit] = useState(300);
+  const [truTarget, setTruTarget] = useState(15);
+  const [truMin, setTruMin] = useState(0);
+  const [truMax, setTruMax] = useState(800);
   const [hoyResult, setHoyResult] = useState(null);
   const [truResult, setTruResult] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -93,68 +124,88 @@ export default function Control() {
 
   return (
     <div className="space-y-6" data-testid="control-page">
-      <IntroCard title="Steuerung" subtitle="Direkte Hoymiles- und Trucki-Befehle" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
+      <IntroCard title="Steuerung" subtitle="Hoymiles- & Trucki-Befehle, MQTT-Overrides, Settings-Editor" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
-          <span className="w-1.5 h-7 rounded-sm" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
-          Steuerung
-        </h1>
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
+        <span className="w-1.5 h-7 rounded-sm" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
+        Steuerung
+      </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Hoymiles — kompakter */}
         <Panel title="Hoymiles HM1500 · Ahoy DTU" accent="#FACC15" testid="control-hoymiles">
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Power-Limit (%)</label>
-            <div className="flex gap-2 mt-2">
-              <input type="number" min="0" max="100" value={limit} onChange={(e) => setLimit(Number(e.target.value))}
-                     className="glass-input flex-1 px-3 py-2 font-mono text-sm" data-testid="input-hoy-limit" />
-              <PrimaryButton onClick={() => runHoy("limit", limit)} disabled={busy} data-testid="btn-hoy-limit">
-                <Send size={14} className="mr-1.5" /> Senden
-              </PrimaryButton>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
+          <SliderControl
+            label="Power-Limit"
+            value={limit}
+            onChange={setLimit}
+            onSend={() => runHoy("limit", limit)}
+            min={0} max={100} step={1} unit="%" accent="#FACC15"
+            busy={busy} testid="hoy-limit"
+          />
+          <Divider label="Aktionen" />
+          <div className="grid grid-cols-3 gap-2">
             <NeoButton onClick={() => runHoy("power_on")} disabled={busy} data-testid="btn-hoy-on">
-              <Power size={14} className="mr-1.5 text-emerald-300" /> Power ON
+              <Power size={14} className="mr-1.5 text-emerald-300" /> ON
             </NeoButton>
             <NeoButton onClick={() => runHoy("power_off")} disabled={busy} data-testid="btn-hoy-off">
-              <Power size={14} className="mr-1.5 text-red-300" /> Power OFF
+              <Power size={14} className="mr-1.5 text-red-300" /> OFF
             </NeoButton>
-            <NeoButton onClick={() => runHoy("start")} disabled={busy} data-testid="btn-hoy-start">
-              <Play size={14} className="mr-1.5" /> Start
-            </NeoButton>
-            <NeoButton onClick={() => runHoy("stop")} disabled={busy} data-testid="btn-hoy-stop">
-              <Square size={14} className="mr-1.5" /> Stop
-            </NeoButton>
-            <NeoButton onClick={() => runHoy("restart")} disabled={busy} data-testid="btn-hoy-restart" className="col-span-2">
+            <NeoButton onClick={() => runHoy("restart")} disabled={busy} data-testid="btn-hoy-restart">
               <RotateCw size={14} className="mr-1.5" /> Restart
             </NeoButton>
           </div>
           <Result res={hoyResult} />
         </Panel>
 
-        <Panel title="Trucki2Shelly Gateway" accent="#06B6D4" testid="control-trucki">
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Power-Limit (W)</label>
-            <div className="flex gap-2 mt-2">
-              <input type="number" min="0" max="2400" step="10" value={truLimit} onChange={(e) => setTruLimit(Number(e.target.value))}
-                     className="glass-input flex-1 px-3 py-2 font-mono text-sm" data-testid="input-tru-limit" />
-              <PrimaryButton onClick={() => runTru("limit", truLimit)} disabled={busy} data-testid="btn-tru-limit">
-                <Send size={14} className="mr-1.5" /> Senden
-              </PrimaryButton>
-            </div>
-            <div className="font-mono text-[10px] text-white/45 mt-1.5">
-              Begrenzt die AC-Ausgangsleistung in Watt (Trucki HTTP <code>/Limit?L=…</code>).
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <NeoButton onClick={() => runTru("zepc_on")} disabled={busy} data-testid="btn-tru-zepc-on">ZEPC ON</NeoButton>
-            <NeoButton onClick={() => runTru("zepc_off")} disabled={busy} data-testid="btn-tru-zepc-off">ZEPC OFF</NeoButton>
-            <NeoButton onClick={() => runTru("restart")} disabled={busy} data-testid="btn-tru-restart" className="col-span-2">
+        {/* Trucki — UNIFIED: Steuerung + Settings */}
+        <Panel title="Trucki2Shelly · Steuerung & Settings" accent="#06B6D4" testid="control-trucki">
+          {/* Live AC-Setpoint */}
+          <SliderControl
+            label="AC-Setpoint (Einspeise-Leistung)"
+            value={truLimit}
+            onChange={setTruLimit}
+            onSend={() => runTru("limit", truLimit)}
+            min={0} max={2400} step={10} unit=" W" accent="#06B6D4"
+            busy={busy} testid="tru-limit"
+          />
+          <Divider label="ZEPC & Restart" />
+          <div className="grid grid-cols-3 gap-2">
+            <NeoButton onClick={() => runTru("zepc_on")} disabled={busy} data-testid="btn-tru-zepc-on">
+              <Power size={14} className="mr-1.5 text-emerald-300" /> ZEPC ON
+            </NeoButton>
+            <NeoButton onClick={() => runTru("zepc_off")} disabled={busy} data-testid="btn-tru-zepc-off">
+              <Power size={14} className="mr-1.5 text-red-300" /> ZEPC OFF
+            </NeoButton>
+            <NeoButton onClick={() => runTru("restart")} disabled={busy} data-testid="btn-tru-restart">
               <RotateCw size={14} className="mr-1.5" /> Restart
             </NeoButton>
           </div>
+
+          <Divider label="Settings · MQTT-Overrides" />
+          <SliderControl
+            label="TARGET (Netzbezug-Soll)"
+            value={truTarget}
+            onChange={setTruTarget}
+            onSend={() => runTru("target", truTarget)}
+            min={-200} max={500} step={5} unit=" W" accent="#A78BFA"
+            busy={busy} testid="tru-target"
+          />
+          <SliderControl
+            label="MIN-Power"
+            value={truMin}
+            onChange={setTruMin}
+            onSend={() => runTru("min", truMin)}
+            min={0} max={500} step={10} unit=" W" accent="#A78BFA"
+            busy={busy} testid="tru-min"
+          />
+          <SliderControl
+            label="MAX-Power"
+            value={truMax}
+            onChange={setTruMax}
+            onSend={() => runTru("max", truMax)}
+            min={0} max={2400} step={10} unit=" W" accent="#A78BFA"
+            busy={busy} testid="tru-max"
+          />
           <Result res={truResult} />
         </Panel>
       </div>

@@ -7,6 +7,7 @@ import History from "./pages/History";
 import Control from "./pages/Control";
 import Devices from "./pages/Devices";
 import Diagnose from "./pages/Diagnose";
+import Forecast from "./pages/Forecast";
 import Integrations from "./pages/Integrations";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="verlauf" element={<History />} />
+            <Route path="forecast" element={<Forecast />} />
             <Route path="steuerung" element={<Control />} />
             <Route path="geraete" element={<Devices />} />
             <Route path="diagnose" element={<Diagnose />} />
