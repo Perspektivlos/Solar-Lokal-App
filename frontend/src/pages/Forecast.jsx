@@ -65,8 +65,25 @@ export default function Forecast() {
   const load = () => { setLoading(true); getForecast().then(setData).finally(() => setLoading(false)); };
 
   useEffect(() => {
-    load();
-    getConfig().then((c) => setCfg(c.forecast));
+    let alive = true;
+    const init = async () => {
+      try {
+        const d = await getForecast();
+        if (alive) setData(d);
+      } catch {
+        /* ignore */
+      } finally {
+        if (alive) setLoading(false);
+      }
+      try {
+        const c = await getConfig();
+        if (alive) setCfg(c.forecast);
+      } catch {
+        /* ignore */
+      }
+    };
+    init();
+    return () => { alive = false; };
   }, []);
 
   const updCfg = (patch) => setCfg({ ...cfg, ...patch });
