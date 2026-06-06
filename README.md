@@ -131,6 +131,43 @@ pct exec 220 -- journalctl -u solar-backend --no-pager -n 30
 ```
 …und ich helfe live durch das Debugging.
 
+Klassisch nach `rsync` — die Execute-Bits sind nicht persistent kopiert worden. Schnell nachholen + bauen:
+
+```bash
+pct exec 220 -- bash -lc '
+  find /opt/solar-dashboard/deploy -name "*.sh" -exec sed -i "s/\r\$//" {} \;
+  chmod +x /opt/solar-dashboard/deploy/proxmox/*.sh
+  ls -la /opt/solar-dashboard/deploy/proxmox/
+  /opt/solar-dashboard/deploy/proxmox/build-app.sh
+'
+```
+
+**Was passiert:**
+1. `sed` entfernt CRLF (falls Windows beim Push reingespielt hat)
+2. `chmod +x` setzt das Execute-Bit auf alle drei `.sh`-Files
+3. `ls -la` zeigt zur Bestätigung die Rechte (`-rwxr-xr-x` sollte da stehen)
+4. Build startet
+
+## Warum passiert das?
+
+`rsync -a` überträgt Permissions normalerweise korrekt. Aber: wenn die Quelle (Tarball auf Proxmox-Host) **ohne** Execute-Bits ausgepackt wurde (z. B. weil das Tarball selbst die Bits nicht hatte — etwa nach scp aus Windows oder Download aus GitHub via HTTPS), dann fehlt's auch im rsync-Ziel.
+
+## Dauerfix für nächste Updates
+
+Erweitere meinen Build-Update-Befehl um die `chmod`-Zeile **vor** `build-app.sh`:
+
+```bash
+pct exec 220 -- bash -lc '
+  cd /opt && rm -rf solar-dashboard-new && mkdir solar-dashboard-new
+  tar xzf solar-dashboard.tar.gz -C solar-dashboard-new
+  rsync -a solar-dashboard-new/ solar-dashboard/
+  rm -rf solar-dashboard-new solar-dashboard.tar.gz
+  sed -i "/^emergentintegrations/d" /opt/solar-dashboard/backend/requirements.txt
+  find /opt/solar-dashboard/deploy -name "*.sh" -exec sed -i "s/\r\$//" {} \;
+  chmod +x /opt/solar-dashboard/deploy/proxmox/*.sh
+  /opt/solar-dashboard/deploy/proxmox/build-app.sh
+'
+```
 
 # Here are your Deploy
 
