@@ -264,17 +264,18 @@ export default function Dashboard() {
             key={m.label}
             className="glass relative overflow-hidden p-4 transition-transform duration-200 hover:-translate-y-0.5"
             style={{
-              borderTop: `2px solid ${m.accent}`,
-              background: `linear-gradient(160deg, ${m.accent}14 0%, rgba(15,23,42,0.55) 45%)`,
-              boxShadow: `inset 0 1px 0 ${m.accent}33, 0 10px 30px -22px ${m.accent}`,
+              borderLeft: `3px solid ${m.accent}`,
+              boxShadow: `0 0 24px -16px ${m.accent}88`,
             }}
             data-testid={`today-stat-${m.label}`}
           >
             <div
-              className="absolute -top-10 -right-8 w-24 h-24 rounded-full opacity-25 blur-2xl pointer-events-none"
+              className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-20 blur-2xl pointer-events-none"
               style={{ background: m.accent }}
             />
-            <MetricBig label={m.label} value={m.value} unit={m.unit} color={m.color} sparkValues={m.spark} sparkColor={m.sparkColor} />
+            <div className="relative">
+              <MetricBig label={m.label} value={m.value} unit={m.unit} color={m.color} sparkValues={m.spark} sparkColor={m.sparkColor} />
+            </div>
           </div>
         ))}
       </div>

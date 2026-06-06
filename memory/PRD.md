@@ -68,6 +68,13 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - P2: Push-Benachrichtigung bei Übergang Bezug ↔ Einspeisung.
 - P2: Wochen-/Monats-Verlauf + CSV-Export.
 
+## UI-Feinschliff (2026-06)
+- KPI-Tagesleiste: an GlassCard-Stil angeglichen (linker Akzentbalken + dezenter Glow je Kennzahl), fügt sich ins Gesamtbild ein.
+- Energiefluss-Labels: Watt-Werte durch Richtungspfeile (Flussrichtung) auf der Linienmitte ersetzt – weniger Zahlen-Dopplung, klare Richtungsanzeige.
+- Hoymiles HM1500: Anzeige immer CH1–CH4 (statt aggregiertem CH0); Per-Kanal-Werte aus `HM1500/ch1..4/*`-Topics, sonst 0.
+- Akku-„ENTLÄDT"-Bereich bewusst unverändert (User-Wunsch).
+- Lint/Code: `Date.now()`-Purity-Blocker behoben (Uhr inkrementell + Lazy-Init), Vorwert von useRef → useState (reineres Render), `relativeTime(iso, now)`.
+
 ## Next Tasks
 - Testen mit echten Geräten (Demo-Modus aus) zuhause.
 - Reale Victron-Endpunkte je nach VenusOS-Setup anpassen.
