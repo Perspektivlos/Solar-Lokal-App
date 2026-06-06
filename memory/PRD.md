@@ -50,6 +50,16 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - **MOCKED** im Demo-Modus: Shelly, Ahoy, Trucki, Victron-Werte aus Generatoren (Sonnen-Kurve, 3-Phasen-Last, SoC).
 - **LIVE** sobald Demo-Modus deaktiviert + IPs erreichbar: Direkter HTTP-Abruf.
 
+## Implemented (2026-06)
+- ✅ InfluxDB + Grafana Langzeit-Analyse Setup (P0):
+  - `deploy/proxmox/pve-create-influxdb-lxc.sh`: InfluxDB-2.7-LXC (Default CT 203 / 192.168.0.203), Auto-Setup Org `home`, Bucket `solar`, generierter API-Token, Repo-Key SHA256-verifiziert.
+  - `deploy/proxmox/grafana/solar-influxdb-dashboard.json`: fertiges Grafana-Dashboard (Flux), 7 Panels (PV/Netz/Haus/SoC-Gauge, Leistungsfluss, SoC-Verlauf, Energie-kWh via integral). Nutzt `__inputs` → Datenquelle beim Import wählbar.
+  - `deploy/proxmox/grafana/influxdb-datasource.yaml`: optionale Grafana-Provisionierung.
+  - `deploy/proxmox/grafana/INFLUXDB-GRAFANA-SETUP.md`: Schritt-für-Schritt-Guide für bestehende Grafana (LXC 102, 192.168.0.91:3000).
+  - Schema-Match bestätigt: Backend schreibt Measurement `solar`, Felder pv_power/grid_power/battery_power/house_power/battery_soc.
+- ✅ Grafana-Dashboard erweitert: 8. Panel **"Autarkie heute"** (Gauge %, Flux union/pivot: (Hausenergie − Netzbezug)/Hausenergie).
+- ✅ Refactoring: MQTT-Logik aus `server.py` in eigenes Modul `backend/mqtt_client.py` ausgelagert (Daten-Store, Topic-Handler, fetch_*_from_mqtt, _mqtt_setup/_disconnect). server.py 1347 → ~960 Zeilen. Lint sauber, 29/29 Tests grün (inkl. neue `tests/test_mqtt_client.py`).
+
 ## Backlog (P1/P2)
 - P1: Victron VenusOS Large – konkretes Parsing der MPPT-Endpunkte (D-Bus REST), aktuell generisch.
 - P1: MQTT Topic-Mapping zu Live-Werten (statt nur Counter).

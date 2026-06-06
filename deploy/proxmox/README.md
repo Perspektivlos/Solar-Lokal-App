@@ -61,6 +61,19 @@ Fertig — Dashboard ist unter `http://192.168.0.210/` erreichbar.
 
 ---
 
+## InfluxDB + Grafana (Langzeit-Analyse)
+
+Für persistente Langzeit-Daten und Grafana-Auswertung gibt es ein separates
+Setup. InfluxDB läuft als eigener LXC (`pve-create-influxdb-lxc.sh`), Grafana
+nutzt du als bestehende Instanz (LXC 102, `http://192.168.0.91:3000`).
+
+➡️ Komplette Anleitung: **[`grafana/INFLUXDB-GRAFANA-SETUP.md`](grafana/INFLUXDB-GRAFANA-SETUP.md)**
+
+Enthaltene Dateien:
+- `pve-create-influxdb-lxc.sh` – installiert InfluxDB 2.7 als LXC (Org `home`, Bucket `solar`, Auto-Token)
+- `grafana/solar-influxdb-dashboard.json` – fertiges Grafana-Dashboard zum Importieren
+- `grafana/influxdb-datasource.yaml` – optionale Grafana-Datenquellen-Provisionierung
+
 ## Konfiguration
 
 In der Web-UI:
