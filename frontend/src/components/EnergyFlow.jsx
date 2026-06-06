@@ -110,7 +110,9 @@ export default function EnergyFlow({ summary, trucki }) {
   const batteryDischarge = battery < -20;
   const houseActive = house > 5;
 
-  const gridLabel = importActive ? "Bezug" : exportActive ? "Einspeisung" : "balanced";
+  let gridLabel = "balanced";
+  if (importActive) gridLabel = "Bezug";
+  else if (exportActive) gridLabel = "Einspeisung";
   const gridColor = grid >= 0 ? COLOR.grid_import : COLOR.grid_export;
   let batteryMode = "idle";
   if (batteryCharge) batteryMode = "lädt";
