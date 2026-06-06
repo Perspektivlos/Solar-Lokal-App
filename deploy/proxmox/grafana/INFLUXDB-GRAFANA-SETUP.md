@@ -21,7 +21,23 @@ Org = `home` · Bucket = `solar`
 
 ## Schritt 1 — InfluxDB als LXC installieren
 
-Auf dem **Proxmox-Host** (`192.168.0.200`) als root:
+> **Bereits vorhanden?** Läuft InfluxDB schon (in dieser Umgebung: **LXC ID 101**,
+> `http://192.168.0.203:8086`), dann **diesen Schritt überspringen** und direkt mit
+> Schritt 2 weitermachen. Stelle in deiner InfluxDB nur sicher, dass es eine
+> **Organisation** (`home`), einen **Bucket** (`solar`) und einen **API-Token** gibt:
+>
+> ```bash
+> # in der bestehenden InfluxDB-LXC (z.B. ID 101)
+> pct enter 101    # oder per SSH
+> influx org create   --name home            2>/dev/null || true
+> influx bucket create --name solar --org home 2>/dev/null || true
+> influx auth create  --org home --all-access --description "solar-dashboard"
+> #  -> den ausgegebenen Token notieren (für Schritt 2 + Grafana)
+> ```
+> Org/Bucket dürfen auch anders heißen – dann in Schritt 2 (Integrationen) und in
+> Grafana entsprechend eintragen.
+
+Falls **noch keine** InfluxDB existiert, auf dem **Proxmox-Host** (`192.168.0.200`) als root:
 
 ```bash
 # Script auf den Host kopieren (Teil des Repos: deploy/proxmox/)

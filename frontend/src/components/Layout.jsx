@@ -68,7 +68,7 @@ export default function Layout() {
           <span>Lokale Steuerung · Mosquitto · InfluxDB · MongoDB</span>
           <div className="flex items-center gap-4 flex-wrap">
             <span data-testid="footer-copyright">© {new Date().getFullYear()} THcentral.de</span>
-            <span data-testid="footer-version" className="text-white/55">v1.2</span>
+            <span data-testid="footer-version" className="text-white/55">v{process.env.REACT_APP_VERSION || "1.2.0"}</span>
             <a
               href="https://app.emergent.sh/?utm_source=emergent-badge"
               target="_blank"

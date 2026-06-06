@@ -75,6 +75,13 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Akku-„ENTLÄDT"-Bereich bewusst unverändert (User-Wunsch).
 - Lint/Code: `Date.now()`-Purity-Blocker behoben (Uhr inkrementell + Lazy-Init), Vorwert von useRef → useState (reineres Render), `relativeTime(iso, now)`.
 
+## UI/Design-Iteration 2 (2026-06)
+- KPI-Tagesleiste: ein zusammenhängendes Raster mit abgesteckten Bereichen (Trennlinien `divide-*` + farbiger Top-Akzent je Segment) statt einzelner Karten.
+- Gesamtbild: Hintergrund tiefes Schwarz → Dunkelblau, dynamisch gemischt via `body::before` (radiale Blau-/Silber-Glows, langsame `bg-drift`-Animation). Karten-/Glass-Schatten auf Weiß/Silber-Halo umgestellt (`.glass`, `.glass-strong`, GlassCard boxShadow).
+- Versionsnummer automatisch: `craco.config.js` setzt `process.env.REACT_APP_VERSION` aus `package.json` (→ Footer `v{version}`). package.json auf 1.2.0 gebumpt; Version wird in den Production-Build eingebacken.
+- Footer: „Made with Emergent" verschoben (floating `#emergent-badge` ausgeblendet), Copyright „© THcentral.de".
+- InfluxDB-Anleitung: Hinweis ergänzt, dass InfluxDB bereits als LXC (ID 101, 192.168.0.203:8086) läuft → Install-Script optional, nur Org/Bucket/Token sicherstellen.
+
 ## Next Tasks
 - Testen mit echten Geräten (Demo-Modus aus) zuhause.
 - Reale Victron-Endpunkte je nach VenusOS-Setup anpassen.

@@ -65,8 +65,8 @@ function GlassCard({ title, accent, right, testid, children, danger }) {
       style={{
         borderLeft: `3px solid ${accent}`,
         boxShadow: danger
-          ? `inset 0 0 0 1px rgba(239,68,68,0.4), 0 0 24px -8px ${accent}55`
-          : `0 0 24px -16px ${accent}88`,
+          ? `inset 0 0 0 1px rgba(239,68,68,0.45), 0 12px 34px -18px rgba(0,0,0,0.6), 0 0 26px -16px rgba(226,232,240,0.22)`
+          : `0 12px 34px -18px rgba(0,0,0,0.6), 0 0 26px -16px rgba(226,232,240,0.22)`,
       }}
     >
       {/* accent glow blob */}
@@ -250,8 +250,8 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Tageswerte strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3" data-testid="today-stats">
+      {/* Tageswerte – ein Raster in abgesteckte Bereiche */}
+      <div className="glass overflow-hidden grid grid-cols-2 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/[0.07]" data-testid="today-stats">
         {[
           { label: "PV heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv },
           { label: "Verbrauch", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: "#cbd5e1", spark: trail.house, sparkColor: "#cbd5e1" },
@@ -262,20 +262,14 @@ export default function Dashboard() {
         ].map((m) => (
           <div
             key={m.label}
-            className="glass relative overflow-hidden p-4 transition-transform duration-200 hover:-translate-y-0.5"
-            style={{
-              borderLeft: `3px solid ${m.accent}`,
-              boxShadow: `0 0 24px -16px ${m.accent}88`,
-            }}
+            className="relative p-4 transition-colors hover:bg-white/[0.02]"
             data-testid={`today-stat-${m.label}`}
           >
-            <div
-              className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-20 blur-2xl pointer-events-none"
-              style={{ background: m.accent }}
+            <span
+              className="absolute top-0 left-0 right-0 h-[2px] opacity-80 pointer-events-none"
+              style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)` }}
             />
-            <div className="relative">
-              <MetricBig label={m.label} value={m.value} unit={m.unit} color={m.color} sparkValues={m.spark} sparkColor={m.sparkColor} />
-            </div>
+            <MetricBig label={m.label} value={m.value} unit={m.unit} color={m.color} sparkValues={m.spark} sparkColor={m.sparkColor} />
           </div>
         ))}
       </div>
