@@ -71,3 +71,8 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 ## Next Tasks
 - Testen mit echten Geräten (Demo-Modus aus) zuhause.
 - Reale Victron-Endpunkte je nach VenusOS-Setup anpassen.
+
+## Deployment-Härtung (2026-06)
+- `deploy/proxmox/build-app.sh`: Backend-Service wird jetzt VOR dem Frontend-Build aktiviert/gestartet → ein Frontend-Build-Fehler lässt das Backend nicht mehr „dead". RAM-Check + `NODE_OPTIONS=--max-old-space-size=2048` + OOM-Hinweise ergänzt.
+- `frontend/craco.config.js`: ESLint-Override nur noch im Dev-Server (Production-Build lässt `eslint`-Key weg). Hinweis: craco gibt bei `DISABLE_ESLINT_PLUGIN=true` weiterhin die harmlose Log-Zeile „Cannot find ESLint plugin (ESLintWebpackPlugin)" aus – NICHT fatal, Build läuft mit EXIT 0 durch.
+- Auf User-LXC 220 verifiziert: Frontend-Build erfolgreich (~19s, kein Memory-Limit), Backend `active (running)`, Live-/History-Endpunkte liefern 200 OK im Browser.
