@@ -102,6 +102,7 @@ Das Dashboard enthält:
 - Leistungsfluss-Verlauf (PV / Netz / Batterie / Haus)
 - Batterie-SoC-Verlauf
 - Energie im Zeitraum (kWh, per Integral)
+- **Autarkie heute** (Gauge in %): Anteil des Hausverbrauchs, der NICHT aus dem Netz bezogen wurde — berechnet als `(Hausenergie − Netzbezug) / Hausenergie`.
 
 > Auto-Refresh steht auf **15s**, Standard-Zeitraum **letzte 24h**.
 > Für Tageswerte oben rechts auf **„Today"** umstellen.
