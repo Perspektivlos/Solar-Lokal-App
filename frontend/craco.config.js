@@ -23,15 +23,21 @@ if (config.enableHealthCheck) {
 }
 
 let webpackConfig = {
-  eslint: {
-    configure: {
-      extends: ["plugin:react-hooks/recommended"],
-      rules: {
-        "react-hooks/rules-of-hooks": "error",
-        "react-hooks/exhaustive-deps": "warn",
-      },
-    },
-  },
+  // ESLint: im Dev-Server aktiv (erzwingt React-Hooks-Regeln). Beim
+  // Production-Build wird der eslint-Key weggelassen, damit craco erst gar
+  // nicht nach dem (via DISABLE_ESLINT_PLUGIN entfernten) ESLintWebpackPlugin
+  // sucht und keine irreführende Meldung ausgibt.
+  eslint: isDevServer
+    ? {
+        configure: {
+          extends: ["plugin:react-hooks/recommended"],
+          rules: {
+            "react-hooks/rules-of-hooks": "error",
+            "react-hooks/exhaustive-deps": "warn",
+          },
+        },
+      }
+    : undefined,
   webpack: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
