@@ -2,6 +2,10 @@
 const path = require("path");
 require("dotenv").config();
 
+// Versionsnummer automatisch aus package.json bereitstellen (Footer liest
+// process.env.REACT_APP_VERSION). Muss vor react-scripts gesetzt werden.
+process.env.REACT_APP_VERSION = require("./package.json").version;
+
 // Check if we're in development/preview mode (not production build)
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build
 const isDevServer = process.env.NODE_ENV !== "production";
@@ -23,15 +27,21 @@ if (config.enableHealthCheck) {
 }
 
 let webpackConfig = {
-  eslint: {
-    configure: {
-      extends: ["plugin:react-hooks/recommended"],
-      rules: {
-        "react-hooks/rules-of-hooks": "error",
-        "react-hooks/exhaustive-deps": "warn",
-      },
-    },
-  },
+  // ESLint: im Dev-Server aktiv (erzwingt React-Hooks-Regeln). Beim
+  // Production-Build wird der eslint-Key weggelassen, damit craco erst gar
+  // nicht nach dem (via DISABLE_ESLINT_PLUGIN entfernten) ESLintWebpackPlugin
+  // sucht und keine irreführende Meldung ausgibt.
+  eslint: isDevServer
+    ? {
+        configure: {
+          extends: ["plugin:react-hooks/recommended"],
+          rules: {
+            "react-hooks/rules-of-hooks": "error",
+            "react-hooks/exhaustive-deps": "warn",
+          },
+        },
+      }
+    : undefined,
   webpack: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getLive, getToday, getHistory } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import IntroCard from "../components/IntroCard";
@@ -40,10 +40,10 @@ const INTRO_SECTIONS = [
 ];
 
 // ---- helpers ----
-function relativeTime(iso) {
+function relativeTime(iso, nowMs) {
   if (!iso) return "–";
   const dt = new Date(iso);
-  const diff = (Date.now() - dt.getTime()) / 1000;
+  const diff = (nowMs - dt.getTime()) / 1000;
   if (diff < 2) return "gerade eben";
   if (diff < 60) return `vor ${Math.floor(diff)} s`;
   if (diff < 3600) return `vor ${Math.floor(diff / 60)} min`;
@@ -65,8 +65,8 @@ function GlassCard({ title, accent, right, testid, children, danger }) {
       style={{
         borderLeft: `3px solid ${accent}`,
         boxShadow: danger
-          ? `inset 0 0 0 1px rgba(239,68,68,0.4), 0 0 24px -8px ${accent}55`
-          : `0 0 24px -16px ${accent}88`,
+          ? `inset 0 0 0 1px rgba(239,68,68,0.45), 0 12px 34px -18px rgba(0,0,0,0.6), 0 0 26px -16px rgba(226,232,240,0.22)`
+          : `0 12px 34px -18px rgba(0,0,0,0.6), 0 0 26px -16px rgba(226,232,240,0.22)`,
       }}
     >
       {/* accent glow blob */}
@@ -147,35 +147,38 @@ export default function Dashboard() {
   const [today, setToday] = useState(null);
   const [trail, setTrail] = useState({ pv: [], grid: [], house: [], battery: [] });
   const [err, setErr] = useState(null);
-  const prevRef = useRef(null);
-  const [now, setNow] = useState(Date.now());
-
-  const loadInitialTrail = useCallback(() => {
-    getHistory("1h").then((d) => {
-      const pts = (d.points || []).slice(-30);
-      setTrail({
-        pv: pts.map((p) => p.pv_power),
-        grid: pts.map((p) => p.grid_power),
-        house: pts.map((p) => p.house_power),
-        battery: pts.map((p) => p.battery_power),
-      });
-    }).catch(() => {});
-  }, []);
-
-  useEffect(() => { loadInitialTrail(); }, [loadInitialTrail]);
+  const [prevLive, setPrevLive] = useState(null);
+  const liveRef = useRef(null);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    const id = setInterval(() => setNow((n) => n + 1000), 1000);
     return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
     let alive = true;
+    let seeded = false;
     const tick = async () => {
       try {
+        if (!seeded) {
+          seeded = true;
+          const h = await getHistory("1h");
+          if (alive && h?.points) {
+            const pts = h.points.slice(-30);
+            setTrail(() => ({
+              pv: pts.map((p) => p.pv_power),
+              grid: pts.map((p) => p.grid_power),
+              house: pts.map((p) => p.house_power),
+              battery: pts.map((p) => p.battery_power),
+            }));
+          }
+        }
         const [l, t] = await Promise.all([getLive(), getToday()]);
         if (!alive) return;
-        setLive((prev) => { prevRef.current = prev; return l; });
+        setPrevLive(liveRef.current);
+        liveRef.current = l;
+        setLive(l);
         setToday(t);
         setTrail((tr) => ({
           pv: [...tr.pv, l.summary.pv_power].slice(-30),
@@ -219,7 +222,7 @@ export default function Dashboard() {
   }
 
   const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp } = live;
-  const prev = prevRef.current;
+  const prev = prevLive;
   const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
 
   return (
@@ -235,7 +238,7 @@ export default function Dashboard() {
           </h1>
           <div className="font-mono text-[11px] text-white/55 mt-1 flex items-center gap-2 flex-wrap">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" />
-            Update: {relativeTime(timestamp)}
+            Update: {relativeTime(timestamp, now)}
             <span className="text-white/30">·</span>
             <span>Clock: {new Date(now).toLocaleTimeString("de-DE")}</span>
           </div>
@@ -247,17 +250,25 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Tageswerte strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-px glass overflow-hidden" data-testid="today-stats">
+      {/* Tageswerte – ein Raster in abgesteckte Bereiche */}
+      <div className="glass overflow-hidden grid grid-cols-2 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/[0.07]" data-testid="today-stats">
         {[
-          { label: "PV heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300 neon-text-yellow", spark: trail.pv, sparkColor: COLOR.pv },
-          { label: "Verbrauch", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", spark: trail.house, sparkColor: "#cbd5e1" },
-          { label: "Netz Bezug", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300 neon-text-red" },
-          { label: "Einspeisung", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300 neon-text-green" },
-          { label: "Autarkie", value: formatNum(today?.autarky_pct, 0), unit: "%", color: "text-white" },
-          { label: "Eigenverbr.", value: formatNum(today?.self_consumption_pct, 0), unit: "%", color: "text-cyan-300 neon-text-cyan" },
+          { label: "PV heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv },
+          { label: "Verbrauch", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: "#cbd5e1", spark: trail.house, sparkColor: "#cbd5e1" },
+          { label: "Netz Bezug", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300 neon-text-red", accent: COLOR.grid_imp },
+          { label: "Einspeisung", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp },
+          { label: "Autarkie", value: formatNum(today?.autarky_pct, 0), unit: "%", color: "text-violet-300", accent: "#A78BFA" },
+          { label: "Eigenverbr.", value: formatNum(today?.self_consumption_pct, 0), unit: "%", color: "text-cyan-300 neon-text-cyan", accent: COLOR.battery },
         ].map((m) => (
-          <div key={m.label} className="p-4 bg-slate-900/40">
+          <div
+            key={m.label}
+            className="relative p-4 transition-colors hover:bg-white/[0.02]"
+            data-testid={`today-stat-${m.label}`}
+          >
+            <span
+              className="absolute top-0 left-0 right-0 h-[2px] opacity-80 pointer-events-none"
+              style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)` }}
+            />
             <MetricBig label={m.label} value={m.value} unit={m.unit} color={m.color} sparkValues={m.spark} sparkColor={m.sparkColor} />
           </div>
         ))}

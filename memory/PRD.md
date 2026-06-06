@@ -68,6 +68,25 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - P2: Push-Benachrichtigung bei Übergang Bezug ↔ Einspeisung.
 - P2: Wochen-/Monats-Verlauf + CSV-Export.
 
+## UI-Feinschliff (2026-06)
+- KPI-Tagesleiste: an GlassCard-Stil angeglichen (linker Akzentbalken + dezenter Glow je Kennzahl), fügt sich ins Gesamtbild ein.
+- Energiefluss-Labels: Watt-Werte durch Richtungspfeile (Flussrichtung) auf der Linienmitte ersetzt – weniger Zahlen-Dopplung, klare Richtungsanzeige.
+- Hoymiles HM1500: Anzeige immer CH1–CH4 (statt aggregiertem CH0); Per-Kanal-Werte aus `HM1500/ch1..4/*`-Topics, sonst 0.
+- Akku-„ENTLÄDT"-Bereich bewusst unverändert (User-Wunsch).
+- Lint/Code: `Date.now()`-Purity-Blocker behoben (Uhr inkrementell + Lazy-Init), Vorwert von useRef → useState (reineres Render), `relativeTime(iso, now)`.
+
+## UI/Design-Iteration 2 (2026-06)
+- KPI-Tagesleiste: ein zusammenhängendes Raster mit abgesteckten Bereichen (Trennlinien `divide-*` + farbiger Top-Akzent je Segment) statt einzelner Karten.
+- Gesamtbild: Hintergrund tiefes Schwarz → Dunkelblau, dynamisch gemischt via `body::before` (radiale Blau-/Silber-Glows, langsame `bg-drift`-Animation). Karten-/Glass-Schatten auf Weiß/Silber-Halo umgestellt (`.glass`, `.glass-strong`, GlassCard boxShadow).
+- Versionsnummer automatisch: `craco.config.js` setzt `process.env.REACT_APP_VERSION` aus `package.json` (→ Footer `v{version}`). package.json auf 1.2.0 gebumpt; Version wird in den Production-Build eingebacken.
+- Footer: „Made with Emergent" verschoben (floating `#emergent-badge` ausgeblendet), Copyright „© THcentral.de".
+- InfluxDB-Anleitung: Hinweis ergänzt, dass InfluxDB bereits als LXC (ID 101, 192.168.0.203:8086) läuft → Install-Script optional, nur Org/Bucket/Token sicherstellen.
+
 ## Next Tasks
 - Testen mit echten Geräten (Demo-Modus aus) zuhause.
 - Reale Victron-Endpunkte je nach VenusOS-Setup anpassen.
+
+## Deployment-Härtung (2026-06)
+- `deploy/proxmox/build-app.sh`: Backend-Service wird jetzt VOR dem Frontend-Build aktiviert/gestartet → ein Frontend-Build-Fehler lässt das Backend nicht mehr „dead". RAM-Check + `NODE_OPTIONS=--max-old-space-size=2048` + OOM-Hinweise ergänzt.
+- `frontend/craco.config.js`: ESLint-Override nur noch im Dev-Server (Production-Build lässt `eslint`-Key weg). Hinweis: craco gibt bei `DISABLE_ESLINT_PLUGIN=true` weiterhin die harmlose Log-Zeile „Cannot find ESLint plugin (ESLintWebpackPlugin)" aus – NICHT fatal, Build läuft mit EXIT 0 durch.
+- Auf User-LXC 220 verifiziert: Frontend-Build erfolgreich (~19s, kein Memory-Limit), Backend `active (running)`, Live-/History-Endpunkte liefern 200 OK im Browser.

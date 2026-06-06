@@ -75,23 +75,32 @@ function Flow({ d, color, active, reverse, watts }) {
         strokeLinecap="round"
         style={{ filter: `drop-shadow(0 0 4px ${color}aa)` }}
       />
-      {watts !== undefined && <FlowLabel d={d} color={color} watts={watts} />}
+      {watts !== undefined && <FlowLabel d={d} color={color} reverse={reverse} />}
     </>
   );
 }
 
-function FlowLabel({ d, color, watts }) {
+function FlowLabel({ d, color, reverse }) {
   const m = d.match(/M\s*([\d.]+)\s+([\d.]+)\s+L\s*([\d.]+)\s+([\d.]+)/);
   if (!m) return null;
-  const x = (parseFloat(m[1]) + parseFloat(m[3])) / 2;
-  const y = (parseFloat(m[2]) + parseFloat(m[4])) / 2;
+  const x1 = parseFloat(m[1]), y1 = parseFloat(m[2]);
+  const x2 = parseFloat(m[3]), y2 = parseFloat(m[4]);
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  // Symbol statt Zahlenwert: Richtungspfeil auf der Linienmitte, zeigt die
+  // tatsächliche Flussrichtung (Quelle → Ziel, bei reverse umgekehrt).
+  const fromX = reverse ? x2 : x1, fromY = reverse ? y2 : y1;
+  const toX = reverse ? x1 : x2, toY = reverse ? y1 : y2;
+  const angle = (Math.atan2(toY - fromY, toX - fromX) * 180) / Math.PI;
   return (
     <g>
-      <rect x={x - 40} y={y - 13} width="80" height="26" rx="4" fill="rgba(15,23,42,0.92)" stroke={color} strokeWidth="1.5" />
-      <text x={x} y={y + 5} textAnchor="middle" fontSize="13" fontFamily="IBM Plex Mono" fill={color} fontWeight="700"
-            style={{ filter: `drop-shadow(0 0 3px ${color}99)` }}>
-        {`${Math.round(Math.abs(watts))} W`}
-      </text>
+      <circle cx={mx} cy={my} r="11" fill="rgba(15,23,42,0.92)" stroke={color} strokeWidth="1.5" />
+      <path
+        d="M -4 -5 L 6 0 L -4 5 Z"
+        fill={color}
+        transform={`translate(${mx},${my}) rotate(${angle})`}
+        style={{ filter: `drop-shadow(0 0 3px ${color}cc)` }}
+      />
     </g>
   );
 }

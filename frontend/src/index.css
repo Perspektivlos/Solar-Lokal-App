@@ -14,13 +14,30 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: #f1f5f9;
-    background-color: #0f172a;
-    background-image:
-        radial-gradient(900px circle at 15% -10%, rgba(250, 204, 21, 0.08), transparent 55%),
-        radial-gradient(900px circle at 85% 110%, rgba(6, 182, 212, 0.10), transparent 55%),
-        radial-gradient(700px circle at 50% 50%, rgba(99, 102, 241, 0.05), transparent 70%);
+    /* Eindrucksvolles Schwarz → Dunkelblau */
+    background-color: #04060d;
+    background-image: linear-gradient(160deg, #05070f 0%, #070c1c 45%, #04060d 100%);
     background-attachment: fixed;
     min-height: 100vh;
+}
+
+/* Dynamisch gemischter Hintergrund: dunkelblaue Tiefen + silbriger Schimmer,
+   langsam „atmend" für ein lebendiges Gesamtbild. */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(1100px circle at 14% -12%, rgba(29, 78, 216, 0.26), transparent 55%),
+        radial-gradient(1000px circle at 86% 112%, rgba(23, 42, 110, 0.34), transparent 55%),
+        radial-gradient(820px circle at 50% 44%, rgba(203, 213, 225, 0.05), transparent 70%);
+    animation: bg-drift 26s ease-in-out infinite alternate;
+}
+@keyframes bg-drift {
+    0%   { transform: translate3d(0, 0, 0) scale(1);        opacity: 0.85; }
+    100% { transform: translate3d(0, -1.4%, 0) scale(1.07); opacity: 1; }
 }
 
 .font-mono, code {
@@ -65,7 +82,10 @@ body {
         border: 1px solid rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(12px) saturate(160%);
         -webkit-backdrop-filter: blur(12px) saturate(160%);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px -10px rgba(0, 0, 0, 0.4);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            0 10px 30px -14px rgba(0, 0, 0, 0.6),
+            0 0 28px -18px rgba(226, 232, 240, 0.28);
         border-radius: 6px;
     }
     .glass-strong {
@@ -73,7 +93,10 @@ body {
         border: 1px solid rgba(255, 255, 255, 0.12);
         backdrop-filter: blur(16px) saturate(180%);
         -webkit-backdrop-filter: blur(16px) saturate(180%);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.09),
+            0 14px 38px -16px rgba(0, 0, 0, 0.65),
+            0 0 34px -18px rgba(226, 232, 240, 0.30);
         border-radius: 6px;
     }
     .glass-inset {
