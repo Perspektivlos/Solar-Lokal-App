@@ -33,7 +33,11 @@ const INTRO_SECTIONS = [
   },
 ];
 
-function getResultIcon(ok)      { if (ok === true) return Check; if (ok === false) return X; return Minus; }
+function ResultIcon({ ok, className }) {
+  if (ok === true) return <Check size={16} strokeWidth={3} className={className} />;
+  if (ok === false) return <X size={16} strokeWidth={3} className={className} />;
+  return <Minus size={16} strokeWidth={3} className={className} />;
+}
 function getResultClass(ok) {
   if (ok === true)  return "border-l-emerald-400/70 bg-emerald-400/[0.04]";
   if (ok === false) return "border-l-red-400/70 bg-red-400/[0.04]";
@@ -51,11 +55,10 @@ function formatFieldValue(v) {
 }
 
 function ResultRow({ name, ok, detail, ms }) {
-  const Icon = getResultIcon(ok);
   return (
     <div className={`flex items-center gap-3 glass border-l-[6px] ${getResultClass(ok)} px-3 py-2.5`}
          data-testid={`diag-${name.replace(/\s+/g, "-").toLowerCase()}`}>
-      <Icon size={16} strokeWidth={3} className={getResultIconClass(ok)} />
+      <ResultIcon ok={ok} className={getResultIconClass(ok)} />
       <div className="flex-1 min-w-0">
         <div className="font-medium text-sm text-white">{name}</div>
         <div className="font-mono text-[11px] text-white/55 truncate">{detail}</div>
@@ -153,7 +156,7 @@ export default function Diagnose() {
         <div className="p-4 space-y-2">
           {!result && (
             <div className="font-mono text-sm text-white/55 flex items-center gap-2">
-              <ChevronRight size={14} /> Klicke „Selbst-Test starten" um alle Komponenten zu prüfen.
+              <ChevronRight size={14} /> {'Klicke „Selbst-Test starten" um alle Komponenten zu prüfen.'}
             </div>
           )}
           {result?.tests?.map((t, i) => <ResultRow key={i} {...t} />)}

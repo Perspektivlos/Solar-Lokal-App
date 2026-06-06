@@ -30,7 +30,7 @@ const INTRO_SECTIONS = [
   },
   {
     label: "Speicherung",
-    body: <span>Konfiguration wird in MongoDB (<code className="text-cyan-300">db.config._id=&apos;main&apos;</code>) persistiert. Nach ‚Speichern' werden MQTT- und InfluxDB-Verbindungen neu aufgebaut.</span>,
+    body: <span>Konfiguration wird in MongoDB (<code className="text-cyan-300">db.config._id=&apos;main&apos;</code>) persistiert. Nach ‚Speichern&rsquo; werden MQTT- und InfluxDB-Verbindungen neu aufgebaut.</span>,
   },
   {
     label: "Mögliche Fehler",
