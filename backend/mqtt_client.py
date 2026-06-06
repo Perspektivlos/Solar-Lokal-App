@@ -177,28 +177,21 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     available = int(raw.get("HM1500/available", 0) or 0)
     p_ac = float(total.get("P_AC", 0) or 0)
     yield_day_wh = float(total.get("YieldDay", 0) or 0)  # Wh
-    # Per-channel data not always published — expose aggregated channel for now
+    # HM1500 hat 4 DC-Eingänge → immer CH1–CH4 anzeigen. Per-Kanal-Werte aus
+    # MQTT übernehmen, falls Ahoy DTU sie publiziert; sonst 0 (Gesamtwert in total_power).
     channels = []
     for ch in range(1, 5):
         chp = raw.get(f"HM1500/ch{ch}/P_DC")
         chu = raw.get(f"HM1500/ch{ch}/U_DC")
         chi = raw.get(f"HM1500/ch{ch}/I_DC")
         chy = raw.get(f"HM1500/ch{ch}/YieldDay")
-        if chp is not None or chu is not None:
-            channels.append({
-                "ch": ch,
-                "power": round(float(chp or 0), 1),
-                "voltage": round(float(chu or 0), 1),
-                "current": round(float(chi or 0), 2),
-                "yield_day": round(float(chy or 0) / 1000.0, 3),
-            })
-    if not channels:
-        # Single aggregated channel if no per-ch data
-        channels = [{
-            "ch": 0, "power": round(p_ac, 1),
-            "voltage": 0, "current": 0,
-            "yield_day": round(yield_day_wh / 1000.0, 3),
-        }]
+        channels.append({
+            "ch": ch,
+            "power": round(float(chp or 0), 1),
+            "voltage": round(float(chu or 0), 1),
+            "current": round(float(chi or 0), 2),
+            "yield_day": round(float(chy or 0) / 1000.0, 3),
+        })
     return {
         "online": available > 0,
         "total_power": round(p_ac, 1),

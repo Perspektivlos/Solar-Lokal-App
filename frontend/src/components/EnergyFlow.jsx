@@ -83,8 +83,15 @@ function Flow({ d, color, active, reverse, watts }) {
 function FlowLabel({ d, color, watts }) {
   const m = d.match(/M\s*([\d.]+)\s+([\d.]+)\s+L\s*([\d.]+)\s+([\d.]+)/);
   if (!m) return null;
-  const x = (parseFloat(m[1]) + parseFloat(m[3])) / 2;
-  const y = (parseFloat(m[2]) + parseFloat(m[4])) / 2;
+  const x1 = parseFloat(m[1]), y1 = parseFloat(m[2]);
+  const x2 = parseFloat(m[3]), y2 = parseFloat(m[4]);
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  // Label neben die Flusslinie versetzen, damit es die animierten Striche
+  // nicht überdeckt: vertikale Linien → nach rechts, horizontale → nach oben.
+  const vertical = Math.abs(x2 - x1) < Math.abs(y2 - y1);
+  const x = vertical ? mx + 58 : mx;
+  const y = vertical ? my : my - 30;
   return (
     <g>
       <rect x={x - 40} y={y - 13} width="80" height="26" rx="4" fill="rgba(15,23,42,0.92)" stroke={color} strokeWidth="1.5" />
