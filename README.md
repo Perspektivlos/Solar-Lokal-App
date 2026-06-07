@@ -1,8 +1,8 @@
 
-
+# Here are your Deploy
 # Komplette Deployment-Anleitung Schritt für Schritt
 
-## 🔧 Schritt 0 — Vorbereitung
+## 🔧 Vorbereitung
 Auf deinem PC (Linux/Mac/WSL):
 ```bash
 # Variante GitHub:
@@ -168,23 +168,3 @@ pct exec 220 -- bash -lc '
   /opt/solar-dashboard/deploy/proxmox/build-app.sh
 '
 ```
-
-# Here are your Deploy
-
-Tarball fertig: **`/tmp/solar-dashboard.tar.gz` (263 KB, 96 Files)**. ⚠️ Diese Datei liegt im Emergent-Cloud-Container — du musst sie zu dir bekommen. Drei Wege:
-
----
-
-## Option 1 — Download via Emergent (empfohlen)
-
-Im Emergent-UI hast du oben rechts:
-- **"Push to GitHub"** → erstellt/aktualisiert ein GitHub-Repo mit dem kompletten Code
-- **"Download Code"** → liefert das gesamte Projekt als ZIP
-
-Nutze eine der beiden. Bei GitHub klonst du auf Proxmox direkt; bei Download lädst du auf deinem PC und scp'st dann rüber.
-
-## Option 2 — `pct push` ohne ZIP
-
-Wenn du ohnehin Zugriff auf den `/app`-Ordner hier hast (z. B. via Emergent-Workspace), kannst du die deploy-Scripts auch einzeln rüberkopieren.
-
----
