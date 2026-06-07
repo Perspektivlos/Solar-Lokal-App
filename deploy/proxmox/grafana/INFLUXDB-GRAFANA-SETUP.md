@@ -9,11 +9,20 @@ und visualisiert die Langzeit-Daten in deiner **bestehenden Grafana-Instanz** (L
    (Backend, LXC 220)                        (LXC 203, :8086)                  (LXC 102, :3000)
 ```
 
-Datenmodell, das das Dashboard schreibt:
+Datenmodell, das das Dashboard schreibt (sobald InfluxDB aktiv ist):
 
-| Measurement | Felder (alle in Watt, SoC in %)                                          |
-|-------------|---------------------------------------------------------------------------|
-| `solar`     | `pv_power`, `grid_power`, `battery_power`, `house_power`, `battery_soc`   |
+| Measurement     | Tags         | Felder                                                                 |
+|-----------------|--------------|------------------------------------------------------------------------|
+| `solar`         | –            | `pv_power`, `grid_power`, `battery_power`, `house_power`, `battery_soc`, `autarky_pct`, `self_consumption_pct` |
+| `shelly_phase`  | `phase`      | `power`, `voltage`, `current`, `pf`                                     |
+| `shelly`        | –            | `total_power`                                                          |
+| `hoymiles`      | –            | `total_power`, `limit_percent`                                         |
+| `hoymiles_ch`   | `ch`         | `power`, `voltage`, `current`, `yield_day`                             |
+| `victron`       | –            | `total_power`                                                         |
+| `victron_mppt`  | `mppt`       | `pv_power`, `pv_voltage`, `battery_voltage`, `yield_today`, `state`     |
+| `trucki`        | –            | `vbat`, `ac_power`, `soc`, `zepc`, `temperature`, `ac_setpoint`, `ac_display`, `day_energy`, `total_energy` |
+
+Leistungen in Watt, SoC/Autarkie/Eigenverbrauch in %, Energie in kWh.
 
 Org = `home` · Bucket = `solar`
 
@@ -104,24 +113,39 @@ Datei `deploy/proxmox/grafana/influxdb-datasource.yaml` in der Grafana-LXC nach
 
 ---
 
-## Schritt 4 — Dashboard importieren
+## Schritt 4 — Dashboards importieren
+
+Es gibt **zwei** Dashboards – beide gleich importieren:
+
+| Datei | Inhalt | UID |
+|-------|--------|-----|
+| `solar-influxdb-dashboard.json` | **Übersicht**: PV/Netz/Haus/SoC-Kacheln, Leistungsfluss, SoC-Verlauf, kWh-Energie, Autarkie heute | `solar-lokal` |
+| `solar-devices-dashboard.json`  | **Geräte-Detail**: Shelly pro Phase, Hoymiles CH1–CH4, Victron pro MPPT, Trucki (VBAT/AC/SoC/Temp), Autarkie & Eigenverbrauch-Verlauf | `solar-geraete` |
+
+Pro Datei:
 
 1. In Grafana: **Dashboards → New → Import**
-2. **Upload JSON file** → `deploy/proxmox/grafana/solar-influxdb-dashboard.json` wählen
-   (oder Inhalt in das Textfeld einfügen).
+2. **Upload JSON file** → die jeweilige Datei wählen (oder Inhalt einfügen).
 3. Beim Import erscheint die Auswahl **„InfluxDB (Solar)"** → deine Datenquelle
    `InfluxDB-Solar` auswählen.
 4. **Import**.
 
-Das Dashboard enthält:
+Das **Übersichts-Dashboard** (`solar-lokal`) enthält:
 - Live-Kacheln: PV-Leistung, Netz, Hausverbrauch, Batterie-SoC (Gauge)
 - Leistungsfluss-Verlauf (PV / Netz / Batterie / Haus)
 - Batterie-SoC-Verlauf
 - Energie im Zeitraum (kWh, per Integral)
 - **Autarkie heute** (Gauge in %): Anteil des Hausverbrauchs, der NICHT aus dem Netz bezogen wurde — berechnet als `(Hausenergie − Netzbezug) / Hausenergie`.
 
-> Auto-Refresh steht auf **15s**, Standard-Zeitraum **letzte 24h**.
-> Für Tageswerte oben rechts auf **„Today"** umstellen.
+Das **Geräte-Detail-Dashboard** (`solar-geraete`) enthält gruppierte Zeilen:
+- **Shelly Pro 3EM**: Leistung & Spannung je Phase (L1–L3)
+- **Hoymiles HM1500**: Leistung je Kanal (CH1–CH4), Gesamt-AC, Leistungslimit
+- **Victron MPPT**: PV-Leistung & PV-Spannung je MPPT-Instanz
+- **Trucki2Shelly**: Akku-Spannung (VBAT), AC-Ausgang/Entladung, SoC-Gauge, Temperatur
+- **Autarkie & Eigenverbrauch** (momentaner Verlauf in %)
+
+> Beide Dashboards sind oben über das „Dashboards"-Dropdown verlinkt.
+> Auto-Refresh **15s**, Standard-Zeitraum **letzte 24h**.
 
 ---
 
@@ -139,8 +163,10 @@ Das Dashboard enthält:
 
 ## Retention / Speicherplatz
 
-5 Felder × alle 15s ≈ 28.800 Punkte/Tag. InfluxDB komprimiert das stark
-(typisch < 50 MB/Monat). Für automatisches Löschen alter Daten kann beim Setup
+Mit dem erweiterten Datenmodell (Summary + Shelly-Phasen + Hoymiles-Kanäle +
+Victron-MPPTs + Trucki) werden ca. **40–60 Felder × alle 15s ≈ 250k–350k Punkte/Tag**
+geschrieben. InfluxDB komprimiert das stark (typisch < 150 MB/Monat). Für
+automatisches Löschen alter Daten kann beim Setup
 `INFLUX_RETENTION="365d"` gesetzt werden (Default `0` = unbegrenzt). Nachträglich:
 
 ```bash

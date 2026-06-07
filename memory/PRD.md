@@ -93,6 +93,13 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Cleanup: ungenutzte shadcn-Dateien `carousel.jsx`, `calendar.jsx`, `command.jsx` gelöscht → 4 blockierende Lint-Fehler entfernt.
 - Tests: `test_config_goals.py` (6) ergänzt; Testing-Agent Backend+Frontend je 100%.
 
+## Grafana/InfluxDB-Ausbau + Victron-Bestätigung (2026-06)
+- InfluxDB-Write erweitert (`_build_influx_points` in server.py): schreibt jetzt pro Poll-Zyklus reiche Measurements – `solar` (inkl. momentanem `autarky_pct`/`self_consumption_pct`), `shelly_phase` (L1–L3), `shelly`, `hoymiles`, `hoymiles_ch` (CH1–4), `victron`, `victron_mppt` (pro Instanz, inkl. `state`), `trucki` (vbat/ac_power/soc/zepc/temperature/setpoint/energy).
+- Zweites Grafana-Dashboard `solar-devices-dashboard.json` (UID `solar-geraete`): gerätespezifische Zeilen (Shelly-Phasen, Hoymiles-Kanäle, Victron-MPPTs, Trucki, Autarkie/Eigenverbrauch-Verlauf). Verlinkt mit dem Übersichts-Dashboard.
+- SETUP-Doku (`INFLUXDB-GRAFANA-SETUP.md`): Datenmodell-Tabelle, Zwei-Dashboard-Import, Retention aktualisiert.
+- Victron: Topics vom User als korrekt bestätigt (`N/<vrm>/solarcharger/<inst>/…`), bleibt rein MPPT-Solar → Parsing unverändert; Victron-Daten fließen jetzt zusätzlich pro MPPT nach InfluxDB/Grafana.
+- Tests: `test_influx_points.py` (5) – Measurements/Autarkie-Berechnung/Offline-Skip. Gesamt 42 pytest grün.
+
 ## Next Tasks
 - P1: Telegram-Bot für SoC-Warnungen (Push bei niedrigem Akku/Statuswechsel).
 - P1: Forecast vs. Ist-Vergleich (Vergleichskarte auf dem Dashboard).
