@@ -1,0 +1,31 @@
+{
+  "summary": "Tested the new Autarkie-Ziel feature end-to-end. Backend: 37/37 pytest pass (6 new test_config_goals.py + 8 mqtt + 23 solar_dashboard). GET /api/config exposes goals.autarky_pct (default 70). PUT /api/config with {goals:{autarky_pct:80}} returns 200, persists via subsequent GET, and a goals-only PUT preserves every other top-level key (demo_mode/devices/mqtt/influx/victron_mqtt/forecast) byte-for-byte - so the live MQTT/integration session is not restarted. Frontend: data-testid='autarky-goal-card' renders on the dashboard (demo) with the ring, autarky-value '100%' (expected since demo PV fully covers load), 'ZIEL ERREICHT' badge, and initial autarky-goal-value '70%'. Clicking +/- mutates the goal by 5 (70->75->80->75) and the value survives a full page reload (75% after F5). Energiefluss-Diagramm regression: Netz (978 W Einspeisung) and Akku (404 W, 75% lädt) remain clearly distinct on the live dashboard. Verlauf and Forecast pages load with charts and no JS/page errors. Goal was reset to 70% at the end of the test run as requested.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_config_goals.py",
+    "/app/backend/tests/test_mqtt_client.py",
+    "/app/backend/tests/test_solar_dashboard.py",
+    "/app/test_reports/pytest/iteration_4_full.xml",
+    "/app/test_reports/pytest/iteration_4_goals.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py cfg_put correctly restricts integration restarts to {demo_mode, devices, mqtt, victron_mqtt, influx} - goals/forecast tweaks no longer drop the MQTT session. Verified by goals-only PUT preserving other keys.",
+    "AutarkyGoal.jsx: goal updates are optimistic (setGoal first, then putConfig). On putConfig failure a toast.error is shown but the local value is NOT rolled back - minor UX gap (state diverges from backend). Not a blocker.",
+    "AutarkyGoal.jsx: rapid +/- clicks fire one putConfig per click (no debounce). Fine at human click rate but could be improved with a 300ms debounce.",
+    "Pre-existing (out of scope): server.py still uses deprecated @app.on_event startup/shutdown - migrate to lifespan handlers in a future pass."
+  ],
+  "updated_files": ["/app/backend/tests/test_config_goals.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "None (demo_mode=True, no auth)",
+  "seed_data_creation": "None (goal value mutated during tests, reset to 70 at end - confirmed via GET /api/config)",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The goals.autarky_pct field is now part of /api/config (default 70). The frontend AutarkyGoal card on the Dashboard reads it on mount and writes via PUT /api/config {goals:{autarky_pct:N}}. cfg_put only restarts MQTT/Influx when one of {demo_mode, devices, mqtt, victron_mqtt, influx} is in the payload - keep that whitelist intact for future config keys. For testing, use data-testids: autarky-goal-card, autarky-ring, autarky-value, autarky-goal-status, autarky-goal-value, autarky-goal-increase, autarky-goal-decrease. Goal is currently 70 in the live preview DB.",
+  "rca of the issue": "N/A - feature addition iteration. No bugs found."
+}

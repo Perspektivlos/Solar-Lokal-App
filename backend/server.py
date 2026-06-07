@@ -94,6 +94,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "tilt_deg": 30,
         "azimuth_deg": 180,
     },
+    "goals": {
+        "autarky_pct": 70,
+    },
 }
 
 
@@ -105,7 +108,7 @@ async def get_config() -> Dict[str, Any]:
     doc.pop("_id", None)
     # merge missing keys
     cfg = {**DEFAULT_CONFIG, **doc}
-    for k in ["devices", "mqtt", "influx", "victron_mqtt", "forecast"]:
+    for k in ["devices", "mqtt", "influx", "victron_mqtt", "forecast", "goals"]:
         cfg[k] = {**DEFAULT_CONFIG[k], **(doc.get(k) or {})}
     return cfg
 
@@ -385,6 +388,7 @@ class ConfigUpdate(BaseModel):
     influx: Optional[Dict[str, Any]] = None
     victron_mqtt: Optional[Dict[str, Any]] = None
     forecast: Optional[Dict[str, Any]] = None
+    goals: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):
@@ -424,8 +428,11 @@ async def cfg_put(update: ConfigUpdate):
         else:
             current[key] = val
     await save_config(current)
-    # Restart integrations
-    await restart_integrations()
+    # Restart integrations only when connection-relevant keys changed
+    # (goals/forecast tweaks must not drop the live MQTT session).
+    integration_keys = {"demo_mode", "devices", "mqtt", "victron_mqtt", "influx"}
+    if integration_keys & set(payload.keys()):
+        await restart_integrations()
     return current
 
 
@@ -842,6 +849,114 @@ _poll_task: Optional[asyncio.Task] = None
 _keepalive_task: Optional[asyncio.Task] = None
 
 
+def _instant_ratios(summary: Dict[str, Any]) -> tuple:
+    """Momentane Autarkie & Eigenverbrauch in % aus der Live-Summary."""
+    hp = float(summary.get("house_power", 0) or 0)
+    gp = float(summary.get("grid_power", 0) or 0)
+    pv = float(summary.get("pv_power", 0) or 0)
+    grid_imp = max(0.0, gp)
+    grid_exp = max(0.0, -gp)
+    autarky = (hp - grid_imp) / hp * 100.0 if hp > 0 else 0.0
+    self_cons = (pv - grid_exp) / pv * 100.0 if pv > 0 else 0.0
+    return (max(0.0, min(100.0, autarky)), max(0.0, min(100.0, self_cons)))
+
+
+def _build_influx_points(data: Dict[str, Any]) -> list:
+    """Erzeugt einen reichen Satz InfluxDB-Punkte aus einer collect_live()-Payload.
+
+    Measurements:
+      - solar        : Summary (pv/grid/battery/house/soc + autarky/self-consumption %)
+      - shelly_phase : pro Phase (tag phase=L1..L3) power/voltage/current/pf
+      - shelly       : total_power
+      - hoymiles     : total_power, limit_percent
+      - hoymiles_ch  : pro Kanal (tag ch=1..4) power/voltage/current/yield_day
+      - victron      : total_power
+      - victron_mppt : pro MPPT (tag mppt=<instanz>) pv_power/pv_voltage/battery_voltage/yield_today/state
+      - trucki       : vbat/ac_power/soc/zepc/temperature/ac_setpoint/ac_display/day_energy/total_energy
+    """
+    pts: list = []
+    summary = data.get("summary", {}) or {}
+    autarky, self_cons = _instant_ratios(summary)
+    pts.append(
+        Point("solar")
+        .field("pv_power", float(summary.get("pv_power", 0) or 0))
+        .field("grid_power", float(summary.get("grid_power", 0) or 0))
+        .field("battery_power", float(summary.get("battery_power", 0) or 0))
+        .field("house_power", float(summary.get("house_power", 0) or 0))
+        .field("battery_soc", float(summary.get("battery_soc", 0) or 0))
+        .field("autarky_pct", round(autarky, 1))
+        .field("self_consumption_pct", round(self_cons, 1))
+    )
+
+    shelly = data.get("shelly") or {}
+    for ph in shelly.get("phases", []) or []:
+        pts.append(
+            Point("shelly_phase")
+            .tag("phase", str(ph.get("phase", "?")))
+            .field("power", float(ph.get("power", 0) or 0))
+            .field("voltage", float(ph.get("voltage", 0) or 0))
+            .field("current", float(ph.get("current", 0) or 0))
+            .field("pf", float(ph.get("pf", 0) or 0))
+        )
+    if shelly.get("total_power") is not None:
+        pts.append(Point("shelly").field("total_power", float(shelly.get("total_power", 0) or 0)))
+
+    ahoy = data.get("ahoy") or {}
+    if ahoy.get("total_power") is not None:
+        pts.append(
+            Point("hoymiles")
+            .field("total_power", float(ahoy.get("total_power", 0) or 0))
+            .field("limit_percent", float(ahoy.get("limit_percent", 0) or 0))
+        )
+    for ch in ahoy.get("channels", []) or []:
+        pts.append(
+            Point("hoymiles_ch")
+            .tag("ch", str(ch.get("ch", "?")))
+            .field("power", float(ch.get("power", 0) or 0))
+            .field("voltage", float(ch.get("voltage", 0) or 0))
+            .field("current", float(ch.get("current", 0) or 0))
+            .field("yield_day", float(ch.get("yield_day", 0) or 0))
+        )
+
+    victron = data.get("victron") or {}
+    if victron.get("total_power") is not None:
+        pts.append(Point("victron").field("total_power", float(victron.get("total_power", 0) or 0)))
+    for m in victron.get("mppts", []) or []:
+        vp = (
+            Point("victron_mppt")
+            .tag("mppt", str(m.get("id", "?")))
+            .field("pv_power", float(m.get("pv_power", 0) or 0))
+            .field("pv_voltage", float(m.get("pv_voltage", 0) or 0))
+            .field("battery_voltage", float(m.get("battery_voltage", 0) or 0))
+            .field("yield_today", float(m.get("yield_today", 0) or 0))
+        )
+        if m.get("state") is not None:
+            vp = vp.field("state", str(m.get("state")))
+        pts.append(vp)
+
+    trucki = data.get("trucki") or {}
+    if trucki.get("online"):
+        tp = (
+            Point("trucki")
+            .field("vbat", float(trucki.get("battery_voltage", 0) or 0))
+            .field("ac_power", float(trucki.get("battery_power", 0) or 0))
+            .field("soc", float(trucki.get("soc", 0) or 0))
+            .field("zepc", 1 if trucki.get("zepc") else 0)
+        )
+        for src, dst in [
+            ("temperature", "temperature"),
+            ("ac_setpoint_w", "ac_setpoint"),
+            ("ac_display_w", "ac_display"),
+            ("day_energy_kwh", "day_energy"),
+            ("total_energy_kwh", "total_energy"),
+        ]:
+            if trucki.get(src) is not None:
+                tp = tp.field(dst, float(trucki.get(src, 0) or 0))
+        pts.append(tp)
+
+    return pts
+
+
 async def poller_loop():
     _poller_state["running"] = True
     while True:
@@ -858,18 +973,11 @@ async def poller_loop():
             await db.snapshots.insert_one(snap)
             _poller_state["last_write"] = snap["ts"]
             _poller_state["count"] += 1
-            # InfluxDB optional write
+            # InfluxDB optional write (reicher Punkte-Satz pro Gerät)
             if _influx_state["write_api"] is not None:
                 try:
-                    p = (
-                        Point("solar")
-                        .field("pv_power", float(snap["pv_power"]))
-                        .field("grid_power", float(snap["grid_power"]))
-                        .field("battery_power", float(snap["battery_power"]))
-                        .field("house_power", float(snap["house_power"]))
-                        .field("battery_soc", float(snap["battery_soc"]))
-                    )
-                    _influx_state["write_api"].write(bucket=_influx_state["bucket"], record=p)
+                    points = _build_influx_points(data)
+                    _influx_state["write_api"].write(bucket=_influx_state["bucket"], record=points)
                     _influx_state["writes"] += 1
                 except Exception as e:
                     _influx_state["last_error"] = str(e)

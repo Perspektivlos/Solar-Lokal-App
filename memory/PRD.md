@@ -82,8 +82,28 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Footer: „Made with Emergent" verschoben (floating `#emergent-badge` ausgeblendet), Copyright „© THcentral.de".
 - InfluxDB-Anleitung: Hinweis ergänzt, dass InfluxDB bereits als LXC (ID 101, 192.168.0.203:8086) läuft → Install-Script optional, nur Org/Bucket/Token sicherstellen.
 
+## Bugfix: Netz/Akku identische Werte (2026-06)
+- Ursache: `fetch_trucki_from_mqtt()` leitete `battery_power` aus `Trucki/METER` ab. METER ist laut Trucki2Shelly-Doku der Netz-/Zähler-Messwert (Feedback-Signal vom Shelly Pro 3EM) → identisch zu `summary.grid_power`. Auf echter Hardware zeigten Netz und Akku denselben Wert.
+- Fix: `battery_power` kommt jetzt aus `Trucki/ACDISPLAY` (Ist-WR-Ausgang), Fallback `Trucki/ACSETPOINT`. Entladen → negativ, 0 wenn STATE != ON. METER bleibt separat als `grid_meter_w`. SoC-Lastkompensation nutzt ebenfalls die WR-Ausgangsleistung.
+- 3 Regressionstests ergänzt (test_mqtt_client.py), Testing-Agent: Backend+Frontend 100% grün, Netz/Akku im Energiefluss klar unterschiedlich.
+
+## Feature: Autarkie-Ziel-Kachel + Cleanup (2026-06)
+- Neue Dashboard-Kachel „Autarkie heute · Ziel-Fortschritt" (`AutarkyGoal.jsx`): Ring-Fortschritt der heutigen Eigendeckung gegen ein konfigurierbares Ziel, Aufschlüsselung (Eigenverbrauch %, selbst genutzt kWh), Fortschrittsbalken mit Ziel-Markierung und Inline-Ziel-Editor (±5 %).
+- Backend: `goals.autarky_pct` (Default 70) in `DEFAULT_CONFIG` + Merge + `ConfigUpdate`. `PUT /api/config` startet Integrationen nur noch neu, wenn verbindungsrelevante Keys ({demo_mode, devices, mqtt, victron_mqtt, influx}) geändert werden → Ziel-Tweaks lassen die MQTT-Session bestehen.
+- Cleanup: ungenutzte shadcn-Dateien `carousel.jsx`, `calendar.jsx`, `command.jsx` gelöscht → 4 blockierende Lint-Fehler entfernt.
+- Tests: `test_config_goals.py` (6) ergänzt; Testing-Agent Backend+Frontend je 100%.
+
+## Grafana/InfluxDB-Ausbau + Victron-Bestätigung (2026-06)
+- InfluxDB-Write erweitert (`_build_influx_points` in server.py): schreibt jetzt pro Poll-Zyklus reiche Measurements – `solar` (inkl. momentanem `autarky_pct`/`self_consumption_pct`), `shelly_phase` (L1–L3), `shelly`, `hoymiles`, `hoymiles_ch` (CH1–4), `victron`, `victron_mppt` (pro Instanz, inkl. `state`), `trucki` (vbat/ac_power/soc/zepc/temperature/setpoint/energy).
+- Zweites Grafana-Dashboard `solar-devices-dashboard.json` (UID `solar-geraete`): gerätespezifische Zeilen (Shelly-Phasen, Hoymiles-Kanäle, Victron-MPPTs, Trucki, Autarkie/Eigenverbrauch-Verlauf). Verlinkt mit dem Übersichts-Dashboard.
+- SETUP-Doku (`INFLUXDB-GRAFANA-SETUP.md`): Datenmodell-Tabelle, Zwei-Dashboard-Import, Retention aktualisiert.
+- Victron: Topics vom User als korrekt bestätigt (`N/<vrm>/solarcharger/<inst>/…`), bleibt rein MPPT-Solar → Parsing unverändert; Victron-Daten fließen jetzt zusätzlich pro MPPT nach InfluxDB/Grafana.
+- Tests: `test_influx_points.py` (5) – Measurements/Autarkie-Berechnung/Offline-Skip. Gesamt 42 pytest grün.
+
 ## Next Tasks
-- Testen mit echten Geräten (Demo-Modus aus) zuhause.
+- P1: Telegram-Bot für SoC-Warnungen (Push bei niedrigem Akku/Statuswechsel).
+- P1: Forecast vs. Ist-Vergleich (Vergleichskarte auf dem Dashboard).
+- P2: Erweiterte Wettervorhersage (Wind, Niederschlag).
 - Reale Victron-Endpunkte je nach VenusOS-Setup anpassen.
 
 ## Deployment-Härtung (2026-06)
