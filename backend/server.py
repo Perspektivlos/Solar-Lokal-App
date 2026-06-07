@@ -94,6 +94,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "tilt_deg": 30,
         "azimuth_deg": 180,
     },
+    "goals": {
+        "autarky_pct": 70,
+    },
 }
 
 
@@ -105,7 +108,7 @@ async def get_config() -> Dict[str, Any]:
     doc.pop("_id", None)
     # merge missing keys
     cfg = {**DEFAULT_CONFIG, **doc}
-    for k in ["devices", "mqtt", "influx", "victron_mqtt", "forecast"]:
+    for k in ["devices", "mqtt", "influx", "victron_mqtt", "forecast", "goals"]:
         cfg[k] = {**DEFAULT_CONFIG[k], **(doc.get(k) or {})}
     return cfg
 
@@ -385,6 +388,7 @@ class ConfigUpdate(BaseModel):
     influx: Optional[Dict[str, Any]] = None
     victron_mqtt: Optional[Dict[str, Any]] = None
     forecast: Optional[Dict[str, Any]] = None
+    goals: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):
@@ -424,8 +428,11 @@ async def cfg_put(update: ConfigUpdate):
         else:
             current[key] = val
     await save_config(current)
-    # Restart integrations
-    await restart_integrations()
+    # Restart integrations only when connection-relevant keys changed
+    # (goals/forecast tweaks must not drop the live MQTT session).
+    integration_keys = {"demo_mode", "devices", "mqtt", "victron_mqtt", "influx"}
+    if integration_keys & set(payload.keys()):
+        await restart_integrations()
     return current
 
 

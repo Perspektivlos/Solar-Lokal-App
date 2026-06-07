@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getLive, getToday, getHistory } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
+import AutarkyGoal from "../components/AutarkyGoal";
 import IntroCard from "../components/IntroCard";
 import { Cable, AlertTriangle, Activity, Radio, Wifi, WifiOff } from "lucide-react";
 
@@ -273,6 +274,14 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* Autarkie-Ziel · Fortschritt heute */}
+      <AutarkyGoal
+        autarky={today?.autarky_pct}
+        selfConsumption={today?.self_consumption_pct}
+        selfConsumedKwh={today?.self_consumption_kwh}
+        consumptionKwh={today?.consumption_kwh}
+      />
 
       {/* Energy flow + summary metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
