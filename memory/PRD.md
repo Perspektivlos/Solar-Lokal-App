@@ -87,6 +87,12 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Fix: `battery_power` kommt jetzt aus `Trucki/ACDISPLAY` (Ist-WR-Ausgang), Fallback `Trucki/ACSETPOINT`. Entladen → negativ, 0 wenn STATE != ON. METER bleibt separat als `grid_meter_w`. SoC-Lastkompensation nutzt ebenfalls die WR-Ausgangsleistung.
 - 3 Regressionstests ergänzt (test_mqtt_client.py), Testing-Agent: Backend+Frontend 100% grün, Netz/Akku im Energiefluss klar unterschiedlich.
 
+## Feature: Autarkie-Ziel-Kachel + Cleanup (2026-06)
+- Neue Dashboard-Kachel „Autarkie heute · Ziel-Fortschritt" (`AutarkyGoal.jsx`): Ring-Fortschritt der heutigen Eigendeckung gegen ein konfigurierbares Ziel, Aufschlüsselung (Eigenverbrauch %, selbst genutzt kWh), Fortschrittsbalken mit Ziel-Markierung und Inline-Ziel-Editor (±5 %).
+- Backend: `goals.autarky_pct` (Default 70) in `DEFAULT_CONFIG` + Merge + `ConfigUpdate`. `PUT /api/config` startet Integrationen nur noch neu, wenn verbindungsrelevante Keys ({demo_mode, devices, mqtt, victron_mqtt, influx}) geändert werden → Ziel-Tweaks lassen die MQTT-Session bestehen.
+- Cleanup: ungenutzte shadcn-Dateien `carousel.jsx`, `calendar.jsx`, `command.jsx` gelöscht → 4 blockierende Lint-Fehler entfernt.
+- Tests: `test_config_goals.py` (6) ergänzt; Testing-Agent Backend+Frontend je 100%.
+
 ## Next Tasks
 - P1: Telegram-Bot für SoC-Warnungen (Push bei niedrigem Akku/Statuswechsel).
 - P1: Forecast vs. Ist-Vergleich (Vergleichskarte auf dem Dashboard).
