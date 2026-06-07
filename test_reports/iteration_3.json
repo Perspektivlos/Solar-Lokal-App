@@ -1,0 +1,27 @@
+{
+  "summary": "Verified Trucki battery_power fix (METER -> ACDISPLAY). Backend pytest suite (8/8) passes including the three targeted regression tests. Demo-mode /api/live returns distinct grid_power and battery_power across multiple polls (e.g. grid=-1030 W vs battery=378 W). /api/diagnostics/raw, /api/forecast, /api/history all 200. Frontend Energiefluss-Diagramm renders correctly: flow-grid='NETZ 970W Einspeisung' vs flow-battery='AKKU 413W 84% · lädt' (distinct, and they continue to update independently). live-grid and live-battery KPI cards also show distinct values.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mqtt_client.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "mqtt_client.fetch_trucki_from_mqtt() correctly derives battery_power from ACDISPLAY (fallback ACSETPOINT) and keeps METER as grid_meter_w. Sign convention: discharging => negative battery_power; 0.0 when STATE != ON. Matches the regression tests.",
+    "Minor (pre-existing, not in scope): server.py uses deprecated FastAPI @app.on_event('startup'/'shutdown') and Motor uses the deprecated AsyncIOMotorClient defaults; consider lifespan handlers in a future refactor.",
+    "Minor (pre-existing): collect_live() flows pv_power = ahoy.total_power + victron.total_power even when ahoy is in 'fallback' state (mock with online=False) — could double-count in mixed real/mock scenarios, but not relevant to this fix."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "None (demo_mode=True, no auth)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "The Trucki METER vs ACDISPLAY bug fix is verified. Demo mode produces clearly distinct grid (Shelly mock) and battery (Trucki mock) values, so any future regression where they become identical would be visible immediately in /api/live and the Energiefluss-Diagramm. Real-MQTT path is exercised only via unit tests in /app/backend/tests/test_mqtt_client.py — keep those 3 regression tests (test_fetch_trucki_from_mqtt_discharging, test_fetch_trucki_battery_independent_of_grid_meter, test_fetch_trucki_acsetpoint_fallback) intact.",
+  "rca of the issue": "Root cause was fetch_trucki_from_mqtt() reading 'METER' (the Trucki gateway's grid-meter feedback from the Shelly Pro 3EM) and exposing it as battery_power. Since the Shelly summary.grid_power is built from the same physical reading, Netz and Akku ended up identical on real hardware. Fix: derive battery_power from 'ACDISPLAY' (actual inverter AC output) with fallback to 'ACSETPOINT' (setpoint), and keep METER under a new key grid_meter_w. Confirmed by unit tests + visual demo-mode separation."
+}

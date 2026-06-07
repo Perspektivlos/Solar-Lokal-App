@@ -258,9 +258,13 @@ def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
     vbat = float(live.get("VBAT", 0) or 0)
     meter = float(live.get("METER", 0) or 0)
     state_on = str(live.get("STATE", "")).upper() == "ON"
-    # METER ist die aktuelle AC-Einspeise-Leistung. SoC-Last-Kompensation
-    # bekommt diesen Wert nur wenn Trucki gerade aktiv entlädt.
-    discharge_w = meter if state_on else 0.0
+    # ACDISPLAY = tatsächliche AC-Ausgangsleistung des Wechselrichters (Akku-
+    # Entladung). Fallback: ACSETPOINT (Sollwert). METER ist der Netz-/Zähler-
+    # Messwert (Feedback-Signal) und entspricht dem Shelly-Wert – darf NICHT
+    # als Akku-Leistung verwendet werden, sonst zeigen Netz/Akku denselben Wert.
+    inverter_out_w = float(live.get("ACDISPLAY", live.get("ACSETPOINT", 0)) or 0)
+    # SoC-Last-Kompensation nutzt die echte WR-Ausgangsleistung beim Entladen.
+    discharge_w = inverter_out_w if state_on else 0.0
     # ZEPC kann sein: "1", "(ENABLED) 1", "(DISABLED) 0", "ON", "0", "1"
     zepc_raw = str(live.get("ZEPC", "0")).upper()
     zepc_on = ("ENABLED" in zepc_raw) or zepc_raw.strip() in ("1", "ON", "TRUE")
@@ -270,7 +274,9 @@ def fetch_trucki_from_mqtt() -> Optional[Dict[str, Any]]:
         "online": True,
         "soc": round(_trucki_soc_from_voltage(vbat, discharge_w), 1),
         "battery_voltage": round(vbat, 2),
-        "battery_power": -round(meter, 1) if state_on else 0.0,
+        # Akku-Leistung = WR-Ausgang (Entladen → negativ). 0 wenn AC aus.
+        "battery_power": -round(inverter_out_w, 1) if state_on else 0.0,
+        "grid_meter_w": round(meter, 1),
         "ac_output": state_on,
         "zepc": zepc_on,
         "target_w": float(live.get("TARGET", 0) or 0),

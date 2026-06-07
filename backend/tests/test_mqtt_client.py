@@ -51,9 +51,34 @@ def test_dispatch_routes_trucki_and_shelly() -> None:
 
 def test_fetch_trucki_from_mqtt_discharging() -> None:
     _reset_store()
-    mc._mqtt_data["trucki"]["raw"] = {"VBAT": 52.5, "METER": 300.0, "STATE": "ON", "ZEPC": "(ENABLED) 1"}
+    # battery_power must come from ACDISPLAY (inverter output), NOT METER (grid).
+    mc._mqtt_data["trucki"]["raw"] = {
+        "VBAT": 52.5, "METER": 300.0, "ACDISPLAY": 420.0,
+        "STATE": "ON", "ZEPC": "(ENABLED) 1",
+    }
     res = mc.fetch_trucki_from_mqtt()
     assert res is not None
     assert res["ac_output"] is True
     assert res["zepc"] is True
-    assert res["battery_power"] == -300.0  # discharging => negative
+    assert res["battery_power"] == -420.0  # discharging => negative, from ACDISPLAY
+    assert res["grid_meter_w"] == 300.0    # METER kept separately, != battery
+
+
+def test_fetch_trucki_battery_independent_of_grid_meter() -> None:
+    _reset_store()
+    # Regression: Netz (METER) and Akku (ACDISPLAY) must differ.
+    mc._mqtt_data["trucki"]["raw"] = {
+        "VBAT": 52.5, "METER": 0.0, "ACDISPLAY": 380.0, "STATE": "ON",
+    }
+    res = mc.fetch_trucki_from_mqtt()
+    assert res["battery_power"] == -380.0
+    assert res["grid_meter_w"] == 0.0
+
+
+def test_fetch_trucki_acsetpoint_fallback() -> None:
+    _reset_store()
+    # No ACDISPLAY -> fall back to ACSETPOINT.
+    mc._mqtt_data["trucki"]["raw"] = {"VBAT": 52.5, "ACSETPOINT": 250.0, "STATE": "ON"}
+    res = mc.fetch_trucki_from_mqtt()
+    assert res["battery_power"] == -250.0
+
