@@ -100,6 +100,11 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Victron: Topics vom User als korrekt bestätigt (`N/<vrm>/solarcharger/<inst>/…`), bleibt rein MPPT-Solar → Parsing unverändert; Victron-Daten fließen jetzt zusätzlich pro MPPT nach InfluxDB/Grafana.
 - Tests: `test_influx_points.py` (5) – Measurements/Autarkie-Berechnung/Offline-Skip. Gesamt 42 pytest grün.
 
+## Grafana Check & Repair + App-Style (2026-06)
+- **Repair Org-Mismatch:** Echte InfluxDB-Org des Users ist `Solar Lokal` (nicht `home`). `influxdb-datasource.yaml` (Provisioning) auf Org `Solar Lokal` + URL + echten Token gesetzt; SETUP-Doku (Schritt 1/2/3 + Fehlerbehebung) durchgehend auf `Solar Lokal` umgestellt.
+- **Check & Repair-Sektion** in der Doku: Hinweis, dass im Data Explorer nur die 5 alten Felder erscheinen, solange die Backend-LXC 220 auf der Vor-Ausbau-Version läuft → `git pull` + `systemctl restart solar-backend` nötig, damit `autarky_pct`/`self_consumption_pct` + Measurements `shelly_phase/hoymiles/hoymiles_ch/victron/victron_mppt/trucki` geschrieben werden.
+- **Design-Optimierung (App-Look):** Beide Grafana-Dashboards neu gestylt – transparente Panels (`transparent:true`), `style:dark`, App-Neon-Palette (PV #FACC15, Netz-Bezug #F87171, Einspeisung/Autarkie #10B981, Akku/Cyan #06B6D4, Haus #cbd5e1, Orange #FB923C), weiche Gradient-Linien, Emojis aus Titeln entfernt, Cross-Links zwischen Übersicht (`solar-lokal`) und Geräte-Detail (`solar-geraete`).
+
 ## Next Tasks
 - P1: Telegram-Bot für SoC-Warnungen (Push bei niedrigem Akku/Statuswechsel).
 - P1: Forecast vs. Ist-Vergleich (Vergleichskarte auf dem Dashboard).

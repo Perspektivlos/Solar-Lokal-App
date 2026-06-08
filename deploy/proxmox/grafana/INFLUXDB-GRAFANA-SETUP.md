@@ -24,7 +24,36 @@ Datenmodell, das das Dashboard schreibt (sobald InfluxDB aktiv ist):
 
 Leistungen in Watt, SoC/Autarkie/Eigenverbrauch in %, Energie in kWh.
 
-Org = `home` · Bucket = `solar`
+Org = `Solar Lokal` · Bucket = `solar`
+
+---
+
+## ✅ Check & Repair – deine Werte (THcoding / Solar Lokal)
+
+| Einstellung    | Wert |
+|----------------|------|
+| InfluxDB-URL   | `http://192.168.0.203:8086` |
+| Organisation   | `Solar Lokal` *(mit Leerzeichen!)* |
+| Bucket         | `solar` |
+| Grafana-URL    | `http://192.168.0.91:3000` |
+
+> **WICHTIG – reiche Daten erst nach Backend-Update:** Erscheinen im InfluxDB
+> *Data Explorer* nur die 5 alten Felder (`pv_power`, `grid_power`,
+> `battery_power`, `house_power`, `battery_soc`) und **keine** Tags
+> (`No tag keys found`), dann läuft auf der Backend-LXC (220) noch die **alte
+> Version**. Nach dem Update (neueste Code-Version pullen + Backend neu starten)
+> schreibt das Backend zusätzlich `autarky_pct`, `self_consumption_pct` sowie die
+> Measurements `shelly_phase`, `hoymiles`, `hoymiles_ch`, `victron`,
+> `victron_mppt`, `trucki`. Erst danach zeigen beide Grafana-Dashboards alle Panels.
+>
+> ```bash
+> # auf der Backend-LXC 220
+> cd /opt/solar-dashboard        # oder dein Repo-Pfad
+> git pull
+> systemctl restart solar-backend
+> # Prüfen: Diagnose-Tab -> InfluxDB "verbunden, Writes steigen",
+> #         InfluxDB Data Explorer -> Measurements shelly_phase/trucki/... sichtbar
+> ```
 
 ---
 
@@ -33,14 +62,14 @@ Org = `home` · Bucket = `solar`
 > **Bereits vorhanden?** Läuft InfluxDB schon (in dieser Umgebung: **LXC ID 101**,
 > `http://192.168.0.203:8086`), dann **diesen Schritt überspringen** und direkt mit
 > Schritt 2 weitermachen. Stelle in deiner InfluxDB nur sicher, dass es eine
-> **Organisation** (`home`), einen **Bucket** (`solar`) und einen **API-Token** gibt:
+> **Organisation** (`Solar Lokal`), einen **Bucket** (`solar`) und einen **API-Token** gibt:
 >
 > ```bash
 > # in der bestehenden InfluxDB-LXC (z.B. ID 101)
 > pct enter 101    # oder per SSH
-> influx org create   --name home            2>/dev/null || true
-> influx bucket create --name solar --org home 2>/dev/null || true
-> influx auth create  --org home --all-access --description "solar-dashboard"
+> influx org create   --name "Solar Lokal"                 2>/dev/null || true
+> influx bucket create --name solar --org "Solar Lokal"    2>/dev/null || true
+> influx auth create  --org "Solar Lokal" --all-access --description "solar-dashboard"
 > #  -> den ausgegebenen Token notieren (für Schritt 2 + Grafana)
 > ```
 > Org/Bucket dürfen auch anders heißen – dann in Schritt 2 (Integrationen) und in
@@ -77,7 +106,7 @@ Im Solar-Dashboard (Web-UI):
 1. **Integrationen** → Karte **InfluxDB**
 2. Werte eintragen:
    - **URL**: `http://192.168.0.203:8086`
-   - **Org**: `home`
+   - **Org**: `Solar Lokal`
    - **Bucket**: `solar`
    - **Token**: `<Token aus Schritt 1>`
 3. Toggle **AN** → **Speichern**
@@ -100,16 +129,16 @@ In deiner bestehenden Grafana (`http://192.168.0.91:3000`):
    - **URL**: `http://192.168.0.203:8086`
    - **Auth**: alle Toggles aus (keine Basic-Auth)
    - **InfluxDB Details**:
-     - **Organization**: `home`
+     - **Organization**: `Solar Lokal`
      - **Token**: `<Token aus Schritt 1>`
      - **Default Bucket**: `solar`
 3. **Save & test** → muss „datasource is working" melden.
 
-**Variante B — per Provisioning (Datei `influxdb-solar.yaml`):**
+**Variante B — per Provisioning (Datei `influxdb-datasource.yaml`):**
 
 Datei `deploy/proxmox/grafana/influxdb-datasource.yaml` in der Grafana-LXC nach
-`/etc/grafana/provisioning/datasources/` kopieren, Token eintragen, dann
-`systemctl restart grafana-server`. (Details in der YAML-Datei.)
+`/etc/grafana/provisioning/datasources/influxdb-solar.yaml` kopieren (Org `Solar Lokal`
+und Token sind dort bereits eingetragen), dann `systemctl restart grafana-server`.
 
 ---
 
@@ -155,7 +184,8 @@ Das **Geräte-Detail-Dashboard** (`solar-geraete`) enthält gruppierte Zeilen:
 |---------|------------------|
 | Grafana „Save & test" schlägt fehl | Falscher Token/Org, oder InfluxDB-LXC nicht erreichbar. `curl http://192.168.0.203:8086/health` testen. |
 | Panels „No data" | Demo-Modus zählt nicht? Doch — auch im Demo-Modus wird geschrieben, **sobald InfluxDB in den Integrationen aktiv ist**. Diagnose-Tab prüfen (Writes > 0). |
-| Diagnose: InfluxDB rot, „unauthorized" | Token falsch oder Org stimmt nicht (`home`). |
+| Diagnose: InfluxDB rot, „unauthorized" | Token falsch oder Org stimmt nicht (muss exakt `Solar Lokal` sein, mit Leerzeichen). |
+| Panels zeigen nur PV/Netz/Haus/SoC, keine Geräte-Details | Backend-LXC läuft noch auf alter Version → neueste Version pullen + `systemctl restart solar-backend` (siehe „Check & Repair" oben). |
 | Energie-kWh wirkt zu niedrig | `integral` braucht den vollen Zeitraum — Zeitfenster auf „Today" stellen. |
 | Daten brechen ab | Backend lief nicht (15s-Poller). `journalctl -u solar-backend -f` im Dashboard-LXC prüfen. |
 

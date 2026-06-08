@@ -3,7 +3,7 @@
     {
       "name": "DS_INFLUXDB",
       "label": "InfluxDB (Solar)",
-      "description": "Wähle deine InfluxDB-2-Datenquelle (Flux). Org=home, Bucket=solar.",
+      "description": "Wähle deine InfluxDB-2-Datenquelle (Flux). Org=Solar Lokal, Bucket=solar.",
       "type": "datasource",
       "pluginId": "influxdb",
       "pluginName": "InfluxDB"
@@ -22,195 +22,111 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
-  "links": [],
+  "links": [
+    { "title": "Geräte-Detail", "type": "dashboards", "tags": ["detail"], "asDropdown": true, "icon": "apps" }
+  ],
   "liveNow": false,
   "refresh": "15s",
   "schemaVersion": 39,
+  "style": "dark",
   "tags": ["solar", "energie", "home"],
   "templating": { "list": [] },
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Solar Lokal-Dashboard",
+  "title": "Solar Lokal – Übersicht",
   "uid": "solar-lokal",
-  "version": 1,
+  "version": 2,
   "weekStart": "",
   "panels": [
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "yellow" },
-          "unit": "watt",
-          "decimals": 0,
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "fixed", "fixedColor": "#FACC15" }, "unit": "watt", "decimals": 0, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
       "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
       "pluginVersion": "10.0.0",
       "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
-          "refId": "A"
-        }
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
       ],
-      "title": "☀️ PV-Leistung",
+      "title": "PV-Leistung",
       "type": "stat"
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "unit": "watt",
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 0.1 }
-            ]
-          },
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "watt", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "#10B981", "value": null }, { "color": "#F87171", "value": 0.1 } ] }, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
       "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
       "pluginVersion": "10.0.0",
       "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"grid_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
-          "refId": "A"
-        }
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"grid_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
       ],
-      "title": "🔌 Netz (− = Einspeisung)",
+      "title": "Netz  (− = Einspeisung)",
       "type": "stat"
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "purple" },
-          "unit": "watt",
-          "decimals": 0,
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "fixed", "fixedColor": "#cbd5e1" }, "unit": "watt", "decimals": 0, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
       "id": 3,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
       "pluginVersion": "10.0.0",
       "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
-          "refId": "A"
-        }
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
       ],
-      "title": "🏠 Hausverbrauch",
+      "title": "Hausverbrauch",
       "type": "stat"
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "orange", "value": 20 },
-              { "color": "yellow", "value": 50 },
-              { "color": "green", "value": 80 }
-            ]
-          },
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "percent", "min": 0, "max": 100, "decimals": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "#F87171", "value": null }, { "color": "#FB923C", "value": 20 }, { "color": "#FACC15", "value": 50 }, { "color": "#06B6D4", "value": 80 } ] }, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
       "id": 4,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true },
       "pluginVersion": "10.0.0",
       "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_soc\")\n  |> last()",
-          "refId": "A"
-        }
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_soc\")\n  |> last()", "refId": "A" }
       ],
-      "title": "🔋 Batterie SoC",
+      "title": "Batterie SoC",
       "type": "gauge"
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
           "unit": "watt",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "fillOpacity": 12,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "spanNulls": true,
-            "axisPlacement": "auto"
-          },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 16, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true, "axisPlacement": "auto" },
           "mappings": []
         },
         "overrides": [
-          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [ { "id": "displayName", "value": "PV" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } } ] },
-          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [ { "id": "displayName", "value": "Netz" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] },
-          { "matcher": { "id": "byFrameRefID", "options": "C" }, "properties": [ { "id": "displayName", "value": "Batterie" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#22D3EE" } } ] },
-          { "matcher": { "id": "byFrameRefID", "options": "D" }, "properties": [ { "id": "displayName", "value": "Haus" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "purple" } } ] }
+          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [ { "id": "displayName", "value": "PV" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#FACC15" } } ] },
+          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [ { "id": "displayName", "value": "Netz" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#F87171" } } ] },
+          { "matcher": { "id": "byFrameRefID", "options": "C" }, "properties": [ { "id": "displayName", "value": "Batterie" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#06B6D4" } } ] },
+          { "matcher": { "id": "byFrameRefID", "options": "D" }, "properties": [ { "id": "displayName", "value": "Haus" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#cbd5e1" } } ] }
         ]
       },
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 4 },
       "id": 5,
-      "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
+      "options": { "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" },
@@ -223,121 +139,64 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "green" },
+          "color": { "mode": "fixed", "fixedColor": "#06B6D4" },
           "unit": "percent",
           "min": 0,
           "max": 100,
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "fillOpacity": 18,
-            "gradientMode": "opacity",
-            "showPoints": "never",
-            "spanNulls": true
-          },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 20, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
       "id": 6,
-      "options": {
-        "legend": { "calcs": ["min", "max", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
+      "options": { "legend": { "calcs": ["min", "max", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
       "pluginVersion": "10.0.0",
       "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_soc\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
-          "refId": "A"
-        }
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_soc\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
       ],
-      "title": "🔋 Batterie SoC Verlauf (%)",
+      "title": "Batterie SoC Verlauf (%)",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "unit": "kwatth",
-          "decimals": 2,
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "kwatth", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [ { "color": "#06B6D4", "value": null } ] }, "mappings": [] },
         "overrides": [
-          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [ { "id": "displayName", "value": "PV-Ertrag" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } } ] },
-          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [ { "id": "displayName", "value": "Hausverbrauch" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "purple" } } ] }
+          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [ { "id": "displayName", "value": "PV-Ertrag" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#FACC15" } } ] },
+          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [ { "id": "displayName", "value": "Hausverbrauch" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#cbd5e1" } } ] }
         ]
       },
       "gridPos": { "h": 8, "w": 8, "x": 12, "y": 13 },
       "id": 7,
-      "options": {
-        "displayMode": "gradient",
-        "orientation": "horizontal",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "showUnfilled": true,
-        "valueMode": "color"
-      },
+      "options": { "displayMode": "gradient", "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showUnfilled": true, "valueMode": "color" },
       "pluginVersion": "10.0.0",
       "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\")\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\")\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))",
-          "refId": "B"
-        }
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\")\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))", "refId": "A" },
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\")\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> map(fn: (r) => ({ r with _value: r._value / 1000.0 }))", "refId": "B" }
       ],
       "title": "Energie im Zeitraum (kWh)",
       "type": "bargauge"
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "orange", "value": 40 },
-              { "color": "yellow", "value": 60 },
-              { "color": "green", "value": 80 }
-            ]
-          },
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "percent", "min": 0, "max": 100, "decimals": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "#F87171", "value": null }, { "color": "#FB923C", "value": 40 }, { "color": "#FACC15", "value": 60 }, { "color": "#10B981", "value": 80 } ] }, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 4, "x": 20, "y": 13 },
       "id": 8,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true },
       "pluginVersion": "10.0.0",
       "targets": [
-        {
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "house = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\")\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> group()\n  |> keep(columns: [\"_value\"])\n  |> set(key: \"k\", value: \"house\")\n\ngridimp = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"grid_power\")\n  |> map(fn: (r) => ({ r with _value: if r._value > 0.0 then r._value else 0.0 }))\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> group()\n  |> keep(columns: [\"_value\"])\n  |> set(key: \"k\", value: \"gridimp\")\n\nunion(tables: [house, gridimp])\n  |> pivot(rowKey: [], columnKey: [\"k\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ _value: if r.house > 0.0 then (r.house - r.gridimp) / r.house * 100.0 else 0.0 }))",
-          "refId": "A"
-        }
+        { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "house = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\")\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> group()\n  |> keep(columns: [\"_value\"])\n  |> set(key: \"k\", value: \"house\")\n\ngridimp = from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"grid_power\")\n  |> map(fn: (r) => ({ r with _value: if r._value > 0.0 then r._value else 0.0 }))\n  |> integral(unit: 1h, interpolate: \"linear\")\n  |> group()\n  |> keep(columns: [\"_value\"])\n  |> set(key: \"k\", value: \"gridimp\")\n\nunion(tables: [house, gridimp])\n  |> pivot(rowKey: [], columnKey: [\"k\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({ _value: if r.house > 0.0 then (r.house - r.gridimp) / r.house * 100.0 else 0.0 }))", "refId": "A" }
       ],
-      "title": "🔆 Autarkie heute",
+      "title": "Autarkie heute",
       "type": "gauge"
     }
   ]
