@@ -1,13 +1,19 @@
 # Grafana Provisioning – InfluxDB-2-Datenquelle (Flux) für das Solar-Dashboard
 #
-# Installation (in der Grafana-LXC 102, http://192.168.0.91:3000):
+# Installation (in der Grafana-LXC, http://192.168.0.91:3000):
 #   1. Diese Datei kopieren nach:
 #        /etc/grafana/provisioning/datasources/influxdb-solar.yaml
-#   2. Unten bei "token" deinen InfluxDB-API-Token eintragen.
-#   3. systemctl restart grafana-server
+#   2. systemctl restart grafana-server
 #
 # Danach erscheint die Datenquelle "InfluxDB-Solar" automatisch und kann beim
-# Import von solar-influxdb-dashboard.json ausgewählt werden.
+# Import von solar-influxdb-dashboard.json / solar-devices-dashboard.json
+# ausgewählt werden.
+#
+# WICHTIG (Check & Repair):
+#   - organization MUSS exakt deiner InfluxDB-Org entsprechen: "Solar Lokal"
+#     (mit Leerzeichen!). Eine falsche Org ist die häufigste "No data"-Ursache.
+#   - Der Token unten ist sensibel – nicht öffentlich teilen. Bei Bedarf in der
+#     InfluxDB-UI (Load Data → API Tokens) neu erzeugen und hier ersetzen.
 
 apiVersion: 1
 
@@ -19,9 +25,9 @@ datasources:
     isDefault: false
     jsonData:
       version: Flux
-      organization: home
+      organization: Solar Lokal
       defaultBucket: solar
       tlsSkipVerify: true
     secureJsonData:
-      token: DEIN_INFLUXDB_API_TOKEN_HIER
+      token: 4t9sIhQin5gJ8D0k5WwQU2KaoMb9-QBc-lKiDS5MT8An0nsxUf1EVPc9ZwmMEFAWHo1lsHkN-f0j3XKVCNskag==
     editable: true

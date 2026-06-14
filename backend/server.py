@@ -83,7 +83,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "enabled": False,
         "url": "http://192.168.0.203:8086",
         "token": "",
-        "org": "home",
+        "org": "Solar Lokal",
         "bucket": "solar",
     },
     "forecast": {

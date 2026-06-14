@@ -3,7 +3,7 @@
     {
       "name": "DS_INFLUXDB",
       "label": "InfluxDB (Solar)",
-      "description": "Wähle deine InfluxDB-2-Datenquelle (Flux). Org=home, Bucket=solar.",
+      "description": "Wähle deine InfluxDB-2-Datenquelle (Flux). Org=Solar Lokal, Bucket=solar.",
       "type": "datasource",
       "pluginId": "influxdb",
       "pluginName": "InfluxDB"
@@ -22,19 +22,20 @@
   "graphTooltip": 1,
   "id": null,
   "links": [
-    { "title": "Solar Lokal-Dashboard", "type": "dashboards", "tags": ["solar"], "asDropdown": true, "icon": "external link" }
+    { "title": "Übersicht", "type": "dashboards", "tags": ["solar"], "asDropdown": true, "icon": "external link" }
   ],
   "liveNow": false,
   "refresh": "15s",
   "schemaVersion": 39,
+  "style": "dark",
   "tags": ["solar", "geräte", "detail"],
   "templating": { "list": [] },
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Solar – Geräte-Detail",
+  "title": "Solar Lokal – Geräte-Detail",
   "uid": "solar-geraete",
-  "version": 1,
+  "version": 2,
   "weekStart": "",
   "panels": [
     {
@@ -42,26 +43,24 @@
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "id": 100,
       "type": "row",
-      "title": "🔌 Shelly Pro 3EM",
+      "title": "Shelly Pro 3EM",
       "panels": []
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
           "unit": "watt",
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 14, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "id": 1,
-      "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
+      "options": { "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"shelly_phase\" and r._field == \"power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"phase\"])", "refId": "A" }
@@ -71,6 +70,7 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -83,10 +83,7 @@
       },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "id": 2,
-      "options": {
-        "legend": { "calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
-      },
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"shelly_phase\" and r._field == \"voltage\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"phase\"])", "refId": "A" }
@@ -99,26 +96,24 @@
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
       "id": 101,
       "type": "row",
-      "title": "☀️ Hoymiles HM1500 (Ahoy DTU)",
+      "title": "Hoymiles HM1500 (Ahoy DTU)",
       "panels": []
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
           "unit": "watt",
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 14, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
       "id": 3,
-      "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
+      "options": { "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"hoymiles_ch\" and r._field == \"power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"ch\"])", "refId": "A" }
@@ -128,21 +123,19 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "yellow" },
+          "color": { "mode": "fixed", "fixedColor": "#FACC15" },
           "unit": "watt",
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 14, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 16, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 8, "x": 12, "y": 10 },
       "id": 4,
-      "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
+      "options": { "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"hoymiles\" and r._field == \"total_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
@@ -152,26 +145,14 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 0,
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 50 }, { "color": "green", "value": 90 } ] },
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "percent", "min": 0, "max": 100, "decimals": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "#F87171", "value": null }, { "color": "#FACC15", "value": 50 }, { "color": "#10B981", "value": 90 } ] }, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 4, "x": 20, "y": 10 },
       "id": 5,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"hoymiles\" and r._field == \"limit_percent\")\n  |> last()", "refId": "A" }
@@ -184,26 +165,24 @@
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
       "id": 102,
       "type": "row",
-      "title": "🟢 Victron SmartSolar MPPT",
+      "title": "Victron SmartSolar MPPT",
       "panels": []
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
           "unit": "watt",
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 12, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 16, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 19 },
       "id": 6,
-      "options": {
-        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
+      "options": { "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"victron_mppt\" and r._field == \"pv_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"mppt\"])", "refId": "A" }
@@ -213,6 +192,7 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -225,10 +205,7 @@
       },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 19 },
       "id": 7,
-      "options": {
-        "legend": { "calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
-      },
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "none" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"victron_mppt\" and r._field == \"pv_voltage\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"mppt\"])", "refId": "A" }
@@ -241,27 +218,25 @@
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
       "id": 103,
       "type": "row",
-      "title": "🔋 Trucki2Shelly Speicher",
+      "title": "Trucki2Shelly Speicher",
       "panels": []
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "#22D3EE" },
+          "color": { "mode": "fixed", "fixedColor": "#06B6D4" },
           "unit": "volt",
           "decimals": 2,
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 10, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 12, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 28 },
       "id": 8,
-      "options": {
-        "legend": { "calcs": ["min", "max", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
+      "options": { "legend": { "calcs": ["min", "max", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"trucki\" and r._field == \"vbat\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
@@ -271,21 +246,19 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "orange" },
+          "color": { "mode": "fixed", "fixedColor": "#FB923C" },
           "unit": "watt",
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 12, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 14, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 28 },
       "id": 9,
-      "options": {
-        "legend": { "calcs": ["mean", "min", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "single", "sort": "none" }
-      },
+      "options": { "legend": { "calcs": ["mean", "min", "lastNotNull"], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "single", "sort": "none" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"trucki\" and r._field == \"ac_power\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
@@ -295,26 +268,14 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "decimals": 0,
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "orange", "value": 15 }, { "color": "yellow", "value": 40 }, { "color": "green", "value": 70 } ] },
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "percent", "min": 0, "max": 100, "decimals": 0, "thresholds": { "mode": "absolute", "steps": [ { "color": "#F87171", "value": null }, { "color": "#FB923C", "value": 15 }, { "color": "#FACC15", "value": 40 }, { "color": "#06B6D4", "value": 70 } ] }, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 4, "x": 16, "y": 28 },
       "id": 10,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "showThresholdLabels": false, "showThresholdMarkers": true },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"trucki\" and r._field == \"soc\")\n  |> last()", "refId": "A" }
@@ -324,26 +285,14 @@
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "unit": "celsius",
-          "decimals": 1,
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null }, { "color": "green", "value": 10 }, { "color": "orange", "value": 45 }, { "color": "red", "value": 60 } ] },
-          "mappings": []
-        },
+        "defaults": { "color": { "mode": "thresholds" }, "unit": "celsius", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [ { "color": "#06B6D4", "value": null }, { "color": "#10B981", "value": 10 }, { "color": "#FB923C", "value": 45 }, { "color": "#F87171", "value": 60 } ] }, "mappings": [] },
         "overrides": []
       },
       "gridPos": { "h": 8, "w": 4, "x": 20, "y": 28 },
       "id": 11,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"trucki\" and r._field == \"temperature\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" }
@@ -356,31 +305,29 @@
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
       "id": 104,
       "type": "row",
-      "title": "🔆 Autarkie & Eigenverbrauch (momentan)",
+      "title": "Autarkie & Eigenverbrauch (momentan)",
       "panels": []
     },
     {
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "transparent": true,
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
           "unit": "percent",
           "min": 0,
           "max": 100,
-          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 14, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 16, "gradientMode": "opacity", "showPoints": "never", "spanNulls": true },
           "mappings": []
         },
         "overrides": [
-          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [ { "id": "displayName", "value": "Autarkie" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
-          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [ { "id": "displayName", "value": "Eigenverbrauch" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#22D3EE" } } ] }
+          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [ { "id": "displayName", "value": "Autarkie" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } } ] },
+          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [ { "id": "displayName", "value": "Eigenverbrauch" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#06B6D4" } } ] }
         ]
       },
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 37 },
       "id": 12,
-      "options": {
-        "legend": { "calcs": ["mean", "min", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
+      "options": { "legend": { "calcs": ["mean", "min", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
       "pluginVersion": "10.0.0",
       "targets": [
         { "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"solar\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"autarky_pct\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)", "refId": "A" },
