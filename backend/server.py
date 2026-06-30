@@ -354,12 +354,25 @@ async def collect_live() -> Dict[str, Any]:
         ),
     )
 
-    pv_power = (ahoy.get("total_power", 0) or 0) + (victron.get("total_power", 0) or 0)
-    grid_power = shelly.get("total_power", 0) or 0  # >0 import, <0 export
-    battery_power = trucki.get("battery_power", 0) or 0  # >0 charging, <0 discharging
-    # Energy balance: PV + Grid_in + Battery_discharge = House
-    # With signed conventions: house = pv + grid - battery_power
-    house_power = pv_power + grid_power - battery_power
+    # DC-gekoppeltes System (vom Nutzer bestätigt):
+    #  - Victron-MPPTs laden den Akku (DC), speisen NICHT direkt ins Haus.
+    #  - Hoymiles HM1500 speist AC direkt ins Haus/Netz.
+    #  - Trucki/SUN-Wechselrichter entlädt den Akku ins AC-Netz.
+    #  - Shelly Pro 3EM misst am Netzanschluss (+Bezug / −Einspeisung).
+    pv_ac_power = ahoy.get("total_power", 0) or 0       # Hoymiles AC → Haus
+    pv_dc_power = victron.get("total_power", 0) or 0     # Victron MPPT → Akku (laden)
+    pv_power = pv_ac_power + pv_dc_power                  # Gesamt-PV-Erzeugung (KPI)
+    grid_power = shelly.get("total_power", 0) or 0       # >0 Bezug, <0 Einspeisung
+
+    # Trucki/SUN: battery_power < 0 = entlädt (AC-Ausgang ins Haus)
+    trucki_bp = trucki.get("battery_power", 0) or 0
+    battery_discharge_w = max(0.0, -trucki_bp)           # SUN-Entladung → Haus (AC)
+    battery_charge_w = max(0.0, pv_dc_power)             # MPPT-Ladung (DC) in den Akku
+    # Netto-Akku: + = lädt netto, − = entlädt netto
+    battery_net = battery_charge_w - battery_discharge_w
+
+    # AC-Bus-Bilanz: Hausverbrauch = Hoymiles-AC + SUN-Entladung + Netzbezug
+    house_power = pv_ac_power + battery_discharge_w + grid_power
     house_power = max(0.0, house_power)
 
     return {
@@ -371,8 +384,12 @@ async def collect_live() -> Dict[str, Any]:
         "victron": victron,
         "summary": {
             "pv_power": round(pv_power, 1),
+            "pv_ac_power": round(pv_ac_power, 1),
+            "pv_dc_power": round(pv_dc_power, 1),
             "grid_power": round(grid_power, 1),
-            "battery_power": round(battery_power, 1),
+            "battery_power": round(battery_net, 1),
+            "battery_charge_w": round(battery_charge_w, 1),
+            "battery_discharge_w": round(battery_discharge_w, 1),
             "house_power": round(max(0, house_power), 1),
             "battery_soc": trucki.get("soc", 0),
         },
@@ -880,8 +897,12 @@ def _build_influx_points(data: Dict[str, Any]) -> list:
     pts.append(
         Point("solar")
         .field("pv_power", float(summary.get("pv_power", 0) or 0))
+        .field("pv_ac_power", float(summary.get("pv_ac_power", 0) or 0))
+        .field("pv_dc_power", float(summary.get("pv_dc_power", 0) or 0))
         .field("grid_power", float(summary.get("grid_power", 0) or 0))
         .field("battery_power", float(summary.get("battery_power", 0) or 0))
+        .field("battery_charge_w", float(summary.get("battery_charge_w", 0) or 0))
+        .field("battery_discharge_w", float(summary.get("battery_discharge_w", 0) or 0))
         .field("house_power", float(summary.get("house_power", 0) or 0))
         .field("battery_soc", float(summary.get("battery_soc", 0) or 0))
         .field("autarky_pct", round(autarky, 1))
