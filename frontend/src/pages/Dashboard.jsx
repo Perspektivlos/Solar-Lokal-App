@@ -306,14 +306,24 @@ export default function Dashboard() {
               sparkColor={summary.grid_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}
             />
           </GlassCard>
-          <GlassCard title={summary.battery_power >= 0 ? "Akku lädt" : "Akku entlädt"} accent={COLOR.battery} testid="live-battery" danger={socDanger}>
+          <GlassCard title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"} accent={COLOR.battery} testid="live-battery" danger={socDanger}>
             <MetricBig
-              label={summary.battery_power >= 0 ? "Ladeleistung" : "Entladeleistung"}
+              label={summary.battery_power >= 0 ? "Ladeleistung netto" : "Entladeleistung netto"}
               value={formatNum(Math.abs(summary.battery_power), 0)} unit="W"
               color="text-cyan-300 neon-text-cyan"
               sub={<Delta prev={prev?.summary?.battery_power} curr={summary.battery_power} />}
               sparkValues={trail.battery} sparkColor={COLOR.battery}
             />
+            <div className="grid grid-cols-2 gap-2 mt-3" data-testid="battery-breakdown">
+              <div className="glass-inset p-2" style={{ borderLeft: "3px solid #FACC15" }}>
+                <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/50">Laden · MPPT</div>
+                <div className="font-mono text-base text-yellow-300" data-testid="battery-charge">{formatNum(summary.battery_charge_w, 0)}<span className="text-[10px] text-white/40"> W</span></div>
+              </div>
+              <div className="glass-inset p-2" style={{ borderLeft: "3px solid #06B6D4" }}>
+                <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/50">Entladen · SUN</div>
+                <div className="font-mono text-base text-cyan-300" data-testid="battery-discharge">{formatNum(summary.battery_discharge_w, 0)}<span className="text-[10px] text-white/40"> W</span></div>
+              </div>
+            </div>
             <div className="mt-3 pt-3 border-t border-white/10">
               <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 flex items-center justify-between">
                 <span>SoC</span>

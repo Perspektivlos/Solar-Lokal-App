@@ -171,31 +171,41 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     raw = _mqtt_data["ahoy"]["raw"]
     if not raw:
         return None
-    total = raw.get("HM1500/total") or raw.get("total") or {}
-    if not isinstance(total, dict):
-        total = {}
+
+    # AhoyDTU veröffentlicht je Topic ein JSON-Objekt:
+    #   HM1500/total -> {"P_AC", "P_DC", "YieldDay", "YieldTotal", "MaxPower"}
+    #   HM1500/ch0   -> AC-Summary {"U_AC","I_AC","P_AC","F_AC","PF_AC","Temp",
+    #                               "YieldDay","YieldTotal","P_DC","Efficiency",...}
+    #   HM1500/ch1..4-> DC pro Eingang {"U_DC","I_DC","P_DC","YieldDay",
+    #                                   "YieldTotal","Irradiation","MaxPower"}
+    #   HM1500/available (int), HM1500/ack_pwr_limit (Leistungslimit in %)
+    def _obj(key: str) -> Dict[str, Any]:
+        v = raw.get(key)
+        return v if isinstance(v, dict) else {}
+
+    total = _obj("HM1500/total") or _obj("total")
+    ch0 = _obj("HM1500/ch0")
+    p_ac = float(total.get("P_AC", ch0.get("P_AC", 0)) or 0)
+    yield_day_wh = float(total.get("YieldDay", ch0.get("YieldDay", 0)) or 0)  # Wh
     available = int(raw.get("HM1500/available", 0) or 0)
-    p_ac = float(total.get("P_AC", 0) or 0)
-    yield_day_wh = float(total.get("YieldDay", 0) or 0)  # Wh
-    # HM1500 hat 4 DC-Eingänge → immer CH1–CH4 anzeigen. Per-Kanal-Werte aus
-    # MQTT übernehmen, falls Ahoy DTU sie publiziert; sonst 0 (Gesamtwert in total_power).
+    # Leistungslimit: ack_pwr_limit (vom WR bestätigt), Fallback power_limit_read
+    limit = raw.get("HM1500/ack_pwr_limit", raw.get("HM1500/power_limit_read", 100))
+
+    # HM1500 hat 4 DC-Eingänge → CH1–CH4 aus den JSON-Objekten HM1500/ch1..4.
     channels = []
     for ch in range(1, 5):
-        chp = raw.get(f"HM1500/ch{ch}/P_DC")
-        chu = raw.get(f"HM1500/ch{ch}/U_DC")
-        chi = raw.get(f"HM1500/ch{ch}/I_DC")
-        chy = raw.get(f"HM1500/ch{ch}/YieldDay")
+        c = _obj(f"HM1500/ch{ch}")
         channels.append({
             "ch": ch,
-            "power": round(float(chp or 0), 1),
-            "voltage": round(float(chu or 0), 1),
-            "current": round(float(chi or 0), 2),
-            "yield_day": round(float(chy or 0) / 1000.0, 3),
+            "power": round(float(c.get("P_DC", 0) or 0), 1),
+            "voltage": round(float(c.get("U_DC", 0) or 0), 1),
+            "current": round(float(c.get("I_DC", 0) or 0), 2),
+            "yield_day": round(float(c.get("YieldDay", 0) or 0) / 1000.0, 3),
         })
     return {
         "online": available > 0,
         "total_power": round(p_ac, 1),
-        "limit_percent": int(raw.get("HM1500/power_limit_read", 100) or 100),
+        "limit_percent": round(float(limit or 100)),
         "yield_day_kwh": round(yield_day_wh / 1000.0, 3),
         "channels": channels,
         "_via_mqtt": True,

@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 5: verified the AhoyDTU JSON-channel MQTT parser + DC-coupled energy model end-to-end. Backend pytest: 44/44 pass (test_fetch_ahoy_parses_json_channel_objects, test_fetch_ahoy_ac_falls_back_to_ch0, trucki/influx suites all green) - JUnit at /app/test_reports/pytest/iteration_5_full.xml. /api/live summary contains all new fields (pv_ac_power=1392.1, pv_dc_power=1334.3, battery_charge_w=1334.3, battery_discharge_w=0.0, battery_power net=1334.3, house_power=464.5). House-identity holds exactly: pv_ac+battery_discharge+grid_power = 1392.1+0+(-927.6) = 464.5 == reported house_power, clamped >=0. /api/today, /api/history, /api/forecast, /api/diagnostics/raw, /api/config all return 200. Frontend (demo): energy-flow-svg renders with flow-pv showing 'AC 1397 · DC 1361 W' sub-label, PV->Haus + PV->Akku (diagonal) + Battery->Haus flows present (flow-battery & flow-house found). live-battery title toggles to 'Akku lädt (netto)' under MPPT charging. battery-breakdown block visible with battery-charge='1.361 W' and battery-discharge='0 W' (expected discharge=0 while MPPT-charging in this demo slot). No NaN anywhere on Dashboard/Verlauf/Forecast/Diagnose, zero JS pageerrors. Visual screenshot confirms 'AKKU 1398W · 88% · ↑1398 ↓0W' on Energiefluss.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_mqtt_client.py",
+    "/app/backend/tests/test_influx_points.py",
+    "/app/backend/tests/test_solar_dashboard.py",
+    "/app/backend/tests/test_config_goals.py",
+    "/app/test_reports/pytest/iteration_5_full.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "mqtt_client.fetch_ahoy_from_mqtt() correctly reads HM1500/total + HM1500/ch0..4 JSON objects, derives P_AC from total (fallback ch0), uses HM1500/ack_pwr_limit for limit_percent (fallback power_limit_read, then 100), converts YieldDay Wh->kWh. Online flag now driven by HM1500/available > 0 - sensible.",
+    "server.collect_live() DC-coupling formula house = max(0, pv_ac + battery_discharge + grid) is consistent with summary fields and verified numerically against /api/live. battery_charge_w is sourced from victron total_power (MPPT DC) and battery_discharge_w from -min(0, trucki.battery_power) - net battery_power = charge - discharge.",
+    "EnergyFlow.jsx: PV->Battery diagonal flow uses Math.round(charge) as label and only animates when charge>20W; symmetric path for discharge>20W. Akku-Sub shows '↑charge ↓discharge W' compactly. Looks correct.",
+    "Dashboard.jsx live-battery card title flips on summary.battery_power sign (net). battery-breakdown shows raw charge/discharge components independently, matching the user request for both values.",
+    "Pre-existing (out of scope): server.py still uses deprecated @app.on_event startup/shutdown (DeprecationWarning visible in pytest output) - migrate to lifespan handlers in a future pass. Not blocking."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "None (demo_mode=True, no auth)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "DC-coupled energy model is the source of truth. summary fields on /api/live: pv_power (=pv_ac+pv_dc), pv_ac_power (Hoymiles), pv_dc_power (Victron MPPT, also = battery_charge_w), battery_charge_w (=pv_dc), battery_discharge_w (= -min(0, trucki.battery_power)), battery_power (net = charge - discharge), house_power = max(0, pv_ac + discharge + grid). data-testids of interest: energy-flow-svg, flow-pv (SVG <g> - use page.evaluate textContent, NOT inner_text), flow-house, flow-battery, flow-grid, live-battery, battery-breakdown, battery-charge, battery-discharge. AhoyDTU MQTT topic shape: HM1500/total, HM1500/ch0..ch4 (each a JSON object), HM1500/available, HM1500/ack_pwr_limit. In demo the Akku may show charge>0/discharge=0 OR vice versa depending on time of day - both states are correct.",
+  "rca of the issue": "N/A - bug-fix verification iteration, no new issues found."
+}

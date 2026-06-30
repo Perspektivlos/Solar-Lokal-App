@@ -82,3 +82,39 @@ def test_fetch_trucki_acsetpoint_fallback() -> None:
     res = mc.fetch_trucki_from_mqtt()
     assert res["battery_power"] == -250.0
 
+
+def test_fetch_ahoy_parses_json_channel_objects() -> None:
+    _reset_store()
+    # AhoyDTU publiziert je Kanal ein JSON-Objekt unter HM1500/chN (nicht flach).
+    mc._mqtt_data["ahoy"]["raw"] = {
+        "HM1500/total": {"P_AC": 656.1, "YieldDay": 946, "P_DC": 690.7},
+        "HM1500/ch0": {"P_AC": 656.1, "U_AC": 228.1, "YieldDay": 946},
+        "HM1500/ch1": {"U_DC": 38.2, "I_DC": 5.4, "P_DC": 206.6, "YieldDay": 303},
+        "HM1500/ch2": {"U_DC": 38.2, "I_DC": 0.03, "P_DC": 1, "YieldDay": 6},
+        "HM1500/ch3": {"U_DC": 41.2, "I_DC": 6.8, "P_DC": 280, "YieldDay": 332},
+        "HM1500/ch4": {"U_DC": 41.2, "I_DC": 4.93, "P_DC": 203.1, "YieldDay": 305},
+        "HM1500/available": 2,
+        "HM1500/ack_pwr_limit": 60.0,
+    }
+    res = mc.fetch_ahoy_from_mqtt()
+    assert res is not None
+    assert res["online"] is True
+    assert res["total_power"] == 656.1
+    assert res["limit_percent"] == 60          # aus ack_pwr_limit, nicht Default 100
+    assert len(res["channels"]) == 4
+    assert res["channels"][0]["power"] == 206.6   # CH1 P_DC (vorher 0!)
+    assert res["channels"][2]["power"] == 280.0   # CH3 P_DC
+    assert res["channels"][0]["voltage"] == 38.2
+    assert res["channels"][0]["yield_day"] == 0.303  # Wh -> kWh
+
+
+def test_fetch_ahoy_ac_falls_back_to_ch0() -> None:
+    _reset_store()
+    mc._mqtt_data["ahoy"]["raw"] = {
+        "HM1500/ch0": {"P_AC": 542.8, "YieldDay": 899},
+        "HM1500/available": 1,
+    }
+    res = mc.fetch_ahoy_from_mqtt()
+    assert res["total_power"] == 542.8
+    assert res["limit_percent"] == 100  # kein Limit-Topic -> Default
+

@@ -106,29 +106,34 @@ function FlowLabel({ d, color, reverse }) {
 }
 
 export default function EnergyFlow({ summary, trucki }) {
-  const pv = summary?.pv_power || 0;
+  const pv = summary?.pv_power || 0;            // Gesamt-PV-Erzeugung
+  const pvAc = summary?.pv_ac_power ?? pv;      // Hoymiles AC → Haus
+  const pvDc = summary?.pv_dc_power || 0;       // Victron MPPT → Akku (laden)
   const grid = summary?.grid_power || 0;
-  const battery = summary?.battery_power || 0;
+  const battery = summary?.battery_power || 0;  // Netto: + lädt, − entlädt
+  const charge = summary?.battery_charge_w || 0;       // MPPT-Ladung (DC)
+  const discharge = summary?.battery_discharge_w || 0; // SUN-Entladung → Haus
   const house = summary?.house_power || 0;
   const soc = summary?.battery_soc || 0;
 
   const importActive = grid > 20;
   const exportActive = grid < -20;
-  const pvActive = pv > 5;
-  const batteryCharge = battery > 20;
-  const batteryDischarge = battery < -20;
+  const pvAcActive = pvAc > 5;
+  const chargeActive = charge > 20;
+  const dischargeActive = discharge > 20;
   const houseActive = house > 5;
+  const pvProducing = pv > 5;
 
   let gridLabel = "balanced";
   if (importActive) gridLabel = "Bezug";
   else if (exportActive) gridLabel = "Einspeisung";
   const gridColor = grid >= 0 ? COLOR.grid_import : COLOR.grid_export;
   let batteryMode = "idle";
-  if (batteryCharge) batteryMode = "lädt";
-  else if (batteryDischarge) batteryMode = "entlädt";
+  if (battery > 20) batteryMode = "lädt";
+  else if (battery < -20) batteryMode = "entlädt";
 
-  // Akku-Sub-Text: ZEPC-Limit anzeigen wenn aktiv (Trucki im ZEPC-Modus)
-  let batterySub = `${Math.round(soc)}% · ${batteryMode}`;
+  // Akku-Sub: Lade-/Entlade-Aufteilung (DC-Kopplung); ZEPC-Limit wenn aktiv
+  let batterySub = `${Math.round(soc)}% · ↑${Math.round(charge)} ↓${Math.round(discharge)}W`;
   if (trucki?.zepc && trucki?.ac_setpoint_w) {
     batterySub = `${Math.round(soc)}% · ZEPC ${Math.round(trucki.ac_setpoint_w)}W`;
   }
@@ -154,7 +159,7 @@ export default function EnergyFlow({ summary, trucki }) {
           <rect width="900" height="460" fill="url(#bggrid)" />
 
           <Node x={450} y={70} label="PV-Anlage" value={Math.round(pv)} unit="W" color={COLOR.pv} Icon={Sun}
-                testid="flow-pv" sub={pvActive ? "produziert" : "nachts / inaktiv"} glow={pvActive} />
+                testid="flow-pv" sub={pvProducing ? `AC ${Math.round(pvAc)} · DC ${Math.round(pvDc)} W` : "nachts / inaktiv"} glow={pvProducing} />
           <Node x={450} y={260} label="Haus" value={Math.round(house)} unit="W" color="#cbd5e1" Icon={Home}
                 testid="flow-house" sub={houseActive ? "Verbrauch" : "Standby"} glow={houseActive} />
           <Node x={130} y={260} label="Netz" value={Math.round(Math.abs(grid))} unit="W"
@@ -162,15 +167,20 @@ export default function EnergyFlow({ summary, trucki }) {
           <Node x={770} y={260} label="Akku" value={Math.round(Math.abs(battery))} unit="W"
                 color={COLOR.battery} Icon={BatteryCharging} testid="flow-battery"
                 sub={batterySub}
-                glow={batteryCharge || batteryDischarge} />
+                glow={chargeActive || dischargeActive} />
 
-          <Flow d="M 450 118 L 450 212" color={COLOR.pv} active={pvActive} watts={pvActive ? pv : undefined} />
+          {/* PV (Hoymiles AC) → Haus */}
+          <Flow d="M 450 118 L 450 212" color={COLOR.pv} active={pvAcActive} watts={pvAcActive ? pvAc : undefined} />
+          {/* PV (Victron MPPT) → Akku laden (Diagonale) */}
+          <Flow d="M 528 110 L 690 214" color={COLOR.pv} active={chargeActive} watts={chargeActive ? charge : undefined} />
+          {/* Netz ↔ Haus */}
           <Flow d="M 215 260 L 365 260" color={importActive ? COLOR.grid_import : COLOR.grid_export}
                 active={importActive || exportActive} reverse={exportActive}
                 watts={(importActive || exportActive) ? Math.abs(grid) : undefined} />
-          <Flow d="M 535 260 L 685 260" color={COLOR.battery}
-                active={batteryCharge || batteryDischarge} reverse={batteryDischarge}
-                watts={(batteryCharge || batteryDischarge) ? Math.abs(battery) : undefined} />
+          {/* Akku → Haus entladen (SUN) */}
+          <Flow d="M 685 260 L 535 260" color={COLOR.battery}
+                active={dischargeActive}
+                watts={dischargeActive ? discharge : undefined} />
 
           <Flow d="M 450 308 L 450 395" color="#cbd5e1" active={houseActive} />
           <g>
