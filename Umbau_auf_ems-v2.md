@@ -26,7 +26,7 @@ Das macht langfristig den Unterschied.
 
 ---
 
-# Mein offizieller Projektname für den Umbau
+# Offizieller Projektname für den Umbau
 
 Ich würde intern die neue Architektur nennen:
 
@@ -44,7 +44,7 @@ Denn dort entsteht später die eigentliche Intelligenz.
 
 ---
 
-# Ich werde den Umbau in mehreren "Magic Sprints" durchführen.
+# Umbau in mehreren "Magic Sprints" durchführen.
 
 ## Sprint 1
 
