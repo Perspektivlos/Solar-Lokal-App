@@ -1,9 +1,9 @@
-
-# Here are your Deploy
 # Komplette Deployment-Anleitung Schritt für Schritt
 
 ## 🔧 Vorbereitung
+
 Auf deinem PC (Linux/Mac/WSL):
+
 ```bash
 # Variante GitHub:
 git clone https://github.com/<dein-user>/<dein-repo>.git solar-dashboard
@@ -25,6 +25,7 @@ scp deploy/proxmox/*.sh root@192.168.0.200:/root/
 ```
 
 ## 🏗️ Schritt 1 — LXC erstellen (auf 192.168.0.200)
+
 ```bash
 ssh root@192.168.0.200
 cd /root
@@ -40,6 +41,7 @@ bash pve-create-lxc.sh
 ```
 
 **Was läuft ab:**
+
 1. Ubuntu 24.04 LXC-Template wird ggf. heruntergeladen (~250 MB)
 2. Container 220 wird erstellt (2 CPU, 1 GB RAM, 8 GB Disk, IP 192.168.0.210)
 3. Container startet
@@ -50,6 +52,7 @@ bash pve-create-lxc.sh
 **Dauer**: ~5–8 Minuten
 
 ## 📦 Schritt 2 — App-Code in Container kopieren und bauen
+
 ```bash
 # Noch auf dem Proxmox-Host
 pct push 220 /root/solar-dashboard.tar.gz /opt/solar-dashboard.tar.gz
@@ -64,6 +67,7 @@ pct exec 220 -- bash -lc '
 ```
 
 **Was läuft ab im Build-Script:**
+
 1. Python venv unter `/opt/solar-dashboard/backend/.venv`
 2. `pip install -r requirements.txt` (paho-mqtt, influxdb-client, httpx, motor, fastapi, …)
 3. `backend/.env` wird angelegt (`MONGO_URL=mongodb://localhost:27017`, `DB_NAME=solar_dashboard`)
@@ -76,9 +80,7 @@ pct exec 220 -- bash -lc '
 
 ## ✅ Schritt 3 — Im Browser öffnen
 
-```
-http://192.168.0.210/
-```
+<http://192.168.0.210>
 
 Du landest in der Live-Demo. Jetzt einrichten:
 
@@ -105,6 +107,7 @@ pct exec 220 -- bash -lc '
 ```
 
 Erwartete Werte nach erfolgreicher MQTT-Verbindung:
+
 - `mqtt.connected: true`
 - `mqtt.messages: > 0` und steigt
 - `device_mqtt.shelly_last`, `trucki_last`, `ahoy_last`, `victron_last`: alle mit Zeitstempel
@@ -115,20 +118,22 @@ Im UI dann unter **Diagnose** → **Selbst-Test starten** → alle 9 Checks soll
 ## 🩹 Falls etwas hakt
 
 | Symptom | Fix |
-|---|---|
+| ----- | ----- |
 | `mongod` startet nicht | `journalctl -u mongod -n 30` → bei AVX-Fehler: LXC auf anderem Proxmox-Node testen |
 | `yarn build` OOM | `pct set 220 --memory 2048` → erneut bauen → wieder auf 1024 |
 | 502 Bad Gateway | `systemctl restart solar-backend` und `journalctl -u solar-backend -f` prüfen |
 | MQTT bleibt rot | unter Diagnose `last_error` lesen — meist Auth-Problem oder Listener nicht auf `0.0.0.0` |
 | Frontend zeigt Demo statt Live | Geräte-Tab: Demo-Modus aus + Speichern |
 
-
 ## Setup Fehler
+
 Wenn du beim Setup hängst, schick mir die Ausgabe von:
+
 ```bash
 pct exec 220 -- curl -s http://localhost/api/integrations/status
 pct exec 220 -- journalctl -u solar-backend --no-pager -n 30
 ```
+
 …und ich helfe live durch das Debugging.
 
 Klassisch nach `rsync` — die Execute-Bits sind nicht persistent kopiert worden. Schnell nachholen + bauen:
@@ -143,6 +148,7 @@ pct exec 220 -- bash -lc '
 ```
 
 **Was passiert:**
+
 1. `sed` entfernt CRLF (falls Windows beim Push reingespielt hat)
 2. `chmod +x` setzt das Execute-Bit auf alle drei `.sh`-Files
 3. `ls -la` zeigt zur Bestätigung die Rechte (`-rwxr-xr-x` sollte da stehen)
