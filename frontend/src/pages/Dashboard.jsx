@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { getLive, getToday, getHistory } from "../lib/api";
+import { getLive, getToday, getHistory, getConfig } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import AutarkyGoal from "../components/AutarkyGoal";
 import IntroCard from "../components/IntroCard";
-import { Cable, AlertTriangle, Activity, Radio, Wifi, WifiOff } from "lucide-react";
+import { Cable, AlertTriangle, Activity, Radio, Wifi, WifiOff, Target, Zap, Battery } from "lucide-react";
 
 const COLOR = {
   pv: "#FACC15",
@@ -146,6 +146,7 @@ function MetricBig({ label, value, unit, color, sub, sparkValues, sparkColor }) 
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);
+  const [config, setConfig] = useState(null);
   const [trail, setTrail] = useState({ pv: [], grid: [], house: [], battery: [] });
   const [err, setErr] = useState(null);
   const [prevLive, setPrevLive] = useState(null);
@@ -164,15 +165,18 @@ export default function Dashboard() {
       try {
         if (!seeded) {
           seeded = true;
-          const h = await getHistory("1h");
-          if (alive && h?.points) {
-            const pts = h.points.slice(-30);
-            setTrail(() => ({
-              pv: pts.map((p) => p.pv_power),
-              grid: pts.map((p) => p.grid_power),
-              house: pts.map((p) => p.house_power),
-              battery: pts.map((p) => p.battery_power),
-            }));
+          const [h, cfg] = await Promise.all([getHistory("1h"), getConfig()]);
+          if (alive) {
+            setConfig(cfg);
+            if (h?.points) {
+              const pts = h.points.slice(-30);
+              setTrail(() => ({
+                pv: pts.map((p) => p.pv_power),
+                grid: pts.map((p) => p.grid_power),
+                house: pts.map((p) => p.house_power),
+                battery: pts.map((p) => p.battery_power),
+              }));
+            }
           }
         }
         const [l, t] = await Promise.all([getLive(), getToday()]);
@@ -282,6 +286,97 @@ export default function Dashboard() {
         selfConsumedKwh={today?.self_consumption_kwh}
         consumptionKwh={today?.consumption_kwh}
       />
+
+      {/* EMS Goals & Compliance */}
+      {config?.goals && (
+        <div className="glass overflow-hidden grid grid-cols-1 lg:grid-cols-2 divide-x divide-white/[0.07]" data-testid="ems-goals">
+          <div className="p-4 space-y-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 flex items-center gap-2">
+              <Target size={12} /> Zielkonfiguration
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-2 text-[11px] font-mono">
+              <div className="glass-inset p-2 text-white/85"><span className="text-white/45">Autarkie-Ziel</span><br/><span className="text-sm text-violet-300">{config.goals.autarky_pct}%</span></div>
+              <div className="glass-inset p-2 text-white/85"><span className="text-white/45">Min-SOC</span><br/><span className="text-sm text-cyan-300">{config.goals.min_soc}%</span></div>
+              <div className="glass-inset p-2 text-white/85"><span className="text-white/45">Max-SOC</span><br/><span className="text-sm text-yellow-300">{config.goals.max_soc}%</span></div>
+              <div className="glass-inset p-2 text-white/85"><span className="text-white/45">Reserve-SOC</span><br/><span className="text-sm text-emerald-300">{config.goals.reserve_soc}%</span></div>
+              <div className="col-span-2 glass-inset p-2 text-white/85 flex items-center justify-between"><span className="text-white/45">Einspeisung vermeiden</span><span className={config.goals.avoid_export ? "text-emerald-300 font-bold" : "text-red-300 font-bold"}>{config.goals.avoid_export ? "✓ Ja" : "✗ Nein"}</span></div>
+            </div>
+          </div>
+          <div className="p-4 space-y-2">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 flex items-center gap-2">
+              <Battery size={12} /> Akku-Compliance
+            </div>
+            {live && (() => {
+              const soc = live.summary.battery_soc;
+              const belowMin = soc < config.goals.min_soc;
+              const belowReserve = soc < config.goals.reserve_soc;
+              const aboveMax = soc > config.goals.max_soc;
+              return (
+                <div className="grid grid-cols-2 gap-2 mt-2 text-[11px] font-mono">
+                  <div className={`glass-inset p-2 ${belowMin ? "border-red-400/40 bg-red-400/5" : "text-white/85"}`}>
+                    <span className={belowMin ? "text-red-300" : "text-white/45"}>Aktueller SOC</span><br/>
+                    <span className={`text-sm ${belowMin ? "text-red-300 font-bold" : "text-white"}`}>{formatNum(soc, 0)}%</span>
+                  </div>
+                  <div className={`glass-inset p-2 ${belowReserve ? "border-yellow-400/40 bg-yellow-400/5" : "text-white/85"}`}>
+                    <span className={belowReserve ? "text-yellow-300" : "text-white/45"}>Reserve-Status</span><br/>
+                    <span className={`text-sm ${belowReserve ? "text-yellow-300 font-bold" : "text-emerald-300"}`}>{belowReserve ? "⚠ Unter Reserve" : "✓ Ausreichend"}</span>
+                  </div>
+                  <div className={`glass-inset p-2 ${belowMin ? "border-red-400/40 bg-red-400/5" : "text-white/85"}`}>
+                    <span className={belowMin ? "text-red-300" : "text-white/45"}>Min-SOC-Status</span><br/>
+                    <span className={`text-sm ${belowMin ? "text-red-300 font-bold" : "text-emerald-300"}`}>{belowMin ? "🔴 Kritisch" : "✓ OK"}</span>
+                  </div>
+                  <div className={`glass-inset p-2 ${aboveMax ? "border-yellow-400/40 bg-yellow-400/5" : "text-white/85"}`}>
+                    <span className={aboveMax ? "text-yellow-300" : "text-white/45"}>Max-SOC-Status</span><br/>
+                    <span className={`text-sm ${aboveMax ? "text-yellow-300 font-bold" : "text-emerald-300"}`}>{aboveMax ? "⚠ Voll" : "✓ OK"}</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* EMS Decision Intents */}
+      {live?.decision_intents && live.decision_intents.length > 0 && (
+        <div className="glass overflow-hidden" data-testid="decision-intents">
+          <div className="border-b border-white/10 px-4 py-2 flex items-center gap-2">
+            <Zap size={14} className="text-amber-300" />
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/65">EMS-Entscheidungen ({live.decision_intents.length})</div>
+          </div>
+          <div className="divide-y divide-white/5">
+            {live.decision_intents.map((intent, idx) => {
+              const intentColors = {
+                charge: { bg: "bg-yellow-400/10", border: "border-yellow-400/40", text: "text-yellow-300", icon: "⚡" },
+                discharge: { bg: "bg-cyan-400/10", border: "border-cyan-400/40", text: "text-cyan-300", icon: "⬇" },
+                import: { bg: "bg-red-400/10", border: "border-red-400/40", text: "text-red-300", icon: "📥" },
+                export: { bg: "bg-emerald-400/10", border: "border-emerald-400/40", text: "text-emerald-300", icon: "📤" },
+              };
+              const style = intentColors[intent.action] || intentColors.import;
+              return (
+                <div key={idx} className={`p-3 border-l-2 ${style.border} ${style.bg} flex items-start justify-between gap-3`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{style.icon}</span>
+                      <div className={`font-mono text-xs font-bold uppercase tracking-widest ${style.text}`}>
+                        {intent.action === "charge" && "Laden"}
+                        {intent.action === "discharge" && "Entladen"}
+                        {intent.action === "import" && "Netz-Bezug"}
+                        {intent.action === "export" && "Einspeisung"}
+                      </div>
+                    </div>
+                    <div className="font-mono text-[11px] text-white/80 mb-1">{intent.reason}</div>
+                    <div className="font-mono text-xs text-white/60">Ziel: {intent.node_id} | Leistung: {formatNum(intent.value, 1)} W</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className={`font-mono text-sm font-bold ${style.text}`}>P{intent.priority}</div>
+                    <div className="font-mono text-[10px] text-white/50 mt-1">{formatNum(intent.value, 0)} W</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Energy flow + summary metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

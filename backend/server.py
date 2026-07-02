@@ -32,6 +32,9 @@ from mqtt_client import (
     _mqtt_disconnect,
 )
 
+from core.goals import EMSGoals
+from core.manager import EnergyManager
+
 # Optional integrations - imported lazily inside functions where possible
 try:
     from influxdb_client import InfluxDBClient, Point
@@ -48,6 +51,9 @@ db = client[os.environ['DB_NAME']]
 
 app = FastAPI(title="Solar Local Dashboard")
 api_router = APIRouter(prefix="/api")
+
+# Initialize EMS manager
+energy_manager = EnergyManager()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -304,6 +310,10 @@ async def collect_live() -> Dict[str, Any]:
     cfg = await get_config()
     demo = cfg.get("demo_mode", True)
     mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
+    
+    # Load and apply EMS goals
+    goals = EMSGoals.from_dict(cfg.get("goals"))
+    energy_manager.set_goals(goals)
 
     async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
         if not enabled:
@@ -375,6 +385,24 @@ async def collect_live() -> Dict[str, Any]:
     house_power = pv_ac_power + battery_discharge_w + grid_power
     house_power = max(0.0, house_power)
 
+    energy_manager.update_node("pv", pv_power, state="active" if pv_power > 0 else "idle")
+    battery_state = "charging" if battery_net > 0 else "discharging" if battery_net < 0 else "idle"
+    energy_manager.update_node("battery", battery_net, state=battery_state, metadata={"soc": trucki.get("soc", 0)})
+    energy_manager.update_node("house", house_power, state="consuming" if house_power > 0 else "idle")
+    grid_state = "import" if grid_power > 0 else "export" if grid_power < 0 else "idle"
+    energy_manager.update_node("grid", grid_power, state=grid_state)
+
+    decision_intents = [
+        {
+            "node_id": intent.node_id,
+            "action": intent.action,
+            "value": round(intent.value, 1),
+            "reason": intent.reason,
+            "priority": intent.priority,
+        }
+        for intent in energy_manager.evaluate()
+    ]
+
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "demo_mode": demo,
@@ -393,6 +421,7 @@ async def collect_live() -> Dict[str, Any]:
             "house_power": round(max(0, house_power), 1),
             "battery_soc": trucki.get("soc", 0),
         },
+        "decision_intents": decision_intents,
     }
 
 
