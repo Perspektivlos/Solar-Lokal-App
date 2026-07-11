@@ -112,6 +112,11 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - **Frontend:** Energiefluss DC-gekoppelt (PV→Haus, PV→Akku laden Diagonale, Akku→Haus entladen); Akku-Kachel zeigt Laden (MPPT) & Entladen (SUN) getrennt (User-Wunsch Option c).
 - Tests: +3 (Ahoy JSON-Kanäle, ch0-Fallback), gesamt 44 pytest grün; Testing-Agent Backend+Frontend 100 %.
 
+## Entfernt: Autarkie-Ziel-Kachel + Forecast-Menü (2026-06)
+- Frontend: `AutarkyGoal.jsx` (Dashboard-Kachel) und `Forecast.jsx` (Seite) gelöscht; Forecast-Nav-Eintrag (Layout) + Route (App.js) entfernt; `Sun`-Icon-Import bereinigt.
+- Backend: `goals`-Config vollständig entfernt (DEFAULT_CONFIG, Merge, ConfigUpdate); Tests `test_config_goals.py` gelöscht. (`/api/forecast`-Endpoint bleibt bestehen, wird aber nicht mehr vom UI genutzt.)
+- Verifiziert: 38 pytest grün, Lint sauber, Screenshot bestätigt entferntes Menü/Kachel; Energiefluss unverändert funktionsfähig.
+
 ## Next Tasks
 - P1: Telegram-Bot für SoC-Warnungen (Push bei niedrigem Akku/Statuswechsel).
 - P1: Forecast vs. Ist-Vergleich (Vergleichskarte auf dem Dashboard).
