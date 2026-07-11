@@ -69,6 +69,10 @@ function ChartBody({ loading, data }) {
   );
 }
 
+/**
+ * Rendert die historische Leistungs- und Akku-SoC-Ansicht mit auswählbarem Zeitraum.
+ * @returns {JSX.Element} Die Verlaufansicht mit Diagrammen und Bereichsauswahl.
+ */
 export default function History() {
   const [range, setRange] = useState("1h");
   const [data, setData] = useState([]);
