@@ -440,13 +440,13 @@ async def cfg_get():
 @api_router.put("/config")
 async def cfg_put(update: ConfigUpdate):
     """
-    Aktualisiert die Konfiguration und startet betroffene Integrationen neu.
+    Aktualisiert die Konfiguration und startet betroffene Integrationen bei verbindungsrelevanten Änderungen neu.
     
     Parameters:
-    	update (ConfigUpdate): Zu übernehmende Konfigurationsänderungen.
+    	update (ConfigUpdate): Zu speichernde Konfigurationsänderungen.
     
     Returns:
-    	Die aktualisierte Konfiguration als Dictionary.
+    	Die aktualisierte Konfiguration.
     """
     current = await get_config()
     payload = update.model_dump(exclude_none=True)
@@ -878,16 +878,8 @@ _keepalive_task: Optional[asyncio.Task] = None
 
 
 def _instant_ratios(summary: Dict[str, Any]) -> tuple:
-    """
-    Berechnet die momentanen Autarkie- und Eigenverbrauchsquoten aus den Leistungswerten.
-    
-    Parameters:
-    	summary (Dict[str, Any]): Live-Zusammenfassung mit Haus-, Netz- und PV-Leistung.
-    
-    Returns:
-    	tuple: Autarkie- und Eigenverbrauchsquote in Prozent, jeweils auf 0 bis 100 begrenzt.
-    """
-    hp = float(summary.get("house_power", 0) or 0)
+
+  hp = float(summary.get("house_power", 0) or 0)
     gp = float(summary.get("grid_power", 0) or 0)
     pv = float(summary.get("pv_power", 0) or 0)
     grid_imp = max(0.0, gp)
