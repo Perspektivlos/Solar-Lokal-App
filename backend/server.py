@@ -914,7 +914,7 @@ def _pt_solar(summary: Dict[str, Any]) -> "Point":
         	k (str): Schlüssel des auszulesenden Werts.
         
         Returns:
-        	float: Der konvertierte Wert oder `0.0`, wenn kein verwertbarer Wert vorhanden ist.
+        	float: Der konvertierte Wert oder `0.0`, wenn der Wert fehlt oder leer/falsy ist.
         """
         return float(summary.get(k, 0) or 0)
     autarky, self_cons = _instant_ratios(summary)
