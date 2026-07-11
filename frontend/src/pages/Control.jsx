@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { controlHoymiles, controlTrucki } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import { Slider } from "../components/ui/slider";
@@ -69,6 +69,7 @@ function PrimaryButton({ children, accent = "#06B6D4", ...props }) {
 }
 
 function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, step = 1, unit = "%", accent = "#06B6D4", busy, testid }) {
+  const sliderValue = useMemo(() => [value], [value]);
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
@@ -78,7 +79,7 @@ function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, ste
           <span className="text-white/45 text-xs ml-1">{unit}</span>
         </span>
       </div>
-      <Slider value={[value]} onValueChange={(v) => onChange(v[0])} min={min} max={max} step={step} className="my-3" data-testid={`${testid}-slider`} />
+      <Slider value={sliderValue} onValueChange={(v) => onChange(v[0])} min={min} max={max} step={step} className="my-3" data-testid={`${testid}-slider`} />
       <div className="flex items-center justify-between">
         <div className="font-mono text-[10px] text-white/40">{min}{unit} ─ {max}{unit}</div>
         <PrimaryButton onClick={onSend} disabled={busy} accent={accent} data-testid={`${testid}-send`}>

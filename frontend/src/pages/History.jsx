@@ -85,8 +85,8 @@ export default function History() {
           PV: p.pv_power, Netz: p.grid_power, Akku: p.battery_power, Haus: p.house_power, SoC: p.battery_soc,
         }));
         setData(pts);
-      } catch {
-        /* ignore */
+      } catch (err) {
+        console.error("Verlauf laden fehlgeschlagen:", err);
       } finally {
         if (alive) setLoading(false);
       }
