@@ -98,6 +98,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 
 
 async def get_config() -> Dict[str, Any]:
+    """
+    Lädt die gespeicherte Konfiguration und ergänzt fehlende Werte mit den Standardwerten.
+    
+    Returns:
+        Dict[str, Any]: Die zusammengeführte Konfiguration.
+    """
     doc = await db.config.find_one({"_id": "main"})
     if not doc:
         await db.config.insert_one({"_id": "main", **DEFAULT_CONFIG})
@@ -433,6 +439,15 @@ async def cfg_get():
 
 @api_router.put("/config")
 async def cfg_put(update: ConfigUpdate):
+    """
+    Aktualisiert die Konfiguration und startet betroffene Integrationen bei verbindungsrelevanten Änderungen neu.
+    
+    Parameters:
+    	update (ConfigUpdate): Zu speichernde Konfigurationsänderungen.
+    
+    Returns:
+    	Die aktualisierte Konfiguration.
+    """
     current = await get_config()
     payload = update.model_dump(exclude_none=True)
     for key, val in payload.items():
@@ -863,7 +878,15 @@ _keepalive_task: Optional[asyncio.Task] = None
 
 
 def _instant_ratios(summary: Dict[str, Any]) -> tuple:
-    """Momentane Autarkie & Eigenverbrauch in % aus der Live-Summary."""
+    """
+    Berechnet die momentanen Autarkie- und Eigenverbrauchsquoten aus den Leistungswerten.
+    
+    Parameters:
+    	summary (Dict[str, Any]): Live-Zusammenfassung mit Haus-, Netz- und PV-Leistung.
+    
+    Returns:
+    	tuple: Autarkie- und Eigenverbrauchsquote in Prozent, jeweils auf den Bereich von 0 bis 100 begrenzt.
+    """
     hp = float(summary.get("house_power", 0) or 0)
     gp = float(summary.get("grid_power", 0) or 0)
     pv = float(summary.get("pv_power", 0) or 0)
@@ -875,8 +898,24 @@ def _instant_ratios(summary: Dict[str, Any]) -> tuple:
 
 
 def _pt_solar(summary: Dict[str, Any]) -> "Point":
-    """Summary-Measurement inkl. momentaner Autarkie/Eigenverbrauch."""
+    """Erstellt einen InfluxDB-Messpunkt mit Solar-, Netz-, Batterie- und Verbrauchswerten.
+    
+    Parameter:
+    	summary (Dict[str, Any]): Zusammengefasste Live-Messwerte.
+    
+    Returns:
+    	Point: Messpunkt mit den aktuellen Leistungs-, Ladezustands- und Autarkiekennzahlen.
+    """
     def f(k: str) -> float:
+        """
+        Wandelt einen Wert aus der Zusammenfassung in eine Gleitkommazahl um.
+        
+        Parameter:
+        	k (str): Schlüssel des auszulesenden Werts.
+        
+        Returns:
+        	float: Der konvertierte Wert oder `0.0`, wenn der Wert fehlt oder leer/falsy ist.
+        """
         return float(summary.get(k, 0) or 0)
     autarky, self_cons = _instant_ratios(summary)
     return (
@@ -896,6 +935,15 @@ def _pt_solar(summary: Dict[str, Any]) -> "Point":
 
 
 def _pts_shelly(shelly: Dict[str, Any]) -> list:
+    """
+    Erstellt InfluxDB-Messpunkte für die Shelly-Phasen und die Gesamtleistung.
+    
+    Parameters:
+    	shelly (Dict[str, Any]): Shelly-Daten mit Phasenwerten und optionaler Gesamtleistung.
+    
+    Returns:
+    	list: Messpunkte für die einzelnen Phasen sowie gegebenenfalls für die Gesamtleistung.
+    """
     pts = [
         Point("shelly_phase")
         .tag("phase", str(ph.get("phase", "?")))
@@ -911,6 +959,15 @@ def _pts_shelly(shelly: Dict[str, Any]) -> list:
 
 
 def _pts_hoymiles(ahoy: Dict[str, Any]) -> list:
+    """
+    Erstellt InfluxDB-Messpunkte für die aggregierten Hoymiles- und Kanalwerte.
+    
+    Parameters:
+    	ahoy (Dict[str, Any]): Hoymiles-Daten mit Gesamtleistung, Leistungsbegrenzung und Kanalwerten.
+    
+    Returns:
+    	list: Messpunkte für die Gesamtleistung und die einzelnen Hoymiles-Kanäle.
+    """
     pts = []
     if ahoy.get("total_power") is not None:
         pts.append(
@@ -931,6 +988,15 @@ def _pts_hoymiles(ahoy: Dict[str, Any]) -> list:
 
 
 def _pts_victron(victron: Dict[str, Any]) -> list:
+    """
+    Erstellt InfluxDB-Messpunkte für die Victron-Gesamtleistung und die einzelnen MPPT-Regler.
+    
+    Parameters:
+    	victron (Dict[str, Any]): Victron-Daten mit optionaler Gesamtleistung und MPPT-Werten.
+    
+    Returns:
+    	list: InfluxDB-Messpunkte für die Victron-Gesamtleistung und die MPPT-Regler.
+    """
     pts = []
     if victron.get("total_power") is not None:
         pts.append(Point("victron").field("total_power", float(victron.get("total_power", 0) or 0)))
@@ -950,6 +1016,15 @@ def _pts_victron(victron: Dict[str, Any]) -> list:
 
 
 def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
+    """
+    Erstellt einen InfluxDB-Messpunkt mit den Betriebsdaten des Trucki-Akkus.
+    
+    Parameters:
+    	trucki (Dict[str, Any]): Trucki-Daten einschließlich Online-Status und Messwerten.
+    
+    Returns:
+    	Optional[Point]: Ein Trucki-Messpunkt, wenn das Gerät online ist, andernfalls `None`.
+    """
     if not trucki.get("online"):
         return None
     tp = (
@@ -972,17 +1047,14 @@ def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
 
 
 def _build_influx_points(data: Dict[str, Any]) -> list:
-    """Erzeugt einen reichen Satz InfluxDB-Punkte aus einer collect_live()-Payload.
-
-    Measurements:
-      - solar        : Summary (pv/grid/battery/house/soc + autarky/self-consumption %)
-      - shelly_phase : pro Phase (tag phase=L1..L3) power/voltage/current/pf
-      - shelly       : total_power
-      - hoymiles     : total_power, limit_percent
-      - hoymiles_ch  : pro Kanal (tag ch=1..4) power/voltage/current/yield_day
-      - victron      : total_power
-      - victron_mppt : pro MPPT (tag mppt=<instanz>) pv_power/pv_voltage/battery_voltage/yield_today/state
-      - trucki       : vbat/ac_power/soc/zepc/temperature/ac_setpoint/ac_display/day_energy/total_energy
+    """
+    Erstellt InfluxDB-Messpunkte aus einer Live-Dashboard-Payload.
+    
+    Parameters:
+        data (Dict[str, Any]): Live-Payload mit Zusammenfassung und Gerätedaten.
+    
+    Returns:
+        list: InfluxDB-Messpunkte für Solar-, Geräte- und Batteriedaten.
     """
     pts: list = [_pt_solar(data.get("summary") or {})]
     pts += _pts_shelly(data.get("shelly") or {})

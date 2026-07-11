@@ -9,6 +9,10 @@ import Devices from "./pages/Devices";
 import Diagnose from "./pages/Diagnose";
 import Integrations from "./pages/Integrations";
 
+/**
+ * Rendert die Anwendung mit Layout, Seitenrouten und Benachrichtigungen.
+ * @returns {JSX.Element} Das Anwendungslayout mit konfiguriertem Routing und Toaster.
+ */
 function App() {
   return (
     <div className="App">
