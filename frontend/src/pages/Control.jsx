@@ -59,6 +59,12 @@ function NeoButton({ children, ...props }) {
   );
 }
 
+/**
+ * Rendert eine hervorgehobene Schaltfläche mit akzentbasierter Farbgestaltung.
+ * @param {React.ReactNode} children - Inhalt der Schaltfläche.
+ * @param {string} [accent="#06B6D4"] - Akzentfarbe für Hintergrundverlauf und Schatten.
+ * @returns {JSX.Element} Die gestaltete Schaltfläche.
+ */
 function PrimaryButton({ children, accent = "#06B6D4", ...props }) {
   return (
     <button {...props} className={`px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] rounded text-slate-900 font-semibold disabled:opacity-50 ${props.className || ""}`}
@@ -68,6 +74,20 @@ function PrimaryButton({ children, accent = "#06B6D4", ...props }) {
   );
 }
 
+/**
+ * Stellt eine Schieberegelung mit Werteanzeige und Senden-Schaltfläche dar.
+ * @param {string} label - Bezeichnung der Regelung.
+ * @param {number} value - Aktueller Wert der Regelung.
+ * @param {Function} onChange - Callback für Änderungen des Schiebereglers.
+ * @param {Function} onSend - Callback zum Senden des aktuellen Werts.
+ * @param {number} [min=0] - Minimal zulässiger Wert.
+ * @param {number} [max=100] - Maximal zulässiger Wert.
+ * @param {number} [step=1] - Schrittweite des Schiebereglers.
+ * @param {string} [unit="%"] - Einheit des angezeigten Werts.
+ * @param {string} [accent="#06B6D4"] - Akzentfarbe der Regelung.
+ * @param {boolean} busy - Gibt an, ob die Senden-Schaltfläche deaktiviert wird.
+ * @param {string} testid - Präfix für die Test-IDs der Bedienelemente.
+ */
 function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, step = 1, unit = "%", accent = "#06B6D4", busy, testid }) {
   const sliderValue = useMemo(() => [value], [value]);
   return (

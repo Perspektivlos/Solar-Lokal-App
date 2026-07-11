@@ -140,7 +140,10 @@ function MetricBig({ label, value, unit, color, sub, sparkValues, sparkColor }) 
   );
 }
 
-// ---- main page ----
+/**
+ * Zeigt das Solar-Dashboard mit Live-Daten, Tageswerten und Anlagenstatus an.
+ * @return {JSX.Element} Das Dashboard oder eine Lade- beziehungsweise Fehlermeldungsansicht.
+ */
 
 export default function Dashboard() {
   const [live, setLive] = useState(null);
