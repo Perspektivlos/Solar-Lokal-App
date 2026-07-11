@@ -105,6 +105,13 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - **Check & Repair-Sektion** in der Doku: Hinweis, dass im Data Explorer nur die 5 alten Felder erscheinen, solange die Backend-LXC 220 auf der Vor-Ausbau-Version läuft → `git pull` + `systemctl restart solar-backend` nötig, damit `autarky_pct`/`self_consumption_pct` + Measurements `shelly_phase/hoymiles/hoymiles_ch/victron/victron_mppt/trucki` geschrieben werden.
 - **Design-Optimierung (App-Look):** Beide Grafana-Dashboards neu gestylt – transparente Panels (`transparent:true`), `style:dark`, App-Neon-Palette (PV #FACC15, Netz-Bezug #F87171, Einspeisung/Autarkie #10B981, Akku/Cyan #06B6D4, Haus #cbd5e1, Orange #FB923C), weiche Gradient-Linien, Emojis aus Titeln entfernt, Cross-Links zwischen Übersicht (`solar-lokal`) und Geräte-Detail (`solar-geraete`).
 
+## Bugfix: Hoymiles-Parser + DC-gekoppeltes Energiemodell (2026-06)
+- **Hoymiles-Kachel repariert:** AhoyDTU publiziert je Kanal ein JSON-Objekt unter `HM1500/ch1..ch4` (DC) bzw. `HM1500/ch0` (AC), plus `HM1500/total` und `HM1500/ack_pwr_limit`. Der alte Parser suchte flache Keys `HM1500/chN/P_DC` und `power_limit_read` → Kanäle 0, Limit 100 %. `fetch_ahoy_from_mqtt` liest jetzt die JSON-Objekte korrekt (CH1–CH4 P_DC/U_DC/I_DC/YieldDay, Limit aus `ack_pwr_limit`).
+- **Verbrauch/Energiemodell korrigiert (DC-Kopplung, vom User bestätigt):** Victron-MPPTs laden den Akku (DC), Hoymiles speist AC ins Haus, Trucki/SUN entlädt den Akku ins AC-Netz. Neue Haus-Formel: `house = pv_ac (Hoymiles) + battery_discharge (SUN) + grid`. Vorher wurde die Victron-Ladeleistung fälschlich als Hausversorgung mitgezählt (Verbrauch ~4558 statt ~1760 W).
+- **Neue Summary-Felder:** `pv_ac_power`, `pv_dc_power`, `battery_charge_w` (MPPT), `battery_discharge_w` (SUN), `battery_power` (netto). Auch in InfluxDB-Write aufgenommen.
+- **Frontend:** Energiefluss DC-gekoppelt (PV→Haus, PV→Akku laden Diagonale, Akku→Haus entladen); Akku-Kachel zeigt Laden (MPPT) & Entladen (SUN) getrennt (User-Wunsch Option c).
+- Tests: +3 (Ahoy JSON-Kanäle, ch0-Fallback), gesamt 44 pytest grün; Testing-Agent Backend+Frontend 100 %.
+
 ## Next Tasks
 - P1: Telegram-Bot für SoC-Warnungen (Push bei niedrigem Akku/Statuswechsel).
 - P1: Forecast vs. Ist-Vergleich (Vergleichskarte auf dem Dashboard).
