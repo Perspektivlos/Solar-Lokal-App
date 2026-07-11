@@ -51,6 +51,12 @@ function Panel({ title, accent, children, testid }) {
   );
 }
 
+/**
+ * Rendert eine Schaltfläche mit einheitlicher Neo-Button-Gestaltung.
+ * @param {React.ReactNode} children - Inhalt der Schaltfläche.
+ * @param {Object} props - Weitere Eigenschaften für das native Button-Element.
+ * @returns {JSX.Element} Das gestaltete Button-Element.
+ */
 function NeoButton({ children, ...props }) {
   return (
     <button {...props} className={`btn-neo px-3 py-2 font-mono text-xs uppercase tracking-[0.14em] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${props.className || ""}`}>

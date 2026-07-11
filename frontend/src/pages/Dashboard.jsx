@@ -122,6 +122,17 @@ function Spark({ values, color = "#cbd5e1", height = 24 }) {
   );
 }
 
+/**
+ * Stellt einen Messwert mit Bezeichnung, Einheit und optionalem Verlauf dar.
+ * @param {string} label - Bezeichnung des Messwerts.
+ * @param {*} value - Anzuzeigender Messwert.
+ * @param {string} unit - Einheit des Messwerts.
+ * @param {string} [color] - CSS-Klasse für die Farbe des Messwerts.
+ * @param {*} [sub] - Optionaler Zusatzinhalt neben der Bezeichnung.
+ * @param {number[]} [sparkValues] - Werte für die optionale Verlaufskurve.
+ * @param {string} [sparkColor] - Farbe der Verlaufskurve.
+ * @returns {JSX.Element} Das formatierte Messwert-Element.
+ */
 function MetricBig({ label, value, unit, color, sub, sparkValues, sparkColor }) {
   return (
     <div>

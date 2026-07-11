@@ -44,6 +44,12 @@ const INTRO_SECTIONS = [
   },
 ];
 
+/**
+ * Rendert den Leistungsgraphen oder den passenden Lade- beziehungsweise Leerzustand.
+ * @param {boolean} loading - Gibt an, ob die Verlaufsdaten noch geladen werden.
+ * @param {Array} data - Für den Graphen aufbereitete Verlaufsdaten.
+ * @returns {JSX.Element} Der Leistungsgraph, ein Ladehinweis oder ein Leerzustand.
+ */
 function ChartBody({ loading, data }) {
   if (loading) return <div className="font-mono text-sm text-white/55">Lade Verlauf...</div>;
   if (data.length === 0) {

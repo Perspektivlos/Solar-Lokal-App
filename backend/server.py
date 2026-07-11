@@ -440,13 +440,13 @@ async def cfg_get():
 @api_router.put("/config")
 async def cfg_put(update: ConfigUpdate):
     """
-    Aktualisiert die Konfiguration und startet betroffene Integrationen bei verbindungsrelevanten Änderungen neu.
+    Aktualisiert die Konfiguration und startet betroffene Integrationen neu.
     
     Parameters:
-    	update (ConfigUpdate): Zu speichernde Konfigurationsänderungen.
+    	update (ConfigUpdate): Zu übernehmende Konfigurationsänderungen.
     
     Returns:
-    	Die aktualisierte Konfiguration.
+    	Die aktualisierte Konfiguration als Dictionary.
     """
     current = await get_config()
     payload = update.model_dump(exclude_none=True)
@@ -885,7 +885,7 @@ def _instant_ratios(summary: Dict[str, Any]) -> tuple:
     	summary (Dict[str, Any]): Live-Zusammenfassung mit Haus-, Netz- und PV-Leistung.
     
     Returns:
-    	tuple: Autarkie- und Eigenverbrauchsquote in Prozent, jeweils auf den Bereich von 0 bis 100 begrenzt.
+    	tuple: Autarkie- und Eigenverbrauchsquote in Prozent, jeweils auf 0 bis 100 begrenzt.
     """
     hp = float(summary.get("house_power", 0) or 0)
     gp = float(summary.get("grid_power", 0) or 0)
