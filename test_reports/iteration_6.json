@@ -1,0 +1,33 @@
+{
+  "summary": "Backend-only regression + feature test for get_config() merge robustness and /api/today round-trip fields. 40/41 pytest tests pass. Backend healthy, poller running, no startup crash. All requested features verified via live curls against public REACT_APP_BACKEND_URL.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/history?range=1h (test)", "issue": "TestPoller.test_poller_writes_snapshots is inherently flaky: uses 1h rolling window so 20s wait can drop old snapshots faster than new ones arrive (36 -> 35). Poller itself is verified running via /api/diagnostics/run. Test-logic issue, not app bug."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_get_config_merge.py",
+    "/app/backend/tests/test_solar_dashboard.py",
+    "/app/test_reports/pytest/iteration_6.xml"
+  ],
+  "action_items": [
+    "Optional: Harden TestPoller by comparing db.snapshots absolute counts (via a debug endpoint) or by using a wider history range (24h) to avoid rolling-window drops. Not blocking."
+  ],
+  "critical_code_review_comments": [
+    "get_config() merge is now drift-safe (iterates DEFAULT_CONFIG.items()); confirmed forecast key merges even when stored doc lacks it.",
+    "PUT /api/config with partial payload (e.g. {demo_mode:true}) correctly retains all nested defaults incl. forecast — no KeyError.",
+    "/api/today correctly returns battery_charge_kwh, battery_discharge_kwh, round_trip_pct; round_trip_pct clamped 0..100 (verified 0.0 with only 0.047 kWh charge < 0.05 threshold, correct behavior).",
+    "poller_loop writes battery_charge_w/battery_discharge_w into snapshots — verified via /api/history point structure.",
+    "server.py is 1144 lines — exceeds the 700-line guideline; recommend splitting integrations (mqtt/influx), forecast, and diagnostics into separate modules for maintainability.",
+    "@app.on_event startup/shutdown is deprecated in FastAPI (warnings emitted); consider migrating to lifespan handlers."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "97.5% (40/41)", "frontend": "not tested (skipped per request)"},
+  "seed_data_creation": "None. Only used PUT /api/config toggle test which is restored by existing test suite.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend on preview URL is healthy, demo_mode=True, poller writing every 15s. get_config() merge fix verified for all nested keys incl. forecast. TestPoller flakiness is known — see minor issue.",
+  "rca of the issue": "Original LXC startup crash root-caused: DEFAULT_CONFIG lacked 'forecast' while merge loop was hardcoded to a fixed list containing 'forecast', causing KeyError on empty stored doc. Fix iterates DEFAULT_CONFIG.items() so the merge is always aligned with actual defaults. Verified: even when stored config lacks 'forecast'/'influx', GET/PUT return complete merged nested dicts without KeyError."
+}

@@ -103,10 +103,12 @@ async def get_config() -> Dict[str, Any]:
         await db.config.insert_one({"_id": "main", **DEFAULT_CONFIG})
         return dict(DEFAULT_CONFIG)
     doc.pop("_id", None)
-    # merge missing keys
+    # merge missing keys (robust: iteriere über DEFAULT_CONFIG, damit eine
+    # Drift zwischen Config-Keys nie einen KeyError/Startup-Crash auslöst).
     cfg = {**DEFAULT_CONFIG, **doc}
-    for k in ["devices", "mqtt", "influx", "victron_mqtt", "forecast"]:
-        cfg[k] = {**DEFAULT_CONFIG[k], **(doc.get(k) or {})}
+    for k, default_val in DEFAULT_CONFIG.items():
+        if isinstance(default_val, dict):
+            cfg[k] = {**default_val, **(doc.get(k) or {})}
     return cfg
 
 
