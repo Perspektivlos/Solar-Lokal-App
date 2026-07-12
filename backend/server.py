@@ -475,13 +475,24 @@ async def today():
             "grid_export_kwh": 0, "self_consumption_kwh": 0,
             "autarky_pct": 0, "self_consumption_pct": 0,
             "avg_pv_w": 0, "avg_house_w": 0,
+            "battery_charge_kwh": 0, "battery_discharge_kwh": 0,
+            "round_trip_pct": 0,
         }
 
     def trapez(values_a, values_b, t_a, t_b):
         dt_h = (t_b - t_a).total_seconds() / 3600.0
         return (values_a + values_b) / 2.0 * dt_h
 
+    def charge_w(row):
+        v = row.get("battery_charge_w")
+        return v if v is not None else max(0, row.get("battery_power", 0))
+
+    def discharge_w(row):
+        v = row.get("battery_discharge_w")
+        return v if v is not None else max(0, -row.get("battery_power", 0))
+
     pv_wh = grid_imp_wh = grid_exp_wh = house_wh = 0.0
+    bat_charge_wh = bat_discharge_wh = 0.0
     for prev, cur_row in zip(rows, rows[1:]):
         ta = datetime.fromisoformat(prev["ts"])
         tb = datetime.fromisoformat(cur_row["ts"])
@@ -494,6 +505,8 @@ async def today():
         house_wh += trapez(hp_a, hp_b, ta, tb)
         grid_imp_wh += trapez(max(0, gp_a), max(0, gp_b), ta, tb)
         grid_exp_wh += trapez(max(0, -gp_a), max(0, -gp_b), ta, tb)
+        bat_charge_wh += trapez(charge_w(prev), charge_w(cur_row), ta, tb)
+        bat_discharge_wh += trapez(discharge_w(prev), discharge_w(cur_row), ta, tb)
 
     pv_kwh = pv_wh / 1000.0
     house_kwh = house_wh / 1000.0
@@ -509,6 +522,13 @@ async def today():
     avg_pv = (pv_wh / duration_h) if duration_h > 0 else 0
     avg_house = (house_wh / duration_h) if duration_h > 0 else 0
 
+    bat_charge_kwh = bat_charge_wh / 1000.0
+    bat_discharge_kwh = bat_discharge_wh / 1000.0
+    # Round-Trip-Wirkungsgrad = AC-Entladeenergie / DC-Ladeenergie.
+    # Erst ab einer Mindest-Ladeenergie aussagekräftig (Rauschen vermeiden).
+    round_trip = (bat_discharge_kwh / bat_charge_kwh * 100) if bat_charge_kwh > 0.05 else 0
+    round_trip = max(0.0, min(100.0, round_trip))
+
     return {
         "pv_kwh": round(pv_kwh, 3),
         "consumption_kwh": round(house_kwh, 3),
@@ -519,6 +539,9 @@ async def today():
         "self_consumption_pct": round(self_cons_pct, 1),
         "avg_pv_w": round(avg_pv, 1),
         "avg_house_w": round(avg_house, 1),
+        "battery_charge_kwh": round(bat_charge_kwh, 3),
+        "battery_discharge_kwh": round(bat_discharge_kwh, 3),
+        "round_trip_pct": round(round_trip, 1),
     }
 
 
@@ -1004,6 +1027,8 @@ async def poller_loop():
                 "pv_power": data["summary"]["pv_power"],
                 "grid_power": data["summary"]["grid_power"],
                 "battery_power": data["summary"]["battery_power"],
+                "battery_charge_w": data["summary"]["battery_charge_w"],
+                "battery_discharge_w": data["summary"]["battery_discharge_w"],
                 "house_power": data["summary"]["house_power"],
                 "battery_soc": data["summary"]["battery_soc"],
             }

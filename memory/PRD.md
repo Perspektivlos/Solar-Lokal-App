@@ -117,6 +117,11 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Backend: `goals`-Config vollständig entfernt (DEFAULT_CONFIG, Merge, ConfigUpdate); Tests `test_config_goals.py` gelöscht. (`/api/forecast`-Endpoint bleibt bestehen, wird aber nicht mehr vom UI genutzt.)
 - Verifiziert: 38 pytest grün, Lint sauber, Screenshot bestätigt entferntes Menü/Kachel; Energiefluss unverändert funktionsfähig.
 
+## Feature: Round-Trip-Effizienz-Kachel (2026-06)
+- Neue Dashboard-Kachel `RoundTripCard.jsx` (Summary-Spalte, unter Akku): Ring-Gauge des Akku-Wirkungsgrads (AC-Entladeenergie ÷ DC-Ladeenergie) + Aufschlüsselung Geladen (MPPT/DC) vs. Entladen (SUN/AC) in kWh heute. Ringfarbe adaptiv (≥85% grün, ≥70% cyan, sonst orange). Zeigt „–" + Hinweis, solange <0,05 kWh geladen.
+- Backend: Poller-Snapshot um `battery_charge_w`/`battery_discharge_w` erweitert. `/api/today` integriert diese trapezförmig zu `battery_charge_kwh`/`battery_discharge_kwh` und berechnet `round_trip_pct` (0–100 geclamped, Fallback aus netto `battery_power` für Alt-Snapshots).
+- Tests: `test_today_round_trip_fields` ergänzt; 39/39 pytest grün. Verifiziert via curl + Screenshot.
+
 ## Next Tasks
 - P1: Telegram-Bot für SoC-Warnungen (Push bei niedrigem Akku/Statuswechsel).
 - P1: Forecast vs. Ist-Vergleich (Vergleichskarte auf dem Dashboard).

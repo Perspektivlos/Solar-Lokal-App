@@ -119,6 +119,15 @@ class TestToday:
             assert f in data, f"missing {f}"
             assert isinstance(data[f], (int, float)), f"{f} not numeric: {data[f]}"
 
+    def test_today_round_trip_fields(self, client):
+        r = client.get(f"{API}/today", timeout=15)
+        assert r.status_code == 200
+        data = r.json()
+        for f in ("battery_charge_kwh", "battery_discharge_kwh", "round_trip_pct"):
+            assert f in data, f"missing {f}"
+            assert isinstance(data[f], (int, float)), f"{f} not numeric: {data[f]}"
+        assert 0 <= data["round_trip_pct"] <= 100
+
 
 # ---------- /api/history ----------
 class TestHistory:

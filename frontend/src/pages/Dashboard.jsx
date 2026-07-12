@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { getLive, getToday, getHistory } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import IntroCard from "../components/IntroCard";
+import RoundTripCard from "../components/RoundTripCard";
 import { Cable, AlertTriangle, Activity, Radio, Wifi, WifiOff } from "lucide-react";
 
 const COLOR = {
@@ -332,6 +333,7 @@ export default function Dashboard() {
               </div>
             </div>
           </GlassCard>
+          <RoundTripCard today={today} />
         </div>
       </div>
 
