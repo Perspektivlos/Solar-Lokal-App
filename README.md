@@ -148,6 +148,8 @@ Pull Requests, Issues und Erweiterungen sind willkommen, insbesondere für:
 
 Bitte vor größeren Änderungen ein Issue anlegen und die geplanten Anpassungen kurz beschreiben.
 
-## Lizenz
+## Rechtliches
 
-Hinweis in der Copyright.md !
+Solar-Lokal-App – Copyright (c) 2026 T Hauck (GitHub: Perspektivlos), Organisation: THCoding.  
+Aktuell ist dieses Projekt privat und nicht zur freien Wiederverwendung lizenziert.  
+Details siehe `COPYRIGHT.md` oder [THCentral.de](https://THCentral.de).
