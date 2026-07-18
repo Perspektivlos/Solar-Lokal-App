@@ -42,6 +42,12 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-07: MPPT-Vergleich + 3-Phasen-Schieflast (P2)
+- `PhaseBalance.jsx`: prominente 3-Phasen-Schieflast-Kachel (Balken je Phase, Spread in W, Unbalance %, Status grün/orange/rot ab 15%/30%). Aus `shelly.phases`.
+- `MpptCompare.jsx`: MPPT #1 vs #2 (aktuelle Leistung + Yield heute als Balken, „Top"-Badge für Führenden, Yield-Differenz). Aus den ersten zwei `victron.mppts`.
+- Platzierung: neue 2-Spalten-Zeile zwischen Shelly-Karte und Hoymiles/Trucki/Victron. Rein Frontend, keine Backend-Änderung.
+- Verifiziert: testing_agent iteration_7 (Frontend 100%, Werte konsistent, Live-Polling ok, keine Konsolenfehler).
+
 ### 2026-07: Round-Trip-Effizienz-Kachel (P2)
 - `RoundTripCard.jsx` im Dashboard (Summary-Spalte unter Akku): Ring-Gauge Akku-Wirkungsgrad (AC-Entladeenergie ÷ DC-Ladeenergie) + Geladen (MPPT/DC) vs. Entladen (SUN/AC) kWh heute. Ringfarbe adaptiv (≥85% grün / ≥70% cyan / sonst orange). „–" + Hinweis bei <0,05 kWh Ladung.
 - Backend: Poller-Snapshot um `battery_charge_w`/`battery_discharge_w` erweitert; `/api/today` liefert `battery_charge_kwh`, `battery_discharge_kwh`, `round_trip_pct` (Trapez, 0–100 geclamped, Fallback aus netto `battery_power` für Alt-Snapshots).
@@ -59,8 +65,7 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Proxmox-LXC-Deployment-Skripte (`deploy/proxmox/*`), Build-Härtung.
 
 ## Backlog (P1/P2)
-- P2: MPPT-Vergleichskachel (Yield MPPT #1 vs #2) für Dashboard/Grafana.
-- P2: 3-Phasen-Schieflast/Balance prominenter auf dem Dashboard (Schieflast-Erkennung).
+- P2: MPPT-Vergleich/Schieflast auch als Grafana/InfluxDB-Verlaufspanel.
 - P2: Round-Trip-Effizienz als Grafana/InfluxDB-Verlaufspanel (Akku-Alterung über Wochen/Monate).
 - P2: Config Export/Import (JSON), Wochen-/Monats-Verlauf + CSV-Export.
 - Refactor (aufgeschoben, Regressionsrisiko): große UI-Komponenten (`Dashboard.jsx`/`EnergyFlow.jsx`), server.py >700 Zeilen aufteilen, on_event → lifespan.
