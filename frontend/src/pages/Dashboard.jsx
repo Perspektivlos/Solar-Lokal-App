@@ -3,6 +3,8 @@ import { getLive, getToday, getHistory } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
+import PhaseBalance from "../components/PhaseBalance";
+import MpptCompare from "../components/MpptCompare";
 import { Cable, AlertTriangle, Activity, Radio, Wifi, WifiOff } from "lucide-react";
 
 const COLOR = {
@@ -376,6 +378,12 @@ export default function Dashboard() {
           </div>
         </div>
       </GlassCard>
+
+      {/* Schieflast + MPPT-Vergleich */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PhaseBalance phases={shelly.phases} />
+        <MpptCompare mppts={victron.mppts} />
+      </div>
 
       {/* Hoymiles + Trucki + Victron */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
