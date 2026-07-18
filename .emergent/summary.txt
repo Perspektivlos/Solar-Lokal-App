@@ -1,4 +1,4 @@
-<analysis><analysis>
+<analysis>
 **original_problem_statement**: 
 Ich brauche ein modernes Dashboard für Solarenergie im lokalen Netztwerk abzurufen, funktions einstellungen/test und die geräte zu Steuern bzw. Verwalten. Die Geräte sind ein ShellyPro 3em, ein Hoymiles HM1500 in AhoyDTU, ein Trucki2Shelly Gateway und 2 Victron Smartsolar MPPT in VenusOS Large. Lokaler Mosquitto MQTT Broker & InfluxDb Daten Integration. 
 
@@ -15,18 +15,18 @@ PRODUCT REQUIREMENTS:
 **INSTRUCT NEXT AGENT**: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in **German (Deutsch)** only.
 
 **what currently exists?** 
-A fully functional React frontend and FastAPI backend collecting telemetry from Shelly, AhoyDTU, Trucki2Shelly, and Victron MPPT via Mosquitto MQTT. The power flow logic correctly reflects a DC-coupled system (Victron charges battery, Hoymiles provides PV AC, Trucki provides Battery AC). It includes Proxmox LXC scripts and detailed dark-themed Grafana dashboards ( and ) mapping to InfluxDB. 
+A fully functional React frontend and FastAPI backend collecting telemetry from Shelly, AhoyDTU, Trucki2Shelly, and Victron MPPT via Mosquitto MQTT. The power flow logic correctly reflects a DC-coupled system (Victron charges battery, Hoymiles provides PV AC, Trucki provides Battery AC). It includes Proxmox LXC scripts and detailed dark-themed Grafana dashboards (`solar_dashboard.json` and `solar_details.json`) mapping to InfluxDB. 
 
 **Last working item**:
-- **Last item agent was working**: Applying safe Code Review recommendations. The agent fixed empty catch blocks in , added  for inline arrays in , and refactored  in  into smaller helper functions. The agent deliberately deferred large UI component splitting to avoid regressions on working hardware, and ignored false-positive ESLint/Python warnings.
+- **Last item agent was working**: Applying safe Code Review recommendations. The agent fixed empty catch blocks in `App.jsx`, added `useMemo` for inline arrays in `PowerFlowCard.jsx`, and refactored `_format_device_data` in `server.py` into smaller helper functions. The agent deliberately deferred large UI component splitting to avoid regressions on working hardware, and ignored false-positive ESLint/Python warnings.
 - **Status**: USER VERIFICATION PENDING
 - **Agent Testing Done**: Y
-- **Which testing method agent to use?**: backend manual testing by pytest (38 passed), eslint, and screenshot tool.
+- **Which testing method agent to use?**: backend manual testing by pytest (39 passed), eslint, and screenshot tool.
 - **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
 Issue 1: Code Review Refactorings (Large UI Components)
-- Attempted fixes: Agent deferred extracting UI sections of , , and  due to high regression risk on working hardware.
+- Attempted fixes: Agent deferred extracting UI sections of `Dashboard.jsx`, `PowerFlowCard.jsx`, and `App.jsx` due to high regression risk on working hardware.
 - Next debug checklist: Ask the user if they *really* want to split these components despite the risk, or leave them as is since the app is stable.
 - Why fix this issue and what will be achieved with the fix?: Code maintainability, fulfilling the Code Quality Report.
 - Status: NOT STARTED
@@ -44,21 +44,21 @@ Upcoming Tasks:
 Future Tasks (Agent suggested ideas):
 - P2: 3-Phasen-Balance prominenter auf dem Dashboard anzeigen (Schieflast-Erkennung).
 - P2: MPPT-Vergleichskachel (Yield #1 vs #2) für InfluxDB/Grafana.
-- P2: Round-Trip-Effizienz-Kachel für Akku (Laden vs. Entladen).
 
 **Completed work in this session**
-- Bugfix: Grid (Netz) and Battery (Akku) identical values fixed ( replaced with /) (DONE)
-- Bugfix: Hoymiles AhoyDTU MQTT parser updated to read JSON objects per channel () instead of flat keys (DONE)
-- Bugfix: Corrected house consumption math for DC-coupled setup () (DONE)
+- Bugfix: Grid (Netz) and Battery (Akku) identical values fixed (`mqtt_data['grid']` replaced with `mqtt_data['battery_power']`) (DONE)
+- Bugfix: Hoymiles AhoyDTU MQTT parser updated to read JSON objects per channel (`ch0_yield_total`) instead of flat keys (DONE)
+- Bugfix: Corrected house consumption math for DC-coupled setup (`house_consumption_w`) (DONE)
 - Feature/Cleanup: Added and then completely REMOVED Autarkie heute goal and Forecast menu based on explicit user direction (DONE)
-- Cleanup: Removed unused shadcn files (, , ) (DONE)
-- Grafana/InfluxDB: Expanded backend to write all device fields. Created new . Styled dashboards with app's dark neon aesthetic. Corrected InfluxDB Org to  (DONE)
-- Refactoring: Safe code review fixes ( error handling,  memoization,  influx helpers) (DONE)
+- Cleanup: Removed unused shadcn files (`forecast-card.jsx`, `autarky-card.jsx`, `forecast-page.jsx`) (DONE)
+- Grafana/InfluxDB: Expanded backend to write all device fields. Created new `solar_details.json`. Styled dashboards with app's dark neon aesthetic. Corrected InfluxDB Org to `solar` (DONE)
+- Refactoring: Safe code review fixes (`App.jsx` error handling, `useMemo` memoization, `server.py` influx helpers) (DONE)
+- Feature: Round-Trip-Effizienz-Kachel für Akku (Laden vs. Entladen) - Added `RoundTripCard.jsx` component, extended backend `/api/today` with `battery_charge_kwh`, `battery_discharge_kwh`, and `round_trip_pct` calculation, added test coverage (`test_today_round_trip_fields`) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-Issue 1: Code Quality Report warnings for React Hook Dependencies &  identity comparisons.
+Issue 1: Code Quality Report warnings for React Hook Dependencies & `is None` identity comparisons.
 - Debug checklist: N/A.
-- Why to solve this issue and what will be achieved with this?: Agent determined these are false-positives ( is PEP8 idiomatic; hook deps were internal effect variables). DO NOT attempt to fix these as it will cause actual bugs.
+- Why to solve this issue and what will be achieved with this?: Agent determined these are false-positives (`is None` is PEP8 idiomatic; hook deps were internal effect variables). DO NOT attempt to fix these as it will cause actual bugs.
 
 **Known issue recurrence from previous fork**
 - Issue recurrence in previous fork: None
@@ -74,37 +74,37 @@ Backend: FastAPI, MongoDB (Motor Async), Mosquitto MQTT (Paho), InfluxDB Client
 Architecture: DC-Coupled Solar (PV charges battery directly via Victron MPPT, Hoymiles acts as AC microinverter, Trucki controls Shelly battery dispatch).
 
 **key DB schema**
-- :  (Note:  and  configs were removed).
-- : 
+- `telemetry` collection: `mqtt_data` dict (Note: `forecast` and `autarky_goal` configs were removed).
+- InfluxDB: `solar` bucket 
 
 **changes in tech stack**
 - Backend now polls and parses expanded metrics per device phase/channel to send to InfluxDB.
 
 **All files of reference**
-- : InfluxDB formatting logic, endpoint data formatting.
-- : Fixed AhoyDTU and Trucki payload parsers.
-- : Updated to reflect removed Forecast and Autarky Goal.
-- : Renders the DC-coupled flow (MPPT charge vs. Trucki discharge).
-- : Updated provisioning files.
+- `backend/server.py`: InfluxDB formatting logic, endpoint data formatting.
+- `backend/mqtt_client.py`: Fixed AhoyDTU and Trucki payload parsers.
+- `frontend/src/App.jsx`: Updated to reflect removed Forecast and Autarky Goal.
+- `frontend/src/components/PowerFlowCard.jsx`: Renders the DC-coupled flow (MPPT charge vs. Trucki discharge).
+- `lxc/`: Updated provisioning files.
 
 **Areas that need refactoring**:
--  and  are large, but stable. 
+- `Dashboard.jsx` and `PowerFlowCard.jsx` are large, but stable. 
 
 **key api endpoints**
-- : Detailed live state containing , , , , and calculated .
+- `GET /api/telemetry`: Detailed live state containing `pv_power`, `grid_power`, `battery_power`, `house_consumption`, and calculated `flow_arrows`.
 
 **Critical Info for New Agent**
 - **Language**: MUST speak German.
-- **System Physics**: The system is DC-coupled. The battery is charged directly by Victron MPPTs (DC). The house load is met by Hoymiles (PV-to-AC), Trucki (Battery-to-AC), and Grid. House load is calculated as: . NEVER double-count Victron MPPT power into the house load.
+- **System Physics**: The system is DC-coupled. The battery is charged directly by Victron MPPTs (DC). The house load is met by Hoymiles (PV-to-AC), Trucki (Battery-to-AC), and Grid. House load is calculated as: `hoymiles_power + trucki_power + grid_power`. NEVER double-count Victron MPPT power into the house load.
 - **Removed Features**: The user explicitly ordered the complete removal of the Forecast tab and the Autarky Goal card. Do not re-add them. Telegram integration was also explicitly rejected.
 
 **documents and test reports created in this job**
-- 
-- 
-- 
-- 
-- 
-- 
+- `memory/PRD.md`
+- `memory/code_review_report.md`
+- `.emergent/test_report_*.md`
+- `grafana/solar_dashboard.json`
+- `grafana/solar_details.json`
+- `backend/tests/test_solar_dashboard.py` 
 
 **Last 10 User Messages and any pending HUMAN messages**
 1. User provided screenshots showing AhoyDTU channel data missing and House load calculation being incorrect.
@@ -126,16 +126,16 @@ Healthy.
 **Testing status**
 - Testing agent used after significant changes: YES (iterations 3, 4, 5).
 - Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: 
+- Test files created: `backend/tests/test_solar_dashboard.py` 
 - Known regressions: None.
 
 **Credentials to test flow:**
- is default in cloud/local.
-Grafana InfluxDB settings provided by user: Org = , Bucket = .
+`DEMO_MODE=true` is default in cloud/local.
+Grafana InfluxDB settings provided by user: Org = `solar`, Bucket = `solar`.
 
 **What agent forgot to execute**
 Nothing. The agent successfully adhered to the code review exceptions and safely navigated the user's requirements.
 
 **Debugging checklist for current issue**
 N/A - Current state is clean. Await user's next directive.
-</analysis></analysis>
+</analysis>
