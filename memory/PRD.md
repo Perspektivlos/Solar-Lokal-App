@@ -42,6 +42,11 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: Dashboard-Umgruppierung nach Themen
+- Akku-Kacheln in eigener Zeile (`data-testid="battery-row"`): Akku-Netto + Trucki-Speicher + Round-Trip-Effizienz.
+- MPPT-Kacheln in eigener Zeile (`data-testid="mppt-row"`): Victron MPPT + MPPT-Vergleich.
+- Zusätzliche Zeile: 3-Phasen-Schieflast + Hoymiles (Netz/PV-AC). Summary-Spalte neben Energiefluss nur noch PV + Netz. Reine Layout-Änderung, per Screenshot verifiziert.
+
 ### 2026-07: MPPT-Vergleich + 3-Phasen-Schieflast (P2)
 - `PhaseBalance.jsx`: prominente 3-Phasen-Schieflast-Kachel (Balken je Phase, Spread in W, Unbalance %, Status grün/orange/rot ab 15%/30%). Aus `shelly.phases`.
 - `MpptCompare.jsx`: MPPT #1 vs #2 (aktuelle Leistung + Yield heute als Balken, „Top"-Badge für Führenden, Yield-Differenz). Aus den ersten zwei `victron.mppts`.
