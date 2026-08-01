@@ -143,7 +143,10 @@ function MetricBig({ label, value, unit, color, sub, sparkValues, sparkColor }) 
   );
 }
 
-// ---- main page ----
+/**
+ * Zeigt das Live-Dashboard für Solar-, Netz-, Batterie- und MPPT-Daten an.
+ * @return {JSX.Element} Die Dashboard-Ansicht mit Live-Daten oder einem Lade- beziehungsweise Fehlerstatus.
+ */
 
 export default function Dashboard() {
   const [live, setLive] = useState(null);
@@ -300,42 +303,6 @@ export default function Dashboard() {
               sparkColor={summary.grid_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}
             />
           </GlassCard>
-          <GlassCard title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"} accent={COLOR.battery} testid="live-battery" danger={socDanger}>
-            <MetricBig
-              label={summary.battery_power >= 0 ? "Ladeleistung netto" : "Entladeleistung netto"}
-              value={formatNum(Math.abs(summary.battery_power), 0)} unit="W"
-              color="text-cyan-300 neon-text-cyan"
-              sub={<Delta prev={prev?.summary?.battery_power} curr={summary.battery_power} />}
-              sparkValues={trail.battery} sparkColor={COLOR.battery}
-            />
-            <div className="grid grid-cols-2 gap-2 mt-3" data-testid="battery-breakdown">
-              <div className="glass-inset p-2" style={{ borderLeft: "3px solid #FACC15" }}>
-                <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/50">Laden · MPPT</div>
-                <div className="font-mono text-base text-yellow-300" data-testid="battery-charge">{formatNum(summary.battery_charge_w, 0)}<span className="text-[10px] text-white/40"> W</span></div>
-              </div>
-              <div className="glass-inset p-2" style={{ borderLeft: "3px solid #06B6D4" }}>
-                <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/50">Entladen · SUN</div>
-                <div className="font-mono text-base text-cyan-300" data-testid="battery-discharge">{formatNum(summary.battery_discharge_w, 0)}<span className="text-[10px] text-white/40"> W</span></div>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 flex items-center justify-between">
-                <span>SoC</span>
-                {socDanger && <span className="text-red-300 font-bold">⚠ niedrig</span>}
-              </div>
-              <div className="flex items-center gap-3 mt-1">
-                <div className="flex-1 h-3 rounded glass-inset relative overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 transition-all" style={{
-                    width: `${summary.battery_soc}%`,
-                    background: socDanger ? "linear-gradient(90deg, #DC2626, #F87171)" : "linear-gradient(90deg, #0891b2, #06B6D4)",
-                    boxShadow: `0 0 12px ${socDanger ? "#F87171" : COLOR.battery}88`,
-                  }} />
-                </div>
-                <div className="font-mono text-lg w-14 text-right text-white">{formatNum(summary.battery_soc, 0)}%</div>
-              </div>
-            </div>
-          </GlassCard>
-          <RoundTripCard today={today} />
         </div>
       </div>
 
@@ -379,14 +346,9 @@ export default function Dashboard() {
         </div>
       </GlassCard>
 
-      {/* Schieflast + MPPT-Vergleich */}
+      {/* Netz-Phasen & PV-AC */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PhaseBalance phases={shelly.phases} />
-        <MpptCompare mppts={victron.mppts} />
-      </div>
-
-      {/* Hoymiles + Trucki + Victron */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} right={<SourceBadge data={ahoy} />} testid="card-ahoy">
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div>
@@ -417,6 +379,45 @@ export default function Dashboard() {
               ))}
             </tbody>
           </table>
+        </GlassCard>
+      </div>
+
+      {/* Akku-Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-testid="battery-row">
+        <GlassCard title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"} accent={COLOR.battery} testid="live-battery" danger={socDanger}>
+          <MetricBig
+            label={summary.battery_power >= 0 ? "Ladeleistung netto" : "Entladeleistung netto"}
+            value={formatNum(Math.abs(summary.battery_power), 0)} unit="W"
+            color="text-cyan-300 neon-text-cyan"
+            sub={<Delta prev={prev?.summary?.battery_power} curr={summary.battery_power} />}
+            sparkValues={trail.battery} sparkColor={COLOR.battery}
+          />
+          <div className="grid grid-cols-2 gap-2 mt-3" data-testid="battery-breakdown">
+            <div className="glass-inset p-2" style={{ borderLeft: "3px solid #FACC15" }}>
+              <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/50">Laden · MPPT</div>
+              <div className="font-mono text-base text-yellow-300" data-testid="battery-charge">{formatNum(summary.battery_charge_w, 0)}<span className="text-[10px] text-white/40"> W</span></div>
+            </div>
+            <div className="glass-inset p-2" style={{ borderLeft: "3px solid #06B6D4" }}>
+              <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/50">Entladen · SUN</div>
+              <div className="font-mono text-base text-cyan-300" data-testid="battery-discharge">{formatNum(summary.battery_discharge_w, 0)}<span className="text-[10px] text-white/40"> W</span></div>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55 flex items-center justify-between">
+              <span>SoC</span>
+              {socDanger && <span className="text-red-300 font-bold">⚠ niedrig</span>}
+            </div>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex-1 h-3 rounded glass-inset relative overflow-hidden">
+                <div className="absolute inset-y-0 left-0 transition-all" style={{
+                  width: `${summary.battery_soc}%`,
+                  background: socDanger ? "linear-gradient(90deg, #DC2626, #F87171)" : "linear-gradient(90deg, #0891b2, #06B6D4)",
+                  boxShadow: `0 0 12px ${socDanger ? "#F87171" : COLOR.battery}88`,
+                }} />
+              </div>
+              <div className="font-mono text-lg w-14 text-right text-white">{formatNum(summary.battery_soc, 0)}%</div>
+            </div>
+          </div>
         </GlassCard>
 
         <GlassCard title="Trucki2Shelly · Speicher" accent={COLOR.battery} right={<SourceBadge data={trucki} />} testid="card-trucki" danger={trucki?.soc !== undefined && trucki.soc < 15}>
@@ -455,6 +456,11 @@ export default function Dashboard() {
           </div>
         </GlassCard>
 
+        <RoundTripCard today={today} />
+      </div>
+
+      {/* MPPT-Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="mppt-row">
         <GlassCard title="Victron MPPT 150/35" accent={COLOR.victron} right={<SourceBadge data={victron} />} testid="card-victron">
           <div className="space-y-3">
             {victron.mppts?.map((m) => (
@@ -479,6 +485,8 @@ export default function Dashboard() {
             </div>
           </div>
         </GlassCard>
+
+        <MpptCompare mppts={victron.mppts} />
       </div>
     </div>
   );
