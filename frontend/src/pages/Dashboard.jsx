@@ -143,7 +143,10 @@ function MetricBig({ label, value, unit, color, sub, sparkValues, sparkColor }) 
   );
 }
 
-// ---- main page ----
+/**
+ * Zeigt das Live-Dashboard für Solar-, Netz-, Batterie- und MPPT-Daten an.
+ * @return {JSX.Element} Die Dashboard-Ansicht mit Live-Daten oder einem Lade- beziehungsweise Fehlerstatus.
+ */
 
 export default function Dashboard() {
   const [live, setLive] = useState(null);
