@@ -52,18 +52,18 @@ function ChartBody({ loading, data }) {
   return (
     <ResponsiveContainer>
       <LineChart data={data}>
-        <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" />
+        <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.09)" />
         <XAxis dataKey="ts" tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" />
         <YAxis tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" label={Y_LABEL_W} />
         <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} />
         <Legend wrapperStyle={LEGEND_STYLE} />
-        <Line type="monotone" dataKey="PV" stroke="#FACC15" strokeWidth={2.5} dot={false}
-              style={{ filter: "drop-shadow(0 0 5px rgba(250,204,21,0.6))" }} />
-        <Line type="monotone" dataKey="Netz" stroke="#F87171" strokeWidth={2.5} dot={false}
-              style={{ filter: "drop-shadow(0 0 5px rgba(248,113,113,0.6))" }} />
-        <Line type="monotone" dataKey="Akku" stroke="#06B6D4" strokeWidth={2.5} dot={false}
-              style={{ filter: "drop-shadow(0 0 5px rgba(6,182,212,0.6))" }} />
-        <Line type="monotone" dataKey="Haus" stroke="#cbd5e1" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="PV" stroke="#FACC15" strokeWidth={3} dot={false}
+              style={{ filter: "drop-shadow(0 0 6px rgba(250,204,21,0.7))" }} />
+        <Line type="monotone" dataKey="Netz" stroke="#F87171" strokeWidth={3} dot={false}
+              style={{ filter: "drop-shadow(0 0 6px rgba(248,113,113,0.7))" }} />
+        <Line type="monotone" dataKey="Akku" stroke="#06B6D4" strokeWidth={3} dot={false}
+              style={{ filter: "drop-shadow(0 0 6px rgba(6,182,212,0.7))" }} />
+        <Line type="monotone" dataKey="Haus" stroke="#cbd5e1" strokeWidth={2.5} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
