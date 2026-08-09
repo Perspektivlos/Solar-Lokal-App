@@ -205,14 +205,16 @@ export default function Dashboard() {
   const prev = prevLive;
   const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
 
-  // Tageswert-Kacheln für den Header (nebeneinander)
+  // Tageswert-Kacheln für den Header (nebeneinander): erst PV, dann Netz
   const headerStats = [
-    { label: "PV heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "today-stat-PV heute" },
-    { label: "Verbrauch", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: COLOR.silver, spark: trail.house, sparkColor: COLOR.silver, testid: "today-stat-Verbrauch" },
-    { label: "Netz Bezug", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "today-stat-Netz Bezug" },
-    { label: "Einspeisung", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300", accent: COLOR.grid_exp, spark: null, testid: "today-stat-Einspeisung" },
-    { label: "Autarkie", value: formatNum(today?.autarky_pct, 0), unit: "%", color: "text-violet-300", accent: "#A78BFA", testid: "today-stat-Autarkie" },
-    { label: "Eigenverbr.", value: formatNum(today?.self_consumption_pct, 0), unit: "%", color: "text-cyan-300", accent: COLOR.battery, testid: "today-stat-Eigenverbr." },
+    // --- PV ---
+    { label: "PV Gesamt", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "today-stat-PV Gesamt" },
+    { label: "PV Aktuell", value: formatNum(summary?.pv_power, 0), unit: "W", color: "text-yellow-200", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "today-stat-PV Aktuell" },
+    // --- Netz ---
+    { label: "Netz Bezug (Gesamt)", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "today-stat-Netz Bezug" },
+    { label: "Netz Aktuell", value: formatNum(Math.abs(summary?.grid_power ?? 0), 0), unit: "W", color: "text-red-300", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "today-stat-Netz Aktuell" },
+    { label: "Verbrauch (Gesamt)", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: COLOR.silver, spark: trail.house, sparkColor: COLOR.silver, testid: "today-stat-Verbrauch" },
+    { label: "Einspeisung (Gesamt)", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300", accent: COLOR.grid_exp, spark: null, testid: "today-stat-Einspeisung" },
   ];
 
   return (
