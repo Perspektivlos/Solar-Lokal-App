@@ -181,14 +181,6 @@ export default function EnergyFlow({ summary, trucki }) {
           <Flow d="M 685 260 L 535 260" color={COLOR.battery}
                 active={dischargeActive}
                 watts={dischargeActive ? discharge : undefined} />
-
-          <Flow d="M 450 308 L 450 395" color="#cbd5e1" active={houseActive} />
-          <g>
-            <rect x={375} y={398} width={150} height={32} rx="4" fill="rgba(15,23,42,0.85)" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-            <text x={450} y={418} textAnchor="middle" fontSize="12" fontFamily="IBM Plex Mono" fontWeight="600" fill="#cbd5e1">
-              {`${Math.round(Math.max(0, house))} W VERBRAUCH`}
-            </text>
-          </g>
         </svg>
       </div>
     </div>
