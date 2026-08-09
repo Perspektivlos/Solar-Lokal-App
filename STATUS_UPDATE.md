@@ -1,0 +1,84 @@
+# Status-Update: Solar-Lokal-App (Entwicklungsstand)
+
+Dieses Dokument gibt einen strukturierten Überblick über die jüngsten Entwicklungen, Fehlerbehebungen und Funktionserweiterungen der **Solar-Lokal-App** auf Basis der letzten Git-Commits und System-Iterationen.
+
+---
+
+## 1. Kürzliche Commits & Git-Historie
+
+*Hinweis:* Dieser Fork (`fork-update`) hat **noch keine Git-Commits** — der Arbeitsstand liegt vollständig als untracked-Dateien vor. Die unten genannten Commit-Hashes stammen aus der **ursprünglichen Emergent-/Upstream-Historie** und sind in diesem Checkout **nicht vorhanden**. Sie dienen hier nur als grober Herkunftsnachweis, nicht als verifizierbare Historie dieses Forks.
+
+*   **Commit `9e1cc36` (Upstream, aktuellster Stand)**: *Revise license section to include copyright details*
+    *   Überarbeitung der rechtlichen Rahmenbedingungen und Urheberrechtsangaben im Hauptverzeichnis.
+    *   Präzisierung der Eigentumsverhältnisse und Verweis auf das Urheberrecht von T. Hauck (THCoding) in `COPYRIGHT.md` und `README.md`.
+*   **Commit `35fd019` (Upstream)**: *Added P2 features and backlog items with Readme*
+    *   Großes Feature-Paket und System-Härtung (siehe Detailauflistung unten).
+    *   Inbetriebnahme der Erweiterten InfluxDB-Anbindung, Härtung der Geräte-Parser, sowie Einführung der Batterie-Wirkungsgrad-Berechnung.
+*   **Commit `f84c352` / `9cc5ceb` (Upstream)**: *Text Abschnitte angepasst & Auto-generated changes*
+    *   Lokalisierungsanpassungen im React-Frontend.
+    *   Korrektur des App-Titels in der `index.html`.
+
+### 1a. Änderungen in diesem Fork (noch nicht committet)
+
+*   **Backend: PV-Prognose (Forecast) vollständig entfernt** (siehe Abschnitt 2E).
+
+---
+
+## 2. Detaillierte Übersicht der umgesetzten Verbesserungen
+
+In den letzten Entwicklungs-Zyklen wurden kritische architektonische Verbesserungen, Fehlerbehebungen und kosmetische Anpassungen durchgeführt:
+
+### A. Physikalische Korrektur des Energie- & Verbrauchsmodells (DC-Kopplung)
+*   **Problem**: Zuvor kam es im Energiefluss-Diagramm zur fehlerhaften Mitzählung der Victron-MPPT-Ladeleistung als Hauslast, wodurch der Hausverbrauch um bis zu several kW falsch berechnet wurde (~4558 W statt tatsächlichen ~1760 W). Zudem leitete das System `battery_power` fälschlicherweise aus `Trucki/METER` ab, was dem Netz-Messwert entsprach und identische Werte für Netz und Batterie erzeugte.
+*   **Lösung**:
+    *   Einführung der physikalisch korrekten Formel:
+        $$\text{Hausverbrauch} = \text{PV\_AC (Hoymiles)} + \text{Batterie-Entladung (SUN)} + \text{Netzbezug/Einspeisung}$$
+    *   Die MPPT-Ladeleistung lädt nun rein die Batterie (DC) und wird nicht mehr doppelt gezählt.
+    *   Die Batterieleistung kommt nun korrekt und unabhängig aus `Trucki/ACDISPLAY` (bzw. Fallback `Trucki/ACSETPOINT`). Entladungen werden im Energiefluss getrennt von Ladevorgängen dargestellt.
+
+### B. Härtung des Hoymiles/AhoyDTU-Parsers
+*   **Problem**: AhoyDTU publiziert modulspezifische Spannungs- und Leistungswerte als JSON-Objekt unter den Topics `HM1500/ch1` bis `HM1500/ch4`. Der alte Parser suchte nach flachen Keys (wie `P_DC`) und fiel auf 0 W zurück.
+*   **Lösung**: Der Parser `fetch_ahoy_from_mqtt` wurde grundlegend überarbeitet. Er liest nun die JSON-Payloads pro Kanal vollständig aus, extrahiert die Felder `P_DC`, `U_DC`, `I_DC` sowie `YieldDay` sauber und liest das Leistungslimit direkt aus `ack_pwr_limit` aus.
+
+### C. Batterie Round-Trip-Wirkungsgrad-Kachel
+*   **Neues Feature**: Einbindung einer interaktiven Kachel (`RoundTripCard.jsx`) in der Summary-Spalte des Dashboards.
+*   **Funktion**: Integriert die Ladeleistungen (MPPT/DC) und Entladeleistungen (SUN/AC) trapezförmig über den Tag hinweg in Wattstunden und berechnet daraus live den aktuellen Wirkungsgrad der Batterie:
+    $$\text{Effizienz \%} = \frac{\text{Entladene AC-Energie (SUN) heute in kWh}}{\text{Geladene DC-Energie (MPPT) heute in kWh}} \times 100$$
+*   **Anzeigeverhalten**: Farblich adaptiver Ring-Fortschritt (Grün $\ge 85\%$, Cyan $\ge 70\%$, sonst Orange) mit intelligenter Ausblendung („–“) bei unzureichender Tagesladung ($< 0.05$ kWh), um Division-by-Zero-Fehler am Morgen zu vermeiden.
+
+### D. Erweiterung der InfluxDB- & Grafana-Langzeitanalyse
+*   **Reiche Telemetriedaten**: Das Backend schreibt nun hochauflösende Messdaten pro Zyklus (15s) in InfluxDB:
+    *   `solar`: System-Messdaten inklusive Echtzeit-Autarkie (`autarky_pct`) und Eigenverbrauch (`self_consumption_pct`).
+    *   `shelly_phase`: Phasen-Messwerte (L1–L3) für präzise Schieflasterkennungen.
+    *   `hoymiles_ch`: Modulgenaue Erträge der Kanäle 1–4.
+    *   `victron_mppt`: Status- und Leistungsdaten je Laderegler-Instanz.
+    *   `trucki`: Betriebsdaten (Spannung, Strom, Temperatur, ZEPC).
+*   **Dashboards im App-Stil**: Die beiden Grafana-Dashboards (`solar-influxdb-dashboard.json` und `solar-devices-dashboard.json`) wurden mit transparenten Panels, weichen Gradienten-Linien und der Neon-Farbpalette der App (PV Gelb, Netz Rot, Autarkie/Einspeisung Grün, Akku Cyan, Haus Silber) ausgestattet und gegenseitig verlinkt.
+*   **Datenbank-Härtung**: Korrektur des InfluxDB-Organisation-Mismatches (Umstellung von `home` auf die vom User genutzte Org `Solar Lokal`).
+
+### E. Bereinigung & Deployment-Härtung
+*   **Cleanups**: Vollständige Entfernung des vom User unerwünschten Prognose-Menüs (Forecast) und der Autarkie-Ziel-Kachel im gesamten System.
+    *   *Frontend*: Bereits zuvor entfernt (keine `forecast`/`Prognose`-Referenzen mehr in `frontend/src`).
+    *   *Backend*: **Nachgeholt am 09.08.2026.** Zuvor war die Prognose im Backend **noch vorhanden** (Endpunkt `/api/forecast` inkl. Open-Meteo-Anbindung, `forecast`-Block in `DEFAULT_CONFIG` und `forecast`-Feld in `ConfigUpdate`). Alle drei Stellen wurden entfernt; der `/api/forecast`-Route existiert nicht mehr. `test_get_config_merge.py` referenziert `forecast` nur noch in einem Kommentar und bleibt bestehen.
+*   **Fehlerfreie Builds**: Löschen ungenutzter shadcn-Komponenten (`carousel.jsx`, `calendar.jsx`, `command.jsx`) zur Behebung von blockierenden ESLint-Fehlern.
+*   **Deployment-Reihenfolge**: Im Proxmox-Deployment-Skript `build-app.sh` wird das Backend nun *vor* dem rechenintensiven Frontend-Build gestartet, um Systemausfälle bei OOM-Fehlern zu minimieren. Zudem wurde das Node-Speicherlimit auf `2048 MB` angehoben.
+
+---
+
+## 3. Aktueller Status & Projekt-Gesundheit
+
+*   **Backend-Tests (offline ausführbar)**: **17 passed** in den drei reinen Unit-Test-Dateien: `test_mqtt_client.py` (12), `test_influx_points.py` (5), `test_get_config_merge.py` (2). Diese laufen lokal ohne externen Dienst durch (Stand 09.08.2026, verifiziert).
+*   **Backend-Tests (Live-Integration)**: `test_solar_dashboard.py` (~25 Tests) ist eine **Live-Integration-Suite**, die gegen den externen Emergent-Preview-Host (`solar-dash-de.preview.emergentagent.com`) läuft und in dieser Fork-Umgebung **nicht lokal ausgeführt** wird. Die früher genannte Zahl „34 passed / 100%“ aus der Upstream-Historie ist in diesem Fork **nicht reproduzierbar** (kein laufender Server, keine Git-Historie) und gilt als veraltet.
+*   **Frontend**: Die App kompiliert fehlerfrei (Exit Code 0), ESLint läuft sauber durch, und die automatische Versionierung (`REACT_APP_VERSION` aus der `package.json` $\to$ `v1.2.0`) ist erfolgreich aktiv. Keine `forecast`-Referenzen mehr im Frontend-Code.
+*   **Integrationstest live**: Die API-Endpunkte `/api/live`, `/api/today`, `/api/history` und `/api/config` liefern saubere, dem physikalischen Modell entsprechende JSON-Antworten (verifiziert gegen ein importiertes `server`-Modul; `/api/forecast` existiert nicht mehr).
+
+---
+
+## 4. Zukünftiger Backlog (Vorschläge)
+
+1.  **P1: Telegram-Bot für SoC-Meldungen**
+    *   Push-Benachrichtigung bei niedrigem Akkustand ($< 15\%$) oder Ausfall eines Geräts (Wechselrichter offline).
+2.  **P2: MPPT-Vergleichskachel**
+    *   Visualisierung des direkten Ertragsvergleichs (Ertrag Laderegler #1 vs. #2) auf dem Dashboard.
+3.  **P2: CSV-Export im Historien-Tab**
+    *   Einfacher Download historischer Leistungsdaten über die Benutzeroberfläche.
