@@ -139,9 +139,9 @@ export default function EnergyFlow({ summary, trucki }) {
   }
 
   return (
-    <div className="glass-strong h-full flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
-        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/65 flex items-center gap-2">
           <Activity size={12} className="text-cyan-400 neon-cyan" />
           Energiefluss · Live
         </div>

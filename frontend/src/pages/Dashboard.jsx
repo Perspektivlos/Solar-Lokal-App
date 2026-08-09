@@ -5,8 +5,17 @@ import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
 import MpptCompare from "../components/MpptCompare";
-import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat } from "../components/solar-ui";
-import { Sun, Cable, AlertTriangle, Activity } from "lucide-react";
+import DeviceTile from "../components/DeviceTile";
+import { Cable, AlertTriangle, Activity, Radio, Wifi, WifiOff, Sun, Home, BatteryCharging, Cpu } from "lucide-react";
+
+const COLOR = {
+  pv: "#FACC15",
+  grid_imp: "#F87171",
+  grid_exp: "#10B981",
+  battery: "#06B6D4",
+  victron: "#34D399",
+  silver: "#cbd5e1",
+};
 
 const INTRO_SECTIONS = [
   {
@@ -19,86 +28,100 @@ const INTRO_SECTIONS = [
   },
   {
     label: "Aktualisierung",
-    body: "Frontend pollt /api/live + /api/today alle 3 Sekunden. Sparkline-Trail enthält die letzten 30 Datenpunkte. Tageswerte aus Trapez-Integration seit Mitternacht (UTC).",
+    body: "Frontend pollt /api/live + /api/today alle 3 Sekunden. Sparkline-Trail enthält die letzten 30 Datenpunkte. Tageswerte aus Trapez-Integration über /api/snapshots seit Mitternacht (UTC).",
   },
   {
-    label: "Layout-Gruppen",
-    body: "Reihe 1: Tagesübersicht (PV & Netz) + Energiefluss. Danach thematische Reihen: Akku · Victron · Shelly · Rest (Hoymiles).",
+    label: "Tageswerte",
+    body: <span>PV / Verbrauch / Bezug / Einspeisung in kWh · Autarkie (Eigenverbrauch ÷ Hausverbrauch) · Eigenverbrauchsquote (Eigenverbrauch ÷ PV). Beide auf 0–100&nbsp;% begrenzt.</span>,
   },
   {
     label: "Bekannte Einschränkungen",
-    body: "Trucki-SoC wird aus VBAT linear geschätzt (LiFePO4 16S). House-Power wird rechnerisch ermittelt — kann bei Mess-Latenz kurzzeitig unrealistisch wirken.",
+    body: "Trucki-SoC wird aus VBAT linear geschätzt (LiFePO4 16S, 48 V = 0 %, 54.4 V = 100 %). Bei aktiver Last weicht der Wert vom Ruhe-SoC ab. House-Power wird rechnerisch ermittelt — kann bei Mess-Latenz kurzzeitig unrealistisch wirken.",
   },
   {
     label: "Mögliche Fehler",
-    body: "‚Fehler beim Laden' → Backend nicht erreichbar (Service-Status prüfen). Permanenter ‚FALLBACK'-Badge → MQTT enabled aber kein Stream + Gerät via HTTP nicht erreichbar.",
+    body: "‚Fehler beim Laden‘ → Backend nicht erreichbar (Service-Status prüfen). Permanenter ‚FALLBACK‘-Badge → MQTT enabled aber kein Stream + Gerät via HTTP nicht erreichbar.",
   },
 ];
 
-function batteryStateKind(socDanger, power) {
-  if (socDanger) return "KRITISCH";
-  if (power > 20) return "LADEN";
-  if (power < -20) return "ENTLADEN";
-  return "NORMAL";
+// ---- helpers ----
+function relativeTime(iso, nowMs) {
+  if (!iso) return "–";
+  const dt = new Date(iso);
+  const diff = (nowMs - dt.getTime()) / 1000;
+  if (diff < 2) return "gerade eben";
+  if (diff < 60) return `vor ${Math.floor(diff)} s`;
+  if (diff < 3600) return `vor ${Math.floor(diff / 60)} min`;
+  return dt.toLocaleTimeString("de-DE");
 }
 
-// Tagesübersicht: zwei Gruppen (PV / Netz) mit dominantem Live-Wert + Tages-kWh.
-function TopKpi({ today, summary, trail }) {
-  const grid = summary.grid_power;
-  const importing = grid >= 0;
-  const gridNowW = Math.abs(grid);
+function formatNum(n, digits = 0) {
+  if (n === null || n === undefined || isNaN(n)) return "–";
+  return Number(n).toLocaleString("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+// ---- atomic components ----
+
+function SourceBadge({ data }) {
+  let label = "DEMO", cls = "border-yellow-400/40 bg-yellow-400/10 text-yellow-300", Icon = Radio;
+  if (data?._via_mqtt) { label = "MQTT LIVE"; cls = "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"; Icon = Wifi; }
+  else if (data?._fallback) { label = "FALLBACK"; cls = "border-red-400/40 bg-red-400/10 text-red-300"; Icon = WifiOff; }
+  else if (data?.online === false) { label = "OFFLINE"; cls = "border-white/20 bg-white/5 text-white/55"; Icon = WifiOff; }
+  else if (data?.online === true) { label = "LIVE"; cls = "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"; Icon = Wifi; }
   return (
-    <GlassCard
-      title="Tagesübersicht · PV & Netz"
-      accent={COLOR.pv}
-      testid="top-kpi"
-      badge={<Badge kind={importing ? "IMPORT" : "EXPORT"} />}
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 h-full">
-        {/* PV-Gruppe */}
-        <div className="md:pr-5 md:border-r border-white/10 flex flex-col justify-between" data-testid="kpi-group-pv">
-          <div className="flex items-center gap-2 mb-3">
-            <Sun size={14} className="text-yellow-300" />
-            <span className="font-sans text-[11px] font-bold uppercase tracking-[0.2em] text-yellow-300/90">Photovoltaik</span>
-          </div>
-          <MetricBig
-            label="Erzeugung aktuell"
-            value={formatNum(summary.pv_power, 0)}
-            unit="W"
-            color="text-yellow-300 neon-text-yellow"
-            sparkValues={trail.pv}
-            sparkColor={COLOR.pv}
-          />
-          <div className="mt-4 pt-3 border-t border-white/10">
-            <Stat label="Heute gesamt erzeugt" value={formatNum(today?.pv_kwh, 2)} unit="kWh" color="text-yellow-200" testid="kpi-pv-today" />
-          </div>
-        </div>
-        {/* Netz-Gruppe */}
-        <div className="flex flex-col justify-between" data-testid="kpi-group-grid">
-          <div className="flex items-center gap-2 mb-3">
-            <Cable size={14} className={importing ? "text-red-300" : "text-emerald-300"} />
-            <span className={`font-sans text-[11px] font-bold uppercase tracking-[0.2em] ${importing ? "text-red-300/90" : "text-emerald-300/90"}`}>Netz</span>
-          </div>
-          <MetricBig
-            label={importing ? "Bezug aktuell" : "Einspeisung aktuell"}
-            value={formatNum(gridNowW, 0)}
-            unit="W"
-            sign={importing ? "+" : "−"}
-            color={importing ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}
-            sparkValues={trail.grid}
-            sparkColor={importing ? COLOR.grid_imp : COLOR.grid_exp}
-          />
-          <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10">
-            <Stat label="Bezug" value={formatNum(today?.grid_import_kwh, 2)} unit="kWh" color="text-red-200" testid="kpi-grid-import" />
-            <Stat label="Verbrauch" value={formatNum(today?.consumption_kwh, 2)} unit="kWh" testid="kpi-consumption" />
-            <Stat label="Einspeisung" value={formatNum(today?.grid_export_kwh, 2)} unit="kWh" color="text-emerald-200" testid="kpi-grid-export" />
-          </div>
-        </div>
-      </div>
-    </GlassCard>
+    <span className={`inline-flex items-center gap-1 border ${cls} px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.18em] rounded`}>
+      <Icon size={10} strokeWidth={2.5} />
+      {label}
+    </span>
   );
 }
 
+function Delta({ prev, curr }) {
+  if (prev === undefined || curr === undefined || prev === null || curr === null) return null;
+  const d = curr - prev;
+  if (Math.abs(d) < 0.5) return <span className="text-silver-dim font-mono text-[10px]">±0</span>;
+  const up = d > 0;
+  return (
+    <span className={`font-mono text-[10px] ${up ? "text-emerald-300" : "text-red-300"}`}>
+      {up ? "▲" : "▼"} {formatNum(Math.abs(d), 0)} W
+    </span>
+  );
+}
+
+function Spark({ values, color = "#cbd5e1", height = 24 }) {
+  if (!values || values.length < 2) return null;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const w = 100, step = w / (values.length - 1);
+  const pts = values
+    .map((v, i) => `${(i * step).toFixed(1)},${(height - ((v - min) / range) * height).toFixed(1)}`)
+    .join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${height}`} className="w-full" preserveAspectRatio="none" style={{ height }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" style={{ filter: `drop-shadow(0 0 3px ${color}99)` }} />
+    </svg>
+  );
+}
+
+function MetricInline({ label, value, unit, color, sparkValues, sparkColor }) {
+  return (
+    <div className="flex flex-col min-w-0">
+      <div className="tile-stat text-[9px] truncate">{label}</div>
+      <div className={`tile-value text-lg leading-tight ${color || "text-white"}`}>
+        {value}
+        <span className="text-silver-dim text-[10px] ml-0.5">{unit}</span>
+      </div>
+      {sparkValues && sparkValues.length > 1 && (
+        <div className="mt-1"><Spark values={sparkValues} color={sparkColor || "#64748b"} height={16} /></div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Kommandoraum-Dashboard: Tageswerte im Header nebeneinander, großer Energiefluss,
+ * gleich große Geräte-Kacheln (Silber/Schwarz/Grau Command-Center-Stil).
+ */
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);
@@ -156,8 +179,8 @@ export default function Dashboard() {
   if (err) {
     return (
       <div className="space-y-6">
-        <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent="#FACC15" testid="intro-dashboard" />
-        <div className="glass-strong p-6" style={{ borderLeft: "3px solid #F87171" }} data-testid="dashboard-error">
+        <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent={COLOR.pv} testid="intro-dashboard" />
+        <div className="glass-steel p-6 border-l-[3px] border-l-red-400" data-testid="dashboard-error">
           <div className="flex items-center gap-2 text-red-300">
             <AlertTriangle size={18} />
             <span className="font-mono text-sm">Fehler beim Laden: {err}</span>
@@ -169,8 +192,8 @@ export default function Dashboard() {
   if (!live) {
     return (
       <div className="space-y-6">
-        <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent="#FACC15" testid="intro-dashboard" />
-        <div className="font-mono text-sm text-white/55 flex items-center gap-2" data-testid="dashboard-loading">
+        <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent={COLOR.pv} testid="intro-dashboard" />
+        <div className="font-mono text-sm text-silver-dim flex items-center gap-2" data-testid="dashboard-loading">
           <Activity size={14} className="animate-pulse" />
           Lade Live-Daten…
         </div>
@@ -181,233 +204,229 @@ export default function Dashboard() {
   const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp } = live;
   const prev = prevLive;
   const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
-  const batteryKind = batteryStateKind(socDanger, summary.battery_power);
+
+  // Tageswert-Kacheln für den Header (nebeneinander)
+  const headerStats = [
+    { label: "PV heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "today-stat-PV heute" },
+    { label: "Verbrauch", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: COLOR.silver, spark: trail.house, sparkColor: COLOR.silver, testid: "today-stat-Verbrauch" },
+    { label: "Netz Bezug", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "today-stat-Netz Bezug" },
+    { label: "Einspeisung", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300", accent: COLOR.grid_exp, spark: null, testid: "today-stat-Einspeisung" },
+    { label: "Autarkie", value: formatNum(today?.autarky_pct, 0), unit: "%", color: "text-violet-300", accent: "#A78BFA", testid: "today-stat-Autarkie" },
+    { label: "Eigenverbr.", value: formatNum(today?.self_consumption_pct, 0), unit: "%", color: "text-cyan-300", accent: COLOR.battery, testid: "today-stat-Eigenverbr." },
+  ];
 
   return (
     <div className="space-y-6" data-testid="dashboard">
-      <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent="#FACC15" testid="intro-dashboard" />
+      <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent={COLOR.pv} testid="intro-dashboard" />
 
-      {/* Header strip */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
+      {/* ===== HEADER: Titel + Tageswerte nebeneinander ===== */}
+      <div className="glass-steel overflow-hidden">
+        <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-3">
+          <div className="flex items-center gap-3">
             <span className="w-1.5 h-7 rounded-sm" style={{ background: COLOR.pv, boxShadow: `0 0 10px ${COLOR.pv}aa` }} />
-            Solar · Live
-          </h1>
-          <div className="font-mono text-[11px] text-white/60 mt-1 flex items-center gap-2 flex-wrap">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" />
-            Update: {relativeTime(timestamp, now)}
-            <span className="text-white/30">·</span>
-            <span>Uhr: {new Date(now).toLocaleTimeString("de-DE")}</span>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white flex items-center gap-2">
+                Solar · Live
+              </h1>
+              <div className="font-mono text-[11px] text-silver-dim mt-0.5 flex items-center gap-2 flex-wrap">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse" />
+                Update: {relativeTime(timestamp, now)}
+                <span className="text-silver-dim/60">·</span>
+                <span>{new Date(now).toLocaleTimeString("de-DE")}</span>
+              </div>
+            </div>
           </div>
+          {demo_mode && (
+            <div className="border border-yellow-400/40 bg-yellow-400/10 text-yellow-300 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] rounded" data-testid="demo-banner">
+              ⚠ Demo-Modus aktiv
+            </div>
+          )}
         </div>
-        {demo_mode && (
-          <div className="border border-yellow-400/40 bg-yellow-400/10 text-yellow-300 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] rounded" data-testid="demo-banner">
-            ⚠ Demo-Modus aktiv · Werte werden simuliert
+        <div className="silver-divider" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y sm:divide-y-0 divide-white/[0.06]" data-testid="today-stats">
+          {headerStats.map((m) => (
+            <div key={m.label} className="relative p-3 transition-colors hover:bg-white/[0.02]" data-testid={m.testid}>
+              <span className="absolute top-0 left-0 right-0 h-[2px] opacity-80 pointer-events-none"
+                    style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)` }} />
+              <MetricInline label={m.label} value={m.value} unit={m.unit} color={m.color} sparkValues={m.spark} sparkColor={m.sparkColor} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ===== ENERGIE FLUSS (prominent, tiefschwarz) ===== */}
+      <div className="glass-carbon overflow-hidden" data-testid="energy-flow-card">
+        <EnergyFlow summary={summary} trucki={trucki} />
+      </div>
+
+      {/* ===== GERÄTE-GRUPPEN: gestapelte Reihen, Kacheln proportional zum Inhalt ===== */}
+      <div className="space-y-5" data-testid="device-groups">
+
+        {/* --- Reihe 1: Batterie --- */}
+        <div data-testid="group-battery">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <span className="w-1.5 h-4 rounded-sm" style={{ background: COLOR.battery, boxShadow: `0 0 8px ${COLOR.battery}aa` }} />
+            <span className="tile-stat text-[11px]" style={{ color: "rgba(241,245,249,0.7)" }}>Batterie</span>
           </div>
-        )}
-      </div>
-
-      {/* REIHE 1 · Tagesübersicht + Energiefluss */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="row-overview">
-        <div className="lg:col-span-7"><TopKpi today={today} summary={summary} trail={trail} /></div>
-        <div className="lg:col-span-5"><EnergyFlow summary={summary} trucki={trucki} /></div>
-      </div>
-
-      {/* REIHE 2 · Akku */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
-        <div className="lg:col-span-4">
-          <GlassCard
-            title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"}
-            accent={COLOR.battery}
-            testid="live-battery"
-            danger={socDanger}
-            badge={<Badge kind={batteryKind} />}
-          >
-            <MetricBig
-              label={summary.battery_power >= 0 ? "Ladeleistung netto" : "Entladeleistung netto"}
-              value={formatNum(Math.abs(summary.battery_power), 0)} unit="W"
-              color="text-cyan-300 neon-text-cyan"
-              sub={<Delta prev={prev?.summary?.battery_power} curr={summary.battery_power} />}
-              sparkValues={trail.battery} sparkColor={COLOR.battery}
+          <div className="flex gap-5 flex-wrap">
+            <DeviceTile
+              title="Trucki2Shelly"
+              accent={COLOR.battery}
+              icon={BatteryCharging}
+              badge={<SourceBadge data={trucki} />}
+              weight={3}
+              hero={{
+                value: `${formatNum(trucki.soc, 0)}%`,
+                unit: `SoC`,
+                sub: `VBAT ${formatNum(trucki.battery_voltage, 2)} V`,
+                color: socDanger ? "text-red-300" : "text-cyan-300",
+              }}
+              rows={[
+                { label: "Leistung", value: `${trucki.battery_power >= 0 ? "↓" : "↑"}${formatNum(Math.abs(trucki.battery_power), 0)} W`, color: "text-cyan-300" },
+                { label: "AC-Out", value: trucki.ac_output ? "EIN" : "AUS", color: trucki.ac_output ? "text-emerald-300" : "text-silver-dim" },
+                { label: "ZEPC", value: trucki.zepc ? "EIN" : "AUS", color: trucki.zepc ? "text-emerald-300" : "text-silver-dim" },
+                { label: "Temp", value: `${formatNum(trucki.temperature, 0)} °C`, color: "rgba(241,245,249,0.85)" },
+              ]}
+              testid="card-trucki"
             />
-            <div className="grid grid-cols-2 gap-2 mt-3" data-testid="battery-breakdown">
-              <div className="glass-inset p-2" style={{ borderLeft: "3px solid #FACC15" }}>
-                <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">Laden · MPPT</div>
-                <div className="font-mono text-lg font-medium text-yellow-300 mt-0.5" data-testid="battery-charge">{formatNum(summary.battery_charge_w, 0)}<span className="text-xs text-white/40"> W</span></div>
-              </div>
-              <div className="glass-inset p-2" style={{ borderLeft: "3px solid #06B6D4" }}>
-                <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">Entladen · SUN</div>
-                <div className="font-mono text-lg font-medium text-cyan-300 mt-0.5" data-testid="battery-discharge">{formatNum(summary.battery_discharge_w, 0)}<span className="text-xs text-white/40"> W</span></div>
-              </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-white/10">
-              <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70 flex items-center justify-between">
-                <span>SoC</span>
-                {socDanger && <span className="text-red-300 font-bold">⚠ niedrig</span>}
-              </div>
-              <div className="flex items-center gap-3 mt-1.5">
-                <div className="flex-1 h-3 rounded glass-inset relative overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 transition-all" style={{
-                    width: `${summary.battery_soc}%`,
-                    background: socDanger ? "linear-gradient(90deg, #DC2626, #F87171)" : "linear-gradient(90deg, #0891b2, #06B6D4)",
-                    boxShadow: `0 0 12px ${socDanger ? "#F87171" : COLOR.battery}88`,
-                  }} />
-                </div>
-                <div className="font-mono text-xl font-medium w-14 text-right text-white">{formatNum(summary.battery_soc, 0)}%</div>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-
-        <div className="lg:col-span-5">
-          <GlassCard title="Trucki2Shelly · Speicher" accent={COLOR.battery} badge={<SourceBadge data={trucki} />} testid="card-trucki" danger={trucki?.soc !== undefined && trucki.soc < 15}>
-            <div className="space-y-3">
-              <div>
-                <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">SoC (aus VBAT)</div>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <div className="flex-1 h-3 glass-inset relative overflow-hidden">
-                    <div className="absolute inset-y-0 left-0" style={{
-                      width: `${trucki.soc}%`,
-                      background: "linear-gradient(90deg, #0891b2, #06B6D4)",
-                      boxShadow: `0 0 10px ${COLOR.battery}88`,
-                    }} />
-                  </div>
-                  <div className="font-mono text-xl font-medium w-16 text-right text-white">{formatNum(trucki.soc, 0)}%</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Stat label="VBAT" value={formatNum(trucki.battery_voltage, 2)} unit="V" />
-                <Stat label={trucki.battery_power >= 0 ? "lädt" : "entlädt"} value={formatNum(Math.abs(trucki.battery_power), 0)} unit={`W ${trucki.battery_power >= 0 ? "↓" : "↑"}`} color="text-cyan-300 neon-text-cyan" />
-              </div>
-              {trucki.target_w !== undefined && (
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 font-mono text-[11px]">
-                  <div className="text-center text-white/85"><span className="text-white/50">TARGET</span><br/><span className="text-sm">{formatNum(trucki.target_w, 0)} W</span></div>
-                  <div className="text-center text-white/85"><span className="text-white/50">MIN</span><br/><span className="text-sm">{formatNum(trucki.min_power_w, 0)} W</span></div>
-                  <div className="text-center text-white/85"><span className="text-white/50">MAX</span><br/><span className="text-sm">{formatNum(trucki.max_power_w, 0)} W</span></div>
-                  <div className="text-center text-white/85"><span className="text-white/50">TAG</span><br/><span className="text-sm">{formatNum(trucki.day_energy_kwh, 2)} kWh</span></div>
-                  <div className="text-center text-white/85"><span className="text-white/50">GESAMT</span><br/><span className="text-sm">{formatNum(trucki.total_energy_kwh, 1)}</span></div>
-                  <div className="text-center text-white/85"><span className="text-white/50">TEMP</span><br/><span className="text-sm">{formatNum(trucki.temperature, 0)} °C</span></div>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
-                <div className="font-mono text-xs text-white/70">AC-Output: <span className={trucki.ac_output ? "text-emerald-300" : "text-white/30"}>{trucki.ac_output ? "● EIN" : "○ AUS"}</span></div>
-                <div className="font-mono text-xs text-white/70">ZEPC: <span className={trucki.zepc ? "text-emerald-300" : "text-white/30"}>{trucki.zepc ? "● EIN" : "○ AUS"}</span></div>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-
-        <div className="lg:col-span-3"><RoundTripCard today={today} /></div>
-      </div>
-
-      {/* REIHE 3 · Victron */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
-        <div className="lg:col-span-7">
-          <GlassCard title="Victron MPPT 150/35" accent={COLOR.victron} badge={<SourceBadge data={victron} />} testid="card-victron">
-            <div className="space-y-3">
-              {victron.mppts?.map((m) => (
-                <div key={m.id} className="border-b border-white/10 pb-2 last:border-b-0" data-testid={`victron-${m.id}`}>
-                  <div className="flex justify-between font-mono text-xs text-white/85">
-                    <span className="font-medium">{m.name}</span>
-                    <span className="text-white/60 uppercase tracking-wider text-[10px] border border-white/15 px-1.5 rounded">{m.state}</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-2 mt-1.5 font-mono text-xs text-white/80">
-                    <div><span className="text-[10px] text-white/55">P</span><br/><span className="text-yellow-300 text-base font-medium">{formatNum(m.pv_power, 0)}</span> W</div>
-                    <div><span className="text-[10px] text-white/55">U</span><br/>{formatNum(m.pv_voltage, 1)} V</div>
-                    <div><span className="text-[10px] text-white/55">VBatt</span><br/>{formatNum(m.battery_voltage, 2)} V</div>
-                    <div><span className="text-[10px] text-white/55">Day</span><br/>{formatNum(m.yield_today, 2)} kWh</div>
-                  </div>
-                </div>
-              ))}
-              <div className="pt-2 border-t border-white/10 font-mono">
-                <div className="flex items-center justify-between">
-                  <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Σ Total</span>
-                  <span className="text-2xl font-semibold tracking-tight text-yellow-300 neon-text-yellow">{formatNum(victron.total_power, 0)}<span className="text-base ml-1 text-white/45 font-normal">W</span></span>
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-        <div className="lg:col-span-5"><MpptCompare mppts={victron.mppts} /></div>
-      </div>
-
-      {/* REIHE 4 · Shelly */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
-        <div className="lg:col-span-8">
-          <GlassCard
-            title="Shelly Pro 3EM · 3-Phasen-Energiemesser"
-            accent={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}
-            badge={<SourceBadge data={shelly} />}
-            testid="card-shelly"
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
-              {shelly.phases?.map((p) => {
-                const isImport = p.power >= 0;
-                return (
-                  <div key={p.phase} className="glass-inset p-3" data-testid={`shelly-${p.phase}`}>
-                    <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70 flex items-center justify-between">
-                      <span>Phase {p.phase}</span>
-                      <Cable size={12} className={isImport ? "text-red-300" : "text-emerald-300"} />
-                    </div>
-                    <div className={`font-mono text-2xl font-semibold tracking-tight mt-1.5 ${isImport ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`}>
-                      <span className="opacity-70">{isImport ? "+" : "−"}</span>{formatNum(Math.abs(p.power), 1)}<span className="text-sm ml-1 text-white/45 font-normal">W</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mt-3 font-mono text-[11px] text-white/80">
-                      <div><span className="text-white/50">U</span><br/>{formatNum(p.voltage, 1)} V</div>
-                      <div><span className="text-white/50">I</span><br/>{formatNum(p.current, 2)} A</div>
-                      <div><span className="text-white/50">PF</span><br/>{p.pf}</div>
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="glass-inset p-3" style={{ borderLeft: `3px solid ${shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}` }}>
-                <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Σ Total</div>
-                <div className={`font-mono text-2xl font-semibold tracking-tight mt-1.5 ${shelly.total_power >= 0 ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`}>
-                  <span className="opacity-70">{shelly.total_power >= 0 ? "+" : "−"}</span>{formatNum(Math.abs(shelly.total_power), 1)}
-                  <span className="text-sm ml-1 text-white/45 font-normal">W</span>
-                </div>
-                <div className="font-mono text-[10px] text-white/55 mt-3">
-                  {shelly.total_power >= 0 ? "Bezug aus dem Netz" : "Einspeisung ins Netz"}
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-        </div>
-        <div className="lg:col-span-4"><PhaseBalance phases={shelly.phases} /></div>
-      </div>
-
-      {/* REIHE 5 · Rest (Hoymiles) */}
-      <div data-testid="rest-row">
-        <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div className="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3">
-              <MetricBig label="Total AC" value={formatNum(ahoy.total_power, 0)} unit="W" color="text-yellow-300 neon-text-yellow" size="sm" />
-              <Stat label="Limit" value={ahoy.limit_percent} unit="%" />
-            </div>
-            <div className="lg:col-span-3">
-              <table className="w-full font-mono text-xs">
-                <thead>
-                  <tr className="border-b border-white/10 text-[10px] uppercase tracking-[0.2em] text-white/65">
-                    <th className="text-left py-1">CH</th><th className="text-right py-1">P</th><th className="text-right py-1">U</th>
-                    <th className="text-right py-1">I</th><th className="text-right py-1">YDay</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ahoy.channels?.map((c) => (
-                    <tr key={c.ch} className="border-b border-white/5 text-white/85" data-testid={`ahoy-ch-${c.ch}`}>
-                      <td className="py-1.5">CH{c.ch}</td>
-                      <td className="py-1.5 text-right text-yellow-300 text-sm">{formatNum(c.power, 0)} W</td>
-                      <td className="py-1.5 text-right">{formatNum(c.voltage, 1)} V</td>
-                      <td className="py-1.5 text-right">{formatNum(c.current, 2)} A</td>
-                      <td className="py-1.5 text-right">{formatNum(c.yield_day, 2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <DeviceTile
+              title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"}
+              accent={COLOR.battery}
+              icon={BatteryCharging}
+              weight={2}
+              hero={{
+                value: formatNum(Math.abs(summary.battery_power), 0),
+                unit: "W",
+                sub: `${formatNum(summary.battery_soc, 0)}% SoC`,
+                color: socDanger ? "text-red-300" : "text-cyan-300",
+              }}
+              rows={[
+                { label: "Laden · MPPT", value: `${formatNum(summary.battery_charge_w, 0)} W`, color: "text-yellow-300" },
+                { label: "Entl. · SUN", value: `${formatNum(summary.battery_discharge_w, 0)} W`, color: "text-cyan-300" },
+              ]}
+              testid="live-battery"
+            />
+            <div className="device-tile glass-steel !flex" data-testid="card-roundtrip-wrapper" style={{ flexGrow: 2, flexBasis: 0, minWidth: 0, justifyContent: "center" }}>
+              <RoundTripCard today={today} />
             </div>
           </div>
-        </GlassCard>
+        </div>
+
+        {/* --- Reihe 2: Victron --- */}
+        <div data-testid="group-victron">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <span className="w-1.5 h-4 rounded-sm" style={{ background: COLOR.victron, boxShadow: `0 0 8px ${COLOR.victron}aa` }} />
+            <span className="tile-stat text-[11px]" style={{ color: "rgba(241,245,249,0.7)" }}>Victron</span>
+          </div>
+          <div className="flex gap-5 flex-wrap">
+            <DeviceTile
+              title="Victron MPPT"
+              accent={COLOR.victron}
+              icon={Cpu}
+              badge={<SourceBadge data={victron} />}
+              weight={2}
+              hero={{ value: formatNum(victron.total_power, 0), unit: "W", sub: `${victron.mppts?.length || 0} Laderegler`, color: "text-yellow-300" }}
+              rows={(victron.mppts || []).slice(0, 4).map((m) => ({
+                label: `#${m.id}`,
+                value: `${formatNum(m.pv_power, 0)}W`,
+                color: "rgba(241,245,249,0.9)",
+              }))}
+              testid="card-victron"
+            />
+            <div className="device-tile glass-steel !flex" data-testid="card-mppt-compare-wrapper" style={{ flexGrow: 3, flexBasis: 0, minWidth: 0, justifyContent: "center" }}>
+              <MpptCompare mppts={victron.mppts} />
+            </div>
+          </div>
+        </div>
+
+        {/* --- Reihe 3: PV & Netz (Rest) --- */}
+        <div data-testid="group-rest">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <span className="w-1.5 h-4 rounded-sm" style={{ background: COLOR.pv, boxShadow: `0 0 8px ${COLOR.pv}aa` }} />
+            <span className="tile-stat text-[11px]" style={{ color: "rgba(241,245,249,0.7)" }}>PV &amp; Netz</span>
+          </div>
+          <div className="flex gap-5 flex-wrap">
+            <DeviceTile
+              title="Hoymiles HM1500"
+              accent={COLOR.pv}
+              icon={Sun}
+              badge={<SourceBadge data={ahoy} />}
+              weight={3}
+              hero={{ value: formatNum(ahoy.total_power, 0), unit: "W", sub: `Limit ${ahoy.limit_percent}%`, color: "text-yellow-300" }}
+              rows={ahoy.channels?.slice(0, 4).map((c) => ({
+                label: `CH${c.ch}`,
+                value: `${formatNum(c.power, 0)}W`,
+                color: "rgba(241,245,249,0.9)",
+              })) || []}
+              testid="card-ahoy"
+            />
+            <div className="device-tile glass-steel !flex" data-testid="live-grid" style={{ flexGrow: 2, flexBasis: 0, minWidth: 0, justifyContent: "center" }}>
+              <div className="p-4 w-full">
+                <div className="tile-stat text-[10px]">{summary.grid_power >= 0 ? "Netz-Bezug (Import)" : "Einspeisung (Export)"}</div>
+                <div className={`tile-value text-3xl mt-1 ${summary.grid_power >= 0 ? "text-red-300" : "text-emerald-300"}`}>
+                  {formatNum(Math.abs(summary.grid_power), 0)}<span className="text-silver-dim text-xs ml-1">W</span>
+                </div>
+                <div className="mt-2"><Spark values={trail.grid} color={summary.grid_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} height={20} /></div>
+                <div className="tile-stat text-[10px] mt-3">Hausverbrauch aktuell</div>
+                <div className="tile-value text-xl text-white mt-0.5">
+                  {formatNum(summary.house_power, 0)}<span className="text-silver-dim text-xs ml-1">W</span>
+                </div>
+                <div className="mt-2"><Spark values={trail.house} color={COLOR.silver} height={20} /></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- Reihe 4: Shelly --- */}
+        <div data-testid="group-shelly">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <span className="w-1.5 h-4 rounded-sm" style={{ background: shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp, boxShadow: `0 0 8px ${shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}aa` }} />
+            <span className="tile-stat text-[11px]" style={{ color: "rgba(241,245,249,0.7)" }}>Shelly</span>
+          </div>
+          <div className="flex gap-5 flex-wrap">
+            <DeviceTile
+              title="Shelly Pro 3EM"
+              accent={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}
+              icon={Cable}
+              badge={<SourceBadge data={shelly} />}
+              weight={3}
+              hero={{
+                value: `${shelly.total_power >= 0 ? "+" : ""}${formatNum(shelly.total_power, 1)}`,
+                unit: "W",
+                sub: shelly.total_power >= 0 ? "Bezug aus dem Netz" : "Einspeisung ins Netz",
+                color: shelly.total_power >= 0 ? "text-red-300" : "text-emerald-300",
+              }}
+              rows={shelly.phases?.map((p) => ({
+                label: `${p.phase} ${p.power >= 0 ? "+" : ""}${formatNum(p.power, 0)}W`,
+                value: `${formatNum(p.voltage, 0)}V · ${formatNum(p.current, 1)}A`,
+                color: "rgba(241,245,249,0.85)",
+              })) || []}
+              testid="card-shelly"
+            />
+            <div className="device-tile glass-steel !flex" data-testid="card-phase-wrapper" style={{ flexGrow: 2, flexBasis: 0, minWidth: 0, justifyContent: "center" }}>
+              <PhaseBalance phases={shelly.phases} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== ERWEITERTE ANSICHTEN (Vergleich etc.) ===== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" data-testid="mppt-row">
+        <div className="glass-steel" data-testid="card-mppt-compare-wrapper">
+          <MpptCompare mppts={victron.mppts} />
+        </div>
+        <div className="glass-steel p-4 flex flex-col justify-center" data-testid="live-grid">
+          <div className="tile-stat text-[10px]">{summary.grid_power >= 0 ? "Netz-Bezug (Import)" : "Einspeisung (Export)"}</div>
+          <div className={`tile-value text-3xl mt-1 ${summary.grid_power >= 0 ? "text-red-300" : "text-emerald-300"}`}>
+            {formatNum(Math.abs(summary.grid_power), 0)}<span className="text-silver-dim text-xs ml-1">W</span>
+          </div>
+          <div className="mt-2"><Spark values={trail.grid} color={summary.grid_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} height={20} /></div>
+          <div className="tile-stat text-[10px] mt-3">Hausverbrauch aktuell</div>
+          <div className="tile-value text-xl text-white mt-0.5">
+            {formatNum(summary.house_power, 0)}<span className="text-silver-dim text-xs ml-1">W</span>
+          </div>
+          <div className="mt-2"><Spark values={trail.house} color={COLOR.silver} height={20} /></div>
+        </div>
       </div>
     </div>
   );
