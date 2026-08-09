@@ -184,6 +184,12 @@ def mock_trucki() -> Dict[str, Any]:
         "battery_power": round((400 if charging else -180) + random.uniform(-30, 30), 1),
         "ac_output": True,
         "zepc": charging,
+        "temperature": round(28 + 8 * sun + random.uniform(-1, 1), 1),
+        "target_w": 15,
+        "min_w": 0,
+        "max_w": 300,
+        "throughput_day": round(8 + sun * 6 + random.uniform(-0.2, 0.2), 2),
+        "total_kwh": round(5063.0 + soc * 0.3, 1),
     }
 
 
@@ -277,6 +283,12 @@ async def fetch_trucki(ip: str) -> Optional[Dict[str, Any]]:
         "battery_power": data.get("battery_power", 0),
         "ac_output": bool(data.get("ac_output", False)),
         "zepc": bool(data.get("zepc", False)),
+        "temperature": data.get("temperature"),
+        "target_w": data.get("target_w"),
+        "min_w": data.get("min_w"),
+        "max_w": data.get("max_w"),
+        "throughput_day": data.get("throughput_day"),
+        "total_kwh": data.get("total_kwh"),
     }
 
 

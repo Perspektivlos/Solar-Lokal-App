@@ -282,11 +282,15 @@ export default function Dashboard() {
                 color: socDanger ? "text-red-300" : "text-cyan-300",
               }}
               rows={[
-                { label: "Leistung", value: `${trucki.battery_power >= 0 ? "↓" : "↑"}${formatNum(Math.abs(trucki.battery_power), 0)} W`, color: "text-cyan-300" },
+                { label: "VBAT", value: `${formatNum(trucki.battery_voltage, 2)} V`, color: "rgba(241,245,249,0.9)" },
+                { label: trucki.battery_power >= 0 ? "Lädt" : "Entlädt", value: `${formatNum(Math.abs(trucki.battery_power), 0)} W`, color: "text-cyan-300" },
+                { label: "TARGET / MIN / MAX", value: `${formatNum(trucki.target_w, 0)} / ${formatNum(trucki.min_w, 0)} / ${formatNum(trucki.max_w, 0)} W`, color: "rgba(241,245,249,0.8)" },
+                { label: "TAG (Durchsatz)", value: `${formatNum(trucki.throughput_day, 2)} kWh`, color: "rgba(241,245,249,0.8)" },
+                { label: "GESAMT", value: `${formatNum(trucki.total_kwh, 1)} kWh`, color: "rgba(241,245,249,0.8)" },
+                { label: "TEMP", value: `${formatNum(trucki.temperature, 1)} °C`, color: "rgba(241,245,249,0.85)" },
                 { label: "AC-Out", value: trucki.ac_output ? "EIN" : "AUS", color: trucki.ac_output ? "text-emerald-300" : "text-silver-dim" },
                 { label: "ZEPC", value: trucki.zepc ? "EIN" : "AUS", color: trucki.zepc ? "text-emerald-300" : "text-silver-dim" },
-                { label: "Temp", value: `${formatNum(trucki.temperature, 0)} °C`, color: "rgba(241,245,249,0.85)" },
-              ]}
+              ].filter((r) => r.value !== "null" && r.value !== "NaN" && !r.value.includes("NaN"))}
               testid="card-trucki"
             />
             <DeviceTile
@@ -326,11 +330,10 @@ export default function Dashboard() {
               badge={<SourceBadge data={victron} />}
               weight={2}
               hero={{ value: formatNum(victron.total_power, 0), unit: "W", sub: `${victron.mppts?.length || 0} Laderegler`, color: "text-yellow-300" }}
-              rows={(victron.mppts || []).slice(0, 4).map((m) => ({
-                label: `#${m.id}`,
-                value: `${formatNum(m.pv_power, 0)}W`,
-                color: "rgba(241,245,249,0.9)",
-              }))}
+              rows={(victron.mppts || []).slice(0, 4).flatMap((m) => ([
+                { label: `#${m.id} ${m.state || ""}`.trim(), value: `${formatNum(m.pv_power, 0)}W`, color: "text-yellow-300" },
+                { label: `  U ${formatNum(m.pv_voltage, 1)}V · VBatt ${formatNum(m.battery_voltage, 2)}V`, value: `${formatNum(m.yield_today, 2)} kWh/Tag`, color: "rgba(241,245,249,0.8)" },
+              ]))}
               testid="card-victron"
             />
             <div className="device-tile glass-steel !flex" data-testid="card-mppt-compare-wrapper" style={{ flexGrow: 3, flexBasis: 0, minWidth: 0, justifyContent: "center" }}>
@@ -354,8 +357,8 @@ export default function Dashboard() {
               weight={3}
               hero={{ value: formatNum(ahoy.total_power, 0), unit: "W", sub: `Limit ${ahoy.limit_percent}%`, color: "text-yellow-300" }}
               rows={ahoy.channels?.slice(0, 4).map((c) => ({
-                label: `CH${c.ch}`,
-                value: `${formatNum(c.power, 0)}W`,
+                label: `CH${c.ch} P ${formatNum(c.power, 0)}W · U ${formatNum(c.voltage, 1)}V · I ${formatNum(c.current, 2)}A`,
+                value: `${formatNum(c.yield_day, 2)} kWh (YDAY)`,
                 color: "rgba(241,245,249,0.9)",
               })) || []}
               testid="card-ahoy"
