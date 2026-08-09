@@ -211,7 +211,7 @@ body::before {
             0 18px 40px -22px rgba(0, 0, 0, 0.8),
             0 0 26px -16px rgba(203, 213, 225, 0.30);
     }
-    .tile-accent { height: 3px; border-radius: 10px 10px 0 0 0; }
+    .tile-accent { height: 3px; border-radius: 10px 10px 0 0; }
     /* Kompakte Kennzahl innerhalb einer Kachel */
     .tile-stat {
         font-family: 'IBM Plex Mono', monospace;
