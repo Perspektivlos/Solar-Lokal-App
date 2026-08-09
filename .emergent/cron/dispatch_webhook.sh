@@ -30,6 +30,7 @@ fi
 
 ENDPOINT="$(printf '%s' "$ENDPOINT_URL_B64" | base64 -d)"
 
+# strip_quotes entfernt ein passendes Paar umschließender einfacher oder doppelter Anführungszeichen.
 strip_quotes() {
 	# Strip a single matching pair of surrounding quotes.
 	v="$1"
@@ -40,7 +41,7 @@ strip_quotes() {
 	printf '%s' "$v"
 }
 
-# Read the per-app secret from the dotenv at dispatch time (never from cron env).
+# read_secret liest den zuletzt gesetzten WEBHOOK_CRON_SECRET-Wert aus der dotenv-Datei und gibt bei fehlender Datei einen leeren Wert aus.
 read_secret() {
 	[ -f "$WEBHOOK_ENV_FILE" ] || return 0
 	line="$(grep -E '^WEBHOOK_CRON_SECRET=' "$WEBHOOK_ENV_FILE" | tail -n 1 || true)"
