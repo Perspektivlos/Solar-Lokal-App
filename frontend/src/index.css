@@ -66,6 +66,21 @@ body::before {
         --input: 217 33% 22%;
         --ring: 215 28% 65%;
         --radius: 0.375rem;
+
+        /* ---- Silber / Schwarz / Grau Erweiterung (Command-Center) ---- */
+        --steel-50:  #f8fafc;
+        --steel-100: #f1f5f9;
+        --steel-200: #e2e8f0;
+        --steel-300: #cbd5e1;   /* Silber */
+        --steel-400: #94a3b8;
+        --steel-500: #64748b;   /* Grau */
+        --steel-600: #475569;
+        --steel-700: #334155;
+        --steel-800: #1e293b;   /* Anthrazit */
+        --steel-900: #0b1118;   /* fast schwarz */
+        --carbon:    #06090f;   /* Tiefschwarz */
+        --silver-line: rgba(203, 213, 225, 0.16);
+        --silver-glow: rgba(226, 232, 240, 0.10);
     }
 }
 
@@ -144,6 +159,87 @@ body::before {
     .neon-text-green  { text-shadow: 0 0 8px rgba(16, 185, 129, 0.45); }
     .neon-text-red    { text-shadow: 0 0 8px rgba(239, 68, 68, 0.45); }
     .neon-text-cyan   { text-shadow: 0 0 8px rgba(6, 182, 212, 0.45); }
+    .neon-text-silver { text-shadow: 0 0 8px rgba(203, 213, 225, 0.45); }
+}
+
+/* ---- Silber / Schwarz / Grau Command-Center Oberflächen ---- */
+@layer components {
+    /* Gebürsteter Stahl: Anthrazit-Grund mit feinem Silberhauch + weichem Randlicht */
+    .glass-steel {
+        background:
+            linear-gradient(180deg, rgba(30, 41, 59, 0.72) 0%, rgba(11, 17, 24, 0.82) 100%);
+        border: 1px solid var(--silver-line);
+        backdrop-filter: blur(14px) saturate(150%);
+        -webkit-backdrop-filter: blur(14px) saturate(150%);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+            0 16px 40px -20px rgba(0, 0, 0, 0.75),
+            0 0 30px -20px rgba(203, 213, 225, 0.22);
+        border-radius: 10px;
+    }
+    /* Tiefschwarz-Karte für den Energiefluss (Fokus) */
+    .glass-carbon {
+        background:
+            radial-gradient(120% 120% at 50% 0%, rgba(30, 41, 59, 0.55), rgba(6, 9, 15, 0.92));
+        border: 1px solid rgba(203, 213, 225, 0.12);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            inset 0 0 80px -40px rgba(6, 182, 212, 0.30),
+            0 20px 50px -24px rgba(0, 0, 0, 0.8);
+        border-radius: 12px;
+    }
+    /* Gleich große Geräte-Kachel: Silber-Akzentleiste + kompakte Innenaufteilung */
+    .device-tile {
+        background:
+            linear-gradient(180deg, rgba(30, 41, 59, 0.66) 0%, rgba(11, 17, 24, 0.78) 100%);
+        border: 1px solid var(--silver-line);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.07),
+            0 12px 30px -20px rgba(0, 0, 0, 0.7);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        min-height: 208px;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .device-tile:hover {
+        transform: translateY(-2px);
+        border-color: rgba(203, 213, 225, 0.28);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.10),
+            0 18px 40px -22px rgba(0, 0, 0, 0.8),
+            0 0 26px -16px rgba(203, 213, 225, 0.30);
+    }
+    .tile-accent { height: 3px; border-radius: 10px 10px 0 0 0; }
+    /* Kompakte Kennzahl innerhalb einer Kachel */
+    .tile-stat {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(241, 245, 249, 0.55);
+    }
+    .tile-value {
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 500;
+        line-height: 1;
+    }
+    /* Feiner Silber-Verlauf für Trennlinien / Header-Balken */
+    .silver-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(203, 213, 225, 0.35), transparent);
+    }
+    .text-silver { color: var(--steel-300); }
+    .text-silver-dim { color: var(--steel-400); }
+    /* Kachel-Wrapper für horizontale Geräte-Reihe: gleich breit, nicht schrumpfend */
+    .device-tile-wrap {
+        flex: 0 0 auto;
+        width: clamp(260px, 30vw, 320px);
+        scroll-snap-align: start;
+    }
+    .device-tile-wrap .device-tile { height: 100%; }
+    .device-row { scroll-snap-type: x mandatory; scrollbar-width: thin; }
 }
 
 /* Energy flow line animation */
