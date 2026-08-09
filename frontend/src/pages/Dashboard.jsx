@@ -409,25 +409,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* ===== ERWEITERTE ANSICHTEN (Vergleich etc.) ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5" data-testid="mppt-row">
-        <div className="glass-steel" data-testid="card-mppt-compare-wrapper">
-          <MpptCompare mppts={victron.mppts} />
-        </div>
-        <div className="glass-steel p-4 flex flex-col justify-center" data-testid="live-grid">
-          <div className="tile-stat text-[10px]">{summary.grid_power >= 0 ? "Netz-Bezug (Import)" : "Einspeisung (Export)"}</div>
-          <div className={`tile-value text-3xl mt-1 ${summary.grid_power >= 0 ? "text-red-300" : "text-emerald-300"}`}>
-            {formatNum(Math.abs(summary.grid_power), 0)}<span className="text-silver-dim text-xs ml-1">W</span>
-          </div>
-          <div className="mt-2"><Spark values={trail.grid} color={summary.grid_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} height={20} /></div>
-          <div className="tile-stat text-[10px] mt-3">Hausverbrauch aktuell</div>
-          <div className="tile-value text-xl text-white mt-0.5">
-            {formatNum(summary.house_power, 0)}<span className="text-silver-dim text-xs ml-1">W</span>
-          </div>
-          <div className="mt-2"><Spark values={trail.house} color={COLOR.silver} height={20} /></div>
-        </div>
-      </div>
     </div>
   );
 }
