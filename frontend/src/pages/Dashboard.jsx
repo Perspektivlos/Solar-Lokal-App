@@ -205,6 +205,12 @@ export default function Dashboard() {
   const prev = prevLive;
   const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
 
+  // Netz-Status für dynamische Farbe (Bezug = rot, Einspeisung = grün)
+  const gridImporting = (summary?.grid_power ?? 0) >= 0;
+  const netzAktuellColor = gridImporting ? "text-red-300" : "text-emerald-300";
+  const netzAktuellAccent = gridImporting ? COLOR.grid_imp : COLOR.grid_exp;
+  const netzAktuellSpark = gridImporting ? COLOR.grid_imp : COLOR.grid_exp;
+
   // Tageswert-Kacheln für den Header (nebeneinander): erst PV, dann Netz
   const headerStats = [
     // --- PV ---
@@ -212,7 +218,7 @@ export default function Dashboard() {
     { label: "PV Aktuell", value: formatNum(summary?.pv_power, 0), unit: "W", color: "text-yellow-200", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "today-stat-PV Aktuell" },
     // --- Netz ---
     { label: "Netz Bezug (Gesamt)", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "today-stat-Netz Bezug" },
-    { label: "Netz Aktuell", value: formatNum(Math.abs(summary?.grid_power ?? 0), 0), unit: "W", color: "text-red-300", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "today-stat-Netz Aktuell" },
+    { label: gridImporting ? "Netz Bezug (Aktuell)" : "Netz Einspeisung (Aktuell)", value: formatNum(Math.abs(summary?.grid_power ?? 0), 0), unit: "W", color: netzAktuellColor, accent: netzAktuellAccent, spark: trail.grid, sparkColor: netzAktuellSpark, testid: "today-stat-Netz Aktuell" },
     { label: "Verbrauch (Gesamt)", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: COLOR.silver, spark: trail.house, sparkColor: COLOR.silver, testid: "today-stat-Verbrauch" },
     { label: "Einspeisung (Gesamt)", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300", accent: COLOR.grid_exp, spark: null, testid: "today-stat-Einspeisung" },
   ];
