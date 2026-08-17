@@ -4,9 +4,8 @@ Die **Solar-Lokal-App** ist eine lokal betriebene Webanwendung zur Visualisierun
 
 Die App ist komplett **cloudfrei** ausgelegt und für den ressourcensparenden Betrieb auf Mini-PCs oder in Proxmox-LXC-Containern optimiert.
 
-<p align="center">
-  <img width="810" height="922" alt="Solar-Lokal-App Dashboard" src="https://github.com/user-attachments/assets/b7e91deb-9916-4f55-abad-7cd10c3761bc" />
-</p>
+<div align="center"><img width="428" height="447" alt="Screenshot 2026-08-17 233244" src="https://github.com/user-attachments/assets/cb13afc1-8cc3-4a2b-8972-1b870d9c063c" /></div>
+
 
 ---
 
