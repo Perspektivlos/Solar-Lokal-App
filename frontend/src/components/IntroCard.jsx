@@ -2,15 +2,14 @@ import { useState } from "react";
 import { ChevronDown, BookOpen } from "lucide-react";
 
 /**
- * Rendert eine einklappbare Informationskarte am Anfang eines Tabs.
+ * Collapsible info card displayed at the top of each tab.
  *
- * @param {string} title - Kurzer Name des Tabs.
- * @param {string} subtitle - Einzeilige Zusammenfassung.
- * @param {{label: string, body: string|JSX.Element}[]} sections - Inhalte der Kartenabschnitte.
- * @param {boolean} defaultOpen - Gibt an, ob die Karte initial geöffnet ist.
- * @param {string} accent - CSS-Farbe für Akzente der Karte.
- * @param {string} [testid] - Optionaler Wert für Test-IDs.
- * @return {JSX.Element} Die gerenderte Informationskarte.
+ * Props:
+ *  - title: short tab name (e.g. "Dashboard")
+ *  - subtitle: one-line summary
+ *  - sections: array of { label, body }  — body can be string or JSX
+ *  - defaultOpen: boolean
+ *  - accent: CSS color for the icon glow / divider
  */
 export default function IntroCard({ title, subtitle, sections = [], defaultOpen = false, accent = "#06B6D4", testid }) {
   const [open, setOpen] = useState(defaultOpen);
