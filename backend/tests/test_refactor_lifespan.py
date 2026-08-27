@@ -42,6 +42,17 @@ class TestModuleExtraction:
                      "_pts_victron", "_pt_trucki", "_build_influx_points"):
             assert getattr(server, name) is getattr(influx_points, name), f"{name} not identical"
 
+    def test_collectors_module_exists_and_exports(self):
+        import collectors
+        for name in ("collect_live", "fetch_shelly", "fetch_ahoy", "fetch_trucki",
+                     "fetch_victron", "_http_get"):
+            assert callable(getattr(collectors, name)), f"{name} missing from collectors"
+
+    def test_collect_live_imported_in_server(self):
+        import server
+        import collectors
+        assert server.collect_live is collectors.collect_live
+
     def test_no_legacy_on_event_hooks(self):
         import server
         src = open(server.__file__.replace(".pyc", ".py")).read()

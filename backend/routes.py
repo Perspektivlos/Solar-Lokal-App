@@ -10,7 +10,6 @@ from fastapi import APIRouter, HTTPException
 from server import (
     get_config,
     save_config,
-    collect_live,
     restart_integrations,
     db,
     ConfigUpdate,
@@ -21,6 +20,7 @@ from server import (
     _influx_state,
     _poller_state,
 )
+from collectors import collect_live
 
 api_router = APIRouter(prefix="/api")
 
@@ -34,7 +34,8 @@ async def root():
 
 @api_router.get("/live")
 async def live():
-    return await collect_live()
+    cfg = await get_config()
+    return await collect_live(cfg)
 
 
 @api_router.get("/config")

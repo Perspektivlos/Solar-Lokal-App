@@ -12,26 +12,18 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import asyncio
 import logging
-import math
-import random
-import time
 from pathlib import Path
 from pydantic import BaseModel
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone, timedelta
-import httpx
+from typing import Any, Dict, Optional
 from contextlib import asynccontextmanager
 
 from mqtt_client import (
     _mqtt_data,
     _mqtt_state,
-    fetch_shelly_from_mqtt,
-    fetch_ahoy_from_mqtt,
-    fetch_trucki_from_mqtt,
-    fetch_victron_from_mqtt,
     _mqtt_setup,
     _mqtt_disconnect,
 )
+from collectors import collect_live
 
 # Optional integrations - imported lazily inside functions where possible
 try:
@@ -145,188 +137,6 @@ async def save_config(cfg: Dict[str, Any]) -> None:
     await db.config.update_one({"_id": "main"}, {"$set": cfg}, upsert=True)
 
 
-# ---------- Real fetchers (best effort, short timeout) ----------
-
-async def _http_get(url: str, timeout: float = 1.0) -> Optional[Dict[str, Any]]:
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as c:
-            r = await c.get(url)
-            if r.status_code == 200:
-                return r.json()
-    except Exception as e:
-        logger.debug(f"GET {url} failed: {e}")
-    return None
-
-
-async def fetch_shelly(ip: str) -> Optional[Dict[str, Any]]:
-    data = await _http_get(f"http://{ip}/rpc/EM.GetStatus?id=0")
-    if not data:
-        return None
-    phases = []
-    for i in range(3):
-        key = f"{chr(ord('a')+i)}"
-        phases.append({
-            "phase": f"L{i+1}",
-            "power": data.get(f"{key}_act_power", 0),
-            "voltage": data.get(f"{key}_voltage", 0),
-            "current": data.get(f"{key}_current", 0),
-            "pf": data.get(f"{key}_pf", 0),
-        })
-    return {
-        "online": True,
-        "total_power": data.get("total_act_power", sum(p["power"] for p in phases)),
-        "phases": phases,
-    }
-
-
-async def fetch_ahoy(ip: str, inverter_id: int = 0) -> Optional[Dict[str, Any]]:
-    live = await _http_get(f"http://{ip}/api/live")
-    inv = await _http_get(f"http://{ip}/api/inverter/id/{inverter_id}")
-    if not (live or inv):
-        return None
-    channels = []
-    total = 0.0
-    if inv and "ch" in inv:
-        for idx, ch in enumerate(inv.get("ch", [])[1:], start=1):
-            # ch arrays usually: [U_dc, I_dc, P_dc, YieldDay, YieldTotal, Irradiation]
-            p = ch[2] if len(ch) > 2 else 0
-            total += p or 0
-            channels.append({
-                "ch": idx,
-                "power": p,
-                "voltage": ch[0] if len(ch) > 0 else 0,
-                "current": ch[1] if len(ch) > 1 else 0,
-                "yield_day": ch[3] if len(ch) > 3 else 0,
-            })
-    return {
-        "online": True,
-        "total_power": total,
-        "limit_percent": (inv or {}).get("power_limit_read", 100),
-        "channels": channels,
-    }
-
-
-async def fetch_trucki(ip: str) -> Optional[Dict[str, Any]]:
-    data = await _http_get(f"http://{ip}/status")
-    if not data:
-        return None
-    return {
-        "online": True,
-        "soc": data.get("soc", 0),
-        "battery_voltage": data.get("battery_voltage", 0),
-        "battery_power": data.get("battery_power", 0),
-        "ac_output": bool(data.get("ac_output", False)),
-        "zepc": bool(data.get("zepc", False)),
-    }
-
-
-async def fetch_victron(ip: str) -> Optional[Dict[str, Any]]:
-    # VenusOS Large exposes various REST endpoints; placeholder using /api/v1/system
-    data = await _http_get(f"http://{ip}/api/v1/system")
-    if not data:
-        return None
-    # Real parsing depends on user setup - return raw under mppts list
-    return {"online": True, "mppts": data.get("mppts", []), "total_power": data.get("pv_power", 0)}
-
-
-# ---------- Aggregator ----------
-
-async def collect_live() -> Dict[str, Any]:
-    cfg = await get_config()
-    demo = cfg.get("demo_mode", True)
-    mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
-
-    async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
-        if not enabled:
-            return {"online": False}
-        if demo:
-            return mock_fn()
-        # 1. Prefer MQTT
-        if mqtt_enabled:
-            try:
-                d = mqtt_fn()
-                if d is not None:
-                    return d
-            except Exception as e:
-                logger.debug(f"mqtt fetch error: {e}")
-        # 2. HTTP fallback
-        d = await http_factory()
-        if d is None:
-            mocked = mock_fn()
-            mocked["online"] = False
-            mocked["_fallback"] = True
-            return mocked
-        return d
-
-    shelly, ahoy, trucki, victron = await asyncio.gather(
-        get_dev(
-            fetch_shelly_from_mqtt,
-            lambda: fetch_shelly(cfg["devices"]["shelly"]["ip"]),
-            mock_shelly,
-            cfg["devices"]["shelly"]["enabled"],
-        ),
-        get_dev(
-            fetch_ahoy_from_mqtt,
-            lambda: fetch_ahoy(cfg["devices"]["ahoy"]["ip"], cfg["devices"]["ahoy"].get("inverter_id", 0)),
-            mock_ahoy,
-            cfg["devices"]["ahoy"]["enabled"],
-        ),
-        get_dev(
-            fetch_trucki_from_mqtt,
-            lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]),
-            mock_trucki,
-            cfg["devices"]["trucki"]["enabled"],
-        ),
-        get_dev(
-            lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
-            lambda: fetch_victron(cfg["devices"]["victron"]["ip"]),
-            mock_victron,
-            cfg["devices"]["victron"]["enabled"],
-        ),
-    )
-
-    # DC-gekoppeltes System (vom Nutzer bestätigt):
-    #  - Victron-MPPTs laden den Akku (DC), speisen NICHT direkt ins Haus.
-    #  - Hoymiles HM1500 speist AC direkt ins Haus/Netz.
-    #  - Trucki/SUN-Wechselrichter entlädt den Akku ins AC-Netz.
-    #  - Shelly Pro 3EM misst am Netzanschluss (+Bezug / −Einspeisung).
-    pv_ac_power = ahoy.get("total_power", 0) or 0       # Hoymiles AC → Haus
-    pv_dc_power = victron.get("total_power", 0) or 0     # Victron MPPT → Akku (laden)
-    pv_power = pv_ac_power + pv_dc_power                  # Gesamt-PV-Erzeugung (KPI)
-    grid_power = shelly.get("total_power", 0) or 0       # >0 Bezug, <0 Einspeisung
-
-    # Trucki/SUN: battery_power < 0 = entlädt (AC-Ausgang ins Haus)
-    trucki_bp = trucki.get("battery_power", 0) or 0
-    battery_discharge_w = max(0.0, -trucki_bp)           # SUN-Entladung → Haus (AC)
-    battery_charge_w = max(0.0, pv_dc_power)             # MPPT-Ladung (DC) in den Akku
-    # Netto-Akku: + = lädt netto, − = entlädt netto
-    battery_net = battery_charge_w - battery_discharge_w
-
-    # AC-Bus-Bilanz: Hausverbrauch = Hoymiles-AC + SUN-Entladung + Netzbezug
-    house_power = pv_ac_power + battery_discharge_w + grid_power
-    house_power = max(0.0, house_power)
-
-    return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "demo_mode": demo,
-        "shelly": shelly,
-        "ahoy": ahoy,
-        "trucki": trucki,
-        "victron": victron,
-        "summary": {
-            "pv_power": round(pv_power, 1),
-            "pv_ac_power": round(pv_ac_power, 1),
-            "pv_dc_power": round(pv_dc_power, 1),
-            "grid_power": round(grid_power, 1),
-            "battery_power": round(battery_net, 1),
-            "battery_charge_w": round(battery_charge_w, 1),
-            "battery_discharge_w": round(battery_discharge_w, 1),
-            "house_power": round(max(0, house_power), 1),
-            "battery_soc": trucki.get("soc", 0),
-        },
-    }
-
-
 # ---------- API Models ----------
 
 class ConfigUpdate(BaseModel):
@@ -359,7 +169,8 @@ async def poller_loop():
     _poller_state["running"] = True
     while True:
         try:
-            data = await collect_live()
+            cfg = await get_config()
+            data = await collect_live(cfg)
             snap = {
                 "ts": data["timestamp"],
                 "pv_power": data["summary"]["pv_power"],
