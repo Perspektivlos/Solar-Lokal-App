@@ -9,7 +9,9 @@ export default function PhaseBalance({ phases }) {
   const maxAbs = Math.max(1, ...mags);
   const avg = mags.length ? mags.reduce((a, b) => a + b, 0) / mags.length : 0;
   const spread = mags.length ? Math.max(...mags) - Math.min(...mags) : 0;
-  const unbalancePct = avg > 0 ? Math.min(100, (spread / avg) * 100) : 0;
+  // Standard-Definition Phasen-Unbalance: max. Abweichung vom Mittel ÷ Mittel.
+  const maxDev = mags.length ? Math.max(...mags.map((m) => Math.abs(m - avg))) : 0;
+  const unbalancePct = avg > 0 ? Math.min(100, (maxDev / avg) * 100) : 0;
 
   const status = unbalancePct < 15
     ? { color: "#10B981", kind: "NORMAL", label: "SYMMETRISCH" }

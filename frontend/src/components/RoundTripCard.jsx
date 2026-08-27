@@ -5,7 +5,7 @@ export default function RoundTripCard({ today }) {
   const pct = Math.max(0, Math.min(100, today?.round_trip_pct ?? 0));
   const charge = today?.battery_charge_kwh ?? 0;
   const discharge = today?.battery_discharge_kwh ?? 0;
-  const hasData = charge > 0.05;
+  const hasData = charge > 0.05 && discharge > 0.02;
 
   const R = 34;
   const C = 2 * Math.PI * R;

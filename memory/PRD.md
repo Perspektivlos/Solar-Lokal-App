@@ -42,6 +42,15 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: UI/UX-Überarbeitung Dashboard (Design-Blueprint)
+- Gemeinsame UI-Bibliothek `components/solar-ui.jsx`: einheitliche `GlassCard` (Header+Badge+Akzent+Glow, h-full), einheitliches Badge-System (LIVE/DEMO/FALLBACK/OFFLINE + NORMAL/KRITISCH/LADEN/ENTLADEN + IMPORT/EXPORT), dominante `MetricBig` (große Kernzahl text-3xl/4xl, kleine Einheit, Vorzeichen), zurückgenommener `Stat`, `Spark`, `Delta`.
+- Alle Kacheln (RoundTripCard, PhaseBalance, MpptCompare, Dashboard-Karten) auf GlassCard vereinheitlicht; kleine Labels kontrastreicher (text-white/70), Einheiten & +/− Vorzeichen vereinheitlicht.
+- Top-Kachel neu: zwei Gruppen PV (Erzeugung aktuell W + Heute kWh) & Netz (Bezug/Einspeisung aktuell W + Bezug/Verbrauch/Einspeisung kWh). Autarkie/Eigenverbrauch entfernt.
+- Neues 5-Reihen-Layout (12-col grid): Reihe 1 Tagesübersicht+Energiefluss (7/5), Reihe 2 Akku (4/5/3), Reihe 3 Victron (7/5), Reihe 4 Shelly (8/4), Reihe 5 Hoymiles (12).
+- History-Charts: Linien-Kontrast leicht erhöht (strokeWidth 3, stärkerer Glow).
+- Fixes nach Test (iteration_8): Nav responsiv (Icons <lg + overflow-x-auto, kein Overflow), Round-Trip-Badge WARTET statt SCHWACH ohne Entladung, Demo `mock_trucki` konsistent (SUN entlädt, battery_power negativ) + vollständige Zusatzfelder, Schieflast-Metrik = max-Abweichung÷Ø, colspan-Warnung in Integrations.jsx behoben.
+- Design-Blueprint: `/app/design_guidelines.json`. Verifiziert: testing_agent iteration_8 (Frontend 95%, Wertekonsistenz Shelly↔Schieflast & Victron↔MPPT bestätigt) + Screenshots.
+
 ### 2026-08: Dashboard-Umgruppierung nach Themen
 - Akku-Kacheln in eigener Zeile (`data-testid="battery-row"`): Akku-Netto + Trucki-Speicher + Round-Trip-Effizienz.
 - MPPT-Kacheln in eigener Zeile (`data-testid="mppt-row"`): Victron MPPT + MPPT-Vergleich.

@@ -184,14 +184,25 @@ def mock_trucki() -> Dict[str, Any]:
     sun = _sun_curve(datetime.now(timezone.utc))
     soc = 35 + 50 * sun + 8 * math.sin(time.time() / 300.0)
     soc = max(5, min(98, soc))
-    charging = sun > 0.4
+    # Trucki/SUN entlädt den Akku ins AC-Netz (DC-gekoppelt: nur Entladung,
+    # nie Ladung). Tagsüber deckt PV mehr Last → weniger Entladung.
+    discharge = max(0.0, 260 - sun * 210 + random.uniform(-25, 25))
+    battery_power = -round(discharge, 1)  # negativ = entlädt (SUN → Haus)
     return {
         "online": True,
         "soc": round(soc, 1),
         "battery_voltage": round(52.4 + (soc - 50) * 0.04, 2),
-        "battery_power": round((400 if charging else -180) + random.uniform(-30, 30), 1),
+        "battery_power": battery_power,
         "ac_output": True,
-        "zepc": charging,
+        "zepc": sun > 0.4,
+        "ac_setpoint_w": round(discharge, 0),
+        "ac_display_w": round(discharge, 0),
+        "target_w": round(discharge, 0),
+        "min_power_w": 0,
+        "max_power_w": 800,
+        "day_energy_kwh": round(1.5 + sun * 3.5, 2),
+        "total_energy_kwh": round(842.5 + soc * 0.01, 1),
+        "temperature": round(28 + sun * 8 + random.uniform(-1, 1), 0),
     }
 
 

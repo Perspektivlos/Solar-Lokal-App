@@ -54,9 +54,9 @@ function Section({ title, accent, enabled, onToggle, testid, switchTestid, child
   );
 }
 
-function Field({ label, ...inputProps }) {
+function Field({ label, colspan, ...inputProps }) {
   return (
-    <div className={inputProps.colspan ? "md:col-span-2" : ""}>
+    <div className={colspan ? "md:col-span-2" : ""}>
       <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">{label}</label>
       <input {...inputProps} className="glass-input w-full px-3 py-2 font-mono text-sm mt-1" />
     </div>
