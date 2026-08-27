@@ -163,7 +163,7 @@ export default function Dashboard() {
 
       {/* SEKTION · BATTERIE */}
       <div className="space-y-3">
-        <SectionHeader label="Batterie" color={COLOR.battery} testid="section-battery" />
+        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} testid="section-battery" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
             <TruckiCard trucki={trucki} />
@@ -195,22 +195,6 @@ export default function Dashboard() {
                   <div className="font-mono text-lg font-medium text-cyan-300 mt-0.5" data-testid="battery-discharge">{formatNum(summary.battery_discharge_w, 0)}<span className="text-xs text-white/40"> W</span></div>
                 </div>
               </div>
-              <div className="mt-3 pt-3 border-t border-white/10">
-                <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70 flex items-center justify-between">
-                  <span>SoC</span>
-                  {socDanger && <span className="text-red-300 font-bold">⚠ niedrig</span>}
-                </div>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <div className="flex-1 h-3 rounded glass-inset relative overflow-hidden">
-                    <div className="absolute inset-y-0 left-0 transition-all" style={{
-                      width: `${summary.battery_soc}%`,
-                      background: socDanger ? "linear-gradient(90deg, #DC2626, #F87171)" : "linear-gradient(90deg, #0891b2, #06B6D4)",
-                      boxShadow: `0 0 12px ${socDanger ? "#F87171" : COLOR.battery}88`,
-                    }} />
-                  </div>
-                  <div className="font-mono text-xl font-medium w-14 text-right text-white">{formatNum(summary.battery_soc, 0)}%</div>
-                </div>
-              </div>
             </GlassCard>
           </div>
 
@@ -220,7 +204,7 @@ export default function Dashboard() {
 
       {/* SEKTION · VICTRON */}
       <div className="space-y-3">
-        <SectionHeader label="Victron" color={COLOR.victron} testid="section-victron" />
+        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} testid="section-victron" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
             <VictronCard victron={victron} />
@@ -231,7 +215,7 @@ export default function Dashboard() {
 
       {/* SEKTION · PV & NETZ */}
       <div className="space-y-3">
-        <SectionHeader label="PV & Netz" color={COLOR.pv} testid="section-pv-grid" />
+        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} testid="section-pv-grid" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
             <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
@@ -270,7 +254,7 @@ export default function Dashboard() {
 
       {/* SEKTION · SHELLY */}
       <div className="space-y-3">
-        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} testid="section-shelly" />
+        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} testid="section-shelly" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
           <div className="lg:col-span-8">
             <GlassCard
