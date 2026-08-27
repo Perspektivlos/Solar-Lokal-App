@@ -38,7 +38,7 @@ def _run(doc):
 
 
 def test_partial_doc_merges_defaults_no_crash():
-    # doc lacks 'forecast'/'influx' and carries a stale extra key
+    # doc lacks 'influx'/'victron_mqtt' and carries a stale extra key
     cfg = _run({"_id": "main", "demo_mode": False, "mqtt": {"enabled": True}, "legacy_goal": 70})
     for k, v in server.DEFAULT_CONFIG.items():
         assert k in cfg

@@ -105,7 +105,7 @@ class TestEndpointContracts:
         r = client.get(f"{API}/config", timeout=30)
         assert r.status_code == 200
         cfg = r.json()
-        for k in ("devices", "mqtt", "influx", "victron_mqtt", "forecast"):
+        for k in ("devices", "mqtt", "influx", "victron_mqtt"):
             assert k in cfg, f"missing config section {k}"
         original_port = cfg["mqtt"]["port"]
 
@@ -114,7 +114,7 @@ class TestEndpointContracts:
         after = client.get(f"{API}/config", timeout=30).json()
         assert after["mqtt"]["port"] == 1884
         # other sections must survive a partial update
-        for k in ("devices", "influx", "victron_mqtt", "forecast"):
+        for k in ("devices", "influx", "victron_mqtt"):
             assert k in after
         assert after["devices"] == cfg["devices"]
 

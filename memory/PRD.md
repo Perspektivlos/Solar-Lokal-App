@@ -42,6 +42,11 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: Forecast vollständig aus Backend entfernt
+- Frontend war bereits sauber (0 Referenzen). Backend-Reste komplett entfernt: `forecast`-Block in `DEFAULT_CONFIG`, `ConfigUpdate.forecast`-Feld, kompletter `/api/forecast`-Endpoint + `_forecast_cache` + Open-Meteo-Fetch, Kommentar-Referenz.
+- Mongo-Config-Dokument einmalig bereinigt (`$unset` forecast/goals), damit kein Alt-Key über den Merge zurückkommt.
+- Tests angepasst (test_refactor_lifespan, test_get_config_merge). Verifiziert: /api/config nur noch demo_mode/devices/mqtt/victron_mqtt/influx; /api/forecast → 404; 54 pytest grün (1 skip = Influx aus).
+
 ### 2026-08: Code-Review-Durchgang
 - Umgesetzt: `console.error` in `History.jsx` catch-Block entfernt → `setData([])` (Leerzustand) + ungenutzte `err`-Variable via optional catch binding beseitigt. Verifiziert testing_agent iteration_11 (Frontend 100%, keine Konsolenfehler).
 - Bewusst NICHT umgesetzt (dokumentierte Ausnahmen, KEINE Regression riskieren):

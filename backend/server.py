@@ -124,14 +124,6 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "org": "Solar Lokal",
         "bucket": "solar",
     },
-    "forecast": {
-        "enabled": True,
-        "latitude": 51.34,
-        "longitude": 12.37,
-        "peak_kwp": 1.5,
-        "tilt_deg": 30,
-        "azimuth_deg": 180,
-    },
 }
 
 
@@ -344,7 +336,6 @@ class ConfigUpdate(BaseModel):
     mqtt: Optional[Dict[str, Any]] = None
     influx: Optional[Dict[str, Any]] = None
     victron_mqtt: Optional[Dict[str, Any]] = None
-    forecast: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):
@@ -384,8 +375,7 @@ async def cfg_put(update: ConfigUpdate):
         else:
             current[key] = val
     await save_config(current)
-    # Restart integrations only when connection-relevant keys changed
-    # (forecast tweaks must not drop the live MQTT session).
+    # Restart integrations only when connection-relevant keys changed.
     integration_keys = {"demo_mode", "devices", "mqtt", "victron_mqtt", "influx"}
     if integration_keys & set(payload.keys()):
         await restart_integrations()
@@ -726,98 +716,6 @@ async def diagnostics_raw():
             "instances": {str(k): v for k, v in _mqtt_data["victron"]["instances"].items()},
         },
     }
-
-
-# ---------- PV Forecast via Open-Meteo ----------
-
-_forecast_cache: Dict[str, Any] = {"data": None, "fetched_at": None}
-
-
-@api_router.get("/forecast")
-async def forecast():
-    """Return 48h hourly PV-Forecast based on Open-Meteo solar radiation.
-
-    Combines GHI (global horizontal irradiance) with a simple capacity estimate.
-    Cached for 15 min to avoid hammering the public API.
-    """
-    cfg = await get_config()
-    fc_cfg = cfg.get("forecast") or {}
-    if not fc_cfg.get("enabled"):
-        return {"enabled": False, "hourly": [], "summary": {}}
-
-    now = datetime.now(timezone.utc)
-    cached = _forecast_cache.get("fetched_at")
-    if cached and (now - datetime.fromisoformat(cached)).total_seconds() < 900 and _forecast_cache.get("data"):
-        return _forecast_cache["data"]
-
-    lat = float(fc_cfg.get("latitude", 51.34))
-    lon = float(fc_cfg.get("longitude", 12.37))
-    peak_kwp = float(fc_cfg.get("peak_kwp", 1.5))
-    url = (
-        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
-        f"&hourly=temperature_2m,cloudcover,shortwave_radiation,direct_radiation,diffuse_radiation"
-        f"&timezone=auto&forecast_days=2"
-    )
-    try:
-        async with httpx.AsyncClient(timeout=8.0) as c:
-            r = await c.get(url)
-            if r.status_code != 200:
-                raise HTTPException(502, f"Open-Meteo: HTTP {r.status_code}")
-            om = r.json()
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(502, f"Open-Meteo unreachable: {e}")
-
-    times = om.get("hourly", {}).get("time", [])
-    ghi = om.get("hourly", {}).get("shortwave_radiation", [])  # W/m²
-    direct = om.get("hourly", {}).get("direct_radiation", [])
-    cloud = om.get("hourly", {}).get("cloudcover", [])
-    temp = om.get("hourly", {}).get("temperature_2m", [])
-
-    # Simplified PV power estimate: P = GHI/1000 * peak_kwp * pr (performance ratio ~0.80)
-    # Temperature derating: -0.4%/K above 25°C panel temperature
-    hourly = []
-    total_kwh_today = 0.0
-    total_kwh_tomorrow = 0.0
-    today_str = now.astimezone().strftime("%Y-%m-%d")
-    pr_base = 0.80
-    for i, t in enumerate(times):
-        ghi_i = float(ghi[i] if i < len(ghi) else 0)
-        temp_i = float(temp[i] if i < len(temp) else 20)
-        # Panel temp ~ ambient + 25K under full sun
-        panel_temp = temp_i + (ghi_i / 1000.0) * 25.0
-        temp_factor = max(0.6, 1.0 - 0.004 * max(0, panel_temp - 25))
-        power_kw = (ghi_i / 1000.0) * peak_kwp * pr_base * temp_factor
-        hourly.append({
-            "time": t,
-            "ghi": round(ghi_i, 1),
-            "direct": round(float(direct[i] if i < len(direct) else 0), 1),
-            "cloud": round(float(cloud[i] if i < len(cloud) else 0), 1),
-            "temp": round(temp_i, 1),
-            "pv_w": round(power_kw * 1000.0, 1),
-        })
-        # Each hour contributes power_kw * 1h to daily total
-        if t.startswith(today_str):
-            total_kwh_today += power_kw
-        else:
-            total_kwh_tomorrow += power_kw
-
-    out = {
-        "enabled": True,
-        "location": {"lat": lat, "lon": lon, "peak_kwp": peak_kwp},
-        "fetched_at": now.isoformat(),
-        "hourly": hourly,
-        "summary": {
-            "kwh_today_forecast": round(total_kwh_today, 2),
-            "kwh_tomorrow_forecast": round(total_kwh_tomorrow, 2),
-        },
-    }
-    _forecast_cache["data"] = out
-    _forecast_cache["fetched_at"] = now.isoformat()
-    return out
-
-
 
 
 # ---------- Background poller ----------
