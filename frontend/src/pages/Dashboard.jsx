@@ -5,7 +5,11 @@ import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
 import MpptCompare from "../components/MpptCompare";
-import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, Spark, SectionHeader } from "../components/solar-ui";
+import KpiStrip from "../components/KpiStrip";
+import GridHouseCard from "../components/GridHouseCard";
+import TruckiCard from "../components/TruckiCard";
+import VictronCard from "../components/VictronCard";
+import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
 import { Cable, AlertTriangle, Activity } from "lucide-react";
 
 const INTRO_SECTIONS = [
@@ -40,61 +44,6 @@ function batteryStateKind(socDanger, power) {
   if (power > 20) return "LADEN";
   if (power < -20) return "ENTLADEN";
   return "NORMAL";
-}
-
-// Obere KPI-Leiste: 6 Kacheln (Gesamt-kWh + Live-W) mit Sparkline-Trend.
-function KpiStrip({ today, summary, trail }) {
-  const exportNow = Math.max(0, -(summary.grid_power || 0));
-  const cells = [
-    { label: "PV Gesamt", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "kpi-pv-total" },
-    { label: "PV Aktuell", value: formatNum(summary.pv_power, 0), unit: "W", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "kpi-pv-now" },
-    { label: "Netz Bezug (Gesamt)", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300 neon-text-red", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "kpi-grid-import" },
-    { label: "Netz Einspeisung (Aktuell)", value: formatNum(exportNow, 0), unit: "W", color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp, spark: trail.grid, sparkColor: COLOR.grid_exp, testid: "kpi-grid-export-now" },
-    { label: "Verbrauch (Gesamt)", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: COLOR.house, spark: trail.house, sparkColor: COLOR.house, testid: "kpi-consumption" },
-    { label: "Einspeisung (Gesamt)", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp, testid: "kpi-grid-export-total" },
-  ];
-  return (
-    <div className="glass overflow-hidden grid grid-cols-2 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/[0.07]" data-testid="top-kpi">
-      {cells.map((m) => (
-        <div key={m.label} className="relative p-4 transition-colors hover:bg-white/[0.02]" data-testid={m.testid}>
-          <span className="absolute top-0 left-0 right-0 h-[2px] opacity-80 pointer-events-none" style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)` }} />
-          <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{m.label}</div>
-          <div className={`font-mono text-2xl lg:text-3xl font-semibold tracking-tight leading-none mt-1.5 ${m.color}`}>
-            {m.value}<span className="text-sm ml-1 text-white/45 font-normal">{m.unit}</span>
-          </div>
-          {m.spark && m.spark.length > 1 && <div className="mt-2"><Spark values={m.spark} color={m.sparkColor} height={20} /></div>}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// PV & Netz: Live-Einspeisung (Export) + aktueller Hausverbrauch.
-function GridHouseCard({ summary, trail }) {
-  const exportNow = Math.max(0, -(summary.grid_power || 0));
-  const exporting = (summary.grid_power || 0) < 0;
-  return (
-    <GlassCard title="Einspeisung & Hausverbrauch" accent={COLOR.grid_exp} testid="card-grid-house" badge={<Badge kind={exporting ? "EXPORT" : "IMPORT"} />}>
-      <MetricBig
-        label="Einspeisung (Export)"
-        value={formatNum(exportNow, 0)}
-        unit="W"
-        color="text-emerald-300 neon-text-green"
-        sparkValues={trail.grid}
-        sparkColor={COLOR.grid_exp}
-      />
-      <div className="mt-4 pt-4 border-t border-white/10">
-        <MetricBig
-          label="Hausverbrauch aktuell"
-          value={formatNum(summary.house_power, 0)}
-          unit="W"
-          color="text-white"
-          sparkValues={trail.house}
-          sparkColor={COLOR.house}
-        />
-      </div>
-    </GlassCard>
-  );
 }
 
 export default function Dashboard() {
@@ -217,41 +166,7 @@ export default function Dashboard() {
         <SectionHeader label="Batterie" color={COLOR.battery} testid="section-battery" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
-            <GlassCard title="Trucki2Shelly · Speicher" accent={COLOR.battery} badge={<SourceBadge data={trucki} />} testid="card-trucki" danger={trucki?.soc !== undefined && trucki.soc < 15}>
-              <div className="space-y-3">
-                <div>
-                  <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">SoC (aus VBAT)</div>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    <div className="flex-1 h-3 glass-inset relative overflow-hidden">
-                      <div className="absolute inset-y-0 left-0" style={{
-                        width: `${trucki.soc}%`,
-                        background: "linear-gradient(90deg, #0891b2, #06B6D4)",
-                        boxShadow: `0 0 10px ${COLOR.battery}88`,
-                      }} />
-                    </div>
-                    <div className="font-mono text-xl font-medium w-16 text-right text-white">{formatNum(trucki.soc, 0)}%</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Stat label="VBAT" value={formatNum(trucki.battery_voltage, 2)} unit="V" />
-                  <Stat label={trucki.battery_power >= 0 ? "lädt" : "entlädt"} value={formatNum(Math.abs(trucki.battery_power), 0)} unit={`W ${trucki.battery_power >= 0 ? "↓" : "↑"}`} color="text-cyan-300 neon-text-cyan" />
-                </div>
-                {trucki.target_w !== undefined && (
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 font-mono text-[11px]">
-                    <div className="text-center text-white/85"><span className="text-white/50">TARGET</span><br/><span className="text-sm">{formatNum(trucki.target_w, 0)} W</span></div>
-                    <div className="text-center text-white/85"><span className="text-white/50">MIN</span><br/><span className="text-sm">{formatNum(trucki.min_power_w, 0)} W</span></div>
-                    <div className="text-center text-white/85"><span className="text-white/50">MAX</span><br/><span className="text-sm">{formatNum(trucki.max_power_w, 0)} W</span></div>
-                    <div className="text-center text-white/85"><span className="text-white/50">TAG</span><br/><span className="text-sm">{formatNum(trucki.day_energy_kwh, 2)} kWh</span></div>
-                    <div className="text-center text-white/85"><span className="text-white/50">GESAMT</span><br/><span className="text-sm">{formatNum(trucki.total_energy_kwh, 1)}</span></div>
-                    <div className="text-center text-white/85"><span className="text-white/50">TEMP</span><br/><span className="text-sm">{formatNum(trucki.temperature, 0)} °C</span></div>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
-                  <div className="font-mono text-xs text-white/70">AC-Output: <span className={trucki.ac_output ? "text-emerald-300" : "text-white/30"}>{trucki.ac_output ? "● EIN" : "○ AUS"}</span></div>
-                  <div className="font-mono text-xs text-white/70">ZEPC: <span className={trucki.zepc ? "text-emerald-300" : "text-white/30"}>{trucki.zepc ? "● EIN" : "○ AUS"}</span></div>
-                </div>
-              </div>
-            </GlassCard>
+            <TruckiCard trucki={trucki} />
           </div>
 
           <div className="lg:col-span-4">
@@ -307,30 +222,7 @@ export default function Dashboard() {
         <SectionHeader label="Victron" color={COLOR.victron} testid="section-victron" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
-            <GlassCard title="Victron MPPT 150/35" accent={COLOR.victron} badge={<SourceBadge data={victron} />} testid="card-victron">
-              <div className="space-y-3">
-                {victron.mppts?.map((m) => (
-                  <div key={m.id} className="border-b border-white/10 pb-2 last:border-b-0" data-testid={`victron-${m.id}`}>
-                    <div className="flex justify-between font-mono text-xs text-white/85">
-                      <span className="font-medium">{m.name}</span>
-                      <span className="text-white/60 uppercase tracking-wider text-[10px] border border-white/15 px-1.5 rounded">{m.state}</span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2 mt-1.5 font-mono text-xs text-white/80">
-                      <div><span className="text-[10px] text-white/55">P</span><br/><span className="text-yellow-300 text-base font-medium">{formatNum(m.pv_power, 0)}</span> W</div>
-                      <div><span className="text-[10px] text-white/55">U</span><br/>{formatNum(m.pv_voltage, 1)} V</div>
-                      <div><span className="text-[10px] text-white/55">VBatt</span><br/>{formatNum(m.battery_voltage, 2)} V</div>
-                      <div><span className="text-[10px] text-white/55">Day</span><br/>{formatNum(m.yield_today, 2)} kWh</div>
-                    </div>
-                  </div>
-                ))}
-                <div className="pt-2 border-t border-white/10 font-mono">
-                  <div className="flex items-center justify-between">
-                    <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Σ Total</span>
-                    <span className="text-2xl font-semibold tracking-tight text-yellow-300 neon-text-yellow">{formatNum(victron.total_power, 0)}<span className="text-base ml-1 text-white/45 font-normal">W</span></span>
-                  </div>
-                </div>
-              </div>
-            </GlassCard>
+            <VictronCard victron={victron} />
           </div>
           <div className="lg:col-span-5"><MpptCompare mppts={victron.mppts} /></div>
         </div>

@@ -42,6 +42,11 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: Refactor – Dashboard-Komponenten ausgelagert
+- `KpiStrip.jsx`, `GridHouseCard.jsx`, `TruckiCard.jsx`, `VictronCard.jsx` aus `Dashboard.jsx` in eigene Komponenten extrahiert (Wartbarkeit). Dashboard.jsx deutlich schlanker.
+- DRY-Helper `lib/power.js` (`exportNowW`, `isExporting`) – doppelte `Math.max(0, -grid_power)`-Berechnung entfernt.
+- Reiner Refactor, kein Verhaltens-/Layout-Change; alle data-testids identisch. Verifiziert via Kompilierung + Smoke-Screenshot (10/10 Karten gerendert).
+
 ### 2026-08: Dashboard-Übersicht nach Nutzer-Screenshot
 - Neue obere **6-Kachel-KPI-Leiste** (volle Breite, Sparklines): PV Gesamt (kWh) · PV Aktuell (W) · Netz Bezug Gesamt (kWh) · Netz Einspeisung Aktuell (W) · Verbrauch Gesamt (kWh) · Einspeisung Gesamt (kWh). Testids kpi-pv-total/kpi-pv-now/kpi-grid-import/kpi-grid-export-now/kpi-consumption/kpi-grid-export-total.
 - **Energiefluss** jetzt in eigener voller Reihe unter der KPI-Leiste.
