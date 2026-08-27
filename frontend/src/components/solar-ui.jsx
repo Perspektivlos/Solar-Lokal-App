@@ -35,7 +35,7 @@ export function GlassCard({ title, accent = "#64748b", icon: Icon, badge, testid
     <div
       className={`glass relative overflow-hidden h-full flex flex-col ${className}`}
       data-testid={testid}
-      style={{ borderLeft: `3px solid ${accent}`, boxShadow: danger ? CARD_SHADOW_DANGER : CARD_SHADOW }}
+      style={{ borderTop: `3px solid ${accent}`, boxShadow: danger ? CARD_SHADOW_DANGER : CARD_SHADOW }}
     >
       <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-20 blur-2xl pointer-events-none" style={{ background: accent }} />
       <div className="relative border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3">
