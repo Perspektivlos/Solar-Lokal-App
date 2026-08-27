@@ -42,6 +42,12 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: Router-Split – server.py < 700 Zeilen
+- Alle Route-Handler (`/`, live, config GET/PUT, history, today, control/hoymiles, control/trucki, integrations/status, diagnostics/run, diagnostics/raw) aus `server.py` in neue `routes.py` (eigener `APIRouter(prefix="/api")`) ausgelagert.
+- `routes.py` importiert geteilte Funktionen/States aus `server` (get_config, save_config, collect_live, restart_integrations, db, Models, _mqtt_*/_influx_/_poller_state). `server.py` importiert `routes` erst am Dateiende (nach allen Definitionen) → kein Zirkularimport.
+- `server.py` 926 → **460 Zeilen**; `routes.py` 395 Zeilen.
+- Verifiziert: Import OK, 11 API-Routen registriert, Smoke-Curl aller Endpunkte 200/ok, 54 pytest grün (1 skip = Influx aus) — inkl. Endpoint-Contract-, lifespan- und Modul-Parität-Tests. Keine Regression.
+
 ### 2026-08: Forecast vollständig aus Backend entfernt
 - Frontend war bereits sauber (0 Referenzen). Backend-Reste komplett entfernt: `forecast`-Block in `DEFAULT_CONFIG`, `ConfigUpdate.forecast`-Feld, kompletter `/api/forecast`-Endpoint + `_forecast_cache` + Open-Meteo-Fetch, Kommentar-Referenz.
 - Mongo-Config-Dokument einmalig bereinigt (`$unset` forecast/goals), damit kein Alt-Key über den Merge zurückkommt.
