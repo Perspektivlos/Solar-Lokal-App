@@ -1,4 +1,5 @@
 import { GlassCard, Badge, formatNum } from "./solar-ui";
+import { Cable } from "lucide-react";
 
 const PHASE_COLOR = { L1: "#FACC15", L2: "#06B6D4", L3: "#A78BFA" };
 
@@ -20,7 +21,7 @@ export default function PhaseBalance({ phases }) {
       : { color: "#F87171", kind: "KRITISCH", label: "STARKE SCHIEFLAST" };
 
   return (
-    <GlassCard title="3-Phasen-Schieflast" accent={status.color} testid="card-phase-balance" badge={<Badge kind={status.kind} label={status.label} testid="phase-balance-status" />}>
+    <GlassCard title="3-Phasen-Schieflast" accent={status.color} icon={Cable} testid="card-phase-balance" badge={<Badge kind={status.kind} label={status.label} testid="phase-balance-status" />}>
       <div className="space-y-3">
         <div className="flex items-end justify-between">
           <div>

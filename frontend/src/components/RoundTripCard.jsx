@@ -1,4 +1,5 @@
 import { GlassCard, Badge, Stat, formatNum } from "./solar-ui";
+import { BatteryCharging } from "lucide-react";
 
 // Ring-Gauge des Round-Trip-Wirkungsgrads (AC-Entladung ÷ DC-Ladung).
 export default function RoundTripCard({ today }) {
@@ -15,7 +16,7 @@ export default function RoundTripCard({ today }) {
   const badgeLabel = !hasData ? "WARTET" : pct >= 85 ? "OPTIMAL" : pct >= 70 ? "GUT" : "SCHWACH";
 
   return (
-    <GlassCard title="Akku · Round-Trip-Effizienz" accent="#06B6D4" testid="card-roundtrip" badge={<Badge kind={badgeKind} label={badgeLabel} />}>
+    <GlassCard title="Akku · Round-Trip-Effizienz" accent="#06B6D4" icon={BatteryCharging} testid="card-roundtrip" badge={<Badge kind={badgeKind} label={badgeLabel} />}>
       <div className="flex items-center gap-4">
         <div className="relative shrink-0" style={{ width: 88, height: 88 }}>
           <svg viewBox="0 0 88 88" className="w-full h-full -rotate-90">

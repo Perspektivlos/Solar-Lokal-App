@@ -1,4 +1,5 @@
 import { GlassCard, Badge, formatNum } from "./solar-ui";
+import { Sun } from "lucide-react";
 
 const BAR_COLOR = ["#FACC15", "#34D399"];
 
@@ -13,7 +14,7 @@ export default function MpptCompare({ mppts }) {
   const leader = yields.length === 2 ? (yields[0] === yields[1] ? null : (yields[0] > yields[1] ? 0 : 1)) : null;
 
   return (
-    <GlassCard title="MPPT-Vergleich · Yield #1 vs #2" accent="#34D399" testid="card-mppt-compare" badge={<Badge kind="NORMAL" label="SOLAR DC" />}>
+    <GlassCard title="MPPT-Vergleich · Yield #1 vs #2" accent="#34D399" icon={Sun} testid="card-mppt-compare" badge={<Badge kind="NORMAL" label="SOLAR DC" />}>
       <div className="space-y-4">
         {list.length < 2 && (
           <div className="font-mono text-[11px] text-white/50">Weniger als zwei MPPTs verfügbar.</div>

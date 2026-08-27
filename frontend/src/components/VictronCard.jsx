@@ -1,9 +1,10 @@
 import { COLOR, formatNum, GlassCard, SourceBadge } from "./solar-ui";
+import { Sun } from "lucide-react";
 
 // Victron MPPT 150/35: pro Instanz P/U/VBatt/Yield + Gesamtleistung.
 export default function VictronCard({ victron }) {
   return (
-    <GlassCard title="Victron MPPT 150/35" accent={COLOR.victron} badge={<SourceBadge data={victron} />} testid="card-victron">
+    <GlassCard title="Victron MPPT 150/35" accent={COLOR.victron} icon={Sun} badge={<SourceBadge data={victron} />} testid="card-victron">
       <div className="space-y-3">
         {victron.mppts?.map((m) => (
           <div key={m.id} className="border-b border-white/10 pb-2 last:border-b-0" data-testid={`victron-${m.id}`}>

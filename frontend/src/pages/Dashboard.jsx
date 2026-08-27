@@ -10,7 +10,7 @@ import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
 import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
-import { Cable, AlertTriangle, Activity } from "lucide-react";
+import { Cable, AlertTriangle, Activity, Sun, BatteryCharging } from "lucide-react";
 
 const INTRO_SECTIONS = [
   {
@@ -173,6 +173,7 @@ export default function Dashboard() {
             <GlassCard
               title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"}
               accent={COLOR.battery}
+              icon={BatteryCharging}
               testid="live-battery"
               danger={socDanger}
               badge={<Badge kind={batteryKind} />}
@@ -233,7 +234,7 @@ export default function Dashboard() {
         <SectionHeader label="PV & Netz" color={COLOR.pv} testid="section-pv-grid" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
-            <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
+            <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <div className="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3">
                   <MetricBig label="Total AC" value={formatNum(ahoy.total_power, 0)} unit="W" color="text-yellow-300 neon-text-yellow" size="sm" />
@@ -275,6 +276,7 @@ export default function Dashboard() {
             <GlassCard
               title="Shelly Pro 3EM · 3-Phasen-Energiemesser"
               accent={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}
+              icon={Cable}
               badge={<SourceBadge data={shelly} />}
               testid="card-shelly"
             >

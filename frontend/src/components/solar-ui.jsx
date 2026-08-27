@@ -30,7 +30,7 @@ const CARD_SHADOW = "0 12px 34px -18px rgba(0,0,0,0.6), 0 0 26px -16px rgba(226,
 const CARD_SHADOW_DANGER = "inset 0 0 0 1px rgba(239,68,68,0.45), 0 12px 34px -18px rgba(0,0,0,0.6), 0 0 26px -16px rgba(226,232,240,0.22)";
 
 // Einheitliche Detailkarte: Header (Titel + Badge) · Akzentbalken · Glow · Body.
-export function GlassCard({ title, accent = "#64748b", badge, testid, children, danger, className = "" }) {
+export function GlassCard({ title, accent = "#64748b", icon: Icon, badge, testid, children, danger, className = "" }) {
   return (
     <div
       className={`glass relative overflow-hidden h-full flex flex-col ${className}`}
@@ -39,7 +39,10 @@ export function GlassCard({ title, accent = "#64748b", badge, testid, children, 
     >
       <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-20 blur-2xl pointer-events-none" style={{ background: accent }} />
       <div className="relative border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3">
-        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">{title}</div>
+        <div className="flex items-center gap-2 min-w-0">
+          {Icon && <Icon size={13} strokeWidth={2.4} className="shrink-0" style={{ color: accent }} />}
+          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 truncate">{title}</span>
+        </div>
         {badge}
       </div>
       <div className="relative p-4 flex-1">{children}</div>
