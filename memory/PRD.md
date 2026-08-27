@@ -42,6 +42,13 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: Code-Review-Durchgang
+- Umgesetzt: `console.error` in `History.jsx` catch-Block entfernt → `setData([])` (Leerzustand) + ungenutzte `err`-Variable via optional catch binding beseitigt. Verifiziert testing_agent iteration_11 (Frontend 100%, keine Konsolenfehler).
+- Bewusst NICHT umgesetzt (dokumentierte Ausnahmen, KEINE Regression riskieren):
+  - `is`/`==`: betroffene Stellen sind `is None`/`is not None` (korrekt) bzw. `is True/False` auf Booleans → False Positives; `== None` wäre schlechter.
+  - Hook-Deps: gelistete „Deps" sind lokale Vars/stabile Setter/Imports/shadcn-Boilerplate; `[]`-Poller sind Mount-only-Absicht → Hinzufügen = Endlos-Rerenders.
+  - Komplexitäts-Refactors: Wartbarkeit, keine Bugs; hohes Risiko auf Live-Hardware → Backlog (sinnvolle Auslagerungen bereits erfolgt).
+
 ### 2026-08: Backend-Refactor – Module + lifespan
 - Reine Funktionen aus `server.py` ausgelagert: `mocks.py` (Mock-Generatoren `_sun_curve`, `mock_shelly/ahoy/trucki/victron`) und `influx_points.py` (`_instant_ratios`, `_pt_*`, `_pts_*`, `_build_influx_points`). In server.py re-exportiert (Tests referenzieren `server.X`).
 - App-Lebenszyklus von `@app.on_event('startup'/'shutdown')` auf FastAPI-`lifespan`-Contextmanager migriert (Poller/Keepalive-Start + Teardown). Keine Deprecation-Warnungen mehr.
