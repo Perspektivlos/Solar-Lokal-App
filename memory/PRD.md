@@ -42,6 +42,13 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: Backend-Refactor – Module + lifespan
+- Reine Funktionen aus `server.py` ausgelagert: `mocks.py` (Mock-Generatoren `_sun_curve`, `mock_shelly/ahoy/trucki/victron`) und `influx_points.py` (`_instant_ratios`, `_pt_*`, `_pts_*`, `_build_influx_points`). In server.py re-exportiert (Tests referenzieren `server.X`).
+- App-Lebenszyklus von `@app.on_event('startup'/'shutdown')` auf FastAPI-`lifespan`-Contextmanager migriert (Poller/Keepalive-Start + Teardown). Keine Deprecation-Warnungen mehr.
+- `server.py` 1154 → 931 Zeilen. Verhalten unverändert.
+- Verifiziert: testing_agent iteration_10 (Backend 100%, 54/54, inkl. neuem `test_refactor_lifespan.py`; Poller startet via lifespan; alle Endpunkt-Contracts unverändert). Lokale pytest 41/41 grün.
+- Offen für <700 Zeilen: Route-Handler in eigene APIRouter aufteilen (separat, abgestimmt – Collector/Config/DB verzahnt + testseitig gemonkeypatcht).
+
 ### 2026-08: Refactor – Dashboard-Komponenten ausgelagert
 - `KpiStrip.jsx`, `GridHouseCard.jsx`, `TruckiCard.jsx`, `VictronCard.jsx` aus `Dashboard.jsx` in eigene Komponenten extrahiert (Wartbarkeit). Dashboard.jsx deutlich schlanker.
 - DRY-Helper `lib/power.js` (`exportNowW`, `isExporting`) – doppelte `Math.max(0, -grid_power)`-Berechnung entfernt.
