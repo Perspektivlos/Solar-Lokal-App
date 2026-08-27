@@ -145,3 +145,13 @@ export function Stat({ label, value, unit, color, testid }) {
     </div>
   );
 }
+
+// Sektions-Überschrift (farbiger Balken + Label) als Gruppentrenner.
+export function SectionHeader({ label, color = "#64748b", testid }) {
+  return (
+    <div className="flex items-center gap-2.5 pt-1" data-testid={testid}>
+      <span className="w-1 h-4 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
+      <span className="font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-white/70">{label}</span>
+    </div>
+  );
+}

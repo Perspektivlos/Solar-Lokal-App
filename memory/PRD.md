@@ -42,6 +42,14 @@ Modernes Dashboard für Solarenergie im lokalen Netzwerk, um Daten abzurufen, Ge
 - Telegram-Integration: vom User abgelehnt.
 
 ## Changelog (aktuell)
+### 2026-08: Dashboard-Übersicht nach Nutzer-Screenshot
+- Neue obere **6-Kachel-KPI-Leiste** (volle Breite, Sparklines): PV Gesamt (kWh) · PV Aktuell (W) · Netz Bezug Gesamt (kWh) · Netz Einspeisung Aktuell (W) · Verbrauch Gesamt (kWh) · Einspeisung Gesamt (kWh). Testids kpi-pv-total/kpi-pv-now/kpi-grid-import/kpi-grid-export-now/kpi-consumption/kpi-grid-export-total.
+- **Energiefluss** jetzt in eigener voller Reihe unter der KPI-Leiste.
+- **Sektions-Überschriften** (`SectionHeader` in solar-ui): Batterie · Victron · PV & Netz · Shelly.
+- Reihen: Batterie (Trucki / Akku-netto / Round-Trip), Victron (Victron MPPT / MPPT-Vergleich), PV & Netz (Hoymiles / neue Karte `GridHouseCard` = Einspeisung-Export + Hausverbrauch aktuell), Shelly (Shelly 3EM / Schieflast).
+- Alter TopKpi-2-Gruppen-Code entfernt; keine toten Referenzen (AutarkyGoal/Forecast/today-stat/goals) im Frontend.
+- Verifiziert: testing_agent iteration_9 (Frontend 100%, Wertekonsistenz kpi-grid-export-now == GridHouse-Export == Shelly Σ, Hausverbrauch == Energiefluss-Haus, Phasen == Schieflast; Polling; keine Konsolenfehler; Nav-Overflow-Fix greift bei 768/390px). Backend unverändert, 41/41 pytest weiterhin grün.
+
 ### 2026-08: UI/UX-Überarbeitung Dashboard (Design-Blueprint)
 - Gemeinsame UI-Bibliothek `components/solar-ui.jsx`: einheitliche `GlassCard` (Header+Badge+Akzent+Glow, h-full), einheitliches Badge-System (LIVE/DEMO/FALLBACK/OFFLINE + NORMAL/KRITISCH/LADEN/ENTLADEN + IMPORT/EXPORT), dominante `MetricBig` (große Kernzahl text-3xl/4xl, kleine Einheit, Vorzeichen), zurückgenommener `Stat`, `Spark`, `Delta`.
 - Alle Kacheln (RoundTripCard, PhaseBalance, MpptCompare, Dashboard-Karten) auf GlassCard vereinheitlicht; kleine Labels kontrastreicher (text-white/70), Einheiten & +/− Vorzeichen vereinheitlicht.

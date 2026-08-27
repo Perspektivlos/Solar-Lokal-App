@@ -1,0 +1,25 @@
+{
+  "summary": "Frontend-only Verifikation des neuen Dashboard-Layouts (6-Kachel-KPI-Leiste + Energiefluss in eigener Reihe + Sektionen) über die Public-URL im Demo-Modus. Alle geforderten data-testids vorhanden: row-overview, top-kpi mit exakter Reihenfolge kpi-pv-total/kpi-pv-now/kpi-grid-import/kpi-grid-export-now/kpi-consumption/kpi-grid-export-total (jede mit Sparkline, außer der letzten wie spezifiziert), energy-flow-svg (volle Breite 1518px direkt unter der KPI-Leiste), section-battery/victron/pv-grid/shelly, battery-row (card-trucki vollständig mit TARGET 82W/MIN 0W/MAX 800W/TAG 4,83kWh/GESAMT 843,4/TEMP 36°C + AC-Output/ZEPC EIN, live-battery mit Badge LÄDT + battery-charge 1.332W/battery-discharge 82W + SoC 90%, card-roundtrip), mppt-row (card-victron + card-mppt-compare mit identischen Werten 689/644W und 1,20/1,22kWh), pv-grid-row (card-ahoy CH1-4 + card-grid-house), shelly-row (card-shelly L1/L2/L3 + Σ Total mit +/− + card-phase-balance mit phase-bar-L1..L3). Wertekonsistenz bestätigt: kpi-grid-export-now 981W == card-grid-house Einspeisung 981W == Shelly Σ −981,4W; Hausverbrauch 426W == Energiefluss HAUS 426W; Phasen −412/−304/−265W identisch in card-shelly und card-phase-balance; Netto-Akku 1.250W = MPPT 1.332W − SUN 82W (Trucki entlädt 82W) -> Inkonsistenz aus iteration_8 behoben. Polling alle 3s verifiziert (PV 2.657W -> 2.640W). KEINE JS-Konsolenfehler. Regression: history-page lädt, range-1h/6h/12h/24h schaltbar mit gerenderten Charts; Steuerung/Geräte/Diagnose/Integrationen fehlerfrei. Nav-Overflow-Fix greift: bei 768px und 390px scrollWidth == innerWidth (kein horizontaler Seiten-Overflow), Nav zeigt <lg nur Icons. RoundTrip-Badge zeigt korrekt 'WARTET' bei zu wenig Ladeenergie.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard · PV & NETZ-Reihe", "issues": ["card-ahoy (Hoymiles-Tabelle) ist deutlich höher als benötigt/hat ~150px Leerraum unterhalb der 4 Kanalzeilen, während card-grid-house rechts kompakt ist – optional Höhenausgleich oder zusätzlicher Inhalt."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Dashboard.jsx (428 Zeilen): inline Trucki-Karte (Z. 220-254) und inline Victron-Karte (Z. 310-333) sowie KpiStrip/GridHouseCard sollten in eigene Komponenten ausgelagert werden, um die Datei unter ~250 Zeilen zu halten.",
+    "exportNow = Math.max(0, -(summary.grid_power||0)) wird in KpiStrip und GridHouseCard doppelt berechnet – in einen Helper (lib) extrahieren (DRY)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (skipped per request)", "frontend": "100%"},
+  "seed_data_creation": "keine (Demo-Modus)",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "keine Auth erforderlich",
+  "context_for_next_testing_agent": "Neues Dashboard-Layout vollständig verifiziert (Layout, testids, Wertekonsistenz, Polling, keine Konsolenfehler). Alle offenen Punkte aus iteration_8 (Nav-Overflow 768/390px, RoundTrip-Badge 'WARTET', Trucki-Demo-Zusatzfelder, Trucki<->summary-Batterie-Konsistenz, colspan-Warnung) sind behoben. Verbleibend nur kosmetisch: Höhenungleichgewicht card-ahoy vs card-grid-house.",
+  "rca_of_the_issue": "keine Defekte gefunden"
+}
