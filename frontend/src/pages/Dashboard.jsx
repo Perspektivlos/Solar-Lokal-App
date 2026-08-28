@@ -227,7 +227,7 @@ export default function Dashboard() {
                 <div className="lg:col-span-3">
                   <table className="w-full font-mono text-xs">
                     <thead>
-                      <tr className="border-b border-white/10 text-[10px] uppercase tracking-[0.2em] text-white/65">
+                      <tr className="border-b border-white/10 text-xs uppercase tracking-[0.2em] text-white/65">
                         <th className="text-left py-1">CH</th><th className="text-right py-1">P</th><th className="text-right py-1">U</th>
                         <th className="text-right py-1">I</th><th className="text-right py-1">YDay</th>
                       </tr>
@@ -236,10 +236,10 @@ export default function Dashboard() {
                       {ahoy.channels?.map((c) => (
                         <tr key={c.ch} className="border-b border-white/5 text-white/85" data-testid={`ahoy-ch-${c.ch}`}>
                           <td className="py-1.5">CH{c.ch}</td>
-                          <td className="py-1.5 text-right text-yellow-300 text-sm">{formatNum(c.power, 0)} W</td>
-                          <td className="py-1.5 text-right">{formatNum(c.voltage, 1)} V</td>
-                          <td className="py-1.5 text-right">{formatNum(c.current, 2)} A</td>
-                          <td className="py-1.5 text-right">{formatNum(c.yield_day, 2)}</td>
+                          <td className="py-1.5 text-right text-yellow-300 text-base">{formatNum(c.power, 0)} W</td>
+                          <td className="py-1.5 text-right text-base text-white">{formatNum(c.voltage, 1)} V</td>
+                          <td className="py-1.5 text-right text-base text-white">{formatNum(c.current, 2)} A</td>
+                          <td className="py-1.5 text-right text-base text-white">{formatNum(c.yield_day, 2)}</td>
                         </tr>
                       ))}
                     </tbody>

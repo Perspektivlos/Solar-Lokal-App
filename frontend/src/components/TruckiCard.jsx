@@ -13,12 +13,12 @@ export default function TruckiCard({ trucki }) {
         </div>
         {trucki.target_w !== undefined && (
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 font-mono text-[11px]">
-            <div className="text-center text-white/85"><span className="text-white/50">TARGET</span><br/><span className="text-sm">{formatNum(trucki.target_w, 0)} W</span></div>
-            <div className="text-center text-white/85"><span className="text-white/50">MIN</span><br/><span className="text-sm">{formatNum(trucki.min_power_w, 0)} W</span></div>
-            <div className="text-center text-white/85"><span className="text-white/50">MAX</span><br/><span className="text-sm">{formatNum(trucki.max_power_w, 0)} W</span></div>
-            <div className="text-center text-white/85"><span className="text-white/50">TAG</span><br/><span className="text-sm">{formatNum(trucki.day_energy_kwh, 2)} kWh</span></div>
-            <div className="text-center text-white/85"><span className="text-white/50">GESAMT</span><br/><span className="text-sm">{formatNum(trucki.total_energy_kwh, 1)}</span></div>
-            <div className="text-center text-white/85"><span className="text-white/50">TEMP</span><br/><span className="text-sm">{formatNum(trucki.temperature, 0)} °C</span></div>
+            <div className="text-center text-white/85"><span className="text-white/50">TARGET</span><br/><span className="text-base text-white">{formatNum(trucki.target_w, 0)} W</span></div>
+            <div className="text-center text-white/85"><span className="text-white/50">MIN</span><br/><span className="text-base text-white">{formatNum(trucki.min_power_w, 0)} W</span></div>
+            <div className="text-center text-white/85"><span className="text-white/50">MAX</span><br/><span className="text-base text-white">{formatNum(trucki.max_power_w, 0)} W</span></div>
+            <div className="text-center text-white/85"><span className="text-white/50">TAG</span><br/><span className="text-base text-white">{formatNum(trucki.day_energy_kwh, 2)} kWh</span></div>
+            <div className="text-center text-white/85"><span className="text-white/50">GESAMT</span><br/><span className="text-base text-white">{formatNum(trucki.total_energy_kwh, 1)}</span></div>
+            <div className="text-center text-white/85"><span className="text-white/50">TEMP</span><br/><span className="text-base text-white">{formatNum(trucki.temperature, 0)} °C</span></div>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
