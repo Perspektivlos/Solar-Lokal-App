@@ -8,16 +8,7 @@ export default function TruckiCard({ trucki }) {
       <div className="space-y-3">
         <div>
           <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">SoC (aus VBAT)</div>
-          <div className="flex items-center gap-3 mt-1.5">
-            <div className="flex-1 h-3 glass-inset relative overflow-hidden">
-              <div className="absolute inset-y-0 left-0" style={{
-                width: `${trucki.soc}%`,
-                background: "linear-gradient(90deg, #0891b2, #06B6D4)",
-                boxShadow: `0 0 10px ${COLOR.battery}88`,
-              }} />
-            </div>
-            <div className="font-mono text-xl font-medium w-16 text-right text-white">{formatNum(trucki.soc, 0)}%</div>
-          </div>
+          <div className="font-mono text-3xl font-semibold tracking-tight leading-none mt-1.5 text-white">{formatNum(trucki.soc, 0)}<span className="text-lg ml-1 text-white/45 font-normal">%</span></div>
           <div className="font-mono text-xs text-white/50 mt-1.5" data-testid="trucki-vbat">VBAT {formatNum(trucki.battery_voltage, 2)} V</div>
         </div>
         {trucki.target_w !== undefined && (
