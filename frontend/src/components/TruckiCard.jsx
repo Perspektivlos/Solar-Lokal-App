@@ -1,4 +1,4 @@
-import { COLOR, formatNum, GlassCard, SourceBadge, Stat } from "./solar-ui";
+import { COLOR, formatNum, GlassCard, SourceBadge } from "./solar-ui";
 import { BatteryCharging } from "lucide-react";
 
 // Trucki2Shelly-Speicherkarte: SoC, VBAT, Setpoints, AC-Output/ZEPC.
@@ -18,10 +18,7 @@ export default function TruckiCard({ trucki }) {
             </div>
             <div className="font-mono text-xl font-medium w-16 text-right text-white">{formatNum(trucki.soc, 0)}%</div>
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Stat label="VBAT" value={formatNum(trucki.battery_voltage, 2)} unit="V" />
-          <Stat label={trucki.battery_power >= 0 ? "lädt" : "entlädt"} value={formatNum(Math.abs(trucki.battery_power), 0)} unit={`W ${trucki.battery_power >= 0 ? "↓" : "↑"}`} color="text-cyan-300 neon-text-cyan" />
+          <div className="font-mono text-xs text-white/50 mt-1.5" data-testid="trucki-vbat">VBAT {formatNum(trucki.battery_voltage, 2)} V</div>
         </div>
         {trucki.target_w !== undefined && (
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 font-mono text-[11px]">
