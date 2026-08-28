@@ -39,6 +39,12 @@ const INTRO_SECTIONS = [
   },
 ];
 
+/**
+ * Bestimmt den aktuellen Betriebszustand der Batterie.
+ * @param {boolean} socDanger - Gibt an, ob der Ladezustand kritisch niedrig ist.
+ * @param {number} power - Batterieleistung in Watt.
+ * @returns {string} „KRITISCH“ bei kritisch niedrigem Ladezustand, „LADEN“ bei mehr als 20 W, „ENTLADEN“ bei weniger als −20 W, andernfalls „NORMAL“.
+ */
 function batteryStateKind(socDanger, power) {
   if (socDanger) return "KRITISCH";
   if (power > 20) return "LADEN";
@@ -46,6 +52,10 @@ function batteryStateKind(socDanger, power) {
   return "NORMAL";
 }
 
+/**
+ * Zeigt den aktuellen Zustand des Solarenergiesystems mit Live-Daten und Tageswerten an.
+ * Aktualisiert die Anzeige regelmäßig und stellt bei Ladefehlern oder während des Ladevorgangs einen entsprechenden Status dar.
+ */
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);

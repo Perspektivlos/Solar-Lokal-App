@@ -44,6 +44,10 @@ const INTRO_SECTIONS = [
   },
 ];
 
+/**
+ * Zeigt den Verlauf als Leistungsdiagramm oder einen passenden Lade- bzw. Leerzustand an.
+ * @returns {JSX.Element} Das Diagramm oder eine Statusanzeige.
+ */
 function ChartBody({ loading, data }) {
   if (loading) return <div className="font-mono text-sm text-white/55">Lade Verlauf...</div>;
   if (data.length === 0) {
@@ -69,6 +73,10 @@ function ChartBody({ loading, data }) {
   );
 }
 
+/**
+ * Zeigt historische Leistungs- und Batterieladezustandsdaten für den ausgewählten Zeitraum an.
+ * @returns {JSX.Element} Die Verlaufsseite mit Leistungs- und SoC-Diagrammen.
+ */
 export default function History() {
   const [range, setRange] = useState("1h");
   const [data, setData] = useState([]);

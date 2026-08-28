@@ -3,7 +3,11 @@ import { Cable } from "lucide-react";
 
 const PHASE_COLOR = { L1: "#FACC15", L2: "#06B6D4", L3: "#A78BFA" };
 
-// Prominente 3-Phasen-Schieflast-Anzeige (Balken je Phase + Unbalance-Indikator).
+/**
+ * Zeigt die Leistungsaufteilung und Schieflast der drei Phasen an.
+ * @param {Array} [phases] - Phasen mit ihren Leistungswerten.
+ * @return {JSX.Element} Die Darstellung der Phasenschieflast.
+ */
 export default function PhaseBalance({ phases }) {
   const list = phases || [];
   const mags = list.map((p) => Math.abs(p.power || 0));

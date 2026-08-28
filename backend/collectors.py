@@ -26,6 +26,16 @@ logger = logging.getLogger("solar")
 # ---------- HTTP helper ----------
 
 async def _http_get(url: str, timeout: float = 1.0) -> Optional[Dict[str, Any]]:
+    """
+    Führt eine HTTP-GET-Anfrage aus und gibt die JSON-Antwort bei erfolgreicher Ausführung zurück.
+    
+    Parameters:
+    	url (str): Die abzurufende URL.
+    	timeout (float): Maximale Wartezeit für die Anfrage in Sekunden.
+    
+    Returns:
+    	Optional[Dict[str, Any]]: Die geparsten JSON-Daten bei HTTP-Status 200, andernfalls `None`.
+    """
     try:
         async with httpx.AsyncClient(timeout=timeout) as c:
             r = await c.get(url)
@@ -39,6 +49,15 @@ async def _http_get(url: str, timeout: float = 1.0) -> Optional[Dict[str, Any]]:
 # ---------- Real device fetchers (best effort, short timeout) ----------
 
 async def fetch_shelly(ip: str) -> Optional[Dict[str, Any]]:
+    """
+    Ruft den Shelly-Energiestatus ab und strukturiert die Messwerte der drei Phasen.
+    
+    Parameters:
+    	ip (str): IP-Adresse des Shelly-Geräts.
+    
+    Returns:
+    	Optional[Dict[str, Any]]: Status mit Online-Kennzeichnung, Gesamtleistung und Phasenmesswerten; `None`, wenn keine Daten verfügbar sind.
+    """
     data = await _http_get(f"http://{ip}/rpc/EM.GetStatus?id=0")
     if not data:
         return None
@@ -60,6 +79,16 @@ async def fetch_shelly(ip: str) -> Optional[Dict[str, Any]]:
 
 
 async def fetch_ahoy(ip: str, inverter_id: int = 0) -> Optional[Dict[str, Any]]:
+    """
+    Ruft Live- und Wechselrichterdaten von Ahoy ab und strukturiert die Kanal- sowie Gesamtleistungswerte.
+    
+    Parameter:
+    	ip (str): IP-Adresse des Ahoy-Geräts.
+    	inverter_id (int): ID des abzurufenden Wechselrichters.
+    
+    Returns:
+    	(Optional[Dict[str, Any]]): Gerätedaten mit Online-Status, Gesamtleistung, Leistungsbegrenzung und Kanalwerten; `None`, wenn keine Daten verfügbar sind.
+    """
     live = await _http_get(f"http://{ip}/api/live")
     inv = await _http_get(f"http://{ip}/api/inverter/id/{inverter_id}")
     if not (live or inv):
@@ -86,6 +115,15 @@ async def fetch_ahoy(ip: str, inverter_id: int = 0) -> Optional[Dict[str, Any]]:
 
 
 async def fetch_trucki(ip: str) -> Optional[Dict[str, Any]]:
+    """
+    Ruft den Trucki-Status ab und wandelt ihn in strukturierte Batteriekennzahlen um.
+    
+    Parameter:
+    	ip (str): IP-Adresse oder Hostname des Trucki-Geräts.
+    
+    Returns:
+    	Optional[Dict[str, Any]]: Statusdaten mit Online-Status, Ladezustand, Batteriespannung, Batterieleistung sowie AC-Ausgangs- und Zepc-Status; `None`, wenn keine Daten verfügbar sind.
+    """
     data = await _http_get(f"http://{ip}/status")
     if not data:
         return None
@@ -100,6 +138,15 @@ async def fetch_trucki(ip: str) -> Optional[Dict[str, Any]]:
 
 
 async def fetch_victron(ip: str) -> Optional[Dict[str, Any]]:
+    """
+    Ruft Systemdaten eines Victron-Geräts ab.
+    
+    Parameter:
+    	ip (str): IP-Adresse des Victron-Geräts.
+    
+    Returns:
+    	Optional[Dict[str, Any]]: Ein Dictionary mit Online-Status, MPPT-Daten und PV-Gesamtleistung oder `None`, wenn keine Daten verfügbar sind.
+    """
     data = await _http_get(f"http://{ip}/api/v1/system")
     if not data:
         return None
@@ -109,13 +156,34 @@ async def fetch_victron(ip: str) -> Optional[Dict[str, Any]]:
 # ---------- Live-data aggregator ----------
 
 async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
-    """Collect live data from all devices.  *cfg* is the full config dict
-    (previously obtained via ``get_config()``).
+    """
+    Sammelt Live-Daten aller aktivierten Geräte und berechnet zusammengefasste Energiekennzahlen.
+    
+    Parameters:
+    	cfg (Dict[str, Any]): Vollständige Konfiguration mit Geräte-, MQTT- und Demo-Einstellungen.
+    
+    Returns:
+    	Dict[str, Any]: Ergebnis mit UTC-Zeitstempel, Demo-Modus, Gerätedaten und gerundeten
+    	Leistungs- und Batteriekennzahlen.
     """
     demo = cfg.get("demo_mode", True)
     mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
 
     async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
+        """
+        Ermittelt die Gerätedaten anhand der konfigurierten Abrufstrategie.
+        
+        Parameters:
+            mqtt_fn: Funktion zum Abrufen der Gerätedaten über MQTT.
+            http_factory: Asynchrone Funktion zum Abrufen der Gerätedaten über HTTP.
+            mock_fn: Funktion zur Erzeugung von Ersatz- oder Demodaten.
+            enabled (bool): Gibt an, ob das Gerät aktiviert ist.
+        
+        Returns:
+            Ein Dictionary mit den Gerätedaten. Deaktivierte oder nicht erreichbare Geräte
+            werden als offline gekennzeichnet; bei einem HTTP-Ausfall enthält das Ergebnis
+            zusätzlich das Flag `_fallback`.
+        """
         if not enabled:
             return {"online": False}
         if demo:

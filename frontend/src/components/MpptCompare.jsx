@@ -3,7 +3,11 @@ import { Sun } from "lucide-react";
 
 const BAR_COLOR = ["#FACC15", "#34D399"];
 
-// Vergleichskachel MPPT #1 vs #2 (aktuelle Leistung + Yield heute + Differenz).
+/**
+ * Zeigt die aktuelle Leistung und den heutigen Ertrag von bis zu zwei MPPT-Reglern im Vergleich an.
+ * @param {Array<Object>} mppts - Die verfügbaren MPPT-Regler.
+ * @return {JSX.Element} Die Vergleichskachel für die MPPT-Regler.
+ */
 export default function MpptCompare({ mppts }) {
   const list = (mppts || []).slice(0, 2);
   const maxPower = Math.max(1, ...list.map((m) => m.pv_power || 0));

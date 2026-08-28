@@ -1,7 +1,13 @@
 import { COLOR, formatNum, Spark } from "./solar-ui";
 import { exportNowW, isExporting } from "../lib/power";
 
-// Obere KPI-Leiste: 6 Kacheln (Gesamt-kWh + Live-W) mit Sparkline-Trend.
+/**
+ * Rendert eine sechs Kacheln umfassende KPI-Leiste für Solar- und Haushaltsenergiewerte.
+ * @param {Object} today - Tageswerte für Energieerzeugung, Netzbezug, Verbrauch und Einspeisung.
+ * @param {Object} summary - Aktuelle Leistungswerte für PV-Anlage und Netz.
+ * @param {Object} trail - Historische Messwerte für optionale Sparkline-Trends.
+ * @return {JSX.Element} Die gerenderte KPI-Leiste.
+ */
 export default function KpiStrip({ today, summary, trail }) {
   const exportNow = exportNowW(summary);
   const exporting = isExporting(summary);

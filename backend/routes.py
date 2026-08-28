@@ -29,22 +29,47 @@ api_router = APIRouter(prefix="/api")
 
 @api_router.get("/")
 async def root():
+    """Gibt den Dienstnamen und den aktuellen Gesundheitsstatus zurück.
+    
+    Returns:
+        dict: Dienstname und Statusinformationen.
+    """
     return {"service": "solar-local-dashboard", "status": "ok"}
 
 
 @api_router.get("/live")
 async def live():
+    """
+    Lädt die aktuellen Live-Daten anhand der gespeicherten Konfiguration.
+    
+    Returns:
+    	daten (dict): Aktuelle Mess- und Zustandsdaten der konfigurierten Geräte.
+    """
     cfg = await get_config()
     return await collect_live(cfg)
 
 
 @api_router.get("/config")
 async def cfg_get():
+    """Gibt die aktuelle Konfiguration zurück.
+    
+    Returns:
+    	Die aktuelle Konfiguration.
+    """
     return await get_config()
 
 
 @api_router.put("/config")
 async def cfg_put(update: ConfigUpdate):
+    """
+    Aktualisiert die Konfiguration und übernimmt Änderungen an den Integrationen.
+    
+    Parameters:
+    	update (ConfigUpdate): Enthält die zu aktualisierenden Konfigurationsfelder; fehlende Felder bleiben unverändert.
+    
+    Returns:
+    	dict: Die aktualisierte Konfiguration.
+    """
     current = await get_config()
     payload = update.model_dump(exclude_none=True)
     for key, val in payload.items():
@@ -62,6 +87,15 @@ async def cfg_put(update: ConfigUpdate):
 
 @api_router.get("/history")
 async def history(range: str = "1h"):
+    """
+    Lädt zeitlich geordnete Messpunkte für einen konfigurierbaren Zeitraum.
+    
+    Parameter:
+    	range (str): Zeitraum als „1h“, „6h“, „12h“ oder „24h“. Unbekannte Werte verwenden eine Stunde.
+    
+    Returns:
+    	dict: Ein Objekt mit dem angeforderten Zeitraum und den Messpunkten; umfangreiche Ergebnisse werden auf etwa 600 Punkte reduziert.
+    """
     minutes = {"1h": 60, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", 1)
@@ -75,7 +109,17 @@ async def history(range: str = "1h"):
 
 @api_router.get("/today")
 async def today():
-    """Trapez-integration of power values from UTC midnight."""
+    """
+    Berechnet die Energie- und Leistungskennzahlen des aktuellen Tages ab UTC-Mitternacht.
+    
+    Zwischen Messpunkten mit einem Abstand von mehr als zehn Minuten werden keine
+    Energiebeiträge berücksichtigt.
+    
+    Returns:
+    	dict: Tageswerte für PV-Erzeugung, Verbrauch, Netzbezug und -einspeisung,
+    	Eigenverbrauch, Autarkie, Durchschnittsleistungen sowie Batterie-Lade- und
+    	Entladeenergie einschließlich Wirkungsgrad.
+    """
     now = datetime.now(timezone.utc)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
     cur = db.snapshots.find({"ts": {"$gte": midnight.isoformat()}}, {"_id": 0}).sort("ts", 1)
@@ -91,14 +135,44 @@ async def today():
         }
 
     def trapez(values_a, values_b, t_a, t_b):
+        """
+        Nähert die zwischen zwei Messzeitpunkten umgesetzte Energie mithilfe der Trapezregel an.
+        
+        Parameters:
+        	values_a: Leistungswert am ersten Messzeitpunkt
+        	values_b: Leistungswert am zweiten Messzeitpunkt
+        	t_a: Erster Messzeitpunkt
+        	t_b: Zweiter Messzeitpunkt
+        
+        Returns:
+        	Energie für das Zeitintervall in den aus den Leistungswerten abgeleiteten Einheiten
+        """
         dt_h = (t_b - t_a).total_seconds() / 3600.0
         return (values_a + values_b) / 2.0 * dt_h
 
     def charge_w(row):
+        """
+        Ermittelt die Ladeleistung der Batterie aus einer Messdatenzeile.
+        
+        Parameters:
+            row (dict): Messdaten mit optionaler Ladeleistung und Batterieleistung.
+        
+        Returns:
+            float: Explizite Batterieladeleistung oder der nichtnegative Batterieleistungswert.
+        """
         v = row.get("battery_charge_w")
         return v if v is not None else max(0, row.get("battery_power", 0))
 
     def discharge_w(row):
+        """
+        Ermittelt die Batterieentladeleistung eines Messdatensatzes.
+        
+        Parameters:
+        	row (dict): Messdatensatz mit optionaler Entlade- oder Batterieleistung.
+        
+        Returns:
+        	float: Explizit angegebene Entladeleistung oder die aus der Batterieleistung abgeleitete positive Entladeleistung.
+        """
         v = row.get("battery_discharge_w")
         return v if v is not None else max(0, -row.get("battery_power", 0))
 
@@ -158,6 +232,18 @@ async def today():
 
 @api_router.post("/control/hoymiles")
 async def control_hoymiles(cmd: HoymilesControl):
+    """
+    Steuert einen Hoymiles-Wechselrichter über Ahoy DTU.
+    
+    Parameters:
+    	cmd (HoymilesControl): Enthält die auszuführende Aktion und optional den Leistungsgrenzwert.
+    
+    Returns:
+    	dict: Ergebnis der Simulation oder die Antwort von Ahoy DTU.
+    
+    Raises:
+    	HTTPException: Mit Status 400 bei einer unbekannten Aktion oder mit Status 502, wenn Ahoy DTU nicht erreichbar ist.
+    """
     cfg = await get_config()
     if cfg.get("demo_mode"):
         return {"ok": True, "demo": True, "response": {"action": cmd.action, "value": cmd.value, "result": "Simuliert"}}
@@ -184,6 +270,18 @@ async def control_hoymiles(cmd: HoymilesControl):
 
 @api_router.post("/control/trucki")
 async def control_trucki(cmd: TruckiControl):
+    """
+    Steuert den Trucki über MQTT oder die Legacy-HTTP-Schnittstelle.
+    
+    Parameters:
+    	cmd (TruckiControl): Steuerbefehl mit Aktion und optionalem Leistungswert in Watt.
+    
+    Returns:
+    	dict: Ergebnis der Steuerung mit Status, verwendetem Übertragungsweg und Antwortdaten.
+    
+    Raises:
+    	HTTPException: Bei unbekannter Aktion, fehlendem Wert für die Aktion „limit“, nicht per HTTP unterstützten MQTT-Aktionen oder Verbindungsfehlern.
+    """
     cfg = await get_config()
     if cfg.get("demo_mode"):
         return {"ok": True, "demo": True, "response": {"action": cmd.action, "value": cmd.value, "result": "Simuliert"}}
@@ -232,6 +330,13 @@ async def control_trucki(cmd: TruckiControl):
 
 @api_router.get("/integrations/status")
 async def integrations_status():
+    """
+    Liefert den aktuellen Verbindungs- und Betriebsstatus der Integrationen.
+    
+    Returns:
+    	dict: Statusdaten für MQTT, InfluxDB, den Snapshot-Poller sowie die
+    	angeschlossenen Geräte und Victron-MQTT-Instanzen.
+    """
     inst_summary = {}
     for inst, st in _mqtt_data["victron"]["instances"].items():
         inst_summary[str(inst)] = {
@@ -265,13 +370,26 @@ async def integrations_status():
 
 @api_router.post("/diagnostics/run")
 async def diagnostics_run():
-    """Runs a series of health checks against backend, MongoDB, MQTT,
-    InfluxDB and each configured device. Returns one result per check."""
+    """
+    Führt Gesundheitsprüfungen für Backend, Datenbanken, MQTT, den Snapshot-Poller und konfigurierte Geräte durch.
+    
+    Returns:
+        dict: Prüfergebnisse mit Zeitstempel, Gesamtdauer sowie der Anzahl bestandener, fehlgeschlagener und übersprungener Prüfungen.
+    """
     cfg = await get_config()
     started = time.time()
     results: List[Dict[str, Any]] = []
 
     def add(name: str, ok: Optional[bool], detail: str, ms: Optional[int] = None):
+        """
+        Fügt ein Diagnoseergebnis zur Ergebnisliste hinzu.
+        
+        Parameters:
+            name (str): Name der geprüften Komponente.
+            ok (Optional[bool]): Erfolgsstatus der Prüfung oder None, wenn sie übersprungen wurde.
+            detail (str): Beschreibung des Prüfergebnisses.
+            ms (Optional[int]): Dauer der Prüfung in Millisekunden.
+        """
         results.append({"name": name, "ok": ok, "detail": detail, "ms": ms})
 
     # 1. Backend itself
@@ -317,6 +435,15 @@ async def diagnostics_run():
     demo = bool(cfg.get("demo_mode"))
 
     def is_fresh(ts: Optional[str]) -> bool:
+        """
+        Bestimmt, ob ein Zeitstempel innerhalb des gültigen Aktualitätsfensters liegt.
+        
+        Parameters:
+        	ts (Optional[str]): ISO-8601-formatierter Zeitstempel.
+        
+        Returns:
+        	bool: `true`, wenn der Zeitstempel aktuell ist, andernfalls `false`.
+        """
         if not ts:
             return False
         try:
@@ -325,6 +452,17 @@ async def diagnostics_run():
             return False
 
     async def ping_http(label: str, ip: str, paths: List[str], key: str, mqtt_ts: Optional[str], extra: str = ""):
+        """
+        Prüft den Erreichbarkeitsstatus eines konfigurierten Geräts.
+        
+        Parameters:
+            label (str): Bezeichnung des Diagnoseeintrags.
+            ip (str): IP-Adresse des Geräts.
+            paths (List[str]): HTTP-Pfade, die zur Prüfung abgefragt werden.
+            key (str): Konfigurationsschlüssel des Geräts.
+            mqtt_ts (Optional[str]): Zeitstempel der zuletzt empfangenen MQTT-Daten.
+            extra (str): Zusätzlicher Text für den Diagnoseeintrag.
+        """
         if not cfg["devices"][key]["enabled"]:
             add(label, None, "deaktiviert in Config")
             return
@@ -373,7 +511,12 @@ async def diagnostics_run():
 
 @api_router.get("/diagnostics/raw")
 async def diagnostics_raw():
-    """Returns all raw MQTT-collected state for the deep-inspection view."""
+    """
+    Liefert rohe, von MQTT erfasste Zustände für die Detailansicht.
+    
+    Returns:
+    	dict: Rohdaten und ausgewählte Zustandswerte für Ahoy, Shelly, Trucki und Victron.
+    """
     return {
         "ahoy": {"_ts": _mqtt_data["ahoy"]["_ts"], "raw": _mqtt_data["ahoy"]["raw"]},
         "shelly": {

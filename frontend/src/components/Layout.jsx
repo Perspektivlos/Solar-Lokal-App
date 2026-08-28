@@ -10,6 +10,10 @@ const links = [
   { to: "/integrationen", label: "Integrationen", icon: PlugZap, testid: "nav-integrations" },
 ];
 
+/**
+ * Rendert die Anwendungshülle mit Kopfzeile, Navigation, Inhaltsbereich und Fußzeile.
+ * @returns {JSX.Element} Das Layout der Anwendung.
+ */
 export default function Layout() {
   return (
     <div className="min-h-screen text-white">

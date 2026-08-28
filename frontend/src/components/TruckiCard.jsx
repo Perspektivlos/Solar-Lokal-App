@@ -1,7 +1,11 @@
 import { COLOR, formatNum, GlassCard, SourceBadge } from "./solar-ui";
 import { BatteryCharging } from "lucide-react";
 
-// Trucki2Shelly-Speicherkarte: SoC, VBAT, Setpoints, AC-Output/ZEPC.
+/**
+ * Rendert den Status des Trucki2Shelly-Batteriespeichers als Statuskarte.
+ * @param {Object} trucki - Mess- und Zustandsdaten des Batteriespeichers.
+ * @returns {JSX.Element} Die gerenderte Batteriespeicherkarte.
+ */
 export default function TruckiCard({ trucki }) {
   return (
     <GlassCard title="Trucki2Shelly · Speicher" accent={COLOR.battery} icon={BatteryCharging} badge={<SourceBadge data={trucki} />} testid="card-trucki" danger={trucki?.soc !== undefined && trucki.soc < 15}>
