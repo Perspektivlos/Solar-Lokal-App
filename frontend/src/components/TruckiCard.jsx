@@ -23,7 +23,7 @@ export default function TruckiCard({ trucki }) {
             <div className="text-center text-white/85"><span className="text-white/50">TEMP</span><br/><span className="text-sm">{formatNum(trucki.temperature, 0)} °C</span></div>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10">
+        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10 text-center">
           <div className="font-mono text-xs text-white/70">AC-Output: <span className={trucki.ac_output ? "text-emerald-300" : "text-white/30"}>{trucki.ac_output ? "● EIN" : "○ AUS"}</span></div>
           <div className="font-mono text-xs text-white/70">ZEPC: <span className={trucki.zepc ? "text-emerald-300" : "text-white/30"}>{trucki.zepc ? "● EIN" : "○ AUS"}</span></div>
         </div>
