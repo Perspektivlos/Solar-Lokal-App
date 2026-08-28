@@ -44,8 +44,11 @@ const INTRO_SECTIONS = [
   },
 ];
 
-function ChartBody({ loading, data }) {
+function ChartBody({ loading, error, data }) {
   if (loading) return <div className="font-mono text-sm text-white/55">Lade Verlauf...</div>;
+  if (error) {
+    return <div className="font-mono text-sm text-red-300" data-testid="history-error">Verlaufsdaten konnten nicht geladen werden.</div>;
+  }
   if (data.length === 0) {
     return <div className="font-mono text-sm text-white/55" data-testid="history-empty">Noch keine Snapshots im Zeitraum.</div>;
   }
@@ -73,6 +76,7 @@ export default function History() {
   const [range, setRange] = useState("1h");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -84,9 +88,10 @@ export default function History() {
           ts: new Date(p.ts).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
           PV: p.pv_power, Netz: p.grid_power, Akku: p.battery_power, Haus: p.house_power, SoC: p.battery_soc,
         }));
+        setError(false);
         setData(pts);
       } catch {
-        if (alive) setData([]);
+        if (alive) { setError(true); setData([]); }
       } finally {
         if (alive) setLoading(false);
       }
@@ -126,7 +131,7 @@ export default function History() {
           Leistung · {range}
         </div>
         <div className="p-4" style={{ height: 380 }}>
-          <ChartBody loading={loading} data={data} />
+          <ChartBody loading={loading} error={error} data={data} />
         </div>
       </div>
 

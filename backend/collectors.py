@@ -137,30 +137,35 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
             return mocked
         return d
 
+    devs = cfg.get("devices") or {}
+
+    def dcfg(name):
+        return devs.get(name) or {}
+
     shelly, ahoy, trucki, victron = await asyncio.gather(
         get_dev(
             fetch_shelly_from_mqtt,
-            lambda: fetch_shelly(cfg["devices"]["shelly"]["ip"]),
+            lambda: fetch_shelly(dcfg("shelly").get("ip", "")),
             mock_shelly,
-            cfg["devices"]["shelly"]["enabled"],
+            dcfg("shelly").get("enabled", False),
         ),
         get_dev(
             fetch_ahoy_from_mqtt,
-            lambda: fetch_ahoy(cfg["devices"]["ahoy"]["ip"], cfg["devices"]["ahoy"].get("inverter_id", 0)),
+            lambda: fetch_ahoy(dcfg("ahoy").get("ip", ""), dcfg("ahoy").get("inverter_id", 0)),
             mock_ahoy,
-            cfg["devices"]["ahoy"]["enabled"],
+            dcfg("ahoy").get("enabled", False),
         ),
         get_dev(
             fetch_trucki_from_mqtt,
-            lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]),
+            lambda: fetch_trucki(dcfg("trucki").get("ip", "")),
             mock_trucki,
-            cfg["devices"]["trucki"]["enabled"],
+            dcfg("trucki").get("enabled", False),
         ),
         get_dev(
             lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
-            lambda: fetch_victron(cfg["devices"]["victron"]["ip"]),
+            lambda: fetch_victron(dcfg("victron").get("ip", "")),
             mock_victron,
-            cfg["devices"]["victron"]["enabled"],
+            dcfg("victron").get("enabled", False),
         ),
     )
 

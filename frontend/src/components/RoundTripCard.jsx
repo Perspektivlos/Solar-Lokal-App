@@ -39,7 +39,7 @@ export default function RoundTripCard({ today }) {
       </div>
       {!hasData && (
         <div className="mt-3 font-mono text-[10px] text-white/45">
-          Noch zu wenig Ladeenergie heute — Wirkungsgrad wird ab 0,05 kWh berechnet.
+          Noch zu wenig Energie heute — Wirkungsgrad wird erst ab 0,05 kWh Ladung und 0,02 kWh Entladung berechnet.
         </div>
       )}
     </GlassCard>

@@ -103,7 +103,7 @@ Das Projekt liefert automatisierte Skripte im Verzeichnis `deploy/proxmox/`, um 
 1.  **Repository klonen & Code vorbereiten**:
     Klonen Sie das Repository auf Ihrem lokalen Rechner und packen Sie die relevanten Verzeichnisse:
     ```bash
-    tar czf solar-dashboard.tar.gz --exclude='node_modules' --exclude='__pycache__' --exclude='.venv' --exclude='build' --exclude='.git' backend frontend deploy
+    tar czf solar-dashboard.tar.gz --exclude='node_modules' --exclude='__pycache__' --exclude='.venv' --exclude='build' --exclude='.git' --exclude='.env' --exclude='*.env' backend frontend deploy
     scp solar-dashboard.tar.gz root@<DEIN_PROXMOX_IP>:/root/
     ```
 

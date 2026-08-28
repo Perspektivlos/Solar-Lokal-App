@@ -171,7 +171,7 @@ export default function Dashboard() {
 
           <div className="lg:col-span-4">
             <GlassCard
-              title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"}
+              title={batteryKind === "LADEN" ? "Akku lädt (netto)" : batteryKind === "ENTLADEN" ? "Akku entlädt (netto)" : "Akku (netto)"}
               accent={COLOR.battery}
               icon={BatteryCharging}
               testid="live-battery"
@@ -179,7 +179,7 @@ export default function Dashboard() {
               badge={<Badge kind={batteryKind} />}
             >
               <MetricBig
-                label={summary.battery_power >= 0 ? "Ladeleistung netto" : "Entladeleistung netto"}
+                label={batteryKind === "LADEN" ? "Ladeleistung netto" : batteryKind === "ENTLADEN" ? "Entladeleistung netto" : "Leistung netto"}
                 value={formatNum(Math.abs(summary.battery_power), 0)} unit="W"
                 color="text-cyan-300 neon-text-cyan"
                 sub={<Delta prev={prev?.summary?.battery_power} curr={summary.battery_power} />}

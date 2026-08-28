@@ -64,8 +64,10 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Backend: mocks.py, influx_points.py, routes.py, collectors.py extrahiert
 - [x] Lifespan-Migration (on_event → asynccontextmanager)
 - [x] Forecast komplett entfernt (FE+BE)
-- [x] Security Audit (dokumentiert, kein Handlungsbedarf für LAN)
+- [x] Security Audit (dokumentiert; Risiken vom Nutzer bewusst akzeptiert – LAN-only Betrieb: keine Auth, MQTT-Klartext-Creds, offene CORS)
 - [x] 57/57 Pytest-Tests bestanden
+- [x] Fonts umgestellt: Space Grotesk (Text) + JetBrains Mono (Zahlen), app-weit inkl. SVG/Charts (28.08.2026)
+- [x] PR-Review-Triage (28.08.2026): valide Findings behoben – defensive .get()-Zugriffe (collectors.py/routes.py), try/finally in Config-Test, WARN-Badge für Schieflast, History-Fehlerstatus, Batterietitel Totband-konsistent, NavLink aria-label, README-tar & .gitignore (.env/.copilot), design_guidelines Fonts. Halluzinierte/Nitpick-Findings übersprungen (kein /api/forecast, @import-Stil, Zirkulär-Import).
 
 ## Backlog
 - P3: CSV-Datenexport für Verlaufsdaten

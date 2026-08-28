@@ -120,18 +120,19 @@ class TestEndpointContracts:
             assert k in cfg, f"missing config section {k}"
         original_port = cfg["mqtt"]["port"]
 
-        put = client.put(f"{API}/config", json={"mqtt": {"port": 1884}}, timeout=30)
-        assert put.status_code == 200
-        after = client.get(f"{API}/config", timeout=30).json()
-        assert after["mqtt"]["port"] == 1884
-        # other sections must survive a partial update
-        for k in ("devices", "influx", "victron_mqtt"):
-            assert k in after
-        assert after["devices"] == cfg["devices"]
-
-        restore = client.put(f"{API}/config", json={"mqtt": {"port": original_port}}, timeout=30)
-        assert restore.status_code == 200
-        assert client.get(f"{API}/config", timeout=30).json()["mqtt"]["port"] == original_port
+        try:
+            put = client.put(f"{API}/config", json={"mqtt": {"port": 1884}}, timeout=30)
+            assert put.status_code == 200
+            after = client.get(f"{API}/config", timeout=30).json()
+            assert after["mqtt"]["port"] == 1884
+            # other sections must survive a partial update
+            for k in ("devices", "influx", "victron_mqtt"):
+                assert k in after
+            assert after["devices"] == cfg["devices"]
+        finally:
+            restore = client.put(f"{API}/config", json={"mqtt": {"port": original_port}}, timeout=30)
+            assert restore.status_code == 200
+            assert client.get(f"{API}/config", timeout=30).json()["mqtt"]["port"] == original_port
 
     def test_today_contract(self, client):
         r = client.get(f"{API}/today", timeout=30)

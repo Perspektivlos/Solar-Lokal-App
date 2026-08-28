@@ -17,7 +17,7 @@ export default function PhaseBalance({ phases }) {
   const status = unbalancePct < 15
     ? { color: "#10B981", kind: "NORMAL", label: "SYMMETRISCH" }
     : unbalancePct < 30
-      ? { color: "#FB923C", kind: "ENTLADEN", label: "LEICHTE SCHIEFLAST" }
+      ? { color: "#FB923C", kind: "WARN", label: "LEICHTE SCHIEFLAST" }
       : { color: "#F87171", kind: "KRITISCH", label: "STARKE SCHIEFLAST" };
 
   return (
