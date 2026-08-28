@@ -5,17 +5,17 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContai
 
 const RANGES = ["1h", "6h", "12h", "24h"];
 
-const TICK_STYLE = { fontSize: 10, fontFamily: "IBM Plex Mono", fill: "#94a3b8" };
+const TICK_STYLE = { fontSize: 10, fontFamily: "JetBrains Mono", fill: "#94a3b8" };
 const Y_LABEL_W = { value: "W", angle: -90, position: "insideLeft", fontSize: 10, fill: "#94a3b8" };
 const Y_LABEL_PCT = { value: "%", angle: -90, position: "insideLeft", fontSize: 10, fill: "#94a3b8" };
 const Y_DOMAIN_SOC = [0, 100];
 const TOOLTIP_STYLE = {
   borderRadius: 4, border: "1px solid rgba(255,255,255,0.15)",
-  fontFamily: "IBM Plex Mono", fontSize: 11,
+  fontFamily: "JetBrains Mono", fontSize: 11,
   backgroundColor: "rgba(15,23,42,0.95)", color: "#f1f5f9",
 };
 const TOOLTIP_LABEL_STYLE = { color: "#cbd5e1" };
-const LEGEND_STYLE = { fontFamily: "IBM Plex Sans", fontSize: 11, color: "#cbd5e1" };
+const LEGEND_STYLE = { fontFamily: "Space Grotesk", fontSize: 11, color: "#cbd5e1" };
 
 const INTRO_SECTIONS = [
   {

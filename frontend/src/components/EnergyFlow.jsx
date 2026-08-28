@@ -34,19 +34,19 @@ function Node({ x, y, w = 170, h = 96, label, value, unit, sub, color, Icon, tes
           <Icon size={14} color={color} strokeWidth={2.2} />
         </div>
       </foreignObject>
-      <text x={x - w / 2 + 36} y={y - h / 2 + 21} fontSize="10" fontFamily="IBM Plex Mono"
+      <text x={x - w / 2 + 36} y={y - h / 2 + 21} fontSize="10" fontFamily="JetBrains Mono"
             fontWeight="700" letterSpacing="1.6" fill="rgba(255,255,255,0.55)">
         {String(label).toUpperCase()}
       </text>
       {/* Value: rendered as SVG <text> so it never wraps */}
-      <text x={x - w / 2 + 14} y={y + 8} fontSize="28" fontFamily="IBM Plex Mono"
+      <text x={x - w / 2 + 14} y={y + 8} fontSize="28" fontFamily="JetBrains Mono"
             fontWeight="500" fill="#ffffff"
             style={glow ? { filter: `drop-shadow(0 0 6px ${color}99)` } : undefined}>
         {value}
         <tspan fontSize="13" fill="rgba(255,255,255,0.45)" dx="4">{unit}</tspan>
       </text>
       {sub && (
-        <text x={x - w / 2 + 14} y={y + h / 2 - 10} fontSize="10" fontFamily="IBM Plex Mono"
+        <text x={x - w / 2 + 14} y={y + h / 2 - 10} fontSize="10" fontFamily="JetBrains Mono"
               fill="rgba(255,255,255,0.55)">
           {sub}
         </text>
