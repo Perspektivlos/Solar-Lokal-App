@@ -69,6 +69,12 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Fonts umgestellt: Space Grotesk (Text) + JetBrains Mono (Zahlen), app-weit inkl. SVG/Charts (28.08.2026)
 - [x] PR-Review-Triage (28.08.2026): valide Findings behoben – defensive .get()-Zugriffe (collectors.py/routes.py), try/finally in Config-Test, WARN-Badge für Schieflast, History-Fehlerstatus, Batterietitel Totband-konsistent, NavLink aria-label, README-tar & .gitignore (.env/.copilot), design_guidelines Fonts. Halluzinierte/Nitpick-Findings übersprungen (kein /api/forecast, @import-Stil, Zirkulär-Import).
 
+## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
+- **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
+- **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.
+- **„High Complexity / Long Functions"**: Rein kosmetisch; Refactoring einer getesteten, laufenden App bringt keinen funktionalen Nutzen, nur Regressionsrisiko. → Bewusst belassen.
+- Entscheidung vom Nutzer bestätigt am 28.08.2026 (Option a: nichts ändern, nur dokumentieren).
+
 ## Backlog
 - P3: CSV-Datenexport für Verlaufsdaten
 - P3: Alarm-Schwellwerte (konfigurierbare Warnungen)
