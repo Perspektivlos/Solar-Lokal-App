@@ -1,18 +1,16 @@
 <analysis>
 **original_problem_statement**: 
 Ich brauche ein modernes Dashboard für Solarenergie im lokalen Netztwerk abzurufen, funktions einstellungen/test und die geräte zu Steuern bzw. Verwalten. Die Geräte sind ein ShellyPro 3em, ein Hoymiles HM1500 in AhoyDTU, ein Trucki2Shelly Gateway und 2 Victron Smartsolar MPPT in VenusOS Large. Lokaler Mosquitto MQTT Broker & InfluxDb Daten Integration. 
-
 PRODUCT REQUIREMENTS:
 - Live-Dashboard mit animiertem Energiefluss-Diagramm
 - Mock/Demo mode as default for cloud development
 - Dark Glassmorphism aesthetic / Sci-Fi Steuerzentrale with neon accents
 - Control page for Hoymiles and Trucki
 - Diagnostics tab with self-test
-- 48h PV Forecast using Open-Meteo (NOTE: Forecast tab explicitly removed by user request)
-- Proxmox LXC deployment scripts
+- 48h PV Forecast explicitly REMOVED. Do not implement.
 
 **User's preferred language**: German (de)
-**INSTRUCT NEXT AGENT**: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in **German (Deutsch)** only.
+INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in **German (Deutsch)** only.
 
 **what currently exists?** 
 A fully functional React frontend and FastAPI backend collecting telemetry from Shelly, AhoyDTU, Trucki2Shelly, and Victron MPPT via Mosquitto MQTT. The power flow logic correctly reflects a DC-coupled system (Victron charges battery, Hoymiles provides PV AC, Trucki provides Battery AC). It includes Proxmox LXC scripts and detailed dark-themed Grafana dashboards (`solar_dashboard.json` and `solar_details.json`) mapping to InfluxDB. 
@@ -37,10 +35,7 @@ Issue 1: Code Review Refactorings (Large UI Components)
 **In progress Task List**:
 None.
 
-**Upcoming and Future Tasks**
-Upcoming Tasks:
-- None currently specified. (NOTE: Telegram integration and Forecast tab were explicitly REJECTED and removed by the user).
-
+**Upcoming and Future Tasks**:
 Future Tasks (Agent suggested ideas):
 - P2: 3-Phasen-Balance prominenter auf dem Dashboard anzeigen (Schieflast-Erkennung).
 - P2: MPPT-Vergleichskachel (Yield #1 vs #2) für InfluxDB/Grafana.
@@ -69,16 +64,17 @@ Issue 1: Code Quality Report warnings for React Hook Dependencies & `is None` id
 
 
 **Key Technical Concepts**
-Frontend: React, TailwindCSS, Recharts, Shadcn/UI, Dark Glassmorphism
-Backend: FastAPI, MongoDB (Motor Async), Mosquitto MQTT (Paho), InfluxDB Client
-Architecture: DC-Coupled Solar (PV charges battery directly via Victron MPPT, Hoymiles acts as AC microinverter, Trucki controls Shelly battery dispatch).
+Frontend: React, TailwindCSS, Recharts, Shadcn/UI, Dark Glassmorphism (`frontend/src/components/solar-ui.jsx` centralized styling)
+Backend: FastAPI (using Lifespan), MongoDB, Mosquitto MQTT, InfluxDB Client
+Architecture: DC-Coupled Solar setup.
 
 **key DB schema**
 - `telemetry` collection: `mqtt_data` dict (Note: `forecast` and `autarky_goal` configs were removed).
 - InfluxDB: `solar` bucket 
 
 **changes in tech stack**
-- Backend now polls and parses expanded metrics per device phase/channel to send to InfluxDB.
+- App routing via `APIRouter` in `backend/routes.py`.
+- Data collection abstracted to `backend/collectors.py`.
 
 **All files of reference**
 - `backend/server.py`: InfluxDB formatting logic, endpoint data formatting.
@@ -117,7 +113,7 @@ Architecture: DC-Coupled Solar (PV charges battery directly via Victron MPPT, Ho
 8. Agent completed the safe refactors and finished the session. (PENDING HUMAN MESSAGE: Decide what task to do next).
 
 **Project Health Check:**
-Healthy.
+Agent tests are passing; user verification remains pending.
 
 **3rd Party Integrations**
 - Mosquitto MQTT

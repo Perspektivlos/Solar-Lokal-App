@@ -1,0 +1,35 @@
+{
+  "summary": "Frontend-only UI/UX-Verifikation der Dashboard-Überarbeitung (5-Reihen-Layout) im Demo-Modus über die Public-URL. Alle geforderten data-testids gerendert (row-overview/top-kpi/kpi-group-pv/kpi-group-grid/kpi-pv-today/kpi-grid-import/kpi-consumption/kpi-grid-export/energy-flow-svg, battery-row/live-battery/battery-charge/battery-discharge/card-trucki/card-roundtrip, mppt-row/card-victron/card-mppt-compare, shelly-row/card-shelly/card-phase-balance/phase-bar-L1..L3, rest-row/card-ahoy/ahoy-ch-1..4, demo-banner). Autarkie/Eigenverbrauch sind aus der Top-Kachel entfernt. Badges vorhanden (EINSPEISUNG/BEZUG, LÄDT, LIVE, SOLAR DC, STARKE SCHIEFLAST). Wertekonsistenz geprüft: Shelly-Phasen L1/L2/L3 == Schieflast-Balken (±1 W Rundung), Shelly Σ Total (−1.106,5 W) == Netz-Live (−1.107 W), Victron MPPT-Leistungen/Yields identisch in card-victron und card-mppt-compare, Victron Σ (1.336 W) == battery-charge, PV total == Hoymiles AC + Victron DC. Polling alle 3s verifiziert (Werte ändern sich). Keine JS-Konsolenfehler auf dem Dashboard. Regression: Verlauf-Seite lädt, range-1h/6h/12h/24h schaltbar, Charts rendern; Steuerung/Geräte/Diagnose/Integrationen laden fehlerfrei.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Header/Navigation (nav-menu)", "issue": "Bei Tablet-Breite 768px läuft die Navigation über den Viewport hinaus -> horizontales Scrollen der ganzen Seite um 174px, 'INTEGRATIONEN' ist abgeschnitten. Bei 390px verbleiben 14px Overflow. Bestehendes Problem (nicht durch diese Iteration verursacht), aber sichtbarer Layout-Defekt.", "selector": "[data-testid=\"nav-menu\"] / [data-testid=\"nav-integrations\"]", "priority": "MEDIUM"},
+      {"component": "RoundTripCard", "issue": "Am Tagesanfang (charge 0,06 kWh, discharge 0,00 kWh) zeigt die Karte 0% mit Badge 'SCHWACH' in Orange. Semantisch irreführend – bis genügend Entladeenergie vorliegt wäre 'WARTET'/IDLE korrekt (Schwelle nur auf charge > 0,05 geprüft, discharge nicht berücksichtigt).", "selector": "[data-testid=\"card-roundtrip\"] / [data-testid=\"roundtrip-pct\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Reihe 2 · Akku vs. Trucki-Karte", "issue": "Werte-Inkonsistenz: live-battery zeigt Netto 1.336 W (= Victron Σ, discharge 0) während card-trucki 'LÄDT 398 W' anzeigt (Demo-Backend liefert trucki.battery_power unabhängig von summary.battery_power). SoC stimmt (76%). Für den Nutzer widersprüchlich – Demo-Generator sollte trucki.battery_power aus summary ableiten.", "affected_selectors": ["[data-testid=\"live-battery\"]", "[data-testid=\"card-trucki\"]"]}
+    ],
+    "design_issues": [
+      {"screen": "Dashboard · Reihe 2 (card-trucki)", "issues": ["Demo-Payload für Trucki enthält kein target_w/min_power_w/max_power_w/day_energy_kwh/total_energy_kwh/temperature -> der TARGET/MIN/MAX/TAG/GESAMT/TEMP-Block fällt weg und die Karte hat ~120px leeren Raum unter 'AC-Output/ZEPC' (unausgeglichen gegenüber der Nachbarkarte). Entweder Demo-Werte ergänzen oder Platzhalter/kompaktes Layout."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Navigation responsiv machen (Scroll-Container/Burger-Menü) – 174px horizontaler Overflow bei 768px, 14px bei 390px.",
+    "Demo-Generator: trucki.battery_power mit summary.battery_power konsistent halten und trucki-Zusatzfelder (target_w, min/max_power_w, day/total_energy, temperature) auch im Demo-Modus liefern, damit card-trucki vollständig gefüllt ist.",
+    "RoundTripCard: IDLE/'WARTET' auch dann, wenn discharge ~0 ist, statt 0% + 'SCHWACH'."
+  ],
+  "critical_code_review_comments": [
+    "Integrations.jsx: `Field` spreizte die Custom-Prop `colspan` in das <input> -> React-Warnung 'Invalid DOM property colspan' in der Konsole. Von mir gefixt (Prop destrukturiert).",
+    "Dashboard.jsx ist mit ~415 Zeilen noch handhabbar, aber die inline Trucki-Karte (Zeilen 263-299) und die inline Victron-Karte sollten wie die anderen Karten in eigene Komponenten (TruckiCard.jsx, VictronCard.jsx) ausgelagert werden.",
+    "PhaseBalance: unbalancePct = spread/avg*100 klassifiziert Demo-Daten schnell als 'STARKE SCHIEFLAST' (45% bei 464/343/299 W). Übliche Definition ist max(|Pi−Ø|)/Ø – Schwellen (15/30%) prüfen."
+  ],
+  "updated_files": ["/app/frontend/src/pages/Integrations.jsx"],
+  "success_rate": {"backend": "not tested (skipped per request)", "frontend": "95%"},
+  "seed_data_creation": "keine (Demo-Modus)",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "keine Auth erforderlich",
+  "context_for_next_testing_agent": "Dashboard 5-Reihen-Layout, alle testids und Wertekonsistenz (Shelly<->Schieflast, Victron<->MPPT-Vergleich) verifiziert – keine Konsolenfehler mehr nach dem colspan-Fix in Integrations.jsx. Offen: responsiver Nav-Overflow (768px/390px), Trucki-Demo-Daten unvollständig + battery_power inkonsistent zu summary, RoundTrip-Badge-Logik. Verlauf + übrige Seiten regressionsfrei.",
+  "rca_of_the_issue": "Konsolenfehler 'Invalid DOM property colspan' stammte aus Integrations.jsx Field(), das alle Props inkl. der Custom-Prop colspan an <input> weitergab; behoben durch Destrukturierung. Der Tablet-Overflow entsteht durch nav-menu (814px breit) ohne Wrap/Scroll bei 768px Viewport."
+}

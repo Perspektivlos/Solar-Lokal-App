@@ -10,6 +10,10 @@ const links = [
   { to: "/integrationen", label: "Integrationen", icon: PlugZap, testid: "nav-integrations" },
 ];
 
+/**
+ * Rendert die Anwendungshülle mit Kopfzeile, Navigation, Inhaltsbereich und Fußzeile.
+ * @returns {JSX.Element} Das Layout der Anwendung.
+ */
 export default function Layout() {
   return (
     <div className="min-h-screen text-white">
@@ -26,7 +30,7 @@ export default function Layout() {
               <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.2em] mt-1">Control Room</div>
             </div>
           </div>
-          <nav className="flex items-stretch h-full" data-testid="nav-menu">
+          <nav className="flex items-stretch h-full overflow-x-auto" data-testid="nav-menu">
             {links.map((l) => {
               const Icon = l.icon;
               return (
@@ -35,8 +39,9 @@ export default function Layout() {
                   to={l.to}
                   end={l.end}
                   data-testid={l.testid}
+                  aria-label={l.label}
                   className={({ isActive }) =>
-                    `px-4 h-16 flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-medium transition-all relative ${
+                    `px-3 lg:px-4 h-16 flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-medium transition-all relative shrink-0 ${
                       isActive
                         ? "text-white"
                         : "text-white/55 hover:text-white"
@@ -46,7 +51,7 @@ export default function Layout() {
                   {({ isActive }) => (
                     <>
                       <Icon size={14} strokeWidth={2} />
-                      <span className="hidden sm:inline">{l.label}</span>
+                      <span className="hidden lg:inline">{l.label}</span>
                       {isActive && (
                         <span className="absolute bottom-0 left-2 right-2 h-[2px]"
                               style={{ background: "linear-gradient(90deg, transparent, #06B6D4, transparent)" }} />

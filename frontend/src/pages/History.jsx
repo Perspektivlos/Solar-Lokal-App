@@ -5,17 +5,17 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContai
 
 const RANGES = ["1h", "6h", "12h", "24h"];
 
-const TICK_STYLE = { fontSize: 10, fontFamily: "IBM Plex Mono", fill: "#94a3b8" };
+const TICK_STYLE = { fontSize: 10, fontFamily: "JetBrains Mono", fill: "#94a3b8" };
 const Y_LABEL_W = { value: "W", angle: -90, position: "insideLeft", fontSize: 10, fill: "#94a3b8" };
 const Y_LABEL_PCT = { value: "%", angle: -90, position: "insideLeft", fontSize: 10, fill: "#94a3b8" };
 const Y_DOMAIN_SOC = [0, 100];
 const TOOLTIP_STYLE = {
   borderRadius: 4, border: "1px solid rgba(255,255,255,0.15)",
-  fontFamily: "IBM Plex Mono", fontSize: 11,
+  fontFamily: "JetBrains Mono", fontSize: 11,
   backgroundColor: "rgba(15,23,42,0.95)", color: "#f1f5f9",
 };
 const TOOLTIP_LABEL_STYLE = { color: "#cbd5e1" };
-const LEGEND_STYLE = { fontFamily: "IBM Plex Sans", fontSize: 11, color: "#cbd5e1" };
+const LEGEND_STYLE = { fontFamily: "Space Grotesk", fontSize: 11, color: "#cbd5e1" };
 
 const INTRO_SECTIONS = [
   {
@@ -44,39 +44,53 @@ const INTRO_SECTIONS = [
   },
 ];
 
-function ChartBody({ loading, data }) {
+/**
+ * Zeigt den Verlauf als Leistungsdiagramm oder einen passenden Lade- bzw. Leerzustand an.
+ * @returns {JSX.Element} Das Diagramm oder eine Statusanzeige.
+ */
+function ChartBody({ loading, error, data }) {
   if (loading) return <div className="font-mono text-sm text-white/55">Lade Verlauf...</div>;
+  if (error) {
+    return <div className="font-mono text-sm text-red-300" data-testid="history-error">Fehler beim Laden des Verlaufs: {error}</div>;
+  }
   if (data.length === 0) {
     return <div className="font-mono text-sm text-white/55" data-testid="history-empty">Noch keine Snapshots im Zeitraum.</div>;
   }
   return (
     <ResponsiveContainer>
       <LineChart data={data}>
-        <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" />
+        <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.09)" />
         <XAxis dataKey="ts" tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" />
         <YAxis tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" label={Y_LABEL_W} />
         <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} />
         <Legend wrapperStyle={LEGEND_STYLE} />
-        <Line type="monotone" dataKey="PV" stroke="#FACC15" strokeWidth={2.5} dot={false}
-              style={{ filter: "drop-shadow(0 0 5px rgba(250,204,21,0.6))" }} />
-        <Line type="monotone" dataKey="Netz" stroke="#F87171" strokeWidth={2.5} dot={false}
-              style={{ filter: "drop-shadow(0 0 5px rgba(248,113,113,0.6))" }} />
-        <Line type="monotone" dataKey="Akku" stroke="#06B6D4" strokeWidth={2.5} dot={false}
-              style={{ filter: "drop-shadow(0 0 5px rgba(6,182,212,0.6))" }} />
-        <Line type="monotone" dataKey="Haus" stroke="#cbd5e1" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="PV" stroke="#FACC15" strokeWidth={3} dot={false}
+              style={{ filter: "drop-shadow(0 0 6px rgba(250,204,21,0.7))" }} />
+        <Line type="monotone" dataKey="Netz" stroke="#F87171" strokeWidth={3} dot={false}
+              style={{ filter: "drop-shadow(0 0 6px rgba(248,113,113,0.7))" }} />
+        <Line type="monotone" dataKey="Akku" stroke="#06B6D4" strokeWidth={3} dot={false}
+              style={{ filter: "drop-shadow(0 0 6px rgba(6,182,212,0.7))" }} />
+        <Line type="monotone" dataKey="Haus" stroke="#cbd5e1" strokeWidth={2.5} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );
 }
 
+/**
+ * Zeigt historische Leistungs- und Batterieladezustandsdaten für den ausgewählten Zeitraum an.
+ * @returns {JSX.Element} Die Verlaufsseite mit Leistungs- und SoC-Diagrammen.
+ */
 export default function History() {
   const [range, setRange] = useState("1h");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let alive = true;
     const load = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const d = await getHistory(range);
         if (!alive) return;
@@ -86,7 +100,7 @@ export default function History() {
         }));
         setData(pts);
       } catch (err) {
-        console.error("Verlauf laden fehlgeschlagen:", err);
+        if (alive) setError(err instanceof Error ? err.message : "Unbekannter Fehler");
       } finally {
         if (alive) setLoading(false);
       }
@@ -126,7 +140,7 @@ export default function History() {
           Leistung · {range}
         </div>
         <div className="p-4" style={{ height: 380 }}>
-          <ChartBody loading={loading} data={data} />
+          <ChartBody loading={loading} error={error} data={data} />
         </div>
       </div>
 
@@ -135,7 +149,7 @@ export default function History() {
           Akku SoC · {range}
         </div>
         <div className="p-4" style={{ height: 220 }}>
-          {data.length > 0 && (
+          {!loading && !error && data.length > 0 && (
             <ResponsiveContainer>
               <LineChart data={data}>
                 <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" />

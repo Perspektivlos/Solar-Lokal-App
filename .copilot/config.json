@@ -1,0 +1,17 @@
+// User settings belong in settings.json.
+// This file is managed automatically.
+{
+  "copilotTokens": {
+    "https://github.com:Perspektivlos": "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"
+  },
+  "lastLoggedInUser": {
+    "host": "https://github.com",
+    "login": "Perspektivlos"
+  },
+  "loggedInUsers": [
+    {
+      "host": "https://github.com",
+      "login": "Perspektivlos"
+    }
+  ]
+}
