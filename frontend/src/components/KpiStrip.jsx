@@ -21,7 +21,7 @@ export default function KpiStrip({ today, summary, trail }) {
     <div className="glass overflow-hidden grid grid-cols-2 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/[0.07]" data-testid="top-kpi">
       {cells.map((m) => (
         <div key={m.label} className="relative p-4 transition-colors hover:bg-white/[0.02]" data-testid={m.testid}>
-          <span className="absolute top-0 left-0 right-0 h-[2px] opacity-80 pointer-events-none" style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)` }} />
+          <span className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none" style={{ background: m.accent }} />
           <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{m.label}</div>
           <div className={`font-mono text-2xl lg:text-3xl font-semibold tracking-tight leading-none mt-1.5 ${m.color}`}>
             {m.value}<span className="text-sm ml-1 text-white/45 font-normal">{m.unit}</span>
