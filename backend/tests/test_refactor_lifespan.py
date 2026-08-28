@@ -22,6 +22,12 @@ API = f"{_base.rstrip('/')}/api"
 
 @pytest.fixture(scope="module")
 def client():
+    """
+    Erstellt eine HTTP-Sitzung für JSON-Anfragen.
+    
+    Returns:
+    	requests.Session: Eine Sitzung mit gesetztem JSON-Content-Type-Header.
+    """
     s = requests.Session()
     s.headers.update({"Content-Type": "application/json"})
     return s
@@ -178,6 +184,12 @@ class TestEndpointContracts:
         assert isinstance(raw.json(), dict)
 
     def test_no_mongo_object_id_leak(self, client):
+        """
+        Überprüft, dass ausgewählte API-Antworten keine MongoDB-Objekt-IDs enthalten.
+        
+        Parameters:
+        	client: HTTP-Testclient für API-Anfragen
+        """
         for path in ("/live", "/config", "/today", "/integrations/status"):
             body = client.get(f"{API}{path}", timeout=30).text
             assert '"_id"' not in body, f"_id leaked in {path}"
