@@ -98,6 +98,7 @@ export default function History() {
           ts: new Date(p.ts).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
           PV: p.pv_power, Netz: p.grid_power, Akku: p.battery_power, Haus: p.house_power, SoC: p.battery_soc,
         }));
+        setError(false);
         setData(pts);
       } catch (err) {
         if (alive) setError(err instanceof Error ? err.message : "Unbekannter Fehler");

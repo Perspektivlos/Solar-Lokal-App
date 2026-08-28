@@ -86,6 +86,7 @@ const BADGES = {
   KRITISCH: { cls: "border-red-400/50 bg-red-400/15 text-red-300 animate-pulse", Icon: TriangleAlert, label: "KRITISCH" },
   LADEN: { cls: "border-cyan-400/40 bg-cyan-400/10 text-cyan-300", Icon: ArrowDownToLine, label: "LÄDT" },
   ENTLADEN: { cls: "border-yellow-400/40 bg-yellow-400/10 text-yellow-300", Icon: ArrowUpFromLine, label: "ENTLÄDT" },
+  WARN: { cls: "border-orange-400/45 bg-orange-400/10 text-orange-300", Icon: TriangleAlert, label: "WARNUNG" },
   IDLE: { cls: "border-white/20 bg-white/5 text-white/55", Icon: null, label: "IDLE" },
   IMPORT: { cls: "border-red-400/40 bg-red-400/10 text-red-300", Icon: ArrowDownToLine, label: "BEZUG" },
   EXPORT: { cls: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300", Icon: ArrowUpFromLine, label: "EINSPEISUNG" },

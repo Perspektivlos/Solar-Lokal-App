@@ -38,6 +38,7 @@ export default function Layout() {
                   key={l.to}
                   to={l.to}
                   end={l.end}
+                  aria-label={l.label}
                   data-testid={l.testid}
                   aria-label={l.label}
                   className={({ isActive }) =>

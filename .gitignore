@@ -58,6 +58,7 @@ chainlit.md
 .chainlit
 .ipynb_checkpoints/
 .ac
+.copilot/
 
 # Deployment
 .vercel

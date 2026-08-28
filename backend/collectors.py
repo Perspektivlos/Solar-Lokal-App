@@ -210,6 +210,11 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
             return mocked
         return d
 
+    devs = cfg.get("devices") or {}
+
+    def dcfg(name):
+        return devs.get(name) or {}
+
     shelly, ahoy, trucki, victron = await asyncio.gather(
         get_dev(
             fetch_shelly_from_mqtt,
