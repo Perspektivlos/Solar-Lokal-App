@@ -7,7 +7,7 @@ export default function TruckiCard({ trucki }) {
     <GlassCard title="Trucki2Shelly · Speicher" accent={COLOR.battery} icon={BatteryCharging} badge={<SourceBadge data={trucki} />} testid="card-trucki" danger={trucki?.soc !== undefined && trucki.soc < 15}>
       <div className="space-y-3">
         <div className="text-center">
-          <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">SoC</div>
+          <div className="font-sans text-[11px] font-semibold tracking-[0.16em] text-white/70">SoC</div>
           <div className="font-mono text-3xl font-semibold tracking-tight leading-none mt-1.5 text-white">{formatNum(trucki.soc, 0)}<span className="ml-1 font-normal">%</span></div>
           <div className="font-mono text-xs text-white/50 mt-1.5" data-testid="trucki-vbat">VBAT <span className="text-white">{formatNum(trucki.battery_voltage, 2)} V</span></div>
         </div>
