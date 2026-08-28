@@ -87,6 +87,7 @@ frontend/node_modules/.cache/default-development/1.pack
 credentials.json
 *.key
 .credentials
+.copilot/
 frontend/node_modules/.cache/default-development/7.pack
 frontend/node_modules/.cache/default-development/0.pack
 frontend/node_modules/.cache/default-development/2.pack

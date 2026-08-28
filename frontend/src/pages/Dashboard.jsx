@@ -138,7 +138,18 @@ export default function Dashboard() {
   const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp } = live;
   const prev = prevLive;
   const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
-  const batteryKind = batteryStateKind(socDanger, summary.battery_power);
+  const batteryFlowKind = batteryStateKind(false, summary.battery_power);
+  const batteryKind = socDanger ? "KRITISCH" : batteryFlowKind;
+  const batteryTitle = batteryFlowKind === "LADEN"
+    ? "Akku lädt (netto)"
+    : batteryFlowKind === "ENTLADEN"
+      ? "Akku entlädt (netto)"
+      : "Akku neutral (netto)";
+  const batteryLabel = batteryFlowKind === "LADEN"
+    ? "Ladeleistung netto"
+    : batteryFlowKind === "ENTLADEN"
+      ? "Entladeleistung netto"
+      : "Nettoleistung";
 
   return (
     <div className="space-y-6" data-testid="dashboard">
@@ -181,7 +192,7 @@ export default function Dashboard() {
 
           <div className="lg:col-span-4">
             <GlassCard
-              title={summary.battery_power >= 0 ? "Akku lädt (netto)" : "Akku entlädt (netto)"}
+              title={batteryTitle}
               accent={COLOR.battery}
               icon={BatteryCharging}
               testid="live-battery"
@@ -189,7 +200,7 @@ export default function Dashboard() {
               badge={<Badge kind={batteryKind} />}
             >
               <MetricBig
-                label={summary.battery_power >= 0 ? "Ladeleistung netto" : "Entladeleistung netto"}
+                label={batteryLabel}
                 value={formatNum(Math.abs(summary.battery_power), 0)} unit="W"
                 color="text-cyan-300 neon-text-cyan"
                 sub={<Delta prev={prev?.summary?.battery_power} curr={summary.battery_power} />}

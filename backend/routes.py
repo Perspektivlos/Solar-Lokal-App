@@ -463,7 +463,7 @@ async def diagnostics_run():
             mqtt_ts (Optional[str]): Zeitstempel der zuletzt empfangenen MQTT-Daten.
             extra (str): Zusätzlicher Text für den Diagnoseeintrag.
         """
-        if not cfg["devices"][key]["enabled"]:
+        if not ((cfg.get("devices") or {}).get(key) or {}).get("enabled", False):
             add(label, None, "deaktiviert in Config")
             return
         if demo:
@@ -489,12 +489,12 @@ async def diagnostics_run():
                 last_err = f"{type(e).__name__}: {str(e)[:60]}"
         add(label, False, f"{ip} nicht erreichbar – {last_err}{extra}")
 
-    devs = cfg["devices"]
+    devs = cfg.get("devices") or {}
     await asyncio.gather(
-        ping_http("Shelly Pro 3EM", devs["shelly"]["ip"], ["/rpc/EM.GetStatus?id=0", "/"], "shelly", _mqtt_data["shelly"]["_ts"]),
-        ping_http("Ahoy DTU (Hoymiles)", devs["ahoy"]["ip"], ["/api/system", "/"], "ahoy", _mqtt_data["ahoy"]["_ts"]),
-        ping_http("Trucki2Shelly", devs["trucki"]["ip"], ["/status", "/"], "trucki", _mqtt_data["trucki"]["_ts"]),
-        ping_http("Victron VenusOS", devs["victron"]["ip"], ["/api/v1/system", "/"], "victron", _mqtt_data["victron"]["_ts"]),
+        ping_http("Shelly Pro 3EM", (devs.get("shelly") or {}).get("ip", ""), ["/rpc/EM.GetStatus?id=0", "/"], "shelly", _mqtt_data["shelly"]["_ts"]),
+        ping_http("Ahoy DTU (Hoymiles)", (devs.get("ahoy") or {}).get("ip", ""), ["/api/system", "/"], "ahoy", _mqtt_data["ahoy"]["_ts"]),
+        ping_http("Trucki2Shelly", (devs.get("trucki") or {}).get("ip", ""), ["/status", "/"], "trucki", _mqtt_data["trucki"]["_ts"]),
+        ping_http("Victron VenusOS", (devs.get("victron") or {}).get("ip", ""), ["/api/v1/system", "/"], "victron", _mqtt_data["victron"]["_ts"]),
     )
 
     # Summary

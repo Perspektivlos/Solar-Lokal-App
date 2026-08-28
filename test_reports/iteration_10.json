@@ -1,5 +1,6 @@
 {
-  "summary": "Backend-only regression test of the server.py refactor (mocks.py / influx_points.py extraction + migration to FastAPI lifespan). Ran the full existing pytest suite (41 tests) plus a new refactor-specific suite (14 tests) against the public REACT_APP_BACKEND_URL. Result: 54 passed, 1 skipped, 0 failed. Verified: backend boots cleanly with the new lifespan after a supervisor restart, background poller starts (poller.running=true, count grew 1 -> higher over 35s, last_write set), server re-exports the extracted pure functions as identical objects, no legacy @app.on_event remains, and all endpoint contracts (/api/live, /api/config GET+partial PUT, /api/today, /api/history 1h/6h/12h/24h, /api/control/hoymiles, /api/control/trucki, /api/diagnostics/run, /api/diagnostics/raw, /api/integrations/status) are unchanged. No _id leakage. No exceptions in backend logs. Refactor confirmed behavior-neutral.",
+  "summary": "Current backend regression run on 2026-08-28 against a local FastAPI instance with an isolated in-memory MongoDB replacement. Ran all 57 collected tests, including all 15 tests in test_refactor_lifespan.py and the collector parity cases test_collectors_module_exists_and_exports and test_collect_live_imported_in_server. Result: 57 passed, 0 skipped, 0 failed, 0 errors. Verified background poller startup, module extraction parity, endpoint contracts, partial-config restoration, diagnostics, and demo/live fallback behavior.",
+  "test_counts": {"total": 57, "passed": 57, "failed": 0, "skipped": 0, "errors": 0, "refactor_tests": 15},
   "backend_issues": {
     "critical": [],
     "minor": [
@@ -16,8 +17,7 @@
   "test_report_links": [
     "/app/backend/tests/test_refactor_lifespan.py",
     "/app/backend/tests/test_solar_dashboard.py",
-    "/app/test_reports/pytest/iteration_10.xml",
-    "/app/test_reports/pytest/iteration_10_refactor.xml"
+    "/app/test_reports/pytest/iteration_10.xml"
   ],
   "action_items": [
     "Optional (pre-existing, not from this refactor): add Pydantic typing for nested config sections so PUT /api/config rejects non-numeric ports; validate the history 'range' param via Literal/Enum; apply the 'Unknown action' check in demo_mode too."
@@ -29,7 +29,7 @@
     "server.py imports _sun_curve, _pt_solar, _pts_shelly, _pts_hoymiles, _pts_victron, _pt_trucki, _instant_ratios but only _build_influx_points and the mock_* helpers are used at runtime — keep them only if intentionally re-exported for tests (they are used by tests), otherwise trim."
   ],
   "updated_files": ["/app/backend/tests/test_refactor_lifespan.py"],
-  "success_rate": {"backend": "100% (54/54 executed, 1 skipped)", "frontend": "not tested (backend-only request)"},
+  "success_rate": {"backend": "100% (57/57 passed)", "frontend": "not tested (backend-only request)"},
   "seed_data_creation": "None. PUT /api/config tests mutate mqtt.port and restore the original value.",
   "should_call_test_agent_after_fix": false,
   "should_main_agent_self_test": true,

@@ -3,9 +3,9 @@
   "language": "German",
   "typography": {
     "fonts": {
-      "heading": "IBM Plex Sans, sans-serif",
-      "data_and_mono": "IBM Plex Mono, monospace",
-      "body": "IBM Plex Sans, sans-serif"
+      "heading": "Space Grotesk, sans-serif",
+      "data_and_mono": "JetBrains Mono, monospace",
+      "body": "Space Grotesk, sans-serif"
     },
     "hierarchy": {
       "live_metric_primary": "font-mono text-4xl font-semibold tracking-tighter text-white drop-shadow-sm",
@@ -15,7 +15,7 @@
       "small_label": "font-sans text-xs font-bold uppercase tracking-widest text-slate-300"
     },
     "rules": {
-      "numbers": "Always use IBM Plex Mono for numerical values to ensure tabular alignment.",
+      "numbers": "Always use JetBrains Mono for numerical values to ensure tabular alignment.",
       "contrast": "Ensure small labels use text-slate-300 instead of slate-500 to maintain high readability in the dark theme."
     }
   },

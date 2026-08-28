@@ -103,9 +103,10 @@ Das Projekt liefert automatisierte Skripte im Verzeichnis `deploy/proxmox/`, um 
 1.  **Repository klonen & Code vorbereiten**:
     Klonen Sie das Repository auf Ihrem lokalen Rechner und packen Sie die relevanten Verzeichnisse:
     ```bash
-    tar czf solar-dashboard.tar.gz --exclude='node_modules' --exclude='__pycache__' --exclude='.venv' --exclude='build' --exclude='.git' backend frontend deploy
+    tar czf solar-dashboard.tar.gz --exclude='node_modules' --exclude='__pycache__' --exclude='.venv' --exclude='build' --exclude='.git' --exclude='backend/.env' --exclude='frontend/.env' backend frontend deploy
     scp solar-dashboard.tar.gz root@<DEIN_PROXMOX_IP>:/root/
     ```
+    Die lokalen `.env`-Dateien bleiben außerhalb des Archivs; `deploy/proxmox/build-app.sh` provisioniert sie im Zielsystem separat.
 
 2.  **LXC-Container erstellen (auf dem Proxmox-Host)**:
     Legen Sie die Skripte `pve-create-lxc.sh` und `install.sh` im Proxmox-Host unter `/tmp` ab und führen Sie sie aus:
