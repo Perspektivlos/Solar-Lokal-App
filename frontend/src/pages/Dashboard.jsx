@@ -53,9 +53,10 @@ function batteryStateKind(socDanger, power) {
 }
 
 /**
- * Zeigt den aktuellen Zustand des Solarenergiesystems mit Live-Daten und Tageswerten an.
- * Aktualisiert die Anzeige regelmäßig und stellt bei Ladefehlern oder während des Ladevorgangs einen entsprechenden Status dar.
+ * Zeigt das Live-Dashboard für Solar-, Netz-, Batterie- und MPPT-Daten an.
+ * @return {JSX.Element} Die Dashboard-Ansicht mit Live-Daten oder einem Lade- beziehungsweise Fehlerstatus.
  */
+
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);

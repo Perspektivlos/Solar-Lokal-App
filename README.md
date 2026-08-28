@@ -4,9 +4,9 @@ Die **Solar-Lokal-App** ist eine hochgradig modulare, lokale Webanwendung zur Vi
 
 Die App arbeitet komplett **cloudfrei**, ist für den ressourcensparenden Betrieb auf Mini-PCs (z. B. via Proxmox LXC) optimiert und bietet eine moderne Steuerzentrale im **Dark Glassmorphism Sci-Fi-Stil** mit Neon-Akzenten.
 
-<div align="center">
-  <img width="428" height="447" alt="Vorschau Dashboard" src="https://github.com/user-attachments/assets/cb13afc1-8cc3-4a2b-8972-1b870d9c063c" />
-</div>
+  <p align="center">
+    <img width="810" height="922" alt="Solar-Lokal-App Dashboard" src="https://github.com/user-attachments/assets/b7e91deb-9916-4f55-abad-7cd10c3761bc" />
+  </p>
 
 ---
 
@@ -26,7 +26,6 @@ Um Fehlberechnungen und die Doppelzählung von Ladeleistungen zu vermeiden, ermi
 $$\text{Hausverbrauch} = \text{PV\_AC (Hoymiles)} + \text{Batterie-Entladung (SUN)} + \text{Netzbezug/Einspeisung (Shelly)}$$
 
 *Hinweis:* Die DC-Ladeleistung der Victron MPPTs lädt direkt die Batterie und wird **nicht** direkt als Hauslast gezählt. Das Laden und Entladen der Batterie wird im animierten Energiefluss-Diagramm getrennt und überschneidungsfrei visualisiert:
-
 - **Laden (MPPT/DC)**: Eine diagonale Energiefluss-Linie führt direkt von den Solarpanels (PV) zur Batterie.
 - **Entladen (SUN/AC)**: Der Fluss läuft von der Batterie zurück ins Hausnetz.
 
@@ -103,10 +102,9 @@ Das Projekt liefert automatisierte Skripte im Verzeichnis `deploy/proxmox/`, um 
 1.  **Repository klonen & Code vorbereiten**:
     Klonen Sie das Repository auf Ihrem lokalen Rechner und packen Sie die relevanten Verzeichnisse:
     ```bash
-    tar czf solar-dashboard.tar.gz --exclude='node_modules' --exclude='__pycache__' --exclude='.venv' --exclude='build' --exclude='.git' --exclude='backend/.env' --exclude='backend/.env.*' --exclude='frontend/.env' --exclude='frontend/.env.*' backend frontend deploy
+    tar czf solar-dashboard.tar.gz --exclude='node_modules' --exclude='__pycache__' --exclude='.venv' --exclude='build' --exclude='.git' backend frontend deploy
     scp solar-dashboard.tar.gz root@<DEIN_PROXMOX_IP>:/root/
     ```
-    Die benötigten `.env`-Dateien werden nicht archiviert; der Installations- und Build-Ablauf legt sie separat auf dem Zielsystem an.
 
 2.  **LXC-Container erstellen (auf dem Proxmox-Host)**:
     Legen Sie die Skripte `pve-create-lxc.sh` und `install.sh` im Proxmox-Host unter `/tmp` ab und führen Sie sie aus:
@@ -180,7 +178,5 @@ Das Projekt liefert automatisierte Skripte im Verzeichnis `deploy/proxmox/`, um 
 ## 8. Rechtliches & Mitwirkung
 
 **Solar-Lokal-App**
-
 Copyright (c) 2026 T. Hauck (GitHub: [Perspektivlos](https://github.com/Perspektivlos)), Organisation: **THCoding**.
-
-Dieses Projekt ist aktuell privat und nicht zur freien Wiederverwendung lizenziert. Details entnehmen Sie bitte `COPYRIGHT.md` oder kontaktieren Sie uns über [THCentral.de](https://THCentral.de).
+Dieses Projekt ist aktuell privat und nicht zur freien Wiederverwendung lizenziert. Details entnehmen Sie bitte der `COPYRIGHT.md` oder kontaktieren Sie uns über [THCentral.de](https://THCentral.de).
