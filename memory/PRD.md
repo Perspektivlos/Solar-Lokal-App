@@ -64,7 +64,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Backend: mocks.py, influx_points.py, routes.py, collectors.py extrahiert
 - [x] Lifespan-Migration (on_event → asynccontextmanager)
 - [x] Forecast komplett entfernt (FE+BE)
-- [x] Security Audit (dokumentiert, kein Handlungsbedarf für LAN)
+- [ ] Security Audit: Risiken bleiben offen — unauthentifizierte Control-Routen, offengelegte MQTT-Zugangsdaten und permissives CORS mit Credentials benötigen technische Schutzmaßnahmen; LAN-Betrieb allein gilt nicht als ausreichende Mitigation.
 - [x] 57/57 Pytest-Tests bestanden
 
 ## Backlog

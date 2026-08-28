@@ -168,6 +168,11 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     """
     demo = cfg.get("demo_mode", True)
     mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
+    devices = cfg.get("devices") or {}
+    shelly_cfg = devices.get("shelly") or {}
+    ahoy_cfg = devices.get("ahoy") or {}
+    trucki_cfg = devices.get("trucki") or {}
+    victron_cfg = devices.get("victron") or {}
 
     async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
         """
@@ -208,27 +213,27 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     shelly, ahoy, trucki, victron = await asyncio.gather(
         get_dev(
             fetch_shelly_from_mqtt,
-            lambda: fetch_shelly(cfg["devices"]["shelly"]["ip"]),
+            lambda: fetch_shelly(shelly_cfg.get("ip", "")),
             mock_shelly,
-            cfg["devices"]["shelly"]["enabled"],
+            shelly_cfg.get("enabled", False),
         ),
         get_dev(
             fetch_ahoy_from_mqtt,
-            lambda: fetch_ahoy(cfg["devices"]["ahoy"]["ip"], cfg["devices"]["ahoy"].get("inverter_id", 0)),
+            lambda: fetch_ahoy(ahoy_cfg.get("ip", ""), ahoy_cfg.get("inverter_id", 0)),
             mock_ahoy,
-            cfg["devices"]["ahoy"]["enabled"],
+            ahoy_cfg.get("enabled", False),
         ),
         get_dev(
             fetch_trucki_from_mqtt,
-            lambda: fetch_trucki(cfg["devices"]["trucki"]["ip"]),
+            lambda: fetch_trucki(trucki_cfg.get("ip", "")),
             mock_trucki,
-            cfg["devices"]["trucki"]["enabled"],
+            trucki_cfg.get("enabled", False),
         ),
         get_dev(
             lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
-            lambda: fetch_victron(cfg["devices"]["victron"]["ip"]),
+            lambda: fetch_victron(victron_cfg.get("ip", "")),
             mock_victron,
-            cfg["devices"]["victron"]["enabled"],
+            victron_cfg.get("enabled", False),
         ),
     )
 

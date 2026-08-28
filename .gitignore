@@ -3,6 +3,7 @@
 # IDE and editors
 .idea/
 .vscode/
+.copilot/config.json
 
 # Dependencies
 node_modules/

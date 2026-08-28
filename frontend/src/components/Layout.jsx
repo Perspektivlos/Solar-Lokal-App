@@ -39,6 +39,7 @@ export default function Layout() {
                   to={l.to}
                   end={l.end}
                   data-testid={l.testid}
+                  aria-label={l.label}
                   className={({ isActive }) =>
                     `px-3 lg:px-4 h-16 flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-medium transition-all relative shrink-0 ${
                       isActive
