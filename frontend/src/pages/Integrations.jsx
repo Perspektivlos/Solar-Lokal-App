@@ -133,6 +133,14 @@ export default function Integrations() {
             Fehler: {status.mqtt.last_error}
           </div>
         )}
+        {status?.device_mqtt && (
+          <div className="md:col-span-2 font-mono text-[11px] text-white/70 border-t border-white/10 pt-3 space-y-0.5" data-testid="device-mqtt-status">
+            <div className="uppercase tracking-[0.2em] text-white/45 mb-1">Weitere Geräte via MQTT</div>
+            <div>Shelly: <span className="text-white">{status.device_mqtt.shelly_last || "–"}</span></div>
+            <div>Ahoy DTU: <span className="text-white">{status.device_mqtt.ahoy_last || "–"}</span></div>
+            <div>Trucki: <span className="text-white">{status.device_mqtt.trucki_last || "–"}</span> ({status.device_mqtt.trucki_keys?.length || 0} Keys)</div>
+          </div>
+        )}
       </Section>
 
       {/* Victron MQTT Bridge */}
@@ -157,14 +165,6 @@ export default function Integrations() {
                 )}
               </div>
             ))}
-          </div>
-        )}
-        {status?.device_mqtt && (
-          <div className="md:col-span-2 font-mono text-[11px] text-white/70 border-t border-white/10 pt-3 space-y-0.5" data-testid="device-mqtt-status">
-            <div className="uppercase tracking-[0.2em] text-white/45 mb-1">Weitere Geräte via MQTT</div>
-            <div>Shelly: <span className="text-white">{status.device_mqtt.shelly_last || "–"}</span></div>
-            <div>Ahoy DTU: <span className="text-white">{status.device_mqtt.ahoy_last || "–"}</span></div>
-            <div>Trucki: <span className="text-white">{status.device_mqtt.trucki_last || "–"}</span> ({status.device_mqtt.trucki_keys?.length || 0} Keys)</div>
           </div>
         )}
       </Section>
