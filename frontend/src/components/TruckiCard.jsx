@@ -10,7 +10,7 @@ export default function TruckiCard({ trucki }) {
           <div className="font-sans text-[11px] font-semibold tracking-[0.16em] text-white/70">SoC &amp; VBat</div>
           <div className="flex items-baseline justify-center gap-3 mt-1.5" data-testid="trucki-soc-vbat">
             <div className="font-mono text-3xl font-semibold tracking-tight leading-none text-white">{formatNum(trucki.soc, 0)}<span className="ml-1 font-normal">%</span></div>
-            <div className="font-mono text-lg font-medium leading-none text-white/80">{formatNum(trucki.battery_voltage, 2)}<span className="ml-1 text-sm font-normal text-white/50">V</span></div>
+            <div className="font-mono text-lg font-medium leading-none text-white">{formatNum(trucki.battery_voltage, 2)}<span className="ml-1 text-sm font-normal text-white/50">V</span></div>
           </div>
         </div>
         {trucki.target_w !== undefined && (
