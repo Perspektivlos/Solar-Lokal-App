@@ -14,9 +14,9 @@ export default function VictronCard({ victron }) {
             </div>
             <div className="grid grid-cols-4 gap-2 mt-1.5 font-mono text-xs text-white/80">
               <div><span className="text-[10px] text-white/55">P</span><br/><span className="text-yellow-300 text-base font-medium">{formatNum(m.pv_power, 0)}</span> W</div>
-              <div><span className="text-[10px] text-white/55">U</span><br/><span className="text-base text-white">{formatNum(m.pv_voltage, 1)}</span> V</div>
-              <div><span className="text-[10px] text-white/55">VBatt</span><br/><span className="text-base text-white">{formatNum(m.battery_voltage, 2)}</span> V</div>
-              <div><span className="text-[10px] text-white/55">Day</span><br/><span className="text-base text-white">{formatNum(m.yield_today, 2)}</span> kWh</div>
+              <div><span className="text-[10px] text-white/55">U</span><br/>{formatNum(m.pv_voltage, 1)} V</div>
+              <div><span className="text-[10px] text-white/55">VBatt</span><br/>{formatNum(m.battery_voltage, 2)} V</div>
+              <div><span className="text-[10px] text-white/55">Day</span><br/>{formatNum(m.yield_today, 2)} kWh</div>
             </div>
           </div>
         ))}
