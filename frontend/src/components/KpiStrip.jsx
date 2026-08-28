@@ -1,14 +1,19 @@
 import { COLOR, formatNum, Spark } from "./solar-ui";
-import { exportNowW } from "../lib/power";
+import { exportNowW, isExporting } from "../lib/power";
 
 // Obere KPI-Leiste: 6 Kacheln (Gesamt-kWh + Live-W) mit Sparkline-Trend.
 export default function KpiStrip({ today, summary, trail }) {
   const exportNow = exportNowW(summary);
+  const exporting = isExporting(summary);
+  // Aktuellen Grid je nach aktivem Status anzeigen: Netz-Bezug (rot) vs. Netz-Einspeisung (grün).
+  const gridNow = exporting
+    ? { label: "Netz Einspeisung (Aktuell)", value: formatNum(exportNow, 0), color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp }
+    : { label: "Netz Bezug (Aktuell)", value: formatNum(Math.max(0, summary?.grid_power || 0), 0), color: "text-red-300 neon-text-red", accent: COLOR.grid_imp };
   const cells = [
     { label: "PV Gesamt", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "kpi-pv-total" },
     { label: "PV Aktuell", value: formatNum(summary.pv_power, 0), unit: "W", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "kpi-pv-now" },
     { label: "Netz Bezug (Gesamt)", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300 neon-text-red", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "kpi-grid-import" },
-    { label: "Netz Einspeisung (Aktuell)", value: formatNum(exportNow, 0), unit: "W", color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp, spark: trail.grid, sparkColor: COLOR.grid_exp, testid: "kpi-grid-export-now" },
+    { label: gridNow.label, value: gridNow.value, unit: "W", color: gridNow.color, accent: gridNow.accent, spark: trail.grid, sparkColor: gridNow.accent, testid: "kpi-grid-now" },
     { label: "Verbrauch (Gesamt)", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: COLOR.house, spark: trail.house, sparkColor: COLOR.house, testid: "kpi-consumption" },
     { label: "Einspeisung (Gesamt)", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp, testid: "kpi-grid-export-total" },
   ];
