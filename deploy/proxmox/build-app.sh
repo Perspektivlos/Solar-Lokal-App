@@ -67,6 +67,26 @@ if [[ "${AVAIL_MB:-0}" -lt 1200 ]]; then
 fi
 export NODE_OPTIONS="--max-old-space-size=${NODE_HEAP_MB:-2048}"
 
+# craco.config.js ist ZWINGEND nötig: der Webpack-'@'-Alias wird in ~47 Imports
+# verwendet (u.a. src/index.js -> "@/App"). Fehlt die Datei im Upload, bricht
+# 'craco build' mit "Config file not found" ab. Fehlt sie, erzeugen wir eine
+# minimale, funktionsfähige Fallback-Config, damit der Build nicht scheitert.
+if [[ ! -f "$APP_DIR/frontend/craco.config.js" ]]; then
+  warn "craco.config.js fehlt im Upload — erzeuge minimale Fallback-Config."
+  cat > "$APP_DIR/frontend/craco.config.js" <<'CRACO'
+const path = require("path");
+try { require("dotenv").config(); } catch (e) { /* optional */ }
+process.env.REACT_APP_VERSION = require("./package.json").version;
+process.env.REACT_APP_BUILD_DATE = new Date().toISOString().slice(0, 10);
+module.exports = {
+  webpack: {
+    alias: { "@": path.resolve(__dirname, "src") },
+  },
+};
+CRACO
+  chown solar:solar "$APP_DIR/frontend/craco.config.js"
+fi
+
 log "Frontend: Production-Build (kann 2–3 min dauern) …"
 sudo -u solar env GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true CI=false \
   NODE_OPTIONS="$NODE_OPTIONS" yarn build
