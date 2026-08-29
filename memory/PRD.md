@@ -67,6 +67,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Security Audit (dokumentiert; Risiken vom Nutzer bewusst akzeptiert – LAN-only Betrieb: keine Auth, MQTT-Klartext-Creds, offene CORS)
 - [x] 57/57 Pytest-Tests bestanden
 - [x] Fonts umgestellt: Space Grotesk (Text) + JetBrains Mono (Zahlen), app-weit inkl. SVG/Charts (28.08.2026)
+- [x] Design-Refinement (29.08.2026): Palette Schwarz/Mitternachtsblau/Mattgrau/Silber ergänzt (semantische Neon-Akzente bleiben für Datenzustände); einheitliche Kachel-Anatomie via GlassCard (Card-Lift-Hover, Header-Gradient, Silber-Rand); Glas-/Glow-Effekte verstärkt (blur 18px, abgedunkeltes glass-inset rgba(5,5,5,0.7)); Sparklines mit Flächenfüllung; 3-Font-System (Outfit=Labels, IBM Plex Sans=Body, JetBrains Mono=Zahlen). Rein visuell – KEINE angezeigten Werte/Labels geändert. Zentral in index.css/tailwind.config/solar-ui.jsx (kaskadiert auf alle Kacheln). Verifiziert per Screenshots (Dashboard + Geräte + Integrationen).
 - [x] PR-Review-Triage (28.08.2026): valide Findings behoben – defensive .get()-Zugriffe (collectors.py/routes.py), try/finally in Config-Test, WARN-Badge für Schieflast, History-Fehlerstatus, Batterietitel Totband-konsistent, NavLink aria-label, README-tar & .gitignore (.env/.copilot), design_guidelines Fonts. Halluzinierte/Nitpick-Findings übersprungen (kein /api/forecast, @import-Stil, Zirkulär-Import).
 
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")

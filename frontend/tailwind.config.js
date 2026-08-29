@@ -8,8 +8,15 @@ module.exports = {
   theme: {
         extend: {
                 fontFamily: {
-                        sans: ['Space Grotesk', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        sans: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        body: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+                },
+                colors: {
+                        ink: '#050505',
+                        midnight: '#0A1128',
+                        'matte-grey': '#8C92AC',
+                        silver: '#E2E8F0',
                 },
                 borderRadius: {
                         lg: 'var(--radius)',
