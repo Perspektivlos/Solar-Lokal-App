@@ -66,6 +66,9 @@ export default function Dashboard() {
   const [prevLive, setPrevLive] = useState(null);
   const liveRef = useRef(null);
   const [now, setNow] = useState(() => Date.now());
+  // Gleitendes 15-Minuten-Fenster für die Sparklines (im Komponenten-Scope,
+  // damit der Wert in den Effect-Closures immer definiert ist).
+  const TRAIL_WINDOW_MS = 15 * 60 * 1000;
 
   useEffect(() => {
     const id = setInterval(() => setNow((n) => n + 1000), 1000);
