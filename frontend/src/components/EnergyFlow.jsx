@@ -34,19 +34,19 @@ function Node({ x, y, w = 170, h = 96, label, value, unit, sub, color, Icon, tes
           <Icon size={14} color={color} strokeWidth={2.2} />
         </div>
       </foreignObject>
-      <text x={x - w / 2 + 36} y={y - h / 2 + 21} fontSize="10" fontFamily="IBM Plex Mono"
+      <text x={x - w / 2 + 36} y={y - h / 2 + 21} fontSize="10" fontFamily="JetBrains Mono"
             fontWeight="700" letterSpacing="1.6" fill="rgba(255,255,255,0.55)">
         {String(label).toUpperCase()}
       </text>
       {/* Value: rendered as SVG <text> so it never wraps */}
-      <text x={x - w / 2 + 14} y={y + 8} fontSize="28" fontFamily="IBM Plex Mono"
+      <text x={x - w / 2 + 14} y={y + 8} fontSize="28" fontFamily="JetBrains Mono"
             fontWeight="500" fill="#ffffff"
             style={glow ? { filter: `drop-shadow(0 0 6px ${color}99)` } : undefined}>
         {value}
         <tspan fontSize="13" fill="rgba(255,255,255,0.45)" dx="4">{unit}</tspan>
       </text>
       {sub && (
-        <text x={x - w / 2 + 14} y={y + h / 2 - 10} fontSize="10" fontFamily="IBM Plex Mono"
+        <text x={x - w / 2 + 14} y={y + h / 2 - 10} fontSize="10" fontFamily="JetBrains Mono"
               fill="rgba(255,255,255,0.55)">
           {sub}
         </text>
@@ -139,9 +139,9 @@ export default function EnergyFlow({ summary, trucki }) {
   }
 
   return (
-    <div className="glass-strong">
+    <div className="glass-strong h-full flex flex-col">
       <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/65 flex items-center gap-2">
+        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2">
           <Activity size={12} className="text-cyan-400 neon-cyan" />
           Energiefluss · Live
         </div>
@@ -149,14 +149,14 @@ export default function EnergyFlow({ summary, trucki }) {
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" /> AKTIV
         </div>
       </div>
-      <div className="p-4">
-        <svg viewBox="0 0 900 460" className="w-full" data-testid="energy-flow-svg" style={{ maxHeight: 500 }}>
+      <div className="p-4 flex-1 flex items-center">
+        <svg viewBox="0 0 900 360" className="w-full" data-testid="energy-flow-svg" style={{ maxHeight: 520 }}>
           <defs>
             <pattern id="bggrid" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
             </pattern>
           </defs>
-          <rect width="900" height="460" fill="url(#bggrid)" />
+          <rect width="900" height="360" fill="url(#bggrid)" />
 
           <Node x={450} y={70} label="PV-Anlage" value={Math.round(pv)} unit="W" color={COLOR.pv} Icon={Sun}
                 testid="flow-pv" sub={pvProducing ? `AC ${Math.round(pvAc)} · DC ${Math.round(pvDc)} W` : "nachts / inaktiv"} glow={pvProducing} />
@@ -181,14 +181,6 @@ export default function EnergyFlow({ summary, trucki }) {
           <Flow d="M 685 260 L 535 260" color={COLOR.battery}
                 active={dischargeActive}
                 watts={dischargeActive ? discharge : undefined} />
-
-          <Flow d="M 450 308 L 450 395" color="#cbd5e1" active={houseActive} />
-          <g>
-            <rect x={375} y={398} width={150} height={32} rx="4" fill="rgba(15,23,42,0.85)" stroke="rgba(255,255,255,0.18)" strokeWidth="1" />
-            <text x={450} y={418} textAnchor="middle" fontSize="12" fontFamily="IBM Plex Mono" fontWeight="600" fill="#cbd5e1">
-              {`${Math.round(Math.max(0, house))} W VERBRAUCH`}
-            </text>
-          </g>
         </svg>
       </div>
     </div>

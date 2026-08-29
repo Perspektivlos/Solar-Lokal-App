@@ -1,80 +1,136 @@
 {
-  "theme": "light",
-  "archetype": "4_swiss_high_contrast",
+  "theme": "Dark Glassmorphism / Sci-Fi Control-Room",
+  "language": "German",
   "typography": {
     "fonts": {
-      "heading": "IBM Plex Sans, sans-serif",
-      "body": "IBM Plex Sans, sans-serif",
-      "mono": "IBM Plex Mono, monospace"
+      "heading": "Space Grotesk, sans-serif",
+      "data_and_mono": "JetBrains Mono, monospace",
+      "body": "Space Grotesk, sans-serif"
     },
     "hierarchy": {
-      "h1": "text-2xl sm:text-3xl font-bold tracking-tight text-black",
-      "h2": "text-xl sm:text-2xl font-semibold tracking-tight text-black",
-      "h3": "text-lg font-medium text-black",
-      "body": "text-sm sm:text-base text-gray-900",
-      "metric_label": "text-xs font-bold uppercase tracking-[0.2em] text-gray-600",
-      "metric_value": "font-mono text-2xl sm:text-4xl font-medium text-black"
+      "live_metric_primary": "font-mono text-4xl font-semibold tracking-tighter text-white drop-shadow-sm",
+      "live_metric_unit": "font-mono text-xl font-normal text-slate-400 ml-1.5",
+      "live_metric_secondary": "font-mono text-sm text-slate-400/80 font-medium",
+      "card_title": "font-sans text-base font-semibold tracking-wide text-slate-200 uppercase",
+      "small_label": "font-sans text-xs font-bold uppercase tracking-widest text-slate-300"
     },
-    "instructions": "Import IBM Plex Sans and IBM Plex Mono via Google Fonts or standard @import in index.css. Use font-mono strictly for all numeric values, metrics, IPs, and states."
+    "rules": {
+      "numbers": "Always use JetBrains Mono for numerical values to ensure tabular alignment.",
+      "contrast": "Ensure small labels use text-slate-300 instead of slate-500 to maintain high readability in the dark theme."
+    }
   },
   "colors": {
-    "background": "#FFFFFF",
-    "surface": "#F9FAFB",
-    "border": "#000000",
-    "text": {
-      "primary": "#000000",
-      "secondary": "#374151"
+    "accents": {
+      "pv": "#FACC15",
+      "grid_red": "#F87171",
+      "grid_emerald": "#10B981",
+      "battery": "#06B6D4",
+      "victron": "#34D399"
     },
-    "functional": {
-      "pv_solar": "#EAB308",
-      "grid_import": "#EF4444",
-      "grid_export": "#22C55E",
-      "battery": "#3B82F6"
+    "backgrounds": {
+      "app": "bg-slate-950",
+      "card": "bg-slate-900/70 backdrop-blur-xl",
+      "card_hover": "hover:bg-slate-800/80"
     },
-    "instructions": "Use black (#000000) for all dividing lines, borders, and main text. Functional colors must only be used for charts, status indicators, and the energy flow diagram to represent their respective domains. Never use purple or violet gradients."
+    "borders": {
+      "subtle": "border-slate-700/50",
+      "glow_hover": "hover:border-slate-500/60"
+    }
   },
-  "layout_and_spacing": {
-    "style": "scada_control_room",
-    "grid_system": "Dense, utilitarian bento-style grids. Use grid and flexbox to create tight, dashboard-like layouts.",
-    "border_radius": "rounded-none",
-    "borders": "border border-black",
-    "spacing": "Tight padding inside widgets (p-4 or p-6). Emphasize structural hierarchy with solid black lines.",
-    "navigation": "Top navigation bar (Dashboard | Verlauf | Steuerung | Geräte | Integrationen), border-b border-black, sticky top-0, bg-white, z-50."
+  "layouts": {
+    "grid_system": "grid grid-cols-1 md:grid-cols-12 gap-6",
+    "rows": {
+      "row_1_top_kpis_and_flow": {
+        "description": "Top-KPI-Leiste + Animiertes Energiefluss-Diagramm",
+        "grid_span": {
+          "top_kpi_card": "col-span-1 md:col-span-12 lg:col-span-8",
+          "energy_flow_card": "col-span-1 md:col-span-12 lg:col-span-4"
+        },
+        "content_top_kpi": "Zwei Gruppen: [PV: Heute Gesamt Erzeugt (kWh), Aktuelle Erzeugung (W)] und [Netz: Heute Bezug (kWh), Verbrauch (kWh), Einspeisung (kWh), Aktueller Export (W)]. KEINE Autarkie/Eigenverbrauch."
+      },
+      "row_2_battery": {
+        "description": "Batterie-Inhalte",
+        "grid_span": {
+          "akku_netto": "col-span-1 md:col-span-6 lg:col-span-4",
+          "trucki2shelly": "col-span-1 md:col-span-6 lg:col-span-5",
+          "efficiency": "col-span-1 md:col-span-12 lg:col-span-3"
+        }
+      },
+      "row_3_victron": {
+        "description": "Victron-Inhalte",
+        "grid_span": {
+          "mppt_150_35": "col-span-1 md:col-span-12 lg:col-span-7",
+          "mppt_comparison": "col-span-1 md:col-span-12 lg:col-span-5"
+        }
+      },
+      "row_4_shelly": {
+        "description": "Shelly-Inhalte",
+        "grid_span": {
+          "pro_3em": "col-span-1 md:col-span-12 lg:col-span-8",
+          "imbalance": "col-span-1 md:col-span-12 lg:col-span-4"
+        }
+      },
+      "row_5_rest": {
+        "description": "Rest (Hoymiles)",
+        "grid_span": {
+          "hoymiles_hm1500": "col-span-1 md:col-span-12"
+        }
+      }
+    }
   },
   "components": {
-    "cards": "Remove all shadows. Use solid white backgrounds with 1px black borders. Apply rounded-none.",
-    "buttons": "Square edges (rounded-none), solid black background with white text for primary, or white background with black border for secondary. Hover states invert colors or darken.",
-    "tables": "Strict table look. 1px solid black lines separating rows and columns. font-mono for data cells.",
-    "charts": "Use Recharts. Use functional colors for lines/bars (Yellow/Red/Green/Blue). Remove rounded corners from tooltips, use black borders for tooltips. Grid lines should be subtle but present.",
-    "inputs": "rounded-none, border border-black, focus:ring-1 focus:ring-black focus:border-black, font-mono for IP addresses.",
-    "shadcn_overrides": "Override all rounded-md or rounded-lg to rounded-none. Remove ring-offset shadows if they distract from the flat UI."
+    "unified_card": {
+      "wrapper": "relative overflow-hidden rounded-xl bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-6 transition-all duration-300",
+      "header": "flex items-center justify-between mb-6",
+      "title_group": "flex items-center gap-2",
+      "glow_effect": "Absolute positioned radial gradient div in the top-right corner with 10% opacity matching the domain accent color (e.g., PV yellow, Battery cyan)."
+    },
+    "status_badges": {
+      "states": {
+        "NORMAL_OK": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        "KRITISCH": "bg-red-500/10 text-red-400 border-red-500/20 animate-pulse",
+        "LADEN": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+        "ENTLADEN": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+      },
+      "data_sources": {
+        "LIVE": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        "DEMO": "bg-amber-500/10 text-amber-400 border-amber-500/20",
+        "FALLBACK": "bg-orange-500/10 text-orange-400 border-orange-500/20",
+        "OFFLINE": "bg-slate-500/10 text-slate-400 border-slate-500/20"
+      },
+      "styling": "flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border font-mono text-[10px] uppercase tracking-wider font-semibold",
+      "icons": "Use lucide-react. Size 12px (w-3 h-3)."
+    },
+    "units_and_signs": {
+      "units": "Always display units in a smaller font size than the value (text-xl vs text-4xl). Units: W, kW, kWh, V, A, %.",
+      "signs": "Show explicit plus (+) for positive values like charging/import, and minus (-) for discharge/export if applicable. Use semantic coloring for signs."
+    }
   },
-  "animations": {
-    "energy_flow": "Use SVG paths with stroke-dasharray and animated stroke-dashoffset to simulate energy flowing between nodes (PV, Haus, Netz, Akku). Use the functional colors for the respective flow lines.",
-    "ui_interactions": "Minimal. Fast, snappy hover states. Pure functional control room feel."
-  },
-  "icons": {
-    "library": "lucide-react",
-    "instructions": "Use sharp, clean icons with stroke-width of 1.5 or 2."
-  },
-  "specific_views_instructions": {
-    "dashboard": "Live Energy Flow diagram centrally located. 3-Phase Shelly Pro 3EM details in a dense table/grid. Hoymiles channels, Trucki SoC, and Victron MPPT details arrayed around. Tageswerte-Karten for daily stats.",
-    "history": "Recharts line charts showing PV/Netz/Akku/Haus over time + SoC. Toggle buttons for 1h/6h/12h/24h timeframes. Minimalist chart UI.",
-    "device_config": "Forms for IPs per device (Shelly, Hoymiles, Trucki, Victron). IP input fields must use font-mono. Demo-mode toggle switch.",
-    "device_control": "Buttons to Limit/Start/Stop/Restart Hoymiles. Toggle switches/buttons for Trucki AC-Output/ZEPC/Restart. Actions must have clear state indication.",
-    "integration_config": "MQTT & InfluxDB inputs (Broker IP, ports). Status indicator (Connected/Disconnected) using red/green dots."
-  },
-  "testing": {
-    "data_testid": "Apply `data-testid` to all interactive elements, navigation links, and form inputs (e.g., `data-testid=\"nav-dashboard\"`, `data-testid=\"input-shelly-ip\"`, `data-testid=\"btn-hoymiles-start\"`)."
+  "charts": {
+    "recharts": {
+      "lines": "Increase strokeWidth to 2.5 or 3 for better visibility against dark backgrounds.",
+      "glow": "Use CSS filter drop-shadow to give the lines a neon glow (e.g., drop-shadow(0 0 4px currentColor)).",
+      "colors": "Bind line colors to the functional accent colors defined in the colors block.",
+      "tooltips": "Ensure recharts tooltips use the glassmorphism card styling (bg-slate-900/90, border-slate-700/50)."
+    }
   },
   "instructions_to_main_agent": [
-    "Build a pure React application. Use React Router for navigation.",
-    "Strictly adhere to the SCADA/Control Room aesthetic: no gradients, no rounded corners, stark black borders, pure functional colors.",
-    "Ensure the entire UI is in German (deutsche Oberfläche) as requested.",
-    "Import Google Fonts: 'IBM Plex Sans' and 'IBM Plex Mono' in the global CSS.",
-    "For the animated energy flow diagram, build a custom SVG component where nodes are black-bordered boxes and lines are animated paths.",
-    "Use standard `.jsx` files (not TSX).",
-    "Do NOT use placeholder text. Ensure all variables and placeholders reflect real energy metrics (W, kW, kWh, V, A).",
-    "All navigation links and major actions must have `data-testid`."
+    "You are writing a React frontend application.",
+    "Use JS/JSX for all React components. Do NOT use TSX.",
+    "Follow the defined 5-row layout exactly.",
+    "Ensure 'Deutsche Oberfläche' (German labels) is used everywhere.",
+    "Maintain the precise visual hierarchy: Huge dominant values, smaller units, muted secondary data.",
+    "Implement the animated SVG energy flow diagram for Row 1. It must indicate power flow dynamically.",
+    "Implement the 'Top-Kachel' exactly as requested with the specified variables in Row 1.",
+    "Ensure NO fully transparent backgrounds on panels—glassmorphism needs a tinted base (bg-slate-900/70) so text is readable.",
+    "Use lucide-react for all iconography."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Do not converge toward generic outputs. Use the Sci-Fi / Control Room aesthetics strongly but cleanly.",
+    "Do not apply global transitions (e.g., transition: all). Target specific properties.",
+    "Avoid text-align: center on the root app container.",
+    "Ensure layering creates depth via distinct z-indexes and drop shadows.",
+    "All interactive and key informational elements MUST include a data-testid attribute for automated testing. Example: data-testid='kpi-pv-total'.",
+    "Use standard Radix UI or Shadcn components adapted to the dark glassmorphism aesthetic where complex interactivity is needed."
   ]
 }

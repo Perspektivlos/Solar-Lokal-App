@@ -3,6 +3,7 @@
 # IDE and editors
 .idea/
 .vscode/
+.copilot/config.json
 
 # Dependencies
 node_modules/
@@ -57,6 +58,7 @@ chainlit.md
 .chainlit
 .ipynb_checkpoints/
 .ac
+.copilot/
 
 # Deployment
 .vercel
@@ -97,3 +99,5 @@ frontend/node_modules/.cache/default-development/10.pack
 frontend/node_modules/.cache/default-development/3.pack
 frontend/node_modules/.cache/default-development/9.pack
 frontend/node_modules/.cache/default-development/6.pack
+frontend/node_modules/.cache/default-development/12.pack
+frontend/node_modules/.cache/default-development/11.pack
