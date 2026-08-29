@@ -46,16 +46,6 @@ function batteryStateKind(socDanger, power) {
   return "NORMAL";
 }
 
-// Sparkline-Trail: Zeitreihen in Wertelisten je Kanal umwandeln.
-function buildTrail(samples) {
-  return {
-    pv: samples.map((s) => s.pv),
-    grid: samples.map((s) => s.grid),
-    house: samples.map((s) => s.house),
-    battery: samples.map((s) => s.battery),
-  };
-}
-
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);
@@ -68,6 +58,13 @@ export default function Dashboard() {
   // Gleitendes 15-Minuten-Fenster für die Sparklines (im Komponenten-Scope,
   // damit der Wert in den Effect-Closures immer definiert ist).
   const TRAIL_WINDOW_MS = 15 * 60 * 1000;
+  // Zeitreihen in Wertelisten je Kanal umwandeln (Komponenten-Scope).
+  const buildTrail = (samples) => ({
+    pv: samples.map((s) => s.pv),
+    grid: samples.map((s) => s.grid),
+    house: samples.map((s) => s.house),
+    battery: samples.map((s) => s.battery),
+  });
 
   useEffect(() => {
     const id = setInterval(() => setNow((n) => n + 1000), 1000);
