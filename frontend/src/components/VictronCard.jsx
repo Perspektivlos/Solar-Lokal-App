@@ -1,7 +1,11 @@
 import { COLOR, formatNum, GlassCard, SourceBadge } from "./solar-ui";
 import { Sun } from "lucide-react";
 
-// Victron MPPT 150/35: pro Instanz P/U/VBatt/Yield + Gesamtleistung.
+/**
+ * Stellt die Messwerte der Victron-MPPT-Laderegler und deren Gesamtleistung dar.
+ * @param {Object} victron - Victron-Daten mit MPPT-Werten und Gesamtleistung.
+ * @return {JSX.Element} Die Karte mit den Victron-Messwerten.
+ */
 export default function VictronCard({ victron }) {
   return (
     <GlassCard title="Victron MPPT 150/35" accent={COLOR.victron} icon={Sun} badge={<SourceBadge data={victron} />} testid="card-victron">
