@@ -1,6 +1,12 @@
 import { COLOR, formatNum, GlassCard, SourceBadge } from "./solar-ui";
 import { BatteryCharging } from "lucide-react";
 
+// Tri-State für Schalter: true → EIN, false → AUS, sonst UNBEKANNT.
+const switchState = (v) =>
+  v === true ? { text: "● EIN", cls: "text-emerald-300" }
+  : v === false ? { text: "○ AUS", cls: "text-white/30" }
+  : { text: "– UNBEKANNT", cls: "text-white/40" };
+
 // Trucki2Shelly-Speicherkarte: SoC, VBAT, Setpoints, AC-Output/ZEPC.
 export default function TruckiCard({ trucki }) {
   return (
@@ -24,8 +30,8 @@ export default function TruckiCard({ trucki }) {
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/10 text-center">
-          <div className="font-mono text-xs text-white/70">AC-Output: <span className={trucki.ac_output ? "text-emerald-300" : "text-white/30"}>{trucki.ac_output ? "● EIN" : "○ AUS"}</span></div>
-          <div className="font-mono text-xs text-white/70">ZEPC: <span className={trucki.zepc ? "text-emerald-300" : "text-white/30"}>{trucki.zepc ? "● EIN" : "○ AUS"}</span></div>
+          <div className="font-mono text-xs text-white/70">AC-Output: <span className={switchState(trucki.ac_output).cls}>{switchState(trucki.ac_output).text}</span></div>
+          <div className="font-mono text-xs text-white/70">ZEPC: <span className={switchState(trucki.zepc).cls}>{switchState(trucki.zepc).text}</span></div>
         </div>
       </div>
     </GlassCard>

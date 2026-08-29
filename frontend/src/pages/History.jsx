@@ -47,7 +47,7 @@ const INTRO_SECTIONS = [
 function ChartBody({ loading, error, data }) {
   if (loading) return <div className="font-mono text-sm text-white/55">Lade Verlauf...</div>;
   if (error) {
-    return <div className="font-mono text-sm text-red-300" data-testid="history-error">Verlaufsdaten konnten nicht geladen werden.</div>;
+    return <div role="alert" className="font-mono text-sm text-red-300" data-testid="history-error">Verlaufsdaten konnten nicht geladen werden.</div>;
   }
   if (data.length === 0) {
     return <div className="font-mono text-sm text-white/55" data-testid="history-empty">Noch keine Snapshots im Zeitraum.</div>;

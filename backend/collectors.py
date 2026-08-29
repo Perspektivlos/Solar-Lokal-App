@@ -137,10 +137,13 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
             return mocked
         return d
 
-    devs = cfg.get("devices") or {}
+    devs = cfg.get("devices")
+    if not isinstance(devs, dict):
+        devs = {}
 
     def dcfg(name):
-        return devs.get(name) or {}
+        v = devs.get(name)
+        return v if isinstance(v, dict) else {}
 
     shelly, ahoy, trucki, victron = await asyncio.gather(
         get_dev(
