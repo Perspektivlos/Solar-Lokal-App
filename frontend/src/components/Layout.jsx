@@ -63,18 +63,21 @@ export default function Layout() {
       <main className="max-w-[1600px] mx-auto px-6 py-6 relative z-10">
         <Outlet />
       </main>
-      <footer className="mt-12 border-t border-white/5">
-        <div className="max-w-[1600px] mx-auto px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 flex items-center justify-between flex-wrap gap-3">
+      <footer className="mt-12 border-t border-[#8C92AC]/12">
+        <div className="max-w-[1600px] mx-auto px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-[#8C92AC]/70 flex items-center justify-between flex-wrap gap-3">
           <span>Lokale Steuerung · Mosquitto · InfluxDB · MongoDB</span>
           <div className="flex items-center gap-4 flex-wrap">
             <span data-testid="footer-copyright">© {new Date().getFullYear()} THcentral.de</span>
-            <span data-testid="footer-version" className="text-white/55">v{process.env.REACT_APP_VERSION || "1.2.0"}</span>
+            <span data-testid="footer-version" className="text-silver/70">
+              v{process.env.REACT_APP_VERSION || "1.3.0"}
+              {process.env.REACT_APP_BUILD_DATE ? ` · ${process.env.REACT_APP_BUILD_DATE}` : ""}
+            </span>
             <a
               href="https://app.emergent.sh/?utm_source=emergent-badge"
               target="_blank"
               rel="noopener noreferrer"
               data-testid="footer-emergent-badge"
-              className="inline-flex items-center gap-1.5 rounded-full bg-black/70 border border-white/10 px-2.5 py-1 normal-case tracking-normal text-[11px] text-white/80 hover:text-white hover:border-white/25 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#050505]/70 border border-[#8C92AC]/15 px-2.5 py-1 normal-case tracking-normal text-[11px] text-silver/80 hover:text-silver hover:border-silver/25 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 16 16" fill="none">
                 <path d="M15.5702 8.13142C15.7729 8.0412 16.0007 8.18878 15.9892 8.4103C15.8374 11.3192 14.0965 14.0405 11.2531 15.3065C8.40964 16.5725 5.2224 16.0453 2.95912 14.2117C2.78676 14.072 2.82955 13.804 3.03219 13.7137L4.95677 12.8568C5.04866 12.8159 5.15446 12.823 5.24204 12.8725C6.73377 13.7153 8.59176 13.8649 10.2772 13.1145C11.9626 12.3641 13.0947 10.8833 13.4665 9.21075C13.4883 9.11256 13.5539 9.02918 13.6457 8.98827L15.5702 8.13142Z" fill="white"/>

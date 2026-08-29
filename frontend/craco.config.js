@@ -5,6 +5,8 @@ require("dotenv").config();
 // Versionsnummer automatisch aus package.json bereitstellen (Footer liest
 // process.env.REACT_APP_VERSION). Muss vor react-scripts gesetzt werden.
 process.env.REACT_APP_VERSION = require("./package.json").version;
+// Build-Datum automatisch setzen — aktualisiert sich bei jedem Build/Deploy.
+process.env.REACT_APP_BUILD_DATE = new Date().toISOString().slice(0, 10);
 
 // Check if we're in development/preview mode (not production build)
 // Craco sets NODE_ENV=development for start, NODE_ENV=production for build
