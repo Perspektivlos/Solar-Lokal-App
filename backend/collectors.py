@@ -176,18 +176,18 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
 
     async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
         """
-        Ermittelt die Gerätedaten anhand der konfigurierten Abrufstrategie.
+        Ermittelt Gerätedaten über Demo-, MQTT- oder HTTP-Abruf.
         
         Parameters:
             mqtt_fn: Funktion zum Abrufen der Gerätedaten über MQTT.
-            http_factory: Asynchrone Funktion zum Abrufen der Gerätedaten über HTTP.
+            http_factory: Funktion zum Abrufen der Gerätedaten über HTTP.
             mock_fn: Funktion zur Erzeugung von Ersatz- oder Demodaten.
             enabled (bool): Gibt an, ob das Gerät aktiviert ist.
         
         Returns:
-            Ein Dictionary mit den Gerätedaten. Deaktivierte oder nicht erreichbare Geräte
-            werden als offline gekennzeichnet; bei einem HTTP-Ausfall enthält das Ergebnis
-            zusätzlich das Flag `_fallback`.
+            Ein Dictionary mit den Gerätedaten. Deaktivierte Geräte werden als offline
+            gekennzeichnet. Wenn der Abruf fehlschlägt, werden Offline-Ersatzdaten mit
+            dem Flag `_fallback` zurückgegeben.
         """
         if not enabled:
             return {"online": False}
@@ -215,6 +215,14 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         devs = {}
 
     def dcfg(name):
+        """Liefert die Gerätekonfiguration für den angegebenen Namen.
+        
+        Parameters:
+        	name (str): Name des Geräts.
+        
+        Returns:
+        	dict: Gerätekonfiguration oder ein leeres Dictionary, wenn keine gültige Konfiguration vorliegt.
+        """
         v = devs.get(name)
         return v if isinstance(v, dict) else {}
 

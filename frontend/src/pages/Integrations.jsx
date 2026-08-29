@@ -81,6 +81,10 @@ function Field({ label, colspan, ...inputProps }) {
   );
 }
 
+/**
+ * Rendert die Konfigurations- und Statusseite für MQTT, Victron-MQTT und InfluxDB.
+ * @returns {JSX.Element} Die Integrationsseite mit Konfigurationsfeldern, Statusanzeigen und Speicherfunktion.
+ */
 export default function Integrations() {
   const [cfg, setCfg] = useState(null);
   const [status, setStatus] = useState(null);

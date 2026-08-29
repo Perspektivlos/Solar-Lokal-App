@@ -374,7 +374,7 @@ async def diagnostics_run():
     Führt Gesundheitsprüfungen für Backend, Datenbanken, MQTT, den Snapshot-Poller und konfigurierte Geräte durch.
     
     Returns:
-        dict: Prüfergebnisse mit Zeitstempel, Gesamtdauer sowie der Anzahl bestandener, fehlgeschlagener und übersprungener Prüfungen.
+    	dict: Diagnoseergebnisse mit Zeitstempel, Gesamtdauer und Zählwerten für bestandene, fehlgeschlagene und übersprungene Prüfungen.
     """
     cfg = await get_config()
     started = time.time()
@@ -453,15 +453,14 @@ async def diagnostics_run():
 
     async def ping_http(label: str, ip: str, paths: List[str], key: str, mqtt_ts: Optional[str], extra: str = ""):
         """
-        Prüft den Erreichbarkeitsstatus eines konfigurierten Geräts.
+        Prüft die Erreichbarkeit eines aktivierten Geräts über frische MQTT-Daten oder HTTP.
         
         Parameters:
-            label (str): Bezeichnung des Diagnoseeintrags.
-            ip (str): IP-Adresse des Geräts.
-            paths (List[str]): HTTP-Pfade, die zur Prüfung abgefragt werden.
-            key (str): Konfigurationsschlüssel des Geräts.
-            mqtt_ts (Optional[str]): Zeitstempel der zuletzt empfangenen MQTT-Daten.
+            key (str): Schlüssel des Geräts in der Konfiguration.
+            mqtt_ts (Optional[str]): Zeitpunkt der zuletzt empfangenen MQTT-Daten.
             extra (str): Zusätzlicher Text für den Diagnoseeintrag.
+        
+        Deaktivierte Geräte und der Demo-Modus werden entsprechend gekennzeichnet. Bei veralteten oder fehlenden MQTT-Daten werden die angegebenen HTTP-Pfade geprüft; ein Statuscode unter 500 gilt als erreichbar.
         """
         device_cfg = ((cfg.get("devices") or {}).get(key) or {})
         if not device_cfg.get("enabled", False):
@@ -495,6 +494,14 @@ async def diagnostics_run():
         devs = {}
 
     def _d(name):
+        """Gibt die Gerätekonfiguration für den angegebenen Namen als Dictionary zurück.
+        
+        Parameter:
+        	name (str): Name des Geräts.
+        
+        Returns:
+        	dict: Gerätekonfiguration oder ein leeres Dictionary, wenn kein gültiger Dictionary-Eintrag vorhanden ist.
+        """
         v = devs.get(name)
         return v if isinstance(v, dict) else {}
 

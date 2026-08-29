@@ -42,15 +42,16 @@ const CARD_SHADOW = "0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -20px rgba(140
 const CARD_SHADOW_DANGER = "inset 0 0 0 1px rgba(239,68,68,0.45), 0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -18px rgba(239,68,68,0.30)";
 
 /**
- * Rendert eine Detailkarte mit Titel, optionalem Icon und Badge sowie Akzent- und Warnstil.
+ * Rendert eine stilisierte Detailkarte mit Titel, optionalem Icon, Badge und Warnstil.
  * @param {string} title - Der Titel der Karte.
- * @param {string} [accent="#64748b"] - Die Farbe für Akzentbalken, Glow und Icon.
- * @param {React.ComponentType} [Icon] - Das optionale Icon im Kartenkopf.
+ * @param {string} [accent="#8C92AC"] - Die Akzentfarbe für Balken, Glow-Effekt und Icon.
+ * @param {React.ComponentType} [icon] - Das optionale Icon im Kartenkopf.
  * @param {React.ReactNode} [badge] - Das optionale Badge im Kartenkopf.
  * @param {string} [testid] - Die optionale Test-ID des Kartenelements.
  * @param {React.ReactNode} children - Der Inhalt der Karte.
  * @param {boolean} [danger] - Aktiviert den Warnstil der Karte.
  * @param {string} [className=""] - Zusätzliche CSS-Klassen.
+ * @returns {React.ReactElement} Das gerenderte Kartenelement.
  */
 export function GlassCard({ title, accent = "#64748b", icon: Icon, badge, testid, children, danger, className = "" }) {
   return (
@@ -147,9 +148,9 @@ export function Delta({ prev, curr }) {
 }
 
 /**
- * Rendert eine normalisierte SVG-Sparkline aus einer Reihe von Werten.
+ * Rendert eine normalisierte SVG-Sparkline aus mehreren Messwerten.
  * @param {number[]} values - Die darzustellenden Werte.
- * @param {string} [color="#cbd5e1"] - Die Linienfarbe.
+ * @param {string} [color="#8C92AC"] - Die Linien- und Füllfarbe.
  * @param {number} [height=24] - Die Höhe der Sparkline in Pixeln.
  * @returns {JSX.Element|null} Die Sparkline oder `null`, wenn weniger als zwei Werte vorliegen.
  */
