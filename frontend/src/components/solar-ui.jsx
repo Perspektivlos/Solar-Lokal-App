@@ -11,11 +11,23 @@ export const COLOR = {
   house: "#cbd5e1",
 };
 
+/**
+ * Formatiert eine gültige Zahl mit deutscher Zahlenschreibweise und fester Dezimalstellenanzahl.
+ * @param {number} n - Zu formatierende Zahl.
+ * @param {number} [digits=0] - Anzahl der Dezimalstellen.
+ * @returns {string} Die formatierte Zahl oder „–“, wenn kein gültiger Zahlenwert vorliegt.
+ */
 export function formatNum(n, digits = 0) {
   if (n === null || n === undefined || isNaN(n)) return "–";
   return Number(n).toLocaleString("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
+/**
+ * Formatiert einen ISO-Zeitstempel als relative deutsche Zeitangabe.
+ * @param {string} iso - Der ISO-Zeitstempel.
+ * @param {number} nowMs - Der Vergleichszeitpunkt in Millisekunden.
+ * @return {string} Eine relative Zeitangabe, eine lokale Uhrzeit oder „–“, wenn kein Zeitstempel vorhanden ist.
+ */
 export function relativeTime(iso, nowMs) {
   if (!iso) return "–";
   const dt = new Date(iso);
@@ -29,8 +41,18 @@ export function relativeTime(iso, nowMs) {
 const CARD_SHADOW = "0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -20px rgba(140,146,172,0.35)";
 const CARD_SHADOW_DANGER = "inset 0 0 0 1px rgba(239,68,68,0.45), 0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -18px rgba(239,68,68,0.30)";
 
-// Einheitliche Detailkarte: Header (Titel + Badge) · Akzentbalken · Glow · Body.
-export function GlassCard({ title, accent = "#8C92AC", icon: Icon, badge, testid, children, danger, className = "" }) {
+/**
+ * Rendert eine Detailkarte mit Titel, optionalem Icon und Badge sowie Akzent- und Warnstil.
+ * @param {string} title - Der Titel der Karte.
+ * @param {string} [accent="#64748b"] - Die Farbe für Akzentbalken, Glow und Icon.
+ * @param {React.ComponentType} [Icon] - Das optionale Icon im Kartenkopf.
+ * @param {React.ReactNode} [badge] - Das optionale Badge im Kartenkopf.
+ * @param {string} [testid] - Die optionale Test-ID des Kartenelements.
+ * @param {React.ReactNode} children - Der Inhalt der Karte.
+ * @param {boolean} [danger] - Aktiviert den Warnstil der Karte.
+ * @param {string} [className=""] - Zusätzliche CSS-Klassen.
+ */
+export function GlassCard({ title, accent = "#64748b", icon: Icon, badge, testid, children, danger, className = "" }) {
   return (
     <div
       className={`glass card-lift group relative overflow-hidden h-full flex flex-col ${className}`}
@@ -52,7 +74,7 @@ export function GlassCard({ title, accent = "#8C92AC", icon: Icon, badge, testid
 }
 
 // Einheitliches Badge-System: Datenquelle (LIVE/DEMO/FALLBACK/OFFLINE) + Status
-// (NORMAL/KRITISCH/LADEN/ENTLADEN) + Netzrichtung (BEZUG/EINSPEISUNG).
+// (NORMAL/WARN/KRITISCH/LADEN/ENTLADEN) + Netzrichtung (BEZUG/EINSPEISUNG).
 const BADGES = {
   MQTT: { cls: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300", Icon: Wifi, label: "MQTT LIVE" },
   LIVE: { cls: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300", Icon: Wifi, label: "LIVE" },
@@ -60,6 +82,7 @@ const BADGES = {
   FALLBACK: { cls: "border-orange-400/40 bg-orange-400/10 text-orange-300", Icon: WifiOff, label: "FALLBACK" },
   OFFLINE: { cls: "border-white/20 bg-white/5 text-white/55", Icon: WifiOff, label: "OFFLINE" },
   NORMAL: { cls: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300", Icon: null, label: "NORMAL" },
+  WARN: { cls: "border-orange-400/40 bg-orange-400/10 text-orange-300", Icon: TriangleAlert, label: "WARNUNG" },
   KRITISCH: { cls: "border-red-400/50 bg-red-400/15 text-red-300 animate-pulse", Icon: TriangleAlert, label: "KRITISCH" },
   LADEN: { cls: "border-cyan-400/40 bg-cyan-400/10 text-cyan-300", Icon: ArrowDownToLine, label: "LÄDT" },
   ENTLADEN: { cls: "border-yellow-400/40 bg-yellow-400/10 text-yellow-300", Icon: ArrowUpFromLine, label: "ENTLÄDT" },
@@ -69,6 +92,13 @@ const BADGES = {
   EXPORT: { cls: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300", Icon: ArrowUpFromLine, label: "EINSPEISUNG" },
 };
 
+/**
+ * Zeigt ein Status-Badge mit passendem Symbol und Beschriftung an.
+ * @param {string} kind - Der Badge-Typ; unbekannte Typen werden als „OFFLINE“ dargestellt.
+ * @param {string} [label] - Optionale benutzerdefinierte Beschriftung.
+ * @param {string} [testid] - Optionale Test-ID des Badge-Elements.
+ * @return {JSX.Element} Das gerenderte Status-Badge.
+ */
 export function Badge({ kind, label, testid }) {
   const b = BADGES[kind] || BADGES.OFFLINE;
   const Icon = b.Icon;
@@ -83,6 +113,12 @@ export function Badge({ kind, label, testid }) {
   );
 }
 
+/**
+ * Zeigt ein Badge für die Datenquelle und den Verbindungsstatus an.
+ * @param {Object} data - Datenobjekt mit Quellen- und Statusinformationen.
+ * @param {string} [testid] - Optionale Test-ID für das Badge.
+ * @returns {JSX.Element} Das passende Quellen- oder Status-Badge.
+ */
 export function SourceBadge({ data, testid }) {
   let kind = "DEMO";
   if (data?._via_mqtt) kind = "MQTT";
@@ -92,6 +128,12 @@ export function SourceBadge({ data, testid }) {
   return <Badge kind={kind} testid={testid} />;
 }
 
+/**
+ * Zeigt die Veränderung zwischen einem vorherigen und einem aktuellen Wert an.
+ * @param {number|null|undefined} prev - Der vorherige Wert.
+ * @param {number|null|undefined} curr - Der aktuelle Wert.
+ * @returns {JSX.Element|null} Eine formatierte Wattdifferenz oder `null`, wenn ein Wert fehlt.
+ */
 export function Delta({ prev, curr }) {
   if (prev === undefined || curr === undefined || prev === null || curr === null) return null;
   const d = curr - prev;
@@ -104,7 +146,14 @@ export function Delta({ prev, curr }) {
   );
 }
 
-export function Spark({ values, color = "#8C92AC", height = 24 }) {
+/**
+ * Rendert eine normalisierte SVG-Sparkline aus einer Reihe von Werten.
+ * @param {number[]} values - Die darzustellenden Werte.
+ * @param {string} [color="#cbd5e1"] - Die Linienfarbe.
+ * @param {number} [height=24] - Die Höhe der Sparkline in Pixeln.
+ * @returns {JSX.Element|null} Die Sparkline oder `null`, wenn weniger als zwei Werte vorliegen.
+ */
+export function Spark({ values, color = "#cbd5e1", height = 24 }) {
   if (!values || values.length < 2) return null;
   const min = Math.min(...values), max = Math.max(...values);
   const range = max - min || 1;
@@ -126,7 +175,20 @@ export function Spark({ values, color = "#8C92AC", height = 24 }) {
   );
 }
 
-// Dominante Live-Metrik: große Kernzahl, kleine Einheit, optionales Vorzeichen.
+/**
+ * Rendert eine hervorgehobene Live-Metrik mit Wert, Einheit und optionalem Verlauf.
+ * @param {Object} props - Konfiguration der Metrik.
+ * @param {string} props.label - Bezeichnung der Metrik.
+ * @param {*} props.value - Anzuzeigender Messwert.
+ * @param {string} props.unit - Einheit des Messwerts.
+ * @param {string} [props.color] - CSS-Klasse für die Wertfarbe.
+ * @param {string} [props.sign] - Optionales Vorzeichen vor dem Wert.
+ * @param {React.ReactNode} [props.sub] - Zusätzlicher Inhalt neben der Bezeichnung.
+ * @param {number[]} [props.sparkValues] - Werte für die optionale Verlaufskurve.
+ * @param {string} [props.sparkColor] - Farbe der Verlaufskurve.
+ * @param {"sm"|"lg"} [props.size="lg"] - Größe der dargestellten Kernzahl.
+ * @return {JSX.Element} Die formatierte Live-Metrik.
+ */
 export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, sparkColor, size = "lg" }) {
   const valueCls = size === "sm" ? "text-2xl" : "text-3xl lg:text-4xl";
   return (
@@ -146,7 +208,16 @@ export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, s
   );
 }
 
-// Zurückgenommener Sekundärwert (kleiner, gedämpft) für Zusatzinfos.
+/**
+ * Rendert eine kompakte Sekundärstatistik mit Beschriftung, Wert und Einheit.
+ * @param {Object} props - Eigenschaften der Statistik.
+ * @param {*} props.label - Beschriftung der Statistik.
+ * @param {*} props.value - Anzuzeigender Wert.
+ * @param {*} props.unit - Einheit des Werts.
+ * @param {string} [props.color] - Optionale CSS-Klasse für die Wertfarbe.
+ * @param {string} [props.testid] - Optionale Kennung für Tests.
+ * @returns {JSX.Element} Das gerenderte Statistik-Element.
+ */
 export function Stat({ label, value, unit, color, testid }) {
   return (
     <div data-testid={testid}>
@@ -158,7 +229,13 @@ export function Stat({ label, value, unit, color, testid }) {
   );
 }
 
-// Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
+/**
+ * Rendert eine Abschnittsüberschrift als Gruppentrenner.
+ * @param {string} label - Der anzuzeigende Abschnittstitel.
+ * @param {string} [color="#64748b"] - Die Farbe des Balkens und optionalen Icons.
+ * @param {React.ComponentType} [Icon] - Das optionale Icon der Überschrift.
+ * @param {string} [testid] - Die optionale Test-ID des Elements.
+ */
 export function SectionHeader({ label, color = "#64748b", icon: Icon, testid }) {
   return (
     <div className="flex items-center gap-2.5 pt-1" data-testid={testid}>

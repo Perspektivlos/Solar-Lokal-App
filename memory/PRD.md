@@ -64,7 +64,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Backend: mocks.py, influx_points.py, routes.py, collectors.py extrahiert
 - [x] Lifespan-Migration (on_event → asynccontextmanager)
 - [x] Forecast komplett entfernt (FE+BE)
-- [x] Security Audit (dokumentiert; Risiken vom Nutzer bewusst akzeptiert – LAN-only Betrieb: keine Auth, MQTT-Klartext-Creds, offene CORS)
+- [ ] Security Audit: Risiken bleiben offen — unauthentifizierte Control-Routen, offengelegte MQTT-Zugangsdaten und permissives CORS mit Credentials benötigen technische Schutzmaßnahmen; LAN-Betrieb allein gilt nicht als ausreichende Mitigation.
 - [x] 57/57 Pytest-Tests bestanden
 - [x] Fonts umgestellt: Space Grotesk (Text) + JetBrains Mono (Zahlen), app-weit inkl. SVG/Charts (28.08.2026)
 - [x] Design-Refinement (29.08.2026): Palette Schwarz/Mitternachtsblau/Mattgrau/Silber ergänzt (semantische Neon-Akzente bleiben für Datenzustände); einheitliche Kachel-Anatomie via GlassCard (Card-Lift-Hover, Header-Gradient, Silber-Rand); Glas-/Glow-Effekte verstärkt (blur 18px, abgedunkeltes glass-inset rgba(5,5,5,0.7)); Sparklines mit Flächenfüllung; 3-Font-System (Outfit=Labels, IBM Plex Sans=Body, JetBrains Mono=Zahlen). Rein visuell – KEINE angezeigten Werte/Labels geändert. Zentral in index.css/tailwind.config/solar-ui.jsx (kaskadiert auf alle Kacheln). Verifiziert per Screenshots (Dashboard + Geräte + Integrationen).
