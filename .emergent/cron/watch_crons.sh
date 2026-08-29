@@ -11,7 +11,7 @@ APPLIED="${APPLIED_HASH_FILE:-/app/.emergent/cron/applied.hash}"
 JOB_ID="${JOB_ID:-}"
 CRON_API_URL="${CRON_API_URL:-}"
 
-# sha256 of $1, or empty when the file is absent (matches the install writer).
+# hash_file gibt den SHA-256-Hash der angegebenen Datei zurück oder eine leere Zeichenkette, wenn die Datei fehlt oder nicht lesbar ist.
 hash_file() {
 	if [ -f "$1" ]; then
 		sha256sum "$1" 2>/dev/null | cut -d' ' -f1

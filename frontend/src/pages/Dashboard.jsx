@@ -39,6 +39,12 @@ const INTRO_SECTIONS = [
   },
 ];
 
+/**
+ * Bestimmt den aktuellen Betriebszustand der Batterie.
+ * @param {boolean} socDanger - Gibt an, ob der Ladezustand kritisch niedrig ist.
+ * @param {number} power - Batterieleistung in Watt.
+ * @returns {string} „KRITISCH“ bei kritisch niedrigem Ladezustand, „LADEN“ bei mehr als 20 W, „ENTLADEN“ bei weniger als −20 W, andernfalls „NORMAL“.
+ */
 function batteryStateKind(socDanger, power) {
   if (socDanger) return "KRITISCH";
   if (power > 20) return "LADEN";
@@ -46,14 +52,10 @@ function batteryStateKind(socDanger, power) {
   return "NORMAL";
 }
 
-// Sparkline-Trail: gleitendes 15-Minuten-Zeitfenster (unabhängig vom Poll-Intervall).
-const TRAIL_WINDOW_MS = 15 * 60 * 1000;
-const buildTrail = (samples) => ({
-  pv: samples.map((s) => s.pv),
-  grid: samples.map((s) => s.grid),
-  house: samples.map((s) => s.house),
-  battery: samples.map((s) => s.battery),
-});
+/**
+ * Zeigt das Live-Dashboard für Solar-, Netz-, Batterie- und MPPT-Daten an.
+ * @return {JSX.Element} Die Dashboard-Ansicht mit Live-Daten oder einem Lade- beziehungsweise Fehlerstatus.
+ */
 
 export default function Dashboard() {
   const [live, setLive] = useState(null);
@@ -138,7 +140,13 @@ export default function Dashboard() {
   const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp } = live;
   const prev = prevLive;
   const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
-  const batteryKind = batteryStateKind(socDanger, summary.battery_power);
+  const batteryFlowKind = batteryStateKind(false, summary.battery_power);
+  const batteryKind = socDanger ? "KRITISCH" : batteryFlowKind;
+  const batteryCopy = batteryFlowKind === "LADEN"
+    ? { title: "Akku lädt (netto)", label: "Ladeleistung netto" }
+    : batteryFlowKind === "ENTLADEN"
+      ? { title: "Akku entlädt (netto)", label: "Entladeleistung netto" }
+      : { title: "Akku neutral (netto)", label: "Batterieleistung netto" };
 
   return (
     <div className="space-y-6" data-testid="dashboard">
@@ -181,7 +189,7 @@ export default function Dashboard() {
 
           <div className="lg:col-span-4">
             <GlassCard
-              title={batteryKind === "LADEN" ? "Akku lädt (netto)" : batteryKind === "ENTLADEN" ? "Akku entlädt (netto)" : "Akku (netto)"}
+              title={batteryCopy.title}
               accent={COLOR.battery}
               icon={BatteryCharging}
               testid="live-battery"
@@ -189,7 +197,7 @@ export default function Dashboard() {
               badge={<Badge kind={batteryKind} />}
             >
               <MetricBig
-                label={batteryKind === "LADEN" ? "Ladeleistung netto" : batteryKind === "ENTLADEN" ? "Entladeleistung netto" : "Leistung netto"}
+                label={batteryCopy.label}
                 value={formatNum(Math.abs(summary.battery_power), 0)} unit="W"
                 color="text-cyan-300 neon-text-cyan"
                 sub={<Delta prev={prev?.summary?.battery_power} curr={summary.battery_power} />}
