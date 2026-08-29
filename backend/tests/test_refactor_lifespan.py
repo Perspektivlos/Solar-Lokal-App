@@ -124,7 +124,8 @@ class TestEndpointContracts:
         cfg = r.json()
         for k in ("devices", "mqtt", "influx", "victron_mqtt"):
             assert k in cfg, f"missing config section {k}"
-        original_port = cfg["mqtt"]["port"]
+        mutable = ("mqtt", "devices", "influx", "victron_mqtt")
+        original = {k: cfg[k] for k in mutable}
 
         try:
             put = client.put(f"{API}/config", json={"mqtt": {"port": 1884}}, timeout=30)
@@ -136,9 +137,11 @@ class TestEndpointContracts:
                 assert k in after
             assert after["devices"] == cfg["devices"]
         finally:
-            restore = client.put(f"{API}/config", json={"mqtt": {"port": original_port}}, timeout=30)
+            restore = client.put(f"{API}/config", json=original, timeout=30)
             assert restore.status_code == 200
-            assert client.get(f"{API}/config", timeout=30).json()["mqtt"]["port"] == original_port
+            restored = client.get(f"{API}/config", timeout=30).json()
+            for k in mutable:
+                assert restored[k] == original[k], f"config section {k} not restored"
 
     def test_today_contract(self, client):
         r = client.get(f"{API}/today", timeout=30)

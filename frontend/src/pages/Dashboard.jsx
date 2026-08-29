@@ -23,7 +23,7 @@ const INTRO_SECTIONS = [
   },
   {
     label: "Aktualisierung",
-    body: "Frontend pollt /api/live + /api/today alle 3 Sekunden. Sparkline-Trail enthält die letzten 30 Datenpunkte. Tageswerte aus Trapez-Integration seit Mitternacht (UTC).",
+    body: "Frontend pollt /api/live + /api/today alle 3 Sekunden. Die Sparkline-Trendlinien zeigen ein gleitendes 15-Minuten-Fenster (beim Laden aus der History vorbefüllt). Tageswerte aus Trapez-Integration seit Mitternacht (UTC).",
   },
   {
     label: "Layout-Gruppen",
@@ -61,6 +61,7 @@ export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);
   const [trail, setTrail] = useState({ pv: [], grid: [], house: [], battery: [] });
+  const trailRef = useRef([]);
   const [err, setErr] = useState(null);
   const [prevLive, setPrevLive] = useState(null);
   const liveRef = useRef(null);
@@ -80,13 +81,12 @@ export default function Dashboard() {
           seeded = true;
           const h = await getHistory("1h");
           if (alive && h?.points) {
-            const pts = h.points.slice(-30);
-            setTrail(() => ({
-              pv: pts.map((p) => p.pv_power),
-              grid: pts.map((p) => p.grid_power),
-              house: pts.map((p) => p.house_power),
-              battery: pts.map((p) => p.battery_power),
-            }));
+            const cutoff = Date.now() - TRAIL_WINDOW_MS;
+            const samples = h.points
+              .map((p) => ({ t: new Date(p.ts).getTime(), pv: p.pv_power, grid: p.grid_power, house: p.house_power, battery: p.battery_power }))
+              .filter((s) => s.t >= cutoff);
+            trailRef.current = samples;
+            setTrail(buildTrail(samples));
           }
         }
         const [l, t] = await Promise.all([getLive(), getToday()]);
@@ -95,12 +95,13 @@ export default function Dashboard() {
         liveRef.current = l;
         setLive(l);
         setToday(t);
-        setTrail((tr) => ({
-          pv: [...tr.pv, l.summary.pv_power].slice(-30),
-          grid: [...tr.grid, l.summary.grid_power].slice(-30),
-          house: [...tr.house, l.summary.house_power].slice(-30),
-          battery: [...tr.battery, l.summary.battery_power].slice(-30),
-        }));
+        const cutoff = Date.now() - TRAIL_WINDOW_MS;
+        const samples = [
+          ...trailRef.current,
+          { t: Date.now(), pv: l.summary.pv_power, grid: l.summary.grid_power, house: l.summary.house_power, battery: l.summary.battery_power },
+        ].filter((s) => s.t >= cutoff);
+        trailRef.current = samples;
+        setTrail(buildTrail(samples));
         setErr(null);
       } catch (e) {
         if (alive) setErr(e.message);

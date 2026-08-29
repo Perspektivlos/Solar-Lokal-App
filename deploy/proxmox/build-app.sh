@@ -15,6 +15,44 @@ APP_DIR="/opt/solar-dashboard"
 [[ -d "$APP_DIR/backend" && -d "$APP_DIR/frontend" ]] \
   || err "Quellcode nicht gefunden unter $APP_DIR — bitte zuerst hochladen."
 
+# ---- Vollständigkeits-Check ------------------------------------------------
+# Prüft VOR dem Build, ob alle Kern-Dateien vorhanden sind. Ein unvollständiger
+# Upload (z.B. per tar/scp) führt sonst zu kryptischen Fehlern mitten im Build
+# ("craco: Config file not found", ModuleNotFoundError etc.). Hier lieber früh
+# mit klarer Meldung abbrechen. Hinweis: craco.config.js hat weiter unten eine
+# Selbstheilung (Fallback) und ist deshalb bewusst NICHT hart erforderlich.
+log "Vollständigkeit des Uploads prüfen …"
+REQUIRED_FILES=(
+  "backend/server.py"
+  "backend/routes.py"
+  "backend/collectors.py"
+  "backend/mqtt_client.py"
+  "backend/requirements.txt"
+  "frontend/package.json"
+  "frontend/src/index.js"
+  "frontend/src/App.js"
+  "frontend/public/index.html"
+  "frontend/tailwind.config.js"
+)
+MISSING=()
+for f in "${REQUIRED_FILES[@]}"; do
+  [[ -f "$APP_DIR/$f" ]] || MISSING+=("$f")
+done
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  err "Upload unvollständig — folgende Kern-Dateien fehlen:
+    $(printf '\n    - %s' "${MISSING[@]}")
+
+  Der Quellcode wurde nicht komplett übertragen. Bitte erneut vollständig
+  hochladen. Empfohlen (immer vollständig & aktuell):
+    pct exec <CTID> -- bash -lc 'cd /opt && rm -rf solar-dashboard && \\
+      git clone <DEIN_REPO_URL> solar-dashboard'
+  Oder tar sauber neu packen (im Projekt-Root mit /app):
+    tar czf solar-dashboard.tar.gz --exclude='node_modules' \\
+      --exclude='__pycache__' --exclude='.venv' --exclude='build' \\
+      --exclude='.git' backend frontend deploy"
+fi
+ok "Upload vollständig (${#REQUIRED_FILES[@]} Kern-Dateien geprüft)."
+
 chown -R solar:solar "$APP_DIR"
 
 # ---- Backend ----------------------------------------------------------------
@@ -66,6 +104,26 @@ if [[ "${AVAIL_MB:-0}" -lt 1200 ]]; then
   warn "   nach erfolgreichem Build wieder zurück:   pct set <CTID> --memory 1024"
 fi
 export NODE_OPTIONS="--max-old-space-size=${NODE_HEAP_MB:-2048}"
+
+# craco.config.js ist ZWINGEND nötig: der Webpack-'@'-Alias wird in ~47 Imports
+# verwendet (u.a. src/index.js -> "@/App"). Fehlt die Datei im Upload, bricht
+# 'craco build' mit "Config file not found" ab. Fehlt sie, erzeugen wir eine
+# minimale, funktionsfähige Fallback-Config, damit der Build nicht scheitert.
+if [[ ! -f "$APP_DIR/frontend/craco.config.js" ]]; then
+  warn "craco.config.js fehlt im Upload — erzeuge minimale Fallback-Config."
+  cat > "$APP_DIR/frontend/craco.config.js" <<'CRACO'
+const path = require("path");
+try { require("dotenv").config(); } catch (e) { /* optional */ }
+process.env.REACT_APP_VERSION = require("./package.json").version;
+process.env.REACT_APP_BUILD_DATE = new Date().toISOString().slice(0, 10);
+module.exports = {
+  webpack: {
+    alias: { "@": path.resolve(__dirname, "src") },
+  },
+};
+CRACO
+  chown solar:solar "$APP_DIR/frontend/craco.config.js"
+fi
 
 log "Frontend: Production-Build (kann 2–3 min dauern) …"
 sudo -u solar env GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true CI=false \

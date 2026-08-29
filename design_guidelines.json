@@ -1,136 +1,133 @@
 {
-  "theme": "Dark Glassmorphism / Sci-Fi Control-Room",
-  "language": "German",
+  "theme": "dark",
   "typography": {
-    "fonts": {
-      "heading": "Space Grotesk, sans-serif",
-      "data_and_mono": "JetBrains Mono, monospace",
-      "body": "Space Grotesk, sans-serif"
-    },
+    "fonts": [
+      {
+        "role": "Headings & Primary Labels",
+        "family": "Outfit, sans-serif",
+        "import": "@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');"
+      },
+      {
+        "role": "Body Text & UI Elements",
+        "family": "'IBM Plex Sans', sans-serif",
+        "import": "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');"
+      },
+      {
+        "role": "Numbers & Metrics",
+        "family": "'JetBrains Mono', monospace",
+        "import": "@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');"
+      }
+    ],
     "hierarchy": {
-      "live_metric_primary": "font-mono text-4xl font-semibold tracking-tighter text-white drop-shadow-sm",
-      "live_metric_unit": "font-mono text-xl font-normal text-slate-400 ml-1.5",
-      "live_metric_secondary": "font-mono text-sm text-slate-400/80 font-medium",
-      "card_title": "font-sans text-base font-semibold tracking-wide text-slate-200 uppercase",
-      "small_label": "font-sans text-xs font-bold uppercase tracking-widest text-slate-300"
-    },
-    "rules": {
-      "numbers": "Always use JetBrains Mono for numerical values to ensure tabular alignment.",
-      "contrast": "Ensure small labels use text-slate-300 instead of slate-500 to maintain high readability in the dark theme."
+      "h1": "text-4xl lg:text-5xl font-bold tracking-tight text-white",
+      "h2": "text-2xl font-semibold tracking-tight text-silver",
+      "h3": "text-xl font-medium tracking-tight text-silver",
+      "h4": "text-lg font-medium text-matte-grey",
+      "body": "text-base text-matte-grey leading-relaxed",
+      "small": "text-sm text-matte-grey tracking-wide uppercase",
+      "metric_large": "text-4xl lg:text-5xl font-bold font-mono tracking-tighter text-silver",
+      "metric_medium": "text-2xl font-semibold font-mono tracking-tighter text-silver",
+      "metric_small": "text-lg font-medium font-mono text-matte-grey"
     }
   },
   "colors": {
-    "accents": {
-      "pv": "#FACC15",
-      "grid_red": "#F87171",
-      "grid_emerald": "#10B981",
-      "battery": "#06B6D4",
-      "victron": "#34D399"
+    "base": {
+      "black": "#050505",
+      "midnight_blue": "#0A1128",
+      "matte_grey": "#8C92AC",
+      "silver": "#E2E8F0"
+    },
+    "semantic_neon": {
+      "pv": "#FDE047",
+      "grid_imp": "#EF4444",
+      "grid_exp": "#22C55E",
+      "battery": "#06B6D4"
     },
     "backgrounds": {
-      "app": "bg-slate-950",
-      "card": "bg-slate-900/70 backdrop-blur-xl",
-      "card_hover": "hover:bg-slate-800/80"
+      "page": "bg-gradient-to-br from-[#050505] via-[#0A1128]/50 to-[#050505] min-h-screen text-[#E2E8F0]",
+      "card_glass": "bg-[#0A1128]/40 backdrop-blur-xl",
+      "card_inner_dark": "bg-[#050505]/70 backdrop-blur-md"
     },
     "borders": {
-      "subtle": "border-slate-700/50",
-      "glow_hover": "hover:border-slate-500/60"
+      "subtle": "border-[#8C92AC]/20",
+      "glow_hover": "border-[#E2E8F0]/30",
+      "divider": "border-[#8C92AC]/10"
     }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "backdrop_blur": "backdrop-blur-xl",
+      "border": "border border-[#8C92AC]/20",
+      "shadow": "shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+    },
+    "glow_effects": {
+      "pv_glow": "drop-shadow-[0_0_12px_rgba(253,224,71,0.4)]",
+      "grid_imp_glow": "drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]",
+      "grid_exp_glow": "drop-shadow-[0_0_12px_rgba(34,197,94,0.4)]",
+      "battery_glow": "drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]",
+      "text_glow_hover": "drop-shadow-[0_0_8px_rgba(226,232,240,0.6)]"
+    },
+    "inner_dark_panel": "Inside the cards (e.g., around charts or metric groups), use `bg-[#050505]/70 rounded-lg p-4 shadow-inner border border-[#8C92AC]/10` to create a deep, recessed data area."
   },
   "layouts": {
-    "grid_system": "grid grid-cols-1 md:grid-cols-12 gap-6",
-    "rows": {
-      "row_1_top_kpis_and_flow": {
-        "description": "Top-KPI-Leiste + Animiertes Energiefluss-Diagramm",
-        "grid_span": {
-          "top_kpi_card": "col-span-1 md:col-span-12 lg:col-span-8",
-          "energy_flow_card": "col-span-1 md:col-span-12 lg:col-span-4"
-        },
-        "content_top_kpi": "Zwei Gruppen: [PV: Heute Gesamt Erzeugt (kWh), Aktuelle Erzeugung (W)] und [Netz: Heute Bezug (kWh), Verbrauch (kWh), Einspeisung (kWh), Aktueller Export (W)]. KEINE Autarkie/Eigenverbrauch."
-      },
-      "row_2_battery": {
-        "description": "Batterie-Inhalte",
-        "grid_span": {
-          "akku_netto": "col-span-1 md:col-span-6 lg:col-span-4",
-          "trucki2shelly": "col-span-1 md:col-span-6 lg:col-span-5",
-          "efficiency": "col-span-1 md:col-span-12 lg:col-span-3"
-        }
-      },
-      "row_3_victron": {
-        "description": "Victron-Inhalte",
-        "grid_span": {
-          "mppt_150_35": "col-span-1 md:col-span-12 lg:col-span-7",
-          "mppt_comparison": "col-span-1 md:col-span-12 lg:col-span-5"
-        }
-      },
-      "row_4_shelly": {
-        "description": "Shelly-Inhalte",
-        "grid_span": {
-          "pro_3em": "col-span-1 md:col-span-12 lg:col-span-8",
-          "imbalance": "col-span-1 md:col-span-12 lg:col-span-4"
-        }
-      },
-      "row_5_rest": {
-        "description": "Rest (Hoymiles)",
-        "grid_span": {
-          "hoymiles_hm1500": "col-span-1 md:col-span-12"
-        }
-      }
-    }
-  },
-  "components": {
-    "unified_card": {
-      "wrapper": "relative overflow-hidden rounded-xl bg-slate-900/70 backdrop-blur-xl border border-slate-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.4)] p-6 transition-all duration-300",
-      "header": "flex items-center justify-between mb-6",
-      "title_group": "flex items-center gap-2",
-      "glow_effect": "Absolute positioned radial gradient div in the top-right corner with 10% opacity matching the domain accent color (e.g., PV yellow, Battery cyan)."
+    "card_anatomy": {
+      "container": "relative flex flex-col rounded-xl overflow-hidden bg-[#0A1128]/40 backdrop-blur-xl border border-[#8C92AC]/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-[#E2E8F0]/30 hover:shadow-[0_8px_32px_rgba(10,17,40,0.9)] group",
+      "top_accent_bar": "absolute top-0 left-0 right-0 h-[3px] opacity-80 bg-gradient-to-r to-transparent",
+      "header_row": "flex items-center justify-between p-4 border-b border-[#8C92AC]/10 bg-gradient-to-b from-[#8C92AC]/5 to-transparent",
+      "header_title_group": "flex items-center gap-3",
+      "header_icon": "w-5 h-5 text-matte-grey group-hover:text-silver transition-colors",
+      "header_title": "text-xs font-semibold tracking-widest uppercase text-matte-grey group-hover:text-silver transition-colors",
+      "header_badge": "ml-auto",
+      "body": "flex-1 p-5 flex flex-col gap-4 relative z-10",
+      "footer": "p-4 border-t border-[#8C92AC]/10 bg-[#050505]/40 text-xs text-matte-grey flex items-center justify-between"
     },
-    "status_badges": {
-      "states": {
-        "NORMAL_OK": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-        "KRITISCH": "bg-red-500/10 text-red-400 border-red-500/20 animate-pulse",
-        "LADEN": "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
-        "ENTLADEN": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-      },
-      "data_sources": {
-        "LIVE": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-        "DEMO": "bg-amber-500/10 text-amber-400 border-amber-500/20",
-        "FALLBACK": "bg-orange-500/10 text-orange-400 border-orange-500/20",
-        "OFFLINE": "bg-slate-500/10 text-slate-400 border-slate-500/20"
-      },
-      "styling": "flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border font-mono text-[10px] uppercase tracking-wider font-semibold",
-      "icons": "Use lucide-react. Size 12px (w-3 h-3)."
+    "grid_system": {
+      "kpi_top_row": "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8",
+      "main_content": "grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8",
+      "energy_flow": "col-span-1 lg:col-span-2 h-full min-h-[400px]",
+      "device_tiles": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+    }
+  },
+  "motion": {
+    "hover_states": "Cards subtly lift (`-translate-y-1`) with increased border brightness. Icons and titles transition from matte-grey to silver.",
+    "energy_flow_particles": "SVG paths MUST use `stroke-dasharray` and CSS animations (`@keyframes flow`) to animate glowing particles along the lines. Speeds should map to energy volume.",
+    "transitions": "Use `transition-all duration-300 ease-in-out` universally for interactive feedback (buttons, cards, badges)."
+  },
+  "accessibility": {
+    "contrast": "Ensure silver/white text on black/midnight blue backgrounds meets at least 4.5:1 contrast. Neon semantic colors should primarily be used for data plotting, glows, and accents, not small text.",
+    "data_testid": "Add descriptive data-testid attributes to all KPI cards, chart containers, and status badges (e.g., `data-testid=\"kpi-card-pv-total\"`).",
+    "focus": "Focus rings on interactive elements should use `focus:ring-2 focus:ring-[#8C92AC]/50 focus:outline-none rounded-md`."
+  },
+  "components": [
+    {
+      "name": "GlassCard",
+      "instructions": "Standardize using the `card_anatomy` structure. EVERY card in the dashboard must use this identical container layout. The 3px top border gradient should adopt the semantic color (yellow/red/green/cyan) if the card represents a specific energy domain."
     },
-    "units_and_signs": {
-      "units": "Always display units in a smaller font size than the value (text-xl vs text-4xl). Units: W, kW, kWh, V, A, %.",
-      "signs": "Show explicit plus (+) for positive values like charging/import, and minus (-) for discharge/export if applicable. Use semantic coloring for signs."
+    {
+      "name": "MetricBig",
+      "instructions": "Use JetBrains Mono. Maintain exact values and labels without modification. Apply targeted drop-shadow (glow) to the text or its icon based on the metric type."
+    },
+    {
+      "name": "Sparkline",
+      "instructions": "Wrap in the `inner_dark_panel` style (`bg-[#050505]/70`). Minimalist axes. Stroke color matches semantic neon color. Fill uses a subtle linear gradient fading into the dark panel."
+    },
+    {
+      "name": "StatusBadge",
+      "instructions": "Small pill shape (`rounded-full px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider`). Dark inner background (`bg-[#050505]/80`), glowing 1px border matching status color, and a pulsing dot."
+    },
+    {
+      "name": "EnergyFlowDiagram",
+      "instructions": "Central visual piece. Use distinct nodes (PV, Grid, Battery, Home) with glassmorphism styling. Connect them with animated SVG lines featuring the target glow effects. Ensure particles flow in the correct direction (e.g., Grid -> Home or Home -> Grid)."
     }
-  },
-  "charts": {
-    "recharts": {
-      "lines": "Increase strokeWidth to 2.5 or 3 for better visibility against dark backgrounds.",
-      "glow": "Use CSS filter drop-shadow to give the lines a neon glow (e.g., drop-shadow(0 0 4px currentColor)).",
-      "colors": "Bind line colors to the functional accent colors defined in the colors block.",
-      "tooltips": "Ensure recharts tooltips use the glassmorphism card styling (bg-slate-900/90, border-slate-700/50)."
-    }
-  },
-  "instructions_to_main_agent": [
-    "You are writing a React frontend application.",
-    "Use JS/JSX for all React components. Do NOT use TSX.",
-    "Follow the defined 5-row layout exactly.",
-    "Ensure 'Deutsche Oberfläche' (German labels) is used everywhere.",
-    "Maintain the precise visual hierarchy: Huge dominant values, smaller units, muted secondary data.",
-    "Implement the animated SVG energy flow diagram for Row 1. It must indicate power flow dynamically.",
-    "Implement the 'Top-Kachel' exactly as requested with the specified variables in Row 1.",
-    "Ensure NO fully transparent backgrounds on panels—glassmorphism needs a tinted base (bg-slate-900/70) so text is readable.",
-    "Use lucide-react for all iconography."
   ],
   "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
-    "Do not converge toward generic outputs. Use the Sci-Fi / Control Room aesthetics strongly but cleanly.",
-    "Do not apply global transitions (e.g., transition: all). Target specific properties.",
-    "Avoid text-align: center on the root app container.",
-    "Ensure layering creates depth via distinct z-indexes and drop shadows.",
-    "All interactive and key informational elements MUST include a data-testid attribute for automated testing. Example: data-testid='kpi-pv-total'.",
-    "Use standard Radix UI or Shadcn components adapted to the dark glassmorphism aesthetic where complex interactivity is needed."
+    "HARD CONSTRAINT: NEVER alter the displayed data values, labels, or underlying logic. Purely a visual and layout upgrade.",
+    "All cards MUST follow the exact same unified anatomy (Header row with icon+title+badge, Body, optional Footer). No exceptions. This ensures visual harmony.",
+    "Enforce the new dark sci-fi color palette: Base elements use Black and Midnight Blue, structural elements use Matte Grey, text primarily uses Silver.",
+    "Use a darkened background (`bg-[#050505]/70`) INSIDE the tiles for charts, metric groups, or tables. This 'nested depth' is critical to the sci-fi aesthetic.",
+    "Do not use generic centered layouts for data. Align text/labels to the left, and numerical values/badges to the right.",
+    "Avoid fully transparent overlays or backgrounds over the page background. Always use `backdrop-blur` combined with a semi-transparent color (e.g., `bg-[#0A1128]/40`).",
+    "Apply 'data-testid' to all key elements for testing stability.",
+    "Ensure the fonts (Outfit, IBM Plex Sans, JetBrains Mono) are imported and applied correctly according to the typography hierarchy."
   ]
 }

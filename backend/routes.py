@@ -490,12 +490,19 @@ async def diagnostics_run():
                 last_err = f"{type(e).__name__}: {str(e)[:60]}"
         add(label, False, f"{ip} nicht erreichbar – {last_err}{extra}")
 
-    devs = cfg.get("devices") or {}
+    devs = cfg.get("devices")
+    if not isinstance(devs, dict):
+        devs = {}
+
+    def _d(name):
+        v = devs.get(name)
+        return v if isinstance(v, dict) else {}
+
     await asyncio.gather(
-        ping_http("Shelly Pro 3EM", (devs.get("shelly") or {}).get("ip", ""), ["/rpc/EM.GetStatus?id=0", "/"], "shelly", _mqtt_data["shelly"]["_ts"]),
-        ping_http("Ahoy DTU (Hoymiles)", (devs.get("ahoy") or {}).get("ip", ""), ["/api/system", "/"], "ahoy", _mqtt_data["ahoy"]["_ts"]),
-        ping_http("Trucki2Shelly", (devs.get("trucki") or {}).get("ip", ""), ["/status", "/"], "trucki", _mqtt_data["trucki"]["_ts"]),
-        ping_http("Victron VenusOS", (devs.get("victron") or {}).get("ip", ""), ["/api/v1/system", "/"], "victron", _mqtt_data["victron"]["_ts"]),
+        ping_http("Shelly Pro 3EM", _d("shelly").get("ip", ""), ["/rpc/EM.GetStatus?id=0", "/"], "shelly", _mqtt_data["shelly"]["_ts"]),
+        ping_http("Ahoy DTU (Hoymiles)", _d("ahoy").get("ip", ""), ["/api/system", "/"], "ahoy", _mqtt_data["ahoy"]["_ts"]),
+        ping_http("Trucki2Shelly", _d("trucki").get("ip", ""), ["/status", "/"], "trucki", _mqtt_data["trucki"]["_ts"]),
+        ping_http("Victron VenusOS", _d("victron").get("ip", ""), ["/api/v1/system", "/"], "victron", _mqtt_data["victron"]["_ts"]),
     )
 
     # Summary
