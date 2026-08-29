@@ -121,7 +121,7 @@ export function Spark({ values, color = "#8C92AC", height = 24 }) {
         </linearGradient>
       </defs>
       <polygon points={`0,${height} ${pts} ${w},${height}`} fill={`url(#${gid})`} />
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" style={{ filter: `drop-shadow(0 0 4px ${color}aa)` }} />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
 }
