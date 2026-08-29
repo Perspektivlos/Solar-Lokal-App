@@ -39,14 +39,14 @@ export function GlassCard({ title, accent = "#8C92AC", icon: Icon, badge, testid
     >
       <span className="absolute top-0 left-0 right-0 h-[3px] opacity-90 pointer-events-none z-10" style={{ background: `linear-gradient(90deg, ${accent}, transparent 88%)`, boxShadow: `0 0 14px ${accent}, 0 1px 8px ${accent}aa` }} />
       <div className="absolute -top-14 -right-14 w-36 h-36 rounded-full opacity-[0.18] blur-3xl pointer-events-none transition-opacity duration-300 group-hover:opacity-30" style={{ background: accent }} />
-      <div className="relative border-b border-[#8C92AC]/12 bg-gradient-to-b from-white/[0.035] to-transparent px-4 py-2.5 flex items-center justify-between gap-3">
+      <div className="relative border-b border-[#8C92AC]/12 bg-gradient-to-b from-white/[0.035] to-transparent px-5 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           {Icon && <Icon size={13} strokeWidth={2.4} className="shrink-0 transition-colors duration-300" style={{ color: accent }} />}
           <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8C92AC] group-hover:text-silver transition-colors duration-300 truncate">{title}</span>
         </div>
         {badge}
       </div>
-      <div className="relative p-4 flex-1">{children}</div>
+      <div className="relative p-5 flex-1">{children}</div>
     </div>
   );
 }

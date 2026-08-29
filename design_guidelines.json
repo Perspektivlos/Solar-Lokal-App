@@ -4,8 +4,8 @@
     "fonts": [
       {
         "role": "Headings & Primary Labels",
-        "family": "Outfit, sans-serif",
-        "import": "@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');"
+        "family": "'Chakra Petch', sans-serif",
+        "import": "@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');"
       },
       {
         "role": "Body Text & UI Elements",

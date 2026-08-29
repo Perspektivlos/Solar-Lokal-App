@@ -8,15 +8,22 @@ module.exports = {
   theme: {
         extend: {
                 fontFamily: {
-                        sans: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                        sans: ['Chakra Petch', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                         body: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
                         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
                 },
-                colors: {
-                        ink: '#050505',
-                        midnight: '#0A1128',
-                        'matte-grey': '#8C92AC',
-                        silver: '#E2E8F0',
+                spacing: {
+                        '4.5': '1.125rem',
+                        '13': '3.25rem',
+                        '15': '3.75rem',
+                        '17': '4.25rem',
+                        '18': '4.5rem',
+                        '22': '5.5rem',
+                        '26': '6.5rem',
+                        '30': '7.5rem',
+                        '88': '22rem',
+                        '100': '25rem',
+                        '128': '32rem',
                 },
                 borderRadius: {
                         lg: 'var(--radius)',
@@ -24,6 +31,12 @@ module.exports = {
                         sm: 'calc(var(--radius) - 4px)'
                 },
                 colors: {
+                        ink: '#050505',
+                        midnight: '#0A1128',
+                        'matte-grey': '#8C92AC',
+                        silver: '#E2E8F0',
+                        'sci-white': '#F8FAFC',
+                        'sci-blue': { DEFAULT: '#3B82F6', light: '#60A5FA', deep: '#1D4ED8' },
                         background: 'hsl(var(--background))',
                         foreground: 'hsl(var(--foreground))',
                         card: {
