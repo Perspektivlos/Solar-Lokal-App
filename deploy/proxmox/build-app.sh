@@ -15,6 +15,44 @@ APP_DIR="/opt/solar-dashboard"
 [[ -d "$APP_DIR/backend" && -d "$APP_DIR/frontend" ]] \
   || err "Quellcode nicht gefunden unter $APP_DIR — bitte zuerst hochladen."
 
+# ---- Vollständigkeits-Check ------------------------------------------------
+# Prüft VOR dem Build, ob alle Kern-Dateien vorhanden sind. Ein unvollständiger
+# Upload (z.B. per tar/scp) führt sonst zu kryptischen Fehlern mitten im Build
+# ("craco: Config file not found", ModuleNotFoundError etc.). Hier lieber früh
+# mit klarer Meldung abbrechen. Hinweis: craco.config.js hat weiter unten eine
+# Selbstheilung (Fallback) und ist deshalb bewusst NICHT hart erforderlich.
+log "Vollständigkeit des Uploads prüfen …"
+REQUIRED_FILES=(
+  "backend/server.py"
+  "backend/routes.py"
+  "backend/collectors.py"
+  "backend/mqtt_client.py"
+  "backend/requirements.txt"
+  "frontend/package.json"
+  "frontend/src/index.js"
+  "frontend/src/App.js"
+  "frontend/public/index.html"
+  "frontend/tailwind.config.js"
+)
+MISSING=()
+for f in "${REQUIRED_FILES[@]}"; do
+  [[ -f "$APP_DIR/$f" ]] || MISSING+=("$f")
+done
+if [[ ${#MISSING[@]} -gt 0 ]]; then
+  err "Upload unvollständig — folgende Kern-Dateien fehlen:
+    $(printf '\n    - %s' "${MISSING[@]}")
+
+  Der Quellcode wurde nicht komplett übertragen. Bitte erneut vollständig
+  hochladen. Empfohlen (immer vollständig & aktuell):
+    pct exec <CTID> -- bash -lc 'cd /opt && rm -rf solar-dashboard && \\
+      git clone <DEIN_REPO_URL> solar-dashboard'
+  Oder tar sauber neu packen (im Projekt-Root mit /app):
+    tar czf solar-dashboard.tar.gz --exclude='node_modules' \\
+      --exclude='__pycache__' --exclude='.venv' --exclude='build' \\
+      --exclude='.git' backend frontend deploy"
+fi
+ok "Upload vollständig (${#REQUIRED_FILES[@]} Kern-Dateien geprüft)."
+
 chown -R solar:solar "$APP_DIR"
 
 # ---- Backend ----------------------------------------------------------------
