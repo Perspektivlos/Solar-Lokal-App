@@ -3,16 +3,19 @@ import { Cable } from "lucide-react";
 
 const PHASE_COLOR = { L1: "#FACC15", L2: "#06B6D4", L3: "#A78BFA" };
 
-// Prominente 3-Phasen-Schieflast-Anzeige (Balken je Phase + Unbalance-Indikator).
+/**
+ * Zeigt die Leistungsaufteilung und Schieflast der drei Phasen an.
+ * @param {Array} [phases] - Phasen mit ihren Leistungswerten.
+ * @return {JSX.Element} Die Darstellung der Phasenschieflast.
+ */
 export default function PhaseBalance({ phases }) {
   const list = phases || [];
-  const mags = list.map((p) => Math.abs(p.power || 0));
+  const powers = list.map((p) => p.power || 0);
+  const mags = powers.map(Math.abs);
   const maxAbs = Math.max(1, ...mags);
   const avg = mags.length ? mags.reduce((a, b) => a + b, 0) / mags.length : 0;
-  const spread = mags.length ? Math.max(...mags) - Math.min(...mags) : 0;
-  // Standard-Definition Phasen-Unbalance: max. Abweichung vom Mittel ÷ Mittel.
-  const maxDev = mags.length ? Math.max(...mags.map((m) => Math.abs(m - avg))) : 0;
-  const unbalancePct = avg > 0 ? Math.min(100, (maxDev / avg) * 100) : 0;
+  const spread = powers.length ? Math.max(...powers) - Math.min(...powers) : 0;
+  const unbalancePct = avg > 0 ? Math.min(100, (spread / avg) * 100) : 0;
 
   const status = unbalancePct < 15
     ? { color: "#10B981", kind: "NORMAL", label: "SYMMETRISCH" }

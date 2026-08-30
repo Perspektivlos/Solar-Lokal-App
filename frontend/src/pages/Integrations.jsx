@@ -42,6 +42,17 @@ function StatusBadge({ connected, label, testid }) {
   );
 }
 
+/**
+ * Rendert einen schaltbaren Konfigurationsabschnitt mit Titel, Akzentfarbe und Inhalt.
+ * @param {string} title - Die Überschrift des Abschnitts.
+ * @param {string} accent - Die Akzentfarbe für den linken Rand und Schatten.
+ * @param {boolean} enabled - Gibt an, ob der Abschnitt aktiviert ist.
+ * @param {Function} onToggle - Wird beim Ändern des Aktivierungsstatus aufgerufen.
+ * @param {string} testid - Test-ID für den Abschnitt.
+ * @param {string} switchTestid - Test-ID für den Schalter.
+ * @param {React.ReactNode} children - Der Inhalt des Abschnitts.
+ * @return {JSX.Element} Das gerenderte Konfigurationsfeld.
+ */
 function Section({ title, accent, enabled, onToggle, testid, switchTestid, children }) {
   return (
     <div className="glass" style={{ borderLeft: `3px solid ${accent}`, boxShadow: `0 0 24px -16px ${accent}aa` }} data-testid={testid}>
@@ -54,6 +65,13 @@ function Section({ title, accent, enabled, onToggle, testid, switchTestid, child
   );
 }
 
+/**
+ * Rendert ein beschriftetes Eingabefeld innerhalb eines responsiven Rasters.
+ * @param {Object} props - Eigenschaften des Eingabefelds.
+ * @param {string} props.label - Beschriftung des Eingabefelds.
+ * @param {boolean} [props.colspan] - Gibt an, ob das Feld auf mittleren Bildschirmbreiten beide Spalten einnimmt.
+ * @returns {JSX.Element} Das beschriftete Eingabefeld.
+ */
 function Field({ label, colspan, ...inputProps }) {
   return (
     <div className={colspan ? "md:col-span-2" : ""}>
