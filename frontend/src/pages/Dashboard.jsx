@@ -159,7 +159,7 @@ export default function Dashboard() {
       : { title: "Akku neutral (netto)", label: "Batterieleistung netto" };
 
   return (
-    <div className="space-y-6" data-testid="dashboard">
+    <div className="space-y-8" data-testid="dashboard">
       <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent="#FACC15" testid="intro-dashboard" />
 
       {/* Header strip */}
@@ -184,13 +184,13 @@ export default function Dashboard() {
       </div>
 
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
-      <div data-testid="row-overview" className="space-y-6">
+      <div data-testid="row-overview" className="space-y-8">
         <KpiStrip today={today} summary={summary} trail={trail} />
         <EnergyFlow summary={summary} trucki={trucki} />
       </div>
 
       {/* SEKTION · BATTERIE */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} testid="section-battery" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
@@ -231,7 +231,7 @@ export default function Dashboard() {
       </div>
 
       {/* SEKTION · VICTRON */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} testid="section-victron" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
@@ -242,7 +242,7 @@ export default function Dashboard() {
       </div>
 
       {/* SEKTION · PV & NETZ */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} testid="section-pv-grid" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
@@ -281,7 +281,7 @@ export default function Dashboard() {
       </div>
 
       {/* SEKTION · SHELLY */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} testid="section-shelly" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
           <div className="lg:col-span-8">
