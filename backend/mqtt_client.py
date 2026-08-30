@@ -72,6 +72,12 @@ def _handle_victron_topic(topic: str, payload: bytes, now_iso: str) -> None:
     parts = topic.split("/")
     if len(parts) < 5:
         return
+    # Validate that the VRM ID in the topic matches the configured VRM ID
+    configured_vrm = _mqtt_state.get("vrm_id")
+    topic_vrm = parts[1]
+    if configured_vrm and topic_vrm != configured_vrm:
+        logger.debug(f"Ignoring Victron topic with mismatched VRM ID: {topic_vrm} != {configured_vrm}")
+        return
     service = parts[2]
     inst_raw = parts[3]
     path = "/".join(parts[4:])

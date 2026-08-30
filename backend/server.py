@@ -5,7 +5,7 @@ Trucki2Shelly Gateway and Victron MPPT (VenusOS). Provides live values,
 history, daily totals, device control and integration (MQTT/InfluxDB).
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,9 +13,10 @@ import os
 import asyncio
 import logging
 from pathlib import Path
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Any, Dict, Optional
 from contextlib import asynccontextmanager
+import re
 
 from mqtt_client import (
     _mqtt_data,
@@ -149,6 +150,83 @@ async def save_config(cfg: Dict[str, Any]) -> None:
     await db.config.update_one({"_id": "main"}, {"$set": cfg}, upsert=True)
 
 
+# ---------- MQTT Topic Validation ----------
+
+def _validate_mqtt_topic_fragment(fragment: str, field_name: str) -> str:
+    """
+    Validates that an MQTT topic fragment does not contain wildcard characters
+    or path separators that could be exploited for cross-tenant data collection.
+    
+    Parameters:
+        fragment (str): The topic fragment to validate (e.g., topic_prefix or vrm_id).
+        field_name (str): The name of the field being validated (for error messages).
+    
+    Returns:
+        str: The validated fragment.
+    
+    Raises:
+        ValueError: If the fragment contains MQTT wildcards (+, #) or path separators (/).
+    """
+    if not fragment:
+        return fragment
+    
+    # MQTT wildcards: + (single-level), # (multi-level)
+    # Path separator: /
+    forbidden_chars = ['+', '#', '/']
+    for char in forbidden_chars:
+        if char in fragment:
+            raise ValueError(
+                f"{field_name} must not contain MQTT wildcard or path separator characters "
+                f"(+, #, /). Found: '{char}' in '{fragment}'"
+            )
+    
+    return fragment
+
+
+def _validate_mqtt_config(mqtt_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Validates MQTT configuration to prevent wildcard injection attacks.
+    
+    Parameters:
+        mqtt_cfg (Dict[str, Any]): MQTT configuration dictionary.
+    
+    Returns:
+        Dict[str, Any]: The validated configuration.
+    
+    Raises:
+        ValueError: If validation fails.
+    """
+    if not mqtt_cfg:
+        return mqtt_cfg
+    
+    if "topic_prefix" in mqtt_cfg:
+        _validate_mqtt_topic_fragment(mqtt_cfg["topic_prefix"], "mqtt.topic_prefix")
+    
+    return mqtt_cfg
+
+
+def _validate_victron_mqtt_config(victron_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Validates Victron MQTT configuration to prevent wildcard injection attacks.
+    
+    Parameters:
+        victron_cfg (Dict[str, Any]): Victron MQTT configuration dictionary.
+    
+    Returns:
+        Dict[str, Any]: The validated configuration.
+    
+    Raises:
+        ValueError: If validation fails.
+    """
+    if not victron_cfg:
+        return victron_cfg
+    
+    if "vrm_id" in victron_cfg:
+        _validate_mqtt_topic_fragment(victron_cfg["vrm_id"], "victron_mqtt.vrm_id")
+    
+    return victron_cfg
+
+
 # ---------- API Models ----------
 
 class ConfigUpdate(BaseModel):
@@ -157,6 +235,22 @@ class ConfigUpdate(BaseModel):
     mqtt: Optional[Dict[str, Any]] = None
     influx: Optional[Dict[str, Any]] = None
     victron_mqtt: Optional[Dict[str, Any]] = None
+    
+    @field_validator('mqtt')
+    @classmethod
+    def validate_mqtt(cls, v):
+        """Validates MQTT configuration to prevent wildcard injection."""
+        if v is not None:
+            return _validate_mqtt_config(v)
+        return v
+    
+    @field_validator('victron_mqtt')
+    @classmethod
+    def validate_victron_mqtt(cls, v):
+        """Validates Victron MQTT configuration to prevent wildcard injection."""
+        if v is not None:
+            return _validate_victron_mqtt_config(v)
+        return v
 
 
 class HoymilesControl(BaseModel):
