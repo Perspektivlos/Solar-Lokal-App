@@ -6,21 +6,15 @@ Dieses Dokument gibt einen strukturierten Überblick über die jüngsten Entwick
 
 ## 1. Kürzliche Commits & Git-Historie
 
-*Hinweis:* Dieser Fork (`fork-update`) hat **noch keine Git-Commits** — der Arbeitsstand liegt vollständig als untracked-Dateien vor. Die unten genannten Commit-Hashes stammen aus der **ursprünglichen Emergent-/Upstream-Historie** und sind in diesem Checkout **nicht vorhanden**. Sie dienen hier nur als grober Herkunftsnachweis, nicht als verifizierbare Historie dieses Forks.
-
-*   **Commit `9e1cc36` (Upstream, aktuellster Stand)**: *Revise license section to include copyright details*
+*   **Commit `9e1cc36` (Aktuellster Commit)**: *Revise license section to include copyright details*
     *   Überarbeitung der rechtlichen Rahmenbedingungen und Urheberrechtsangaben im Hauptverzeichnis.
     *   Präzisierung der Eigentumsverhältnisse und Verweis auf das Urheberrecht von T. Hauck (THCoding) in `COPYRIGHT.md` und `README.md`.
-*   **Commit `35fd019` (Upstream)**: *Added P2 features and backlog items with Readme*
+*   **Commit `35fd019`**: *Added P2 features and backlog items with Readme*
     *   Großes Feature-Paket und System-Härtung (siehe Detailauflistung unten).
     *   Inbetriebnahme der Erweiterten InfluxDB-Anbindung, Härtung der Geräte-Parser, sowie Einführung der Batterie-Wirkungsgrad-Berechnung.
-*   **Commit `f84c352` / `9cc5ceb` (Upstream)**: *Text Abschnitte angepasst & Auto-generated changes*
+*   **Commit `f84c352` / `9cc5ceb`**: *Text Abschnitte angepasst & Auto-generated changes*
     *   Lokalisierungsanpassungen im React-Frontend.
     *   Korrektur des App-Titels in der `index.html`.
-
-### 1a. Änderungen in diesem Fork (noch nicht committet)
-
-*   **Workspace-Dokumentation und Projektstatus aktualisiert**. Der Fork enthält weiterhin keine eigenen Git-Commits; die lokale Arbeitskopie ist daher nicht durch diese Upstream-Historie verifiziert.
 
 ---
 
@@ -67,7 +61,7 @@ In den letzten Entwicklungs-Zyklen wurden kritische architektonische Verbesserun
 
 ## 3. Aktueller Status & Projekt-Gesundheit
 
-*   **Backend-Tests**: Vorhanden sind fünf Testdateien: `test_mqtt_client.py`, `test_influx_points.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py` und `test_solar_dashboard.py`. Die früher dokumentierte Zahl „17 passed“ bezog sich nur auf drei Unit-Testdateien und ist als historischer Stand zu verstehen; eine aktuelle Gesamtausführung muss separat verifiziert werden.
+*   **Backend-Tests**: Vorhanden sind fünf Testdateien: `test_mqtt_client.py`, `test_influx_points.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py` und `test_solar_dashboard.py`. Die früher dokumentierte Zahl „17 passed" bezog sich nur auf drei Unit-Testdateien und ist als historischer Stand zu verstehen; eine aktuelle Gesamtausführung muss separat verifiziert werden.
 *   **Backend-Integration**: `test_solar_dashboard.py` enthält Tests für die Dashboard-Endpunkte und kann externe Dienste beziehungsweise eine laufende App-Umgebung voraussetzen. Ergebnisse aus früheren Upstream- oder Preview-Läufen sind nicht automatisch für diesen Fork gültig.
 *   **Frontend**: Die App kompiliert fehlerfrei (Exit Code 0, „Compiled successfully"), und die automatische Versionierung (`REACT_APP_VERSION` aus der `package.json` $\to$ `v1.3.0`) plus Build-Datum ist aktiv. Keine `forecast`-Referenzen mehr im Frontend-Code.
 *   **API-Stand**: Die API umfasst `/api/live`, `/api/today`, `/api/history`, `/api/config` sowie Steuerungs-, Diagnose- und Integrations-Routen. Eine `/api/forecast`-Route existiert **nicht** (Forecast vollständig entfernt).
@@ -76,9 +70,9 @@ In den letzten Entwicklungs-Zyklen wurden kritische architektonische Verbesserun
 
 ## 4. Zukünftiger Backlog (Vorschläge)
 
-1.  **P2: MPPT- und Schieflast-Verlauf in Grafana/InfluxDB**
-    *   Historische Panels für den Vergleich der MPPT-Erträge und die 3-Phasen-Schieflast ergänzen.
-2.  **P2: Round-Trip-Verlauf in Grafana/InfluxDB**
-    *   Batterie-Wirkungsgrad über Wochen und Monate auswertbar machen.
-3.  **P2: Konfigurations- und Verlaufs-Export**
-    *   JSON-Export/-Import der Konfiguration sowie Wochen-/Monatsverlauf und CSV-Export ergänzen.
+1.  **P1: Telegram-Bot für SoC-Meldungen**
+    *   Push-Benachrichtigung bei niedrigem Akkustand ($< 15\%$) oder Ausfall eines Geräts (Wechselrichter offline).
+2.  **P2: MPPT-Vergleichskachel**
+    *   Visualisierung des direkten Ertragsvergleichs (Ertrag Laderegler #1 vs. #2) auf dem Dashboard.
+3.  **P2: CSV-Export im Historien-Tab**
+    *   Einfacher Download historischer Leistungsdaten über die Benutzeroberfläche.

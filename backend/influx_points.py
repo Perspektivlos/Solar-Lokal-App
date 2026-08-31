@@ -8,7 +8,16 @@ except Exception:  # pragma: no cover
 
 
 def _instant_ratios(summary: Dict[str, Any]) -> tuple:
-    """Momentane Autarkie & Eigenverbrauch in % aus der Live-Summary."""
+    """
+    Berechnet die momentane Autarkie und den Eigenverbrauch.
+    
+    Parameters:
+        summary (Dict[str, Any]): Live-Summary mit Haus-, Netz- und PV-Leistung.
+    
+    Returns:
+        tuple: Ein Tupel mit Autarkie und Eigenverbrauch in Prozent, jeweils auf
+            den Bereich von 0 bis 100 begrenzt.
+    """
     hp = float(summary.get("house_power", 0) or 0)
     gp = float(summary.get("grid_power", 0) or 0)
     pv = float(summary.get("pv_power", 0) or 0)
@@ -20,8 +29,25 @@ def _instant_ratios(summary: Dict[str, Any]) -> tuple:
 
 
 def _pt_solar(summary: Dict[str, Any]) -> "Point":
-    """Summary-Measurement inkl. momentaner Autarkie/Eigenverbrauch."""
+    """
+    Erstellt einen InfluxDB-Messpunkt mit Solar-, Netz-, Batterie- und Haushaltsdaten.
+    
+    Parameters:
+    	summary (Dict[str, Any]): Zusammenfassung der aktuellen Energie- und Leistungswerte.
+    
+    Returns:
+    	Point: Solar-Messpunkt mit numerischen Messwerten sowie Autarkie- und Eigenverbrauchsanteilen in Prozent.
+    """
     def f(k: str) -> float:
+        """
+        Wandelt den unter einem Schlüssel gespeicherten Wert in eine Gleitkommazahl um.
+        
+        Parameters:
+        	k (str): Schlüssel des auszulesenden Werts.
+        
+        Returns:
+        	float: Der konvertierte Wert oder 0.0, wenn kein Wert vorhanden ist.
+        """
         return float(summary.get(k, 0) or 0)
     autarky, self_cons = _instant_ratios(summary)
     return (
@@ -41,6 +67,15 @@ def _pt_solar(summary: Dict[str, Any]) -> "Point":
 
 
 def _pts_shelly(shelly: Dict[str, Any]) -> list:
+    """
+    Erstellt InfluxDB-Messpunkte für die Shelly-Phasen und optional die Gesamtleistung.
+    
+    Parameters:
+    	shelly (Dict[str, Any]): Shelly-Daten mit Phasenmessungen und optionaler Gesamtleistung.
+    
+    Returns:
+    	list: Messpunkte für die einzelnen Phasen sowie gegebenenfalls für die Gesamtleistung.
+    """
     pts = [
         Point("shelly_phase")
         .tag("phase", str(ph.get("phase", "?")))
@@ -56,6 +91,15 @@ def _pts_shelly(shelly: Dict[str, Any]) -> list:
 
 
 def _pts_hoymiles(ahoy: Dict[str, Any]) -> list:
+    """
+    Erzeugt InfluxDB-Punkte für die Hoymiles-Gesamtleistung und die einzelnen Kanäle.
+    
+    Parameters:
+    	ahoy (Dict[str, Any]): Hoymiles-Daten mit optionaler Gesamtleistung, Leistungsbegrenzung und Kanalmesswerten.
+    
+    Returns:
+    	list: InfluxDB-Punkte für die Gesamtleistung und die konfigurierten Hoymiles-Kanäle.
+    """
     pts = []
     if ahoy.get("total_power") is not None:
         pts.append(
@@ -76,6 +120,15 @@ def _pts_hoymiles(ahoy: Dict[str, Any]) -> list:
 
 
 def _pts_victron(victron: Dict[str, Any]) -> list:
+    """
+    Erstellt InfluxDB-Punkte für die Victron-Gesamtleistung und die einzelnen MPPT-Laderegler.
+    
+    Parameters:
+    	victron (Dict[str, Any]): Victron-Daten mit optionaler Gesamtleistung und MPPT-Messwerten.
+    
+    Returns:
+    	list: InfluxDB-Punkte für die Gesamtleistung und die konfigurierten MPPT-Laderegler.
+    """
     pts = []
     if victron.get("total_power") is not None:
         pts.append(Point("victron").field("total_power", float(victron.get("total_power", 0) or 0)))
@@ -95,6 +148,15 @@ def _pts_victron(victron: Dict[str, Any]) -> list:
 
 
 def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
+    """
+    Erstellt einen InfluxDB-Punkt für ein online verfügbares Trucki-Gerät.
+    
+    Parameters:
+    	trucki (Dict[str, Any]): Trucki-Daten einschließlich Online-Status und Messwerten.
+    
+    Returns:
+    	Optional[Point]: Der Trucki-Punkt oder `None`, wenn das Gerät offline ist.
+    """
     if not trucki.get("online"):
         return None
     tp = (
@@ -117,17 +179,14 @@ def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
 
 
 def _build_influx_points(data: Dict[str, Any]) -> list:
-    """Erzeugt einen reichen Satz InfluxDB-Punkte aus einer collect_live()-Payload.
-
-    Measurements:
-      - solar        : Summary (pv/grid/battery/house/soc + autarky/self-consumption %)
-      - shelly_phase : pro Phase (tag phase=L1..L3) power/voltage/current/pf
-      - shelly       : total_power
-      - hoymiles     : total_power, limit_percent
-      - hoymiles_ch  : pro Kanal (tag ch=1..4) power/voltage/current/yield_day
-      - victron      : total_power
-      - victron_mppt : pro MPPT (tag mppt=<instanz>) pv_power/pv_voltage/battery_voltage/yield_today/state
-      - trucki       : vbat/ac_power/soc/zepc/temperature/ac_setpoint/ac_display/day_energy/total_energy
+    """
+    Erzeugt InfluxDB-Punkte aus einer Live-Daten-Payload.
+    
+    Parameters:
+        data (Dict[str, Any]): Von `collect_live()` gelieferte Daten.
+    
+    Returns:
+        list: Solar-, Geräte- und optional ein Trucki-Punkt.
     """
     pts: list = [_pt_solar(data.get("summary") or {})]
     pts += _pts_shelly(data.get("shelly") or {})
