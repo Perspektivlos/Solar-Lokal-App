@@ -59,6 +59,12 @@ db = client[os.environ['DB_NAME']]
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # startup
+    """
+    Verwaltet den Start und das Herunterfahren der FastAPI-Anwendung.
+    
+    Parameters:
+    	app (FastAPI): Die zu verwaltende FastAPI-Anwendung.
+    """
     await get_config()
     global _poll_task, _keepalive_task
     _poll_task = asyncio.create_task(poller_loop())
@@ -134,6 +140,12 @@ async def get_config() -> Dict[str, Any]:
 
 
 async def save_config(cfg: Dict[str, Any]) -> None:
+    """
+    Speichert die Anwendungskonfiguration in der Datenbank.
+    
+    Parameters:
+    	cfg (Dict[str, Any]): Zu speichernde Konfigurationswerte.
+    """
     await db.config.update_one({"_id": "main"}, {"$set": cfg}, upsert=True)
 
 
@@ -165,7 +177,10 @@ _poll_task: Optional[asyncio.Task] = None
 _keepalive_task: Optional[asyncio.Task] = None
 
 
-async def poller_loop() -> None:
+async def poller_loop():
+    """
+    Erfasst regelmäßig Live-Daten, speichert eine Zusammenfassung in MongoDB und schreibt Gerätedaten optional nach InfluxDB.
+    """
     _poller_state["running"] = True
     while True:
         try:

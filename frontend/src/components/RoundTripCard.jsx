@@ -1,7 +1,11 @@
 import { GlassCard, Badge, Stat, formatNum } from "./solar-ui";
 import { BatteryCharging } from "lucide-react";
 
-// Ring-Gauge des Round-Trip-Wirkungsgrads (AC-Entladung ÷ DC-Ladung).
+/**
+ * Zeigt die Round-Trip-Effizienz des Akkus mit Lade- und Entladewerten an.
+ * @param {object} today - Tagesdaten mit Round-Trip-Wirkungsgrad sowie Lade- und Entladeenergie.
+ * @returns {JSX.Element} Die Karte zur Akku-Round-Trip-Effizienz.
+ */
 export default function RoundTripCard({ today }) {
   const pct = Math.max(0, Math.min(100, today?.round_trip_pct ?? 0));
   const charge = today?.battery_charge_kwh ?? 0;
@@ -39,7 +43,7 @@ export default function RoundTripCard({ today }) {
       </div>
       {!hasData && (
         <div className="mt-3 font-mono text-[10px] text-white/45">
-          Noch zu wenig Energie heute — Wirkungsgrad wird erst ab 0,05 kWh Ladung und 0,02 kWh Entladung berechnet.
+          Noch zu wenig Energie heute — Wirkungsgrad wird bei mehr als 0,05 kWh Ladung und mehr als 0,02 kWh Entladung angezeigt.
         </div>
       )}
     </GlassCard>

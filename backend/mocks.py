@@ -7,7 +7,15 @@ from typing import Any, Dict
 
 
 def _sun_curve(now: datetime) -> float:
-    """Returns 0..1 sun intensity based on hour of day."""
+    """
+    Ermittelt die Sonnenintensität anhand der Tageszeit.
+    
+    Parameter:
+        now (datetime): Zeitpunkt, dessen Uhrzeit für die Berechnung verwendet wird.
+    
+    Returns:
+        float: Sonnenintensität zwischen 0 und 1.
+    """
     h = now.hour + now.minute / 60.0
     if h < 5 or h > 21:
         return 0.0
@@ -16,7 +24,14 @@ def _sun_curve(now: datetime) -> float:
 
 
 def mock_shelly() -> Dict[str, Any]:
-    """Shelly Pro 3EM 3-phase. Positive total_act_power = consumption from grid."""
+    """
+    Erzeugt simulierte Messdaten für einen dreiphasigen Shelly Pro 3EM.
+    
+    Returns:
+    	dict[str, Any]: Messdaten mit Online-Status, Gesamtleistung und Werten für
+    	die drei Phasen. Eine positive Gesamtleistung bezeichnet Netzbezug, eine
+    	negative Gesamtleistung Einspeisung.
+    """
     now = datetime.now(timezone.utc)
     sun = _sun_curve(now)
     # House base load oscillates
@@ -45,6 +60,13 @@ def mock_shelly() -> Dict[str, Any]:
 
 
 def mock_ahoy() -> Dict[str, Any]:
+    """
+    Erzeugt simulierte Messdaten für vier PV-Kanäle.
+    
+    Returns:
+    	dict[str, Any]: Messdaten mit Online-Status, Gesamtleistung, Leistungsbegrenzung und
+    	Kanalwerten für Leistung, Spannung, Strom, Tagesertrag und Kanalnummer.
+    """
     now = datetime.now(timezone.utc)
     sun = _sun_curve(now)
     channels = []
@@ -69,6 +91,13 @@ def mock_ahoy() -> Dict[str, Any]:
 
 def mock_trucki() -> Dict[str, Any]:
     # SoC slowly drifts depending on solar
+    """
+    Simuliert Mess- und Betriebsdaten eines Batteriespeichers.
+    
+    Returns:
+        Dict[str, Any]: Simulierte Speicherwerte einschließlich Ladezustand,
+        Leistung, Energiezähler, Temperatur und Betriebsstatus.
+    """
     sun = _sun_curve(datetime.now(timezone.utc))
     soc = 35 + 50 * sun + 8 * math.sin(time.time() / 300.0)
     soc = max(5, min(98, soc))
@@ -95,6 +124,12 @@ def mock_trucki() -> Dict[str, Any]:
 
 
 def mock_victron() -> Dict[str, Any]:
+    """
+    Erzeugt simulierte Messdaten für zwei Victron-MPPT-Laderegler.
+    
+    Returns:
+    	dict[str, Any]: Daten der beiden Laderegler mit Online-Status und aufsummierter PV-Leistung.
+    """
     now = datetime.now(timezone.utc)
     sun = _sun_curve(now)
     mppts = []
