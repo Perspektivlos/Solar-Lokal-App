@@ -79,7 +79,9 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
 - **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.
 - **„High Complexity / Long Functions"**: Rein kosmetisch; Refactoring einer getesteten, laufenden App bringt keinen funktionalen Nutzen, nur Regressionsrisiko. → Bewusst belassen.
-- Entscheidung vom Nutzer bestätigt am 28.08.2026 (Option a: nichts ändern, nur dokumentieren).
+- **`is`-Vergleiche (Python)**: Alle geprüft. `is None`/`is not None` sind PEP8-konform. `routes.py:370-372` nutzen `r["ok"] is True/False/None` bewusst als **Tri-State** (bestanden/fehlgeschlagen/übersprungen). Umbau auf Truthiness (`not r["ok"]`) würde `None`-Skips fälschlich als Fail zählen → **echter Bug**. → NICHT ändern.
+- **Verschachtelte Ternaries (React)**: Kosmetische Lesbarkeit, kein Bug. → Belassen.
+- Entscheidung vom Nutzer bestätigt am 28.08.2026 und erneut am 30.08.2026 (Option a: nichts ändern, nur dokumentieren).
 
 ## Backlog
 - P3: CSV-Datenexport für Verlaufsdaten
