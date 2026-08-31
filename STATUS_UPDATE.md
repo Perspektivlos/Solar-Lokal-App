@@ -51,7 +51,9 @@ In den letzten Entwicklungs-Zyklen wurden kritische architektonische Verbesserun
 *   **Datenbank-Härtung**: Korrektur des InfluxDB-Organisation-Mismatches (Umstellung von `home` auf die vom User genutzte Org `Solar Lokal`).
 
 ### E. Bereinigung & Deployment-Härtung
-*   **Cleanups**: Vollständige Entfernung des vom User unerwünschten Prognose-Menüs (Forecast) und der Autarkie-Ziel-Kachel im gesamten System (Frontend-Code, Backend-Endpunkte, Konfigurations-Standardwerte und Tests).
+*   **Cleanups**: Das vom User unerwünschte Prognose-Menü (Forecast) und die Autarkie-Ziel-Kachel sind vollständig aus Frontend UND Backend entfernt.
+    *   *Frontend*: Keine Forecast-/Prognose-Ansicht im Routing oder Dashboard.
+    *   *Backend*: Der Endpunkt `/api/forecast`, die Open-Meteo-Anbindung, der `forecast`-Block in `DEFAULT_CONFIG` und das `forecast`-Feld in `ConfigUpdate` wurden vollständig entfernt (im aktuellen Code per Grep verifiziert: 0 Treffer). Hinweis: `autarky_pct`/`self_consumption_pct` sind davon unabhängige, berechnete Live-Kennzahlen und bleiben bestehen.
 *   **Fehlerfreie Builds**: Löschen ungenutzter shadcn-Komponenten (`carousel.jsx`, `calendar.jsx`, `command.jsx`) zur Behebung von blockierenden ESLint-Fehlern.
 *   **Deployment-Reihenfolge**: Im Proxmox-Deployment-Skript `build-app.sh` wird das Backend nun *vor* dem rechenintensiven Frontend-Build gestartet, um Systemausfälle bei OOM-Fehlern zu minimieren. Zudem wurde das Node-Speicherlimit auf `2048 MB` angehoben.
 
@@ -59,9 +61,10 @@ In den letzten Entwicklungs-Zyklen wurden kritische architektonische Verbesserun
 
 ## 3. Aktueller Status & Projekt-Gesundheit
 
-*   **Backend-Tests**: **100% Erfolgsquote (34 passed)**. Alle Unit- und Integrationstests (inklusive `test_mqtt_client.py` und `test_influx_points.py`) laufen fehlerfrei durch.
-*   **Frontend**: Die App kompiliert fehlerfrei (Exit Code 0), ESLint läuft sauber durch, und die automatische Versionierung (`REACT_APP_VERSION` aus der `package.json` $\to$ `v1.2.0`) ist erfolgreich aktiv.
-*   **Integrationstest live**: Die API-Endpunkte `/api/live`, `/api/today`, `/api/history` und `/api/config` liefern saubere, dem physikalischen Modell entsprechende JSON-Antworten.
+*   **Backend-Tests**: Vorhanden sind fünf Testdateien: `test_mqtt_client.py`, `test_influx_points.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py` und `test_solar_dashboard.py`. Die früher dokumentierte Zahl „17 passed" bezog sich nur auf drei Unit-Testdateien und ist als historischer Stand zu verstehen; eine aktuelle Gesamtausführung muss separat verifiziert werden.
+*   **Backend-Integration**: `test_solar_dashboard.py` enthält Tests für die Dashboard-Endpunkte und kann externe Dienste beziehungsweise eine laufende App-Umgebung voraussetzen. Ergebnisse aus früheren Upstream- oder Preview-Läufen sind nicht automatisch für diesen Fork gültig.
+*   **Frontend**: Die App kompiliert fehlerfrei (Exit Code 0, „Compiled successfully“), und die automatische Versionierung (`REACT_APP_VERSION` aus der `package.json` $\to$ `v1.3.0`) plus Build-Datum ist aktiv. Keine `forecast`-Referenzen mehr im Frontend-Code.
+*   **API-Stand**: Die API umfasst `/api/live`, `/api/today`, `/api/history`, `/api/config` sowie Steuerungs-, Diagnose- und Integrations-Routen. Eine `/api/forecast`-Route existiert **nicht** (Forecast vollständig entfernt).
 
 ---
 
