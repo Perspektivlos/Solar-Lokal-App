@@ -44,10 +44,14 @@ const INTRO_SECTIONS = [
   },
 ];
 
+/**
+ * Zeigt den Verlauf als Leistungsdiagramm oder einen passenden Lade- bzw. Leerzustand an.
+ * @returns {JSX.Element} Das Diagramm oder eine Statusanzeige.
+ */
 function ChartBody({ loading, error, data }) {
   if (loading) return <div className="font-mono text-sm text-white/55">Lade Verlauf...</div>;
   if (error) {
-    return <div role="alert" className="font-mono text-sm text-red-300" data-testid="history-error">Verlaufsdaten konnten nicht geladen werden.</div>;
+    return <div className="font-mono text-sm text-red-300" data-testid="history-error">Fehler beim Laden des Verlaufs: {error}</div>;
   }
   if (data.length === 0) {
     return <div className="font-mono text-sm text-white/55" data-testid="history-empty">Noch keine Snapshots im Zeitraum.</div>;
@@ -72,15 +76,21 @@ function ChartBody({ loading, error, data }) {
   );
 }
 
+/**
+ * Zeigt historische Leistungs- und Batterieladezustandsdaten für den ausgewählten Zeitraum an.
+ * @returns {JSX.Element} Die Verlaufsseite mit Leistungs- und SoC-Diagrammen.
+ */
 export default function History() {
   const [range, setRange] = useState("1h");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let alive = true;
     const load = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const d = await getHistory(range);
         if (!alive) return;
@@ -90,8 +100,8 @@ export default function History() {
         }));
         setError(false);
         setData(pts);
-      } catch {
-        if (alive) { setError(true); setData([]); }
+      } catch (err) {
+        if (alive) setError(err instanceof Error ? err.message : "Unbekannter Fehler");
       } finally {
         if (alive) setLoading(false);
       }
@@ -140,7 +150,7 @@ export default function History() {
           Akku SoC · {range}
         </div>
         <div className="p-4" style={{ height: 220 }}>
-          {data.length > 0 && (
+          {!loading && !error && data.length > 0 && (
             <ResponsiveContainer>
               <LineChart data={data}>
                 <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" />

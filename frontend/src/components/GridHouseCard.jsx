@@ -2,7 +2,12 @@ import { COLOR, formatNum, GlassCard, Badge, MetricBig } from "./solar-ui";
 import { Home } from "lucide-react";
 import { exportNowW, isExporting } from "../lib/power";
 
-// PV & Netz: Live-Einspeisung (Export) + aktueller Hausverbrauch.
+/**
+ * Zeigt die aktuelle Netzeinspeisung und den Haushaltsverbrauch an.
+ * @param {Object} summary - Aktuelle Leistungswerte von Netz und Haushalt.
+ * @param {Object} trail - Historische Werte für die Leistungsdiagramme.
+ * @returns {JSX.Element} Die Karte mit Einspeisung, Verbrauch und Status.
+ */
 export default function GridHouseCard({ summary, trail }) {
   const exportNow = exportNowW(summary);
   const exporting = isExporting(summary);
