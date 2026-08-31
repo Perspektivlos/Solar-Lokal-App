@@ -15,7 +15,7 @@ const TOOLTIP_STYLE = {
   backgroundColor: "rgba(15,23,42,0.95)", color: "#f1f5f9",
 };
 const TOOLTIP_LABEL_STYLE = { color: "#cbd5e1" };
-const LEGEND_STYLE = { fontFamily: "Space Grotesk", fontSize: 11, color: "#cbd5e1" };
+const LEGEND_STYLE = { fontFamily: "Chakra Petch", fontSize: 11, color: "#cbd5e1" };
 
 const INTRO_SECTIONS = [
   {

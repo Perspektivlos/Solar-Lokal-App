@@ -128,6 +128,6 @@
     "Do not use generic centered layouts for data. Align text/labels to the left, and numerical values/badges to the right.",
     "Avoid fully transparent overlays or backgrounds over the page background. Always use `backdrop-blur` combined with a semi-transparent color (e.g., `bg-[#0A1128]/40`).",
     "Apply 'data-testid' to all key elements for testing stability.",
-    "Ensure the fonts (Outfit, IBM Plex Sans, JetBrains Mono) are imported and applied correctly according to the typography hierarchy."
+    "Ensure the fonts (Chakra Petch, IBM Plex Sans, JetBrains Mono) are imported and applied correctly according to the typography hierarchy."
   ]
 }
