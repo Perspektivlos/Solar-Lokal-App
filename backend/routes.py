@@ -28,23 +28,23 @@ api_router = APIRouter(prefix="/api")
 # ---------- Endpoints ----------
 
 @api_router.get("/")
-async def root():
+async def root() -> Dict[str, Any]:
     return {"service": "solar-local-dashboard", "status": "ok"}
 
 
 @api_router.get("/live")
-async def live():
+async def live() -> Dict[str, Any]:
     cfg = await get_config()
     return await collect_live(cfg)
 
 
 @api_router.get("/config")
-async def cfg_get():
+async def cfg_get() -> Dict[str, Any]:
     return await get_config()
 
 
 @api_router.put("/config")
-async def cfg_put(update: ConfigUpdate):
+async def cfg_put(update: ConfigUpdate) -> Dict[str, Any]:
     current = await get_config()
     payload = update.model_dump(exclude_none=True)
     for key, val in payload.items():
@@ -61,7 +61,7 @@ async def cfg_put(update: ConfigUpdate):
 
 
 @api_router.get("/history")
-async def history(range: str = "1h"):
+async def history(range: str = "1h") -> Dict[str, Any]:
     minutes = {"1h": 60, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", 1)
@@ -74,7 +74,7 @@ async def history(range: str = "1h"):
 
 
 @api_router.get("/today")
-async def today():
+async def today() -> Dict[str, Any]:
     """Trapez-integration of power values from UTC midnight."""
     now = datetime.now(timezone.utc)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -90,15 +90,15 @@ async def today():
             "round_trip_pct": 0,
         }
 
-    def trapez(values_a, values_b, t_a, t_b):
+    def trapez(values_a: float, values_b: float, t_a: datetime, t_b: datetime) -> float:
         dt_h = (t_b - t_a).total_seconds() / 3600.0
         return (values_a + values_b) / 2.0 * dt_h
 
-    def charge_w(row):
+    def charge_w(row: Dict[str, Any]) -> float:
         v = row.get("battery_charge_w")
         return v if v is not None else max(0, row.get("battery_power", 0))
 
-    def discharge_w(row):
+    def discharge_w(row: Dict[str, Any]) -> float:
         v = row.get("battery_discharge_w")
         return v if v is not None else max(0, -row.get("battery_power", 0))
 
@@ -157,7 +157,7 @@ async def today():
 
 
 @api_router.post("/control/hoymiles")
-async def control_hoymiles(cmd: HoymilesControl):
+async def control_hoymiles(cmd: HoymilesControl) -> Dict[str, Any]:
     cfg = await get_config()
     if cfg.get("demo_mode"):
         return {"ok": True, "demo": True, "response": {"action": cmd.action, "value": cmd.value, "result": "Simuliert"}}
@@ -183,7 +183,7 @@ async def control_hoymiles(cmd: HoymilesControl):
 
 
 @api_router.post("/control/trucki")
-async def control_trucki(cmd: TruckiControl):
+async def control_trucki(cmd: TruckiControl) -> Dict[str, Any]:
     cfg = await get_config()
     if cfg.get("demo_mode"):
         return {"ok": True, "demo": True, "response": {"action": cmd.action, "value": cmd.value, "result": "Simuliert"}}
@@ -231,8 +231,8 @@ async def control_trucki(cmd: TruckiControl):
 
 
 @api_router.get("/integrations/status")
-async def integrations_status():
-    inst_summary = {}
+async def integrations_status() -> Dict[str, Any]:
+    inst_summary: Dict[str, Any] = {}
     for inst, st in _mqtt_data["victron"]["instances"].items():
         inst_summary[str(inst)] = {
             "fields": len([k for k in st.keys() if not k.startswith("_")]),
@@ -264,14 +264,14 @@ async def integrations_status():
 # ---------- Diagnostics / Self-Test ----------
 
 @api_router.post("/diagnostics/run")
-async def diagnostics_run():
+async def diagnostics_run() -> Dict[str, Any]:
     """Runs a series of health checks against backend, MongoDB, MQTT,
     InfluxDB and each configured device. Returns one result per check."""
     cfg = await get_config()
     started = time.time()
     results: List[Dict[str, Any]] = []
 
-    def add(name: str, ok: Optional[bool], detail: str, ms: Optional[int] = None):
+    def add(name: str, ok: Optional[bool], detail: str, ms: Optional[int] = None) -> None:
         results.append({"name": name, "ok": ok, "detail": detail, "ms": ms})
 
     # 1. Backend itself
@@ -355,7 +355,7 @@ async def diagnostics_run():
     if not isinstance(devs, dict):
         devs = {}
 
-    def _d(name):
+    def _d(name: str) -> Dict[str, Any]:
         v = devs.get(name)
         return v if isinstance(v, dict) else {}
 
@@ -379,7 +379,7 @@ async def diagnostics_run():
 
 
 @api_router.get("/diagnostics/raw")
-async def diagnostics_raw():
+async def diagnostics_raw() -> Dict[str, Any]:
     """Returns all raw MQTT-collected state for the deep-inspection view."""
     return {
         "ahoy": {"_ts": _mqtt_data["ahoy"]["_ts"], "raw": _mqtt_data["ahoy"]["raw"]},

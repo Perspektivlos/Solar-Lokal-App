@@ -14,7 +14,7 @@ import asyncio
 import logging
 from pathlib import Path
 from pydantic import BaseModel
-from typing import Any, Dict, Optional
+from typing import Any, AsyncIterator, Dict, Optional
 from contextlib import asynccontextmanager
 
 from mqtt_client import (
@@ -57,7 +57,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # startup
     await get_config()
     global _poll_task, _keepalive_task
@@ -165,7 +165,7 @@ _poll_task: Optional[asyncio.Task] = None
 _keepalive_task: Optional[asyncio.Task] = None
 
 
-async def poller_loop():
+async def poller_loop() -> None:
     _poller_state["running"] = True
     while True:
         try:
@@ -199,7 +199,7 @@ async def poller_loop():
 
 # ---------- Influx setup ----------
 
-def _influx_disconnect():
+def _influx_disconnect() -> None:
     try:
         wa = _influx_state.get("write_api")
         cl = _influx_state.get("client")
@@ -214,7 +214,7 @@ def _influx_disconnect():
     _influx_state["connected"] = False
 
 
-def _influx_setup(cfg_influx: Dict[str, Any]):
+def _influx_setup(cfg_influx: Dict[str, Any]) -> None:
     _influx_disconnect()
     if InfluxDBClient is None or not cfg_influx.get("enabled"):
         return
@@ -233,13 +233,13 @@ def _influx_setup(cfg_influx: Dict[str, Any]):
         _influx_state["connected"] = False
 
 
-async def restart_integrations():
+async def restart_integrations() -> None:
     cfg = await get_config()
     _mqtt_setup(cfg.get("mqtt", {}), cfg.get("victron_mqtt", {}))
     _influx_setup(cfg.get("influx", {}))
 
 
-async def victron_keepalive_loop():
+async def victron_keepalive_loop() -> None:
     """VenusOS only publishes data while it receives periodic keep-alive messages."""
     while True:
         try:

@@ -75,6 +75,9 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Deploy-Vorabprüfung (29.08.2026): build-app.sh prüft 10 Kern-Dateien vor Build, klare Fehlermeldung bei unvollständigem Upload.
 - [x] Deploy-Fix Proxmox (29.08.2026): `build-app.sh` selbstheilend – erzeugt minimale craco.config.js Fallback (Webpack '@'-Alias, in ~47 Imports genutzt), falls im Upload fehlt. Ursache des "craco: Config file not found"-Builds war unvollständiger Quellcode-Upload. Fallback per echtem Production-Build verifiziert (Build erfolgreich, @-Alias aufgelöst).
 
+## Type-Hint-Coverage (30.08.2026)
+- Öffentliche Funktionssignaturen + Rückgabetypen in `routes.py` (alle Endpoints + innere Helfer) und `server.py` (lifespan, poller_loop, _influx_*, restart_integrations, victron_keepalive_loop) additiv annotiert. `AsyncIterator` in server.py-Import ergänzt. Kein Laufzeitverhalten geändert; Import OK, 57/57 Tests grün, API 200.
+
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
 - **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.

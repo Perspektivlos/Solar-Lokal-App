@@ -36,9 +36,18 @@ The frontend uses CRACO; `yarn start` is the development command. There is no `y
 - Preserve the local-first/demo default path. MQTT is preferred when enabled, with short-timeout HTTP fallback for devices.
 - Treat the system as DC-coupled: Victron MPPT charging goes directly to the battery, Hoymiles supplies AC PV, Trucki/SUN supplies battery discharge to AC, and Shelly measures grid exchange. Do not count MPPT charging directly as house consumption.
 - Frontend code is JavaScript/JSX, not TypeScript. Reuse existing `solar-ui`, Radix/shadcn primitives, Lucide icons, Recharts, and `lib/power.js` patterns.
-- Preserve the German UI and dark glass control-room language. Numerical values use JetBrains Mono and UI text uses the fonts and colors defined in `design_guidelines.json`.
+- Preserve the German UI and dark glass control-room language. Numerical values use JetBrains Mono and UI text uses the fonts and colors defined in `design_guidelines.json`. Backend docstrings and the README are also German.
 - Do not reintroduce the removed Forecast UI, Autarky target tile, or Telegram integration.
 - Avoid committing environment files, credentials, generated builds, or dependency directories.
+
+## Pitfalls
+
+- `backend/server.py` reads `MONGO_URL` and `DB_NAME` from environment at module import time (not inside `lifespan`). Missing variables crash on import, before `uvicorn` even starts. Set both before importing or running anything that touches `server.py`.
+- `backend/tests/test_solar_dashboard.py` defaults `REACT_APP_BACKEND_URL` to `https://solar-control-5.preview.emergentagent.com`. Without overriding it to a reachable local backend, the integration tests 404. The offline unit tests (`test_influx_points.py`, `test_mqtt_client.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py`) do not hit the network and run standalone.
+- Frontend health-check plugin and dev-server endpoints are gated behind `ENABLE_HEALTH_CHECK=true`; they are off by default.
+- CRACO auto-injects `REACT_APP_VERSION` (from `package.json` version) and `REACT_APP_BUILD_DATE` (ISO date) on every `yarn start`/`yarn build`. Do not hardcode these values in components — read them from `process.env`.
+- ESLint runs only inside the CRACO dev server (`yarn start`), configured in `craco.config.js` with `plugin:react-hooks/recommended`. There is no standalone `yarn lint` script.
+- On this machine `yarn` is broken; use `./node_modules/.bin/craco` directly for start/build/test when `yarn` fails.
 
 ## Validation and environment
 
