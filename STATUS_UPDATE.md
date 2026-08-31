@@ -63,7 +63,7 @@ In den letzten Entwicklungs-Zyklen wurden kritische architektonische Verbesserun
 
 *   **Backend-Tests**: Vorhanden sind fünf Testdateien: `test_mqtt_client.py`, `test_influx_points.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py` und `test_solar_dashboard.py`. Die früher dokumentierte Zahl „17 passed" bezog sich nur auf drei Unit-Testdateien und ist als historischer Stand zu verstehen; eine aktuelle Gesamtausführung muss separat verifiziert werden.
 *   **Backend-Integration**: `test_solar_dashboard.py` enthält Tests für die Dashboard-Endpunkte und kann externe Dienste beziehungsweise eine laufende App-Umgebung voraussetzen. Ergebnisse aus früheren Upstream- oder Preview-Läufen sind nicht automatisch für diesen Fork gültig.
-*   **Frontend**: Die App kompiliert fehlerfrei (Exit Code 0, „Compiled successfully"), und die automatische Versionierung (`REACT_APP_VERSION` aus der `package.json` $\to$ `v1.3.0`) plus Build-Datum ist aktiv. Keine `forecast`-Referenzen mehr im Frontend-Code.
+*   **Frontend**: Die App kompiliert fehlerfrei (Exit Code 0, „Compiled successfully“), und die automatische Versionierung (`REACT_APP_VERSION` aus der `package.json` $\to$ `v1.3.0`) plus Build-Datum ist aktiv. Keine `forecast`-Referenzen mehr im Frontend-Code.
 *   **API-Stand**: Die API umfasst `/api/live`, `/api/today`, `/api/history`, `/api/config` sowie Steuerungs-, Diagnose- und Integrations-Routen. Eine `/api/forecast`-Route existiert **nicht** (Forecast vollständig entfernt).
 
 ---
