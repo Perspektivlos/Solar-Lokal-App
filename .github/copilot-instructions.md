@@ -18,8 +18,8 @@ python -m pip install -r requirements.txt
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/test_mqtt_client.py -v
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/test_mqtt_client.py::test_fetch_trucki_from_mqtt_discharging -v
-black backend/
-flake8 backend/
+black .
+flake8 .
 ```
 
 Die Tests importieren `server.py`; deshalb müssen `MONGO_URL` und `DB_NAME` gesetzt sein. Der API-/Integrationstest in `backend/tests/test_solar_dashboard.py` verwendet `REACT_APP_BACKEND_URL` und fällt standardmäßig auf die bereitgestellte Preview-URL zurück. Diesen Test nur ausführen, wenn der Dienst erreichbar ist:
