@@ -27,8 +27,8 @@ Find the exact failing layer and explain why the value is wrong. The goal is not
 
 3. Check the most likely source files in order.
    - `backend/mqtt_client.py` for MQTT routing, payload parsing, and in-memory state
-   - `backend/server.py` for live collection, demo logic, summary calculations, and API output
-   - `backend/collectors.py` or `backend/routes.py` for collector or route-specific issues
+   - `backend/collectors.py` and `collect_live()` for MQTT-first live collection, HTTP fallback, demo logic, and summary calculations
+   - `backend/server.py` or `backend/routes.py` for application lifecycle and API output
    - `frontend/src/lib/api.js` and the relevant page/component for display mismatches
 
 4. Verify the repository invariants.
