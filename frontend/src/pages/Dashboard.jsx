@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getLive, getToday, getHistory } from "../lib/api";
+import { getLive, getToday, getHistory, getConfig } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
@@ -55,6 +55,12 @@ export default function Dashboard() {
   const [prevLive, setPrevLive] = useState(null);
   const liveRef = useRef(null);
   const [now, setNow] = useState(() => Date.now());
+  const [devices, setDevices] = useState({});
+  // Direktlink zur Geräte-Weboberfläche (LAN-IP), sofern konfiguriert.
+  const devUrl = (name) => {
+    const ip = devices?.[name]?.ip;
+    return ip ? `http://${ip}` : undefined;
+  };
   // Gleitendes 15-Minuten-Fenster für die Sparklines (im Komponenten-Scope,
   // damit der Wert in den Effect-Closures immer definiert ist).
   const TRAIL_WINDOW_MS = 15 * 60 * 1000;
@@ -69,6 +75,14 @@ export default function Dashboard() {
   useEffect(() => {
     const id = setInterval(() => setNow((n) => n + 1000), 1000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    getConfig()
+      .then((c) => { if (alive) setDevices(c?.devices || {}); })
+      .catch(() => {});
+    return () => { alive = false; };
   }, []);
 
   useEffect(() => {
@@ -174,7 +188,7 @@ export default function Dashboard() {
 
       {/* SEKTION · BATTERIE */}
       <div className="space-y-4">
-        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} testid="section-battery" />
+        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} testid="section-battery" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
             <TruckiCard trucki={trucki} />
@@ -215,7 +229,7 @@ export default function Dashboard() {
 
       {/* SEKTION · VICTRON */}
       <div className="space-y-4">
-        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} testid="section-victron" />
+        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} testid="section-victron" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
             <VictronCard victron={victron} />
@@ -226,7 +240,7 @@ export default function Dashboard() {
 
       {/* SEKTION · PV & NETZ */}
       <div className="space-y-4">
-        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} testid="section-pv-grid" />
+        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} testid="section-pv-grid" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
             <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
@@ -265,7 +279,7 @@ export default function Dashboard() {
 
       {/* SEKTION · SHELLY */}
       <div className="space-y-4">
-        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} testid="section-shelly" />
+        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} testid="section-shelly" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
           <div className="lg:col-span-8">
             <GlassCard
