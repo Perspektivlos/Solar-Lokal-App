@@ -107,6 +107,6 @@ Generate a clear, user-facing changelog from git history. Transform technical co
 
 If the user specifies a tone, adapt:
 
-- **Professional** (default): Clear, neutral, third-person. Good for B2B products.
+- **Professional** (default): Clear, neutral, and user-focused. Follow the perspective defined above.
 - **Friendly**: Second-person ("you"), conversational. Good for consumer products.
 - **Technical**: Include implementation details, link to PRs. Good for developer tools and open source projects.
