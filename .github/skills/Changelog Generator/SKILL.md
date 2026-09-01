@@ -13,7 +13,7 @@ Generate a clear, user-facing changelog from git history. Transform technical co
 1. **Determine the range**:
    - If the user specifies a version range: use it (e.g., `v1.2.0..v1.3.0`)
    - If the user says "since last release": run `git tag --sort=-v:refname | head -5` to find the latest tag, then use `<latest-tag>..HEAD`
-   - If no tags exist: ask the user for a commit range, or default to the last 50 commits with `git log --oneline -50`
+   - If no tags exist: define `<range>` as the last 50 commits, or use the root commit..HEAD when fewer than 50 commits exist
 
 2. **Read the commit history**:
    - Run `git log <range> --pretty=format:"%H %s" --no-merges` for commit subjects
