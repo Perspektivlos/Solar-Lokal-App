@@ -65,6 +65,12 @@ const SHELLY_DETAILS = [
   { label: "Schieflast", body: "Die Phasen-Balance-Karte zeigt Spread (Max−Min) und Unbalance in % — hohe Schieflast belastet einzelne Phasen stärker." },
 ];
 
+/**
+ * Klassifiziert den Batteriezustand anhand des Ladezustands und der Leistung.
+ * @param {boolean} socDanger - Gibt an, ob ein kritischer Ladezustand vorliegt.
+ * @param {number} power - Batterieleistung; positive Werte laden, negative Werte entladen die Batterie.
+ * @returns {string} `KRITISCH`, `LADEN`, `ENTLADEN` oder `NORMAL`.
+ */
 function batteryStateKind(socDanger, power) {
   if (socDanger) return "KRITISCH";
   if (power > 20) return "LADEN";
@@ -72,6 +78,10 @@ function batteryStateKind(socDanger, power) {
   return "NORMAL";
 }
 
+/**
+ * Zeigt eine Live-Übersicht des Solarenergiesystems mit Energiefluss, Gerätezuständen und Netzverbrauch.
+ * @returns {JSX.Element} Das gerenderte Dashboard oder eine Lade- beziehungsweise Fehlermeldung.
+ */
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);

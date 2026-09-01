@@ -10,6 +10,10 @@ const links = [
   { to: "/integrationen", label: "Integrationen", icon: PlugZap, testid: "nav-integrations" },
 ];
 
+/**
+ * Rendert das Hauptlayout der Anwendung mit Navigation, verschachtelten Routen und Footer.
+ * @returns {JSX.Element} Das gerenderte Anwendungslayout.
+ */
 export default function Layout() {
   return (
     <div className="min-h-screen text-white">
