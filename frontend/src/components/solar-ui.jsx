@@ -1,6 +1,7 @@
 /* Einheitliche UI-Primitive für das Solar-Dashboard:
    GlassCard, Status-Badges, dominante Live-Metriken, Sparkline, Delta. */
-import { Wifi, WifiOff, Radio, TriangleAlert, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { useState } from "react";
+import { Wifi, WifiOff, Radio, TriangleAlert, ArrowDownToLine, ArrowUpFromLine, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
 
 export const COLOR = {
   pv: "#FACC15",
@@ -126,7 +127,19 @@ export function Spark({ values, color = "#8C92AC", height = 24 }) {
   );
 }
 
-// Dominante Live-Metrik: große Kernzahl, kleine Einheit, optionales Vorzeichen.
+/**
+ * Zeigt eine hervorgehobene Live-Metrik mit Einheit und optionalem Verlauf an.
+ * @param {string} label - Bezeichnung der Metrik.
+ * @param {*} value - Anzuzeigender Messwert.
+ * @param {string} unit - Einheit des Messwerts.
+ * @param {string} [color] - CSS-Klasse für die Wertfarbe.
+ * @param {string} [sign] - Optionales Vorzeichen vor dem Wert.
+ * @param {React.ReactNode} [sub] - Zusätzlicher Inhalt neben der Bezeichnung.
+ * @param {number[]} [sparkValues] - Werte für die optionale Sparkline.
+ * @param {string} [sparkColor] - Farbe der Sparkline.
+ * @param {"sm"|"lg"} [size="lg"] - Größenvariante des Messwerts.
+ * @returns {JSX.Element} Gerenderte Metrikdarstellung.
+ */
 export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, sparkColor, size = "lg" }) {
   const valueCls = size === "sm" ? "text-2xl" : "text-3xl lg:text-4xl";
   return (
@@ -146,7 +159,15 @@ export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, s
   );
 }
 
-// Zurückgenommener Sekundärwert (kleiner, gedämpft) für Zusatzinfos.
+/**
+ * Zeigt eine kompakte sekundäre Kennzahl mit Beschriftung, Wert und Einheit an.
+ * @param {string} label - Beschriftung der Kennzahl.
+ * @param {*} value - Anzuzeigender Wert.
+ * @param {string} unit - Einheit des Werts.
+ * @param {string} [color] - Optionale CSS-Klasse für die Wertfarbe.
+ * @param {string} [testid] - Optionale Test-ID für das umgebende Element.
+ * @returns {JSX.Element} Das gerenderte Statistik-Element.
+ */
 export function Stat({ label, value, unit, color, testid }) {
   return (
     <div data-testid={testid}>
@@ -159,12 +180,64 @@ export function Stat({ label, value, unit, color, testid }) {
 }
 
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
-export function SectionHeader({ label, color = "#64748b", icon: Icon, testid }) {
+// Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
+/**
+ * Rendert eine farbige Abschnittsüberschrift mit optionaler Weboberfläche und aufklappbaren Detailinformationen.
+ * @param {string} [href] - URL der zu öffnenden Weboberfläche.
+ * @param {Array<{label: string, body: string}>} [details] - Detailinformationen, die ein- und ausgeblendet werden können.
+ */
+export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {
+  const [open, setOpen] = useState(false);
+  const hasDetails = Array.isArray(details) && details.length > 0;
   return (
-    <div className="flex items-center gap-2.5 pt-1" data-testid={testid}>
-      <span className="w-1 h-4 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
-      {Icon && <Icon size={14} strokeWidth={2.4} style={{ color }} />}
-      <span className="font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-white/70">{label}</span>
+    <div data-testid={testid}>
+      <div className="flex items-center gap-3 pt-1">
+        <span className="w-1 h-5 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
+        {Icon && <Icon size={16} strokeWidth={2.4} style={{ color }} />}
+        <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/80">{label}</span>
+        {href && (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Weboberfläche öffnen (${href.replace(/^https?:\/\//, "")})`}
+            data-testid={testid ? `${testid}-link` : undefined}
+            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-mono font-semibold uppercase tracking-[0.14em] text-white/60 hover:text-white transition-colors"
+            style={{ borderColor: `${color}55`, background: `${color}14` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink size={11} strokeWidth={2.4} />
+            <span>Öffnen</span>
+          </a>
+        )}
+        {hasDetails && (
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            data-testid={testid ? `${testid}-details-toggle` : undefined}
+            className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.03] px-2 py-0.5 text-[9px] font-mono font-semibold uppercase tracking-[0.14em] text-white/55 hover:text-white transition-colors"
+          >
+            <BookOpen size={11} strokeWidth={2.2} />
+            <span>{open ? "schließen" : "details"}</span>
+            <ChevronDown size={11} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+          </button>
+        )}
+      </div>
+      {hasDetails && open && (
+        <div
+          className="glass-strong mt-3 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"
+          data-testid={testid ? `${testid}-details` : undefined}
+        >
+          {details.map((s) => (
+            <div key={s.label}>
+              <div className="font-mono text-[10px] uppercase tracking-[0.22em] mb-1.5 pb-1 border-b" style={{ color, borderColor: `${color}33` }}>
+                {s.label}
+              </div>
+              <div className="text-[13px] leading-relaxed text-white/75">{s.body}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
