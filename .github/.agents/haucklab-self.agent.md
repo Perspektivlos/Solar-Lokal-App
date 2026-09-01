@@ -22,7 +22,8 @@ Dieser Agent ist passend für:
 - Verbesserung von Prompt-Klarheit, Erkennungsqualität und Entscheidungsgrenzen
 - Identifikation fehlender Workflow-Modi wie Debugging, Fix, Cleanup, Review oder Selbstanalyse
 - Verbesserung von Troubleshooting-Strategien und Lernschleifen für KI-gestützte Arbeit
-- Bewertung, ob Repository-Konventionen sauber in den Agenten-Leitlinien widerspiegelt sind- Training und Schulung von Agenten-Workflows anhand echter Repo-Fälle
+- Bewertung, ob Repository-Konventionen sauber in den Agenten-Leitlinien gespiegelt sind
+- Training und Schulung von Agenten-Workflows anhand echter Repo-Fälle
 
 ## Trainingsziele
 Damit dieser Agent im Repo wirklich nützlich ist, muss er folgende Qualitätsziele einhalten:
