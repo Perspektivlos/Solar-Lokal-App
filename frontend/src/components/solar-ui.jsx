@@ -147,7 +147,13 @@ export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, s
   );
 }
 
-// Zurückgenommener Sekundärwert (kleiner, gedämpft) für Zusatzinfos.
+/**
+ * Zeigt eine kompakte sekundäre Kennzahl mit Beschriftung und Einheit an.
+ * @param {string} label - Beschriftung der Kennzahl.
+ * @param {*} value - Anzuzeigender Wert.
+ * @param {string} unit - Einheit des Werts.
+ * @param {string} [color] - Optionale CSS-Klasse für die Wertfarbe.
+ */
 export function Stat({ label, value, unit, color, testid }) {
   return (
     <div data-testid={testid}>
@@ -161,7 +167,14 @@ export function Stat({ label, value, unit, color, testid }) {
 
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
 // Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
-// Info-Panel (gleiches Prinzip wie die IntroCard oben), gefiltert auf das Rubrik-Gerät.
+/**
+ * Zeigt eine farbige Rubrikenüberschrift mit optionalem Link und aufklappbaren Details an.
+ * @param {Object} props - Eigenschaften der Überschrift.
+ * @param {string} props.label - Anzuzeigende Rubrikenbezeichnung.
+ * @param {string} [props.color="#64748b"] - Farbe der Überschrift und ihrer Akzente.
+ * @param {string} [props.href] - URL zur externen Geräteoberfläche.
+ * @param {Array<{label: string, body: string}>} [props.details] - Einträge für das aufklappbare Info-Panel.
+ */
 export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Array.isArray(details) && details.length > 0;
