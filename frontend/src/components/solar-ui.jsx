@@ -159,13 +159,13 @@ export function Stat({ label, value, unit, color, testid }) {
 }
 
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
-// Optional: `href` zeigt hinter dem Label einen Direktlink zur Geräte-Weboberfläche.
+// Optional: `href` zeigt hinter dem Label einen Link-Button zur Geräte-Weboberfläche.
 export function SectionHeader({ label, color = "#64748b", icon: Icon, href, testid }) {
   return (
-    <div className="flex items-center gap-2.5 pt-1" data-testid={testid}>
-      <span className="w-1 h-4 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
-      {Icon && <Icon size={14} strokeWidth={2.4} style={{ color }} />}
-      <span className="font-sans text-[11px] font-bold uppercase tracking-[0.22em] text-white/70">{label}</span>
+    <div className="flex items-center gap-3 pt-1" data-testid={testid}>
+      <span className="w-1 h-5 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
+      {Icon && <Icon size={16} strokeWidth={2.4} style={{ color }} />}
+      <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/80">{label}</span>
       {href && (
         <a
           href={href}
@@ -173,10 +173,12 @@ export function SectionHeader({ label, color = "#64748b", icon: Icon, href, test
           rel="noopener noreferrer"
           title={`Weboberfläche öffnen (${href.replace(/^https?:\/\//, "")})`}
           data-testid={testid ? `${testid}-link` : undefined}
-          className="inline-flex items-center text-white/35 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-mono font-semibold uppercase tracking-[0.14em] text-white/60 hover:text-white transition-colors"
+          style={{ borderColor: `${color}55`, background: `${color}14` }}
           onClick={(e) => e.stopPropagation()}
         >
-          <ExternalLink size={13} strokeWidth={2.2} />
+          <ExternalLink size={11} strokeWidth={2.4} />
+          <span>Öffnen</span>
         </a>
       )}
     </div>

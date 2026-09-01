@@ -22,8 +22,8 @@ export default function Layout() {
               <Zap size={18} strokeWidth={2.5} className="text-yellow-300 neon-yellow" />
             </div>
             <div>
-              <div className="font-semibold tracking-tight text-sm leading-none text-white">SOLAR · LOKAL</div>
-              <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.2em] mt-1">Control Room</div>
+              <div className="font-semibold tracking-tight text-sm leading-none text-white">HauckLab · Solar'Projekt</div>
+              <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.2em] mt-1">zur Zeit nur eine kleine App</div>
             </div>
           </div>
           <nav className="flex items-stretch h-full overflow-x-auto" data-testid="nav-menu">
