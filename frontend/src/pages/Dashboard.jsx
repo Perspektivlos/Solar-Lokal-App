@@ -39,6 +39,32 @@ const INTRO_SECTIONS = [
   },
 ];
 
+// Rubrik-spezifische Details (gleiches Prinzip wie INTRO_SECTIONS, nur je Gerät).
+const BATTERY_DETAILS = [
+  { label: "Gerät", body: "Trucki2Shelly Gateway steuert Ladung/Entladung des LiFePO4-Speichers (16S) über die Shelly-Leistungsmessung." },
+  { label: "Datenquelle", body: "MQTT bevorzugt; Fallback auf HTTP /status. Im Demo-Modus Mock-Werte." },
+  { label: "Kennzahlen", body: "SoC (linear aus VBAT geschätzt), VBAT, Setpoint/Min/Max-Leistung, Tag-/Gesamt-Energie, Temperatur, AC-Output & ZEPC-Status." },
+  { label: "Steuerung", body: "Zielleistung und Grenzen des Trucki lassen sich im Tab ‚Steuerung' anpassen." },
+];
+const VICTRON_DETAILS = [
+  { label: "Gerät", body: "2× Victron SmartSolar MPPT-Laderegler unter VenusOS Large (DC-gekoppelt)." },
+  { label: "Datenquelle", body: "Victron-MQTT (VenusOS) mit periodischem Keepalive; Fallback HTTP. Im Demo-Modus Mock-Werte." },
+  { label: "Kennzahlen", body: "PV-Leistung & -Spannung, Batteriespannung, Yield heute je MPPT sowie Ladezustand (Bulk/Absorption/Float)." },
+  { label: "Vergleich", body: "Die MPPT-Vergleichskarte zeigt die Yield-Differenz und welcher Regler aktuell führt." },
+];
+const PVGRID_DETAILS = [
+  { label: "Gerät", body: "Hoymiles HM1500 Mikro-Wechselrichter, ausgelesen über die Ahoy DTU." },
+  { label: "Datenquelle", body: "MQTT bevorzugt; Fallback auf HTTP /api. Im Demo-Modus Mock-Werte." },
+  { label: "Kennzahlen", body: "AC-Gesamtleistung, 4 PV-Kanäle mit Leistung (P), Spannung (U), Strom (I) und Tagesertrag (YDay) sowie das Leistungs-Limit in %." },
+  { label: "Netzbezug", body: "Die gegenübergestellte Karte fasst Einspeisung (Export) und aktuellen Hausverbrauch zusammen." },
+];
+const SHELLY_DETAILS = [
+  { label: "Gerät", body: "Shelly Pro 3EM · 3-Phasen-Energiemesser am Netzübergangspunkt." },
+  { label: "Datenquelle", body: "MQTT bevorzugt; Fallback auf HTTP /rpc (EM.GetStatus). Im Demo-Modus Mock-Werte." },
+  { label: "Kennzahlen", body: "Leistung je Phase L1/L2/L3 mit Spannung (U), Strom (I) und Leistungsfaktor (PF) sowie Σ Total (positiv = Bezug, negativ = Einspeisung)." },
+  { label: "Schieflast", body: "Die Phasen-Balance-Karte zeigt Spread (Max−Min) und Unbalance in % — hohe Schieflast belastet einzelne Phasen stärker." },
+];
+
 function batteryStateKind(socDanger, power) {
   if (socDanger) return "KRITISCH";
   if (power > 20) return "LADEN";
@@ -188,7 +214,7 @@ export default function Dashboard() {
 
       {/* SEKTION · BATTERIE */}
       <div className="space-y-4">
-        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} testid="section-battery" />
+        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={BATTERY_DETAILS} testid="section-battery" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
             <TruckiCard trucki={trucki} />
@@ -229,7 +255,7 @@ export default function Dashboard() {
 
       {/* SEKTION · VICTRON */}
       <div className="space-y-4">
-        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} testid="section-victron" />
+        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} details={VICTRON_DETAILS} testid="section-victron" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
             <VictronCard victron={victron} />
@@ -240,7 +266,7 @@ export default function Dashboard() {
 
       {/* SEKTION · PV & NETZ */}
       <div className="space-y-4">
-        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} testid="section-pv-grid" />
+        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} details={PVGRID_DETAILS} testid="section-pv-grid" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
             <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
@@ -279,7 +305,7 @@ export default function Dashboard() {
 
       {/* SEKTION · SHELLY */}
       <div className="space-y-4">
-        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} testid="section-shelly" />
+        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} details={SHELLY_DETAILS} testid="section-shelly" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
           <div className="lg:col-span-8">
             <GlassCard
