@@ -19,6 +19,8 @@ from server import (
     _mqtt_data,
     _influx_state,
     _poller_state,
+    _retention_state,
+    _cleanup_snapshots_once,
 )
 from collectors import collect_live
 
@@ -310,6 +312,18 @@ async def diagnostics_run() -> Dict[str, Any]:
         detail = (f"verbunden · {_influx_state.get('writes', 0)} Writes") if ok else \
                  f"{inf_cfg.get('url')} – {_influx_state.get('last_error') or 'nicht verbunden'}"
         add("InfluxDB", ok, detail)
+
+    # 5b. Retention
+    ret_cfg = cfg.get("retention") or {}
+    if not ret_cfg.get("enabled", True):
+        add("DB-Retention", None, "deaktiviert in Config")
+    else:
+        days = int(ret_cfg.get("days", 30))
+        last_run = _retention_state.get("last_run") or "–"
+        total = _retention_state.get("total_deleted", 0)
+        err = _retention_state.get("last_error")
+        detail = f"behält {days} Tage · letzter Lauf: {last_run} · gelöscht gesamt: {total}"
+        add("DB-Retention", err is None, detail if not err else f"{detail} · Fehler: {err}")
 
     # 6. Devices — check MQTT freshness first, else HTTP ping
     fresh_window_s = 90  # data younger than this counts as live

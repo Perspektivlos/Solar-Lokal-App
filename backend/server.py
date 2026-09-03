@@ -12,6 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import asyncio
 import logging
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pydantic import BaseModel
 from typing import Any, AsyncIterator, Dict, Optional
@@ -60,9 +61,15 @@ db = client[os.environ['DB_NAME']]
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # startup
     await get_config()
-    global _poll_task, _keepalive_task
+    # Index für schnelle History-Abfragen & Retention-Deletes
+    try:
+        await db.snapshots.create_index("ts")
+    except Exception as e:
+        logger.warning("snapshot index create failed: %s", e)
+    global _poll_task, _keepalive_task, _retention_task
     _poll_task = asyncio.create_task(poller_loop())
     _keepalive_task = asyncio.create_task(victron_keepalive_loop())
+    _retention_task = asyncio.create_task(retention_loop())  # noqa: F821 (late-bound below)
     await restart_integrations()
     logger.info("Solar dashboard started")
     yield
@@ -71,6 +78,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _poll_task.cancel()
     if _keepalive_task:
         _keepalive_task.cancel()
+    if _retention_task:
+        _retention_task.cancel()
     _mqtt_disconnect()
     _influx_disconnect()
     client.close()
@@ -115,6 +124,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "org": "Solar Lokal",
         "bucket": "solar",
     },
+    "retention": {
+        "enabled": True,
+        "days": 30,
+    },
 }
 
 
@@ -145,6 +158,7 @@ class ConfigUpdate(BaseModel):
     mqtt: Optional[Dict[str, Any]] = None
     influx: Optional[Dict[str, Any]] = None
     victron_mqtt: Optional[Dict[str, Any]] = None
+    retention: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):
@@ -160,9 +174,11 @@ class TruckiControl(BaseModel):
 # ---------- Background poller ----------
 
 _poller_state = {"running": False, "last_write": None, "count": 0}
+_retention_state: Dict[str, Any] = {"last_run": None, "last_deleted": 0, "total_deleted": 0, "last_error": None}
 _influx_state: Dict[str, Any] = {"connected": False, "last_error": None, "writes": 0, "client": None, "write_api": None}
 _poll_task: Optional[asyncio.Task] = None
 _keepalive_task: Optional[asyncio.Task] = None
+_retention_task: Optional[asyncio.Task] = None
 
 
 async def poller_loop() -> None:
@@ -254,6 +270,42 @@ async def victron_keepalive_loop() -> None:
         except Exception:
             pass
         await asyncio.sleep(30)
+
+
+# ---------- Retention (auto cleanup of old snapshots) ----------
+
+async def _cleanup_snapshots_once(days: int) -> int:
+    """Delete snapshots older than `days`. Returns number of deleted docs."""
+    if days <= 0:
+        return 0
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    # Snapshots werden als ISO-String gespeichert (siehe poller_loop).
+    # ISO 8601 ist lexikographisch sortierbar -> $lt String-Vergleich ist korrekt.
+    result = await db.snapshots.delete_many({"ts": {"$lt": cutoff.isoformat()}})
+    return int(result.deleted_count or 0)
+
+
+async def retention_loop() -> None:
+    """Hourly background task that thins out old snapshot data."""
+    # Kurz warten, damit Startup nicht sofort I/O feuert
+    await asyncio.sleep(60)
+    while True:
+        try:
+            cfg = await get_config()
+            ret = cfg.get("retention") or {}
+            if ret.get("enabled", True):
+                days = int(ret.get("days", 30))
+                deleted = await _cleanup_snapshots_once(days)
+                _retention_state["last_deleted"] = deleted
+                _retention_state["total_deleted"] += deleted
+                _retention_state["last_error"] = None
+                if deleted:
+                    logger.info("retention: %d alte Snapshots (>%dd) gelöscht", deleted, days)
+            _retention_state["last_run"] = datetime.now(timezone.utc).isoformat()
+        except Exception as e:
+            _retention_state["last_error"] = str(e)
+            logger.exception("retention error: %s", e)
+        await asyncio.sleep(3600)  # stündlich prüfen
 
 
 # ---------- App lifecycle ----------

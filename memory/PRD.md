@@ -37,8 +37,8 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 ```
 
 ## DB Schema
-- `config`: `{"_id": "main", "demo_mode": bool, "devices": {}, "mqtt": {}, "victron_mqtt": {}, "influx": {}}`
-- `snapshots`: Zeitreihen-Dokumente vom Poller (15s-Intervall)
+- `config`: `{"_id": "main", "demo_mode": bool, "devices": {}, "mqtt": {}, "victron_mqtt": {}, "influx": {}, "retention": {"enabled": bool, "days": int}}`
+- `snapshots`: Zeitreihen-Dokumente vom Poller (15s-Intervall); Index auf `ts`; stündliche Retention löscht alles älter als `retention.days` (Default 30 Tage)
 
 ## API Endpoints
 - `GET /api/live` – Live-Daten aller Geräte
@@ -83,6 +83,13 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] .gitignore: `.env`-Ausschlüsse entfernt (für K8s-Deployment nötig)
 - [x] MongoDB-Queries begrenzt: `/history` `.limit(10000)`, `/today` `.limit(20000)`, `/diagnostics` `estimated_document_count()`
 - [x] deployment_agent-Check: PASS – keine Blocker, alle Endpoints HTTP 200
+
+### DB-Retention (03.09.2026)
+- [x] Config-Key `retention: {enabled, days}` (Default 30 Tage) in DEFAULT_CONFIG + ConfigUpdate
+- [x] Stündlicher Hintergrund-Task `retention_loop` in Lifespan; löscht Snapshots älter als N Tage
+- [x] Index `db.snapshots.ts` beim Startup automatisch angelegt (schnellere Queries & Deletes)
+- [x] Diagnostics zeigt DB-Retention-Status (Tage, letzter Lauf, total gelöscht)
+- [x] Pytest `tests/test_retention.py` (3 Tests, 60/60 pass)
 
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
