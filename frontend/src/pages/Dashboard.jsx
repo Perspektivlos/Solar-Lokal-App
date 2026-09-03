@@ -80,7 +80,7 @@ function batteryStateKind(socDanger, power) {
 
 /**
  * Zeigt eine Live-Übersicht des Solarenergiesystems mit Energiefluss, Gerätezuständen und Netzverbrauch.
- * @returns {JSX.Element} Das gerenderte Dashboard oder eine Lade- beziehungsweise Fehlermeldung.
+ * @returns {JSX.Element} Das gerenderte Dashboard sowie Lade- oder Fehlermeldungen.
  */
 export default function Dashboard() {
   const [live, setLive] = useState(null);

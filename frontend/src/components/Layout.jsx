@@ -11,7 +11,7 @@ const links = [
 ];
 
 /**
- * Rendert das Hauptlayout der Anwendung mit Navigation, verschachtelten Routen und Footer.
+ * Rendert das Hauptlayout der Anwendung mit Branding, Navigation, verschachtelten Routen und Footer.
  * @returns {JSX.Element} Das gerenderte Anwendungslayout.
  */
 export default function Layout() {

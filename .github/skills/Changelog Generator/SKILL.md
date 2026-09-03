@@ -13,7 +13,7 @@ Generate a clear, user-facing changelog from git history. Transform technical co
 1. **Determine the range**:
    - If the user specifies a version range: use it (e.g., `v1.2.0..v1.3.0`)
    - If the user says "since last release": run `git tag --sort=-v:refname | head -5` to find the latest tag, then use `<latest-tag>..HEAD`
-   - If no tags exist: ask the user for a commit range, or define the range as the last 50 commits. Set `RANGE_END=HEAD`, `RANGE_COUNT=50`, and `RANGE_OLDEST=$(git rev-list --max-count="$RANGE_COUNT" "$RANGE_END" | tail -1)`. If `git rev-parse --verify "${RANGE_OLDEST}^"` succeeds, set `RANGE_BASE="${RANGE_OLDEST}^"`; otherwise set `RANGE_BASE=$(git hash-object -t tree /dev/null)`, so repositories with fewer than 50 commits still have a valid diff base.
+   - If no tags exist: define `<range>` as the last 50 commits, or use the root commit..HEAD when fewer than 50 commits exist
 
 2. **Read the commit history**:
    - Run `git log <range> --pretty=format:"%H %s" --no-merges` for commit subjects. For the no-tags default, reuse the defined range with `git log "$RANGE_END" --max-count="$RANGE_COUNT" --pretty=format:"%H %s" --no-merges`.
@@ -107,6 +107,6 @@ Generate a clear, user-facing changelog from git history. Transform technical co
 
 If the user specifies a tone, adapt:
 
-- **Professional** (default): Clear, neutral, and user-focused (for example, "You can now..." or "Fixed an issue where..."). Good for B2B products.
+- **Professional** (default): Clear, neutral, and user-focused. Follow the perspective defined above.
 - **Friendly**: Second-person ("you"), conversational. Good for consumer products.
 - **Technical**: Include implementation details, link to PRs. Good for developer tools and open source projects.
