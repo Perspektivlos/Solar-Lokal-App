@@ -5,10 +5,10 @@
 - `backend/` enthält den FastAPI-Dienst, Gerätesammler, die MQTT-Integration, InfluxDB-Punktgeneratoren und Pytest-Tests.
 - `frontend/src/` enthält die React-19-Anwendung. Routen sind in `App.js` definiert; Seiten liegen in `pages/`, die fachliche UI in `components/`, API-Aufrufe in `lib/api.js` und Hilfsfunktionen für Leistung und Vorzeichen in `lib/power.js`.
 - `deploy/proxmox/` enthält die Produktionsskripte für LXC und nginx sowie Grafana-Dashboards.
-- `.github/.agents/` enthält die repo-lokalen Spezialagenten und die Rollenzuordnung.
+- `.github/agents/` enthält die repo-lokalen Spezialagenten; `.github/.agents/` enthält die Rollenzuordnung und Trainingsbenchmarks.
 - `.github/skills/` enthält auf bestimmte Aufgabenbereiche zugeschnittene Skills für Diagnose, Umsetzung, Validierung und Release-Aufgaben.
 - Lies die [Projekt-README](README.md) für Produktverhalten und Deployment-Details, das [Status-Update](STATUS_UPDATE.md) für bekannte Hinweise zum aktuellen Stand und die [Designrichtlinien](design_guidelines.json) für visuelle Frontend-Konventionen.
-- Verwende den [Solar-App-Spezialagenten](.github/.agents/solar-app.agent.md) für detaillierte Domäneninvarianten und aufgabenspezifische Hinweise zur Validierung.
+- Verwende den [Solar-App-Spezialagenten](.github/agents/solar-app.agent.md) für detaillierte Domäneninvarianten und aufgabenspezifische Hinweise zur Validierung.
 - Verwende [agent-map](.github/.agents/agent-map.md), um den passenden Repo-Workflow für Debugging, Fixes oder die Verbesserung von Agenten auszuwählen.
 
 ## Befehle

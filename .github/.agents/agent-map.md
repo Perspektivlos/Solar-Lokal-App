@@ -6,7 +6,7 @@ Diese Agenten sind bewusst in klare Rollen aufgeteilt, damit die Arbeit sauber z
 
 ## 1) Diagnose-Phase
 
-Agent: haucklab.agent.md
+Agent: ../agents/haucklab.agent.md
 - Zweck: Debugging-only / Fehleranalyse
 
 Verwendung bei:
@@ -24,7 +24,7 @@ Typische Prompts:
 
 ## 2) Implementierungs-Phase
 
-Agent: haucklab-fix.agent.md
+Agent: ../agents/haucklab-fix.agent.md
 - Zweck: Fix + Update + Cleanup
 
 Verwendung bei:
@@ -41,7 +41,7 @@ Typische Prompts:
 
 ## 3) Selbstverbesserung der Agenten-Workflows
 
-Agent: haucklab-self.agent.md
+Agent: ../agents/haucklab-self.agent.md
 - Zweck: Grenzen analyse zur Agenten-Eigenentwicklung
 
 Verwendung bei:

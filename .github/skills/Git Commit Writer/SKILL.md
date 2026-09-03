@@ -10,7 +10,7 @@ Write precise, informative commit messages following the Conventional Commits sp
 
 ## Workflow
 
-1. **Check for staged changes**: Run `git diff --cached --stat` to see what files are staged. If nothing is staged, check `git diff --stat` for unstaged changes and ask the user if they want to stage them first.
+1. **Check for staged changes**: Run `git diff --cached --stat` to see what files are staged. If nothing is staged, check `git diff --stat` for unstaged changes and `git ls-files --others --exclude-standard` for unversioned files, then ask the user if they want to stage them first.
 
 2. **Analyze the diff**: Run `git diff --cached` to read the actual changes. For large diffs (>500 lines), use `git diff --cached --stat` combined with `git diff --cached -- <file>` for the most important files.
 

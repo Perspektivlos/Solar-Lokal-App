@@ -18,8 +18,8 @@ python -m pip install -r requirements.txt
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/test_mqtt_client.py -v
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/test_mqtt_client.py::test_fetch_trucki_from_mqtt_discharging -v
-black backend/
-flake8 backend/
+black .
+flake8 .
 ```
 
 Die Tests importieren `server.py`; deshalb müssen `MONGO_URL` und `DB_NAME` gesetzt sein. Der API-/Integrationstest in `backend/tests/test_solar_dashboard.py` verwendet `REACT_APP_BACKEND_URL` und fällt standardmäßig auf die bereitgestellte Preview-URL zurück. Diesen Test nur ausführen, wenn der Dienst erreichbar ist:
@@ -91,6 +91,6 @@ Die Victron-MPPT-Leistung liegt auf der DC-Seite und darf nicht zusätzlich als 
 - Build- und Deployment-Skript: `deploy/proxmox/build-app.sh`
 - InfluxDB-/Grafana-Einrichtung: `deploy/proxmox/grafana/INFLUXDB-GRAFANA-SETUP.md`
 - Produktverhalten und unterstützte Hardware: `README.md`
-- Repository-spezifische Copilot-Agenten: `.github/.agents/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
+- Repository-spezifische Copilot-Agenten: `.github/agents/*.agent.md`; Rollenzuordnung: `.github/.agents/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
 
 Keine Secrets aus `.env`, MQTT-Zugangsdaten, InfluxDB-Tokens oder lokale Deployment-Konfiguration committen.
