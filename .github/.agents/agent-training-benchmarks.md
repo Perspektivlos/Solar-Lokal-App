@@ -118,9 +118,9 @@ Ziel:
 Relevante Dateien:
 - [AGENTS.md](../../AGENTS.md)
 - [.github/.agents/agent-map.md](agent-map.md)
-- [.github/.agents/haucklab.agent.md](haucklab.agent.md)
-- [.github/.agents/haucklab-fix.agent.md](haucklab-fix.agent.md)
-- [.github/.agents/haucklab-self.agent.md](haucklab-self.agent.md)
+- [.github/agents/haucklab.agent.md](../agents/haucklab.agent.md)
+- [.github/agents/haucklab-fix.agent.md](../agents/haucklab-fix.agent.md)
+- [.github/agents/haucklab-self.agent.md](../agents/haucklab-self.agent.md)
 
 Aufgabe:
 - Identifiziere Überlappungen, unklare Scope-Grenzen oder fehlende Verifikationsregeln.

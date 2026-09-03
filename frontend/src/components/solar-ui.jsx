@@ -181,11 +181,7 @@ export function Stat({ label, value, unit, color, testid }) {
 
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
 // Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
-/**
- * Rendert eine farbige Abschnittsüberschrift mit optionaler Weboberfläche und aufklappbaren Detailinformationen.
- * @param {string} [href] - URL der zu öffnenden Weboberfläche.
- * @param {Array<{label: string, body: string}>} [details] - Detailinformationen, die ein- und ausgeblendet werden können.
- */
+// Info-Panel (gleiches Prinzip wie die IntroCard oben), gefiltert auf das Rubrik-Gerät.
 export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Array.isArray(details) && details.length > 0;

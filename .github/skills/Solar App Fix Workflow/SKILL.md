@@ -48,6 +48,16 @@ Before finishing, verify:
 - the relevant test or validation command was run and recorded
 - any remaining uncertainty is called out clearly
 
+## Definition of done
+
+A fix is complete only when:
+
+- the root cause has been addressed
+- the smallest possible patch was applied
+- the relevant validation command has actually been run
+- the fix does not violate the solar energy model
+- the change is documented clearly enough for the next maintainer
+
 ## Typical use cases
 
 Use this skill for:

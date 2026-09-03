@@ -1,19 +1,19 @@
 # Solar Lokal App
 
-## Repository map
+## Repository-Übersicht
 
-- `backend/` contains the FastAPI service, device collectors, MQTT integration, InfluxDB point builders, and Pytest tests.
-- `frontend/src/` contains the React 19 application. Routes are defined in `App.js`; pages live in `pages/`, domain UI in `components/`, API calls in `lib/api.js`, and power/sign helpers in `lib/power.js`.
-- `deploy/proxmox/` contains the production LXC and nginx deployment scripts plus Grafana dashboards.
-- `.github/.agents/` contains the repo-local specialist agents and role map.
-- `.github/skills/` contains scoped workflow skills for diagnostics, implementation, validation, and release-oriented tasks.
-- Read the [project README](README.md) for product behavior and deployment details, the [status update](STATUS_UPDATE.md) for known current-state notes, and [design guidelines](design_guidelines.json) for frontend visual conventions.
-- Use the [solar-app specialist agent](.github/.agents/solar-app.agent.md) for detailed domain invariants and task-specific validation guidance.
-- Use [agent-map](.github/.agents/agent-map.md) to select the correct repo workflow for debugging, fixes, or agent self-improvement.
+- `backend/` enthält den FastAPI-Dienst, Gerätesammler, die MQTT-Integration, InfluxDB-Punktgeneratoren und Pytest-Tests.
+- `frontend/src/` enthält die React-19-Anwendung. Routen sind in `App.js` definiert; Seiten liegen in `pages/`, die fachliche UI in `components/`, API-Aufrufe in `lib/api.js` und Hilfsfunktionen für Leistung und Vorzeichen in `lib/power.js`.
+- `deploy/proxmox/` enthält die Produktionsskripte für LXC und nginx sowie Grafana-Dashboards.
+- `.github/agents/` enthält die repo-lokalen Spezialagenten; `.github/.agents/` enthält die Rollenzuordnung und Trainingsbenchmarks.
+- `.github/skills/` enthält auf bestimmte Aufgabenbereiche zugeschnittene Skills für Diagnose, Umsetzung, Validierung und Release-Aufgaben.
+- Lies die [Projekt-README](README.md) für Produktverhalten und Deployment-Details, das [Status-Update](STATUS_UPDATE.md) für bekannte Hinweise zum aktuellen Stand und die [Designrichtlinien](design_guidelines.json) für visuelle Frontend-Konventionen.
+- Verwende den [Solar-App-Spezialagenten](.github/agents/solar-app.agent.md) für detaillierte Domäneninvarianten und aufgabenspezifische Hinweise zur Validierung.
+- Verwende [agent-map](.github/.agents/agent-map.md), um den passenden Repo-Workflow für Debugging, Fixes oder die Verbesserung von Agenten auszuwählen.
 
-## Commands
+## Befehle
 
-Backend, from `backend/`:
+Backend, aus `backend/`:
 
 ```bash
 pip install -r requirements.txt
@@ -21,7 +21,7 @@ MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. pytest -q
 uvicorn server:app --reload --host 127.0.0.1 --port 8001
 ```
 
-Frontend, from `frontend/`:
+Frontend, aus `frontend/`:
 
 ```bash
 yarn install
@@ -30,110 +30,110 @@ yarn build
 yarn test --watchAll=false
 ```
 
-The frontend uses CRACO; `yarn start` is the development command. There is no `yarn dev` script.
+Das Frontend verwendet CRACO; `yarn start` ist der Entwicklungsbefehl. Es gibt kein `yarn dev`-Skript.
 
-## Working conventions
+## Arbeitskonventionen
 
-- Start at the nearest owning route, component, helper, or test. Trace values from device input through backend aggregation and API transformation before changing displayed metrics.
-- Keep API fields, units, signs, aggregation intervals, and existing `data-testid` values stable unless the task explicitly changes the contract.
-- Preserve the local-first/demo default path. MQTT is preferred when enabled, with short-timeout HTTP fallback for devices.
-- Treat the system as DC-coupled: Victron MPPT charging goes directly to the battery, Hoymiles supplies AC PV, Trucki/SUN supplies battery discharge to AC, and Shelly measures grid exchange. Do not count MPPT charging directly as house consumption.
-- Frontend code is JavaScript/JSX, not TypeScript. Reuse existing `solar-ui`, Radix/shadcn primitives, Lucide icons, Recharts, and `lib/power.js` patterns.
-- Preserve the German UI and dark glass control-room language. Numerical values use JetBrains Mono and UI text uses the fonts and colors defined in `design_guidelines.json`. Backend docstrings and the README are also German.
-- Do not reintroduce the removed Forecast UI, Autarky target tile, or Telegram integration.
-- Avoid committing environment files, credentials, generated builds, or dependency directories.
-- Use the repo-local skills for scoped support: [Solar App Expert](.github/skills/Solar%20App%20Expert/SKILL.md), [Solar App Diagnostics](.github/skills/Solar%20App%20Diagnostics/SKILL.md), [Solar App Fix Workflow](.github/skills/Solar%20App%20Fix%20Workflow/SKILL.md), and [Solar App Validation](.github/skills/Solar%20App%20Validation/SKILL.md).
+- Beginne bei der nächstgelegenen zuständigen Route, Komponente, Hilfsfunktion oder dem passenden Test. Verfolge Werte von der Geräteeingabe über die Backend-Aggregation und API-Transformation, bevor du angezeigte Kennzahlen änderst.
+- Halte API-Felder, Einheiten, Vorzeichen, Aggregationsintervalle und bestehende `data-testid`-Werte stabil, sofern die Aufgabe den Vertrag nicht ausdrücklich ändert.
+- Erhalte den local-first-/Demo-Standardpfad. Wenn aktiviert, wird MQTT bevorzugt; für Geräte gibt es einen HTTP-Fallback mit kurzem Timeout.
+- Behandle das System als DC-gekoppelt: Die Victron-MPPT-Ladung fließt direkt in die Batterie, Hoymiles liefert AC-PV, Trucki/SUN liefert Batterieentladung an das AC-Netz und Shelly misst den Netzaustausch. Zähle MPPT-Ladung nicht direkt zum Hausverbrauch.
+- Frontend-Code ist JavaScript/JSX, nicht TypeScript. Verwende vorhandene Muster mit `solar-ui`, Radix/shadcn-Primitiven, Lucide-Icons, Recharts und `lib/power.js` wieder.
+- Erhalte die deutsche UI und die Sprache eines dunklen Glas-Leitstands. Zahlenwerte verwenden JetBrains Mono; UI-Texte verwenden die in `design_guidelines.json` definierten Schriften und Farben. Backend-Docstrings und die README sind ebenfalls deutsch.
+- Führe die entfernte Forecast-UI, die Autarkie-Zielkachel oder die Telegram-Integration nicht wieder ein.
+- Committe keine Umgebungsdateien, Zugangsdaten, erzeugten Builds oder Abhängigkeitsverzeichnisse.
+- Verwende die repo-lokalen Skills für gezielte Unterstützung: [Solar App Expert](.github/skills/Solar%20App%20Expert/SKILL.md), [Solar App Diagnostics](.github/skills/Solar%20App%20Diagnostics/SKILL.md), [Solar App Fix Workflow](.github/skills/Solar%20App%20Fix%20Workflow/SKILL.md) und [Solar App Validation](.github/skills/Solar%20App%20Validation/SKILL.md).
 
-## Checklist-based working flow
+## Checklistenbasierter Arbeitsablauf
 
-### 1) Task classification
-- [ ] Is this a pure root-cause analysis?
-  - Yes → `haucklab`
-  - No → continue
-- [ ] Is this a concrete fix or update?
-  - Yes → `haucklab-fix`
-  - No → continue
-- [ ] Is this about agent workflow, role clarity, or prompt quality?
-  - Yes → `haucklab-self`
-  - No → continue
-- [ ] Does this need a repo-level domain review across backend/frontend/integrations?
-  - Yes → `solar-app`
+### 1) Aufgabenklassifizierung
+- [ ] Handelt es sich um eine reine Ursachenanalyse?
+  - Ja → `haucklab`
+  - Nein → weiter
+- [ ] Handelt es sich um einen konkreten Fix oder eine Aktualisierung?
+  - Ja → `haucklab-fix`
+  - Nein → weiter
+- [ ] Geht es um Agenten-Workflow, Rollenklarheit oder Prompt-Qualität?
+  - Ja → `haucklab-self`
+  - Nein → weiter
+- [ ] Ist eine domänenweite Prüfung über Backend, Frontend und Integrationen nötig?
+  - Ja → `solar-app`
 
-### 2) Scope and affected area
-- [ ] Backend logic affected?
-- [ ] Frontend display affected?
-- [ ] MQTT/HTTP parsing affected?
-- [ ] InfluxDB/history affected?
-- [ ] Deployment/Proxmox affected?
-- [ ] Only docs/UI wording affected?
+### 2) Umfang und betroffener Bereich
+- [ ] Ist Backend-Logik betroffen?
+- [ ] Ist die Frontend-Anzeige betroffen?
+- [ ] Ist MQTT-/HTTP-Parsing betroffen?
+- [ ] Sind InfluxDB oder Verlauf betroffen?
+- [ ] Sind Deployment oder Proxmox betroffen?
+- [ ] Sind nur Dokumentation oder UI-Texte betroffen?
 
-If multiple areas are involved, trace the full path:
-- source
-- parser/collector
-- aggregation
+Wenn mehrere Bereiche betroffen sind, verfolge den vollständigen Pfad:
+- Quelle
+- Parser/Sammler
+- Aggregation
 - API
-- frontend rendering
+- Frontend-Darstellung
 
-### 3) Root-cause check before editing
-- [ ] Symptom clearly described?
-- [ ] Reproduction or failure path known?
-- [ ] Data flow checked from source to output?
-- [ ] Energy model preserved?
-  - PV production
-  - battery discharge
-  - grid import/export
-  - MPPT charging excluded from house consumption
+### 3) Ursachenprüfung vor der Bearbeitung
+- [ ] Ist das Symptom klar beschrieben?
+- [ ] Ist die Reproduktion oder der Fehlerpfad bekannt?
+- [ ] Ist der Datenfluss von der Quelle bis zur Ausgabe geprüft?
+- [ ] Ist das Energiemodell erhalten?
+  - PV-Erzeugung
+  - Batterieentladung
+  - Netzimport/-export
+  - MPPT-Ladung vom Hausverbrauch ausgeschlossen
 
-### 4) Fix selection
-- [ ] Smallest possible fix chosen?
-- [ ] No broad refactor without necessity?
-- [ ] API contract kept stable unless the task explicitly changes it?
-- [ ] No new hardware assumptions without evidence?
-- [ ] No cloud/demo dependency added if local-first behavior is possible?
+### 4) Auswahl des Fixes
+- [ ] Ist der kleinstmögliche Fix gewählt?
+- [ ] Gibt es kein unnötig breites Refactoring?
+- [ ] Bleibt der API-Vertrag stabil, sofern die Aufgabe ihn nicht ausdrücklich ändert?
+- [ ] Werden keine neuen Hardwareannahmen ohne Belege eingeführt?
+- [ ] Wird keine Cloud-/Demo-Abhängigkeit hinzugefügt, wenn local-first möglich ist?
 
-### 5) Implementation
-- [ ] Relevant files read?
-- [ ] Root cause confirmed?
-- [ ] Minimal patch applied?
-- [ ] Targeted tests added or updated?
-- [ ] Repo conventions preserved?
-- [ ] German UI and existing visual language preserved?
+### 5) Umsetzung
+- [ ] Sind die relevanten Dateien gelesen?
+- [ ] Ist die Ursache bestätigt?
+- [ ] Ist ein minimaler Patch angewendet?
+- [ ] Sind gezielte Tests ergänzt oder aktualisiert?
+- [ ] Sind die Repo-Konventionen erhalten?
+- [ ] Sind die deutsche UI und die bestehende visuelle Sprache erhalten?
 
-### 6) Verification
-- [ ] Relevant backend test run?
-- [ ] Relevant frontend check run?
-- [ ] Energy edge cases checked?
-  - [ ] zero values
-  - [ ] import
-  - [ ] export
-  - [ ] charging
-  - [ ] discharging
-  - [ ] missing fields
-  - [ ] demo mode
+### 6) Verifizierung
+- [ ] Ist der relevante Backend-Test ausgeführt?
+- [ ] Ist der relevante Frontend-Check ausgeführt?
+- [ ] Sind die Grenzfälle der Energieberechnung geprüft?
+  - [ ] Nullwerte
+  - [ ] Import
+  - [ ] Export
+  - [ ] Laden
+  - [ ] Entladen
+  - [ ] Fehlende Felder
+  - [ ] Demo-Modus
 
-Typical commands:
+Typische Befehle:
 - `cd backend && MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. pytest -q`
 - `cd frontend && ./node_modules/.bin/craco build`
 
-### 7) Closure
-- [ ] Root cause documented?
-- [ ] Change explained clearly?
-- [ ] Risk or follow-up issue identified?
-- [ ] No unintended side effects visible?
-- [ ] Next actionable step defined?
+### 7) Abschluss
+- [ ] Ist die Ursache dokumentiert?
+- [ ] Ist die Änderung klar erklärt?
+- [ ] Sind Risiko oder Folgeproblem identifiziert?
+- [ ] Sind keine unbeabsichtigten Nebenwirkungen erkennbar?
+- [ ] Ist der nächste konkrete Schritt definiert?
 
-## Pitfalls
+## Stolperfallen
 
-- `backend/server.py` reads `MONGO_URL` and `DB_NAME` from environment at module import time (not inside `lifespan`). Missing variables crash on import, before `uvicorn` even starts. Set both before importing or running anything that touches `server.py`.
-- `backend/tests/test_solar_dashboard.py` defaults `REACT_APP_BACKEND_URL` to `https://solar-control-5.preview.emergentagent.com`. Without overriding it to a reachable local backend, the integration tests 404. The offline unit tests (`test_influx_points.py`, `test_mqtt_client.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py`) do not hit the network and run standalone.
-- Frontend health-check plugin and dev-server endpoints are gated behind `ENABLE_HEALTH_CHECK=true`; they are off by default.
-- CRACO auto-injects `REACT_APP_VERSION` (from `package.json` version) and `REACT_APP_BUILD_DATE` (ISO date) on every `yarn start`/`yarn build`. Do not hardcode these values in components — read them from `process.env`.
-- ESLint runs only inside the CRACO dev server (`yarn start`), configured in `craco.config.js` with `plugin:react-hooks/recommended`. There is no standalone `yarn lint` script.
-- On this machine `yarn` is broken; use `./node_modules/.bin/craco` directly for start/build/test when `yarn` fails.
+- `backend/server.py` liest `MONGO_URL` und `DB_NAME` beim Modulimport aus der Umgebung (nicht innerhalb von `lifespan`). Fehlende Variablen führen bereits beim Import zum Absturz, bevor `uvicorn` überhaupt startet. Setze beide Variablen, bevor du etwas importierst oder ausführst, das `server.py` berührt.
+- `backend/tests/test_solar_dashboard.py` verwendet standardmäßig `https://solar-control-5.preview.emergentagent.com` als `REACT_APP_BACKEND_URL`. Ohne Überschreiben mit einem erreichbaren lokalen Backend liefern die Integrationstests 404. Die Offline-Unit-Tests (`test_influx_points.py`, `test_mqtt_client.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py`) greifen nicht auf das Netzwerk zu und laufen eigenständig.
+- Das Frontend-Health-Check-Plugin und die Dev-Server-Endpunkte sind hinter `ENABLE_HEALTH_CHECK=true` geschützt und standardmäßig deaktiviert.
+- CRACO injiziert bei jedem `yarn start`/`yarn build` automatisch `REACT_APP_VERSION` (aus der Version in `package.json`) und `REACT_APP_BUILD_DATE` (ISO-Datum). Hardcode diese Werte nicht in Komponenten, sondern lies sie aus `process.env`.
+- ESLint läuft nur innerhalb des CRACO-Dev-Servers (`yarn start`) und ist in `craco.config.js` mit `plugin:react-hooks/recommended` konfiguriert. Es gibt kein eigenständiges `yarn lint`-Skript.
+- Auf diesem Rechner ist `yarn` defekt; verwende bei einem Fehler stattdessen direkt `./node_modules/.bin/craco` für Start, Build und Tests.
 
-## Validation and environment
+## Validierung und Umgebung
 
-- Backend imports configuration at module load and startup requires MongoDB. Some integration tests also require a running app/services and `REACT_APP_BACKEND_URL`; distinguish those environment failures from code regressions.
-- Backend snapshots are written every 15 seconds and the frontend polls live/today data every 3 seconds; preserve these intervals unless required by the task.
-- For energy calculations, cover zero, import, export, charging, discharging, missing fields, and demo-mode data when relevant.
-- After the first substantive edit, run the narrowest relevant executable check, then run the appropriate backend tests or frontend build before finishing.
+- Das Backend importiert seine Konfiguration beim Laden des Moduls und benötigt beim Start MongoDB. Einige Integrationstests benötigen außerdem eine laufende Anwendung bzw. laufende Dienste und `REACT_APP_BACKEND_URL`; unterscheide diese Umgebungsfehler von Code-Regressionen.
+- Backend-Snapshots werden alle 15 Sekunden geschrieben und das Frontend fragt Live-/Tagesdaten alle 3 Sekunden ab. Erhalte diese Intervalle, sofern die Aufgabe keine Änderung erfordert.
+- Decke bei Energieberechnungen relevante Fälle mit Null, Import, Export, Laden, Entladen, fehlenden Feldern und Demo-Daten ab.
+- Führe nach der ersten substanziellen Änderung den engsten passenden ausführbaren Check aus und danach vor dem Abschluss die passenden Backend-Tests oder den Frontend-Build.

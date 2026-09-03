@@ -19,11 +19,11 @@ Skill state: A/B comparison for `codex-grade-coding`
 
 | Dimension | A average | B average | Delta |
 | --- | --- | --- | --- |
-| Correctness | 1.25 | 1.75 | +0.50 |
+| Correctness | 1.25 | 1.63 | +0.38 |
 | Task understanding | 1.38 | 1.75 | +0.37 |
-| Scope discipline | 0.88 | 1.75 | +0.87 |
-| Verification quality | 0.88 | 1.50 | +0.62 |
-| Hallucination control | 1.00 | 1.50 | +0.50 |
+| Scope discipline | 0.88 | 1.63 | +0.75 |
+| Verification quality | 0.88 | 1.63 | +0.75 |
+| Hallucination control | 1.00 | 1.63 | +0.63 |
 | Final answer quality | 1.00 | 1.50 | +0.50 |
 
 ## Qualitative Summary

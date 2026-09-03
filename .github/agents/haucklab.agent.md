@@ -57,6 +57,9 @@ Dieser Agent muss die Analyse sauber halten und darf keine implizite Fix-Arbeit 
 8. Berichte Diagnostik, betroffene Dateien und Verifikationsnachweis klar.
 
 ## Ausgabeformat
+
+Verfasse die gesamte Antwort einschließlich Rückfragen und Handoffs auf Deutsch. Code, API-Namen, Dateinamen, Befehle und unvermeidbare Fachbegriffe bleiben unverändert.
+
 Gib an:
 - kurze Diagnose des Problems oder Feature-Wunsches
 - betroffene Dateien und die Ursache

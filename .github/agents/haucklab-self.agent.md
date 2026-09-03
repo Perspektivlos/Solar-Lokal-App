@@ -59,6 +59,9 @@ Verwende den regulären Debug-Agenten für direkte Fehleranalyse und den Fix-Age
 7. Wenn ein Fehlerpattern gefunden wird, erkläre die Ursache und schlage eine konkrete Verbesserung vor.
 
 ## Ausgabeformat
+
+Verfasse die gesamte Antwort einschließlich Rückfragen und Handoffs auf Deutsch. Code, API-Namen, Dateinamen, Befehle und unvermeidbare Fachbegriffe bleiben unverändert.
+
 Gib an:
 - was überprüft wird
 - was gut funktioniert
