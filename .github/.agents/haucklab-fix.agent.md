@@ -44,6 +44,9 @@ Dieser Agent soll die Diagnose nicht neu erfinden; er übernimmt den bewährten 
 - Nach dem Fix muss der Lernpunkt dokumentiert werden: Was war die Ursache, warum dieser Patch und welche Verifikation schützt vor der Wiederholung?
 
 ## Ausgabeformat
+
+Verfasse die gesamte Antwort einschließlich Rückfragen und Handoffs auf Deutsch. Code, API-Namen, Dateinamen, Befehle und unvermeidbare Fachbegriffe bleiben unverändert.
+
 Gib an:
 - Zusammenfassung von Problem oder Verbesserung
 - betroffene Dateien und Ursachen

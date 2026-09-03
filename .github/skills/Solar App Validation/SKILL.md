@@ -6,7 +6,7 @@ _agensi: "a80f0f9c-4de1-4c0d-b900-d19cf7b742c5"
 
 # Solar App Validation
 
-Use this skill when the user wants to check whether a change is correct, safe, and aligned with the repository’s invariants. This workflow focuses on targeted validation rather than broad, noisy test runs.
+Use this skill when the user wants to check whether a change is correct, safe, and aligned with the repo's invariants. The focus is on targeted validation rather than broad, noisy test runs.
 
 ## Validation goals
 
@@ -49,7 +49,7 @@ cd frontend
 
 4. Record actual result and residual risk.
    - Report what was verified.
-   - Call out any environment dependency or limitation.
+   - Call out any environment dependence or limitation.
    - Distinguish confirmed behavior from assumptions.
 
 ## Must-hold invariants
@@ -60,6 +60,10 @@ cd frontend
 - The four-Hoymiles-channel and three-Shelly-phase structure remains stable.
 - No double-counting of DC-side charging in house consumption.
 
+## Evidence-before-completion rule
+
+Do not claim success without a fresh proving command. A skill run is only complete when the validation command has actually been executed and the result is reported clearly.
+
 ## When to use this skill
 
 Use this skill for:
@@ -67,5 +71,5 @@ Use this skill for:
 - verifying a fix or refactor
 - checking whether a backend or frontend change is safe
 - validating energy semantics and API contract stability
-- confirming a bug is actually resolved without causing regressions
+- confirming that a bug is actually resolved without regressions
 - deciding whether a broader suite is necessary or whether a focused check is sufficient

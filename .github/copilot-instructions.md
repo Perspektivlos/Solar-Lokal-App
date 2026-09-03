@@ -72,6 +72,7 @@ Die Victron-MPPT-Leistung liegt auf der DC-Seite und darf nicht zusätzlich als 
 
 ## Repository-spezifische Konventionen
 
+- Agenten schreiben Antworten, Berichte, Rückfragen und Handoffs auf Deutsch. Code, API-Namen, Dateinamen, Befehle und unvermeidbare Fachbegriffe bleiben unverändert.
 - MQTT-Parsing defensiv implementieren: JSON, verpackte `{"value": ...}`-Payloads, numerische Strings und Text akzeptieren. Fehlende oder fehlerhafte Gerätefelder sollen sichere Defaults liefern und den Poller nicht beenden.
 - Die von der UI verwendeten Herkunftsmarker (`_via_mqtt`, `_fallback` und `online`) erhalten, damit Demo-, MQTT-Live-, HTTP-Fallback- und Offline-Daten unterschieden werden können.
 - Das etablierte Antwortformat mit vier Hoymiles-Kanälen und drei Shelly-Phasen beibehalten. Änderungen am API-Format erfordern passende Anpassungen an Frontend-Verbrauchern und Backend-Tests.
@@ -90,6 +91,6 @@ Die Victron-MPPT-Leistung liegt auf der DC-Seite und darf nicht zusätzlich als 
 - Build- und Deployment-Skript: `deploy/proxmox/build-app.sh`
 - InfluxDB-/Grafana-Einrichtung: `deploy/proxmox/grafana/INFLUXDB-GRAFANA-SETUP.md`
 - Produktverhalten und unterstützte Hardware: `README.md`
-- Repository-spezifische Copilot-Agenten: `.github/agents/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
+- Repository-spezifische Copilot-Agenten: `.github/.agents/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
 
 Keine Secrets aus `.env`, MQTT-Zugangsdaten, InfluxDB-Tokens oder lokale Deployment-Konfiguration committen.

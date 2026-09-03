@@ -22,7 +22,8 @@ Dieser Agent ist passend für:
 - Verbesserung von Prompt-Klarheit, Erkennungsqualität und Entscheidungsgrenzen
 - Identifikation fehlender Workflow-Modi wie Debugging, Fix, Cleanup, Review oder Selbstanalyse
 - Verbesserung von Troubleshooting-Strategien und Lernschleifen für KI-gestützte Arbeit
-- Bewertung, ob Repository-Konventionen sauber in den Agenten-Leitlinien widerspiegelt sind- Training und Schulung von Agenten-Workflows anhand echter Repo-Fälle
+- Bewertung, ob Repository-Konventionen sauber in den Agenten-Leitlinien gespiegelt sind
+- Training und Schulung von Agenten-Workflows anhand echter Repo-Fälle
 
 ## Trainingsziele
 Damit dieser Agent im Repo wirklich nützlich ist, muss er folgende Qualitätsziele einhalten:
@@ -58,6 +59,9 @@ Verwende den regulären Debug-Agenten für direkte Fehleranalyse und den Fix-Age
 7. Wenn ein Fehlerpattern gefunden wird, erkläre die Ursache und schlage eine konkrete Verbesserung vor.
 
 ## Ausgabeformat
+
+Verfasse die gesamte Antwort einschließlich Rückfragen und Handoffs auf Deutsch. Code, API-Namen, Dateinamen, Befehle und unvermeidbare Fachbegriffe bleiben unverändert.
+
 Gib an:
 - was überprüft wird
 - was gut funktioniert
