@@ -16,13 +16,13 @@ Use this skill when the user wants a practical fix for a Solar Lokal App bug or 
 
 2. Localize the root cause.
    - Check `backend/mqtt_client.py` for MQTT parsing and topic state handling.
-   - Check `backend/server.py` for summarization, fallback logic, API payload generation, and lifecycle behavior.
+   - Check `backend/collectors.py` and `collect_live()` for MQTT-first collection, HTTP fallback, and summarization; check `backend/server.py` for API integration and lifecycle behavior.
    - Check `frontend/src/lib/api.js` and the relevant page/component when the issue is visible only in UI output.
 
 3. Apply the smallest correct fix.
    - Do not broaden scope to adjacent modules unless the root cause clearly spans them.
    - Keep the system’s energy model consistent and avoid changing API contracts unless explicitly required.
-   - Preserve source markers, safe defaults, and demo-mode behavior.
+   - Preserve existing source markers, safe defaults, and demo-mode behavior.
 
 4. Verify with the narrowest relevant check.
    - Backend: run a focused pytest selection for the touched logic.
@@ -36,7 +36,7 @@ Use this skill when the user wants a practical fix for a Solar Lokal App bug or 
 - Keep `METER` separate from battery discharge logic.
 - Preserve the established API shape and frontend conventions unless the task explicitly changes them.
 - Maintain defensive MQTT parsing and graceful degradation for missing or malformed data.
-- Preserve the local-first, demo-safe design.
+- Preserve the existing local-first, demo-safe design.
 
 ## Safety checklist
 
@@ -67,4 +67,4 @@ Use this skill for:
 - summary logic or fallback adjustments
 - API contract mismatches
 - frontend display fixes caused by upstream data problems
-- regression fixes that must remain aligned with project invariants
+- regression fixes that must stay aligned with project invariants
