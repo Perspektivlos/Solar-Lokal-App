@@ -52,31 +52,32 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - `GET /api/integrations/status` – MQTT/InfluxDB/Poller Status
 
 ## Completed Work
-- [x] Live-Dashboard mit EnergyFlow-Animation
-- [x] 6-KPI-Strip (PV, Netz, Haus, Akku-SoC, Autarkie, Eigenverbrauch)
-- [x] Round-Trip-Effizienz-Kachel
-- [x] MPPT-Vergleichskachel & 3-Phasen-Schieflast
-- [x] Control-Seite (Hoymiles + Trucki)
-- [x] Diagnostics mit Self-Test
-- [x] History-Seite mit Recharts
-- [x] Dark Glassmorphism UI (solar-ui.jsx)
-- [x] Frontend-Komponentenextraktion (KpiStrip, Cards etc.)
-- [x] Backend: mocks.py, influx_points.py, routes.py, collectors.py extrahiert
-- [x] Lifespan-Migration (on_event → asynccontextmanager)
-- [x] Forecast komplett entfernt (FE+BE)
-- [x] Security Audit (dokumentiert; Risiken vom Nutzer bewusst akzeptiert – LAN-only Betrieb: keine Auth, MQTT-Klartext-Creds, offene CORS)
-- [x] 57/57 Pytest-Tests bestanden
-- [x] Fonts umgestellt: Space Grotesk (Text) + JetBrains Mono (Zahlen), app-weit inkl. SVG/Charts (28.08.2026)
-- [x] Design-Refinement (29.08.2026): Palette Schwarz/Mitternachtsblau/Mattgrau/Silber ergänzt (semantische Neon-Akzente bleiben für Datenzustände); einheitliche Kachel-Anatomie via GlassCard (Card-Lift-Hover, Header-Gradient, Silber-Rand); Glas-/Glow-Effekte verstärkt (blur 18px, abgedunkeltes glass-inset rgba(5,5,5,0.7)); Sparklines mit Flächenfüllung; 3-Font-System (Outfit=Labels, IBM Plex Sans=Body, JetBrains Mono=Zahlen). Rein visuell – KEINE angezeigten Werte/Labels geändert. Zentral in index.css/tailwind.config/solar-ui.jsx (kaskadiert auf alle Kacheln). Verifiziert per Screenshots (Dashboard + Geräte + Integrationen).
-- [x] PR-Review-Triage (28.08.2026): valide Findings behoben – defensive .get()-Zugriffe (collectors.py/routes.py), try/finally in Config-Test, WARN-Badge für Schieflast, History-Fehlerstatus, Batterietitel Totband-konsistent, NavLink aria-label, README-tar & .gitignore (.env/.copilot), design_guidelines Fonts. Halluzinierte/Nitpick-Findings übersprungen (kein /api/forecast, @import-Stil, Zirkulär-Import).
-- [x] Footer/Versionierung (29.08.2026): Version auto aus package.json (v1.3.0) + Build-Datum (craco), Footer-Styling an Palette angepasst.
-- [x] UI-Verfeinerung Sci-Fi-Theme (29.08.2026): Schriften auf Chakra Petch (Labels, sci-fi/technisch) + IBM Plex Sans (Body) + JetBrains Mono (Zahlen); erweiterte Tailwind-Spacing-Scale (4.5/13/15/17/18/22/26/30/88/100/128) + luftigeres Dashboard-Layout (space-y-8, größere Card-Paddings p-5/py-3); Palette um Weiß (sci-white) & Blau (sci-blue) erweitert (Blau-Glow auf Kacheln); Kacheln als erhöhte Navy-Fläche (linear-gradient rgba(23,34,66)) klar abgehoben vom nun fast-schwarzen Seitenhintergrund (#04060c). Latenter Bug behoben: doppelter `colors`-Key in tailwind.config gemerged (silver/midnight-Utilities funktionieren jetzt). Verifiziert per Screenshots (Dashboard oben/unten + Integrationen). Keine Werte geändert.
-- [x] Runtime-Fix (29.08.2026): "TRAIL_WINDOW_MS / buildTrail is not defined" behoben – beide Helfer von Modul- in Komponenten-Scope verschoben (Fast-Refresh/visual-edits-Closure-Problem). Verifiziert per testing_agent (iteration_12.json: 100% Frontend, 0 ReferenceErrors, alle 6 Routen sauber). Zudem 6. KPI-Kachel "Einspeisung (Gesamt)" Sparkline ergänzt (nun alle 6 konsistent).
-- [x] Deploy-Vorabprüfung (29.08.2026): build-app.sh prüft 10 Kern-Dateien vor Build, klare Fehlermeldung bei unvollständigem Upload.
-- [x] Deploy-Fix Proxmox (29.08.2026): `build-app.sh` selbstheilend – erzeugt minimale craco.config.js Fallback (Webpack '@'-Alias, in ~47 Imports genutzt), falls im Upload fehlt. Ursache des "craco: Config file not found"-Builds war unvollständiger Quellcode-Upload. Fallback per echtem Production-Build verifiziert (Build erfolgreich, @-Alias aufgelöst).
 
-## Type-Hint-Coverage (30.08.2026)
-- Öffentliche Funktionssignaturen + Rückgabetypen in `routes.py` (alle Endpoints + innere Helfer) und `server.py` (lifespan, poller_loop, _influx_*, restart_integrations, victron_keepalive_loop) additiv annotiert. `AsyncIterator` in server.py-Import ergänzt. Kein Laufzeitverhalten geändert; Import OK, 57/57 Tests grün, API 200.
+### Kernfunktionen (Feature-Set)
+- [x] Live-Dashboard mit animiertem EnergyFlow-Diagramm
+- [x] 6-KPI-Strip mit 15-Min-Sparklines + Hover-Tooltip (Min/Ø/Max)
+- [x] Geräte-Karten: Trucki, Victron/MPPT-Vergleich, Hoymiles/Ahoy, Shelly 3-Phasen, Batterie-Netto, Round-Trip, Phasen-Schieflast
+- [x] Rubrik-Sektionen mit Geräte-Weblink (↗) + aufklappbaren, live-gefüllten Detail-Panels (IntroCard-Struktur je Rubrik)
+- [x] Control-Seite (Hoymiles + Trucki), Diagnostics-Self-Test, History (Recharts)
+- [x] Demo/Mock-Modus als Default; MQTT/InfluxDB-Integration
+
+### Architektur & Qualität
+- [x] Backend modularisiert: server/routes/collectors/mqtt_client/mocks/influx_points; Lifespan-Migration; 57/57 Pytest-Tests
+- [x] Type-Hints in routes.py & server.py (additiv, 30.08.2026)
+- [x] Forecast vollständig entfernt (FE+BE, per Grep verifiziert)
+- [x] Security Audit dokumentiert; Risiken vom Nutzer bewusst akzeptiert (LAN-only)
+- [x] Deploy (Proxmox): build-app.sh mit Vollständigkeits-Check (10 Kern-Dateien) + selbstheilender craco.config-Fallback
+
+### Design (aktueller Stand)
+- [x] Sci-Fi Dark Glassmorphism; Palette Schwarz/Mitternachtsblau/Mattgrau/Silber + Weiß/Blau
+- [x] Kacheln als erhöhte Navy-Fläche, klar abgehoben vom fast-schwarzen Hintergrund (#04060c); Card-Lift-Hover, Akzent-Glow oben, Sparkline-Flächenfüllung
+- [x] 3-Font-System: **Chakra Petch** (Labels) · **IBM Plex Sans** (Body) · **JetBrains Mono** (Zahlen)
+- [x] Erweiterte Tailwind-Spacing-Scale + luftigeres Layout; Auto-Versionierung im Footer (package.json → v1.3.0 + Build-Datum)
+
+### Behobene Bugs
+- [x] Runtime: „TRAIL_WINDOW_MS / buildTrail is not defined" → Helfer in Komponenten-Scope (verifiziert testing_agent, iteration_12)
+- [x] PR-Review-Triage: defensive .get()-Zugriffe, try/finally im Config-Test, History-Fehlerstatus (role=alert), NavLink aria-label, README-tar & .gitignore
+- [x] tailwind.config: doppelter `colors`-Key gemerged (silver/midnight-Utilities aktiv)
 
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
