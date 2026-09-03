@@ -90,6 +90,6 @@ Die Victron-MPPT-Leistung liegt auf der DC-Seite und darf nicht zusätzlich als 
 - Build- und Deployment-Skript: `deploy/proxmox/build-app.sh`
 - InfluxDB-/Grafana-Einrichtung: `deploy/proxmox/grafana/INFLUXDB-GRAFANA-SETUP.md`
 - Produktverhalten und unterstützte Hardware: `README.md`
-- Repository-spezifische Copilot-Agenten: `.github/agents/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
+- Repository-spezifische Copilot-Agenten: `.github/.agents/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
 
 Keine Secrets aus `.env`, MQTT-Zugangsdaten, InfluxDB-Tokens oder lokale Deployment-Konfiguration committen.

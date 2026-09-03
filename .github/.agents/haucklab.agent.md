@@ -49,10 +49,10 @@ Dieser Agent muss die Analyse sauber halten und darf keine implizite Fix-Arbeit 
 ## Vorgehensweise
 1. Lies die genauen betroffenen Dateien, bevor du Verhalten änderst.
 2. Verfolge den Datenpfad von Gerätedaten über Backend-Parsing, Berechnungen und Frontend-Anzeige.
-3. Bestätige die Ursache und implementiere dann den kleinsten passenden Fix zur Architektur.
-4. Ergänze oder passe einen gezielten Test an, wenn sich das Verhalten ändert.
-5. Validierung mit dem passenden Befehl, z. B. gezieltem pytest oder Frontend-Build/Test-Schritt.
-6. Wenn ein Fix oder Test fehlschlägt, lerne aus dem Fehler, korrigiere die eigentliche Ursache und verhindere dieselbe Ausgabe erneut.
+3. Bestimme den Anfragetyp: Im Debugging-only Modus beschreibst du nur Ursache, Datenfluss, minimalen Fix und passende Validierung, ohne Dateien oder Tests zu ändern; nur bei einer ausdrücklichen Fix-Anfrage führst du die Schritte 4–7 aus.
+4. Bestätige die Ursache und implementiere dann den kleinsten passenden Fix zur Architektur.
+5. Ergänze oder passe einen gezielten Test an, wenn sich das Verhalten ändert.
+6. Validiere mit dem passenden Befehl, z. B. gezieltem pytest oder Frontend-Build/Test-Schritt; wenn ein Fix oder Test fehlschlägt, korrigiere die eigentliche Ursache und verhindere dieselbe Ausgabe erneut.
 7. Halte die Codebasis sauber, indem du veraltete Muster bereinigst, Namenskonventionen und Layout an die aktuelle Architektur angleichst und Dokumentation oder Struktur bei Bedarf aktualisierst.
 8. Berichte Diagnostik, betroffene Dateien und Verifikationsnachweis klar.
 
