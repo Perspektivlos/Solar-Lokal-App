@@ -41,6 +41,12 @@ const INTRO_SECTIONS = [
 
 // Hinweis: Rubrik-Details werden dynamisch aus den Live-Werten gebaut (siehe Dashboard-Component).
 
+/**
+ * Klassifiziert den Batteriezustand anhand des Ladezustands und der Leistung.
+ * @param {boolean} socDanger - Gibt an, ob ein kritischer Ladezustand vorliegt.
+ * @param {number} power - Batterieleistung; positive Werte laden, negative Werte entladen die Batterie.
+ * @returns {string} `KRITISCH`, `LADEN`, `ENTLADEN` oder `NORMAL`.
+ */
 function batteryStateKind(socDanger, power) {
   if (socDanger) return "KRITISCH";
   if (power > 20) return "LADEN";
@@ -48,6 +54,10 @@ function batteryStateKind(socDanger, power) {
   return "NORMAL";
 }
 
+/**
+ * Zeigt eine Live-Übersicht des Solarenergiesystems mit Energiefluss, Gerätezuständen und Netzverbrauch.
+ * @returns {JSX.Element} Das gerenderte Dashboard sowie Lade- oder Fehlermeldungen.
+ */
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);

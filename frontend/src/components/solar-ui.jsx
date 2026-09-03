@@ -127,7 +127,19 @@ export function Spark({ values, color = "#8C92AC", height = 24 }) {
   );
 }
 
-// Dominante Live-Metrik: große Kernzahl, kleine Einheit, optionales Vorzeichen.
+/**
+ * Zeigt eine hervorgehobene Live-Metrik mit Einheit und optionalem Verlauf an.
+ * @param {string} label - Bezeichnung der Metrik.
+ * @param {*} value - Anzuzeigender Messwert.
+ * @param {string} unit - Einheit des Messwerts.
+ * @param {string} [color] - CSS-Klasse für die Wertfarbe.
+ * @param {string} [sign] - Optionales Vorzeichen vor dem Wert.
+ * @param {React.ReactNode} [sub] - Zusätzlicher Inhalt neben der Bezeichnung.
+ * @param {number[]} [sparkValues] - Werte für die optionale Sparkline.
+ * @param {string} [sparkColor] - Farbe der Sparkline.
+ * @param {"sm"|"lg"} [size="lg"] - Größenvariante des Messwerts.
+ * @returns {JSX.Element} Gerenderte Metrikdarstellung.
+ */
 export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, sparkColor, size = "lg" }) {
   const valueCls = size === "sm" ? "text-2xl" : "text-3xl lg:text-4xl";
   return (
@@ -147,7 +159,15 @@ export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, s
   );
 }
 
-// Zurückgenommener Sekundärwert (kleiner, gedämpft) für Zusatzinfos.
+/**
+ * Zeigt eine kompakte sekundäre Kennzahl mit Beschriftung, Wert und Einheit an.
+ * @param {string} label - Beschriftung der Kennzahl.
+ * @param {*} value - Anzuzeigender Wert.
+ * @param {string} unit - Einheit des Werts.
+ * @param {string} [color] - Optionale CSS-Klasse für die Wertfarbe.
+ * @param {string} [testid] - Optionale Test-ID für das umgebende Element.
+ * @returns {JSX.Element} Das gerenderte Statistik-Element.
+ */
 export function Stat({ label, value, unit, color, testid }) {
   return (
     <div data-testid={testid}>
@@ -161,7 +181,11 @@ export function Stat({ label, value, unit, color, testid }) {
 
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
 // Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
-// Info-Panel (gleiches Prinzip wie die IntroCard oben), gefiltert auf das Rubrik-Gerät.
+/**
+ * Rendert eine farbige Abschnittsüberschrift mit optionaler Weboberfläche und aufklappbaren Detailinformationen.
+ * @param {string} [href] - URL der zu öffnenden Weboberfläche.
+ * @param {Array<{label: string, body: string}>} [details] - Detailinformationen, die ein- und ausgeblendet werden können.
+ */
 export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Array.isArray(details) && details.length > 0;

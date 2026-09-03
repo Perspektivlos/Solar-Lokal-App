@@ -5,11 +5,11 @@
 - `backend/` contains the FastAPI service, device collectors, MQTT integration, InfluxDB point builders, and Pytest tests.
 - `frontend/src/` contains the React 19 application. Routes are defined in `App.js`; pages live in `pages/`, domain UI in `components/`, API calls in `lib/api.js`, and power/sign helpers in `lib/power.js`.
 - `deploy/proxmox/` contains the production LXC and nginx deployment scripts plus Grafana dashboards.
-- `.github/agents/` contains the repo-local specialist agents and role map.
+- `.github/.agents/` contains the repo-local specialist agents and role map.
 - `.github/skills/` contains scoped workflow skills for diagnostics, implementation, validation, and release-oriented tasks.
 - Read the [project README](README.md) for product behavior and deployment details, the [status update](STATUS_UPDATE.md) for known current-state notes, and [design guidelines](design_guidelines.json) for frontend visual conventions.
-- Use the [solar-app specialist agent](.github/agents/solar-app.agent.md) for detailed domain invariants and task-specific validation guidance.
-- Use [agent-map](.github/agents/agent-map.md) to select the correct repo workflow for debugging, fixes, or agent self-improvement.
+- Use the [solar-app specialist agent](.github/.agents/solar-app.agent.md) for detailed domain invariants and task-specific validation guidance.
+- Use [agent-map](.github/.agents/agent-map.md) to select the correct repo workflow for debugging, fixes, or agent self-improvement.
 
 ## Commands
 
