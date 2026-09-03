@@ -64,7 +64,7 @@ async def cfg_put(update: ConfigUpdate) -> Dict[str, Any]:
 async def history(range: str = "1h") -> Dict[str, Any]:
     minutes = {"1h": 60, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
-    cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", 1)
+    cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(10000)
     rows = await cur.to_list(10000)
     # downsample if too many points
     if len(rows) > 600:
@@ -78,7 +78,7 @@ async def today() -> Dict[str, Any]:
     """Trapez-integration of power values from UTC midnight."""
     now = datetime.now(timezone.utc)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    cur = db.snapshots.find({"ts": {"$gte": midnight.isoformat()}}, {"_id": 0}).sort("ts", 1)
+    cur = db.snapshots.find({"ts": {"$gte": midnight.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(20000)
     rows = await cur.to_list(20000)
     if not rows:
         return {
@@ -281,7 +281,7 @@ async def diagnostics_run() -> Dict[str, Any]:
     t = time.time()
     try:
         await db.command("ping")
-        snap_count = await db.snapshots.count_documents({})
+        snap_count = await db.snapshots.estimated_document_count()
         add("MongoDB", True, f"Ping OK · {snap_count} Snapshots gespeichert", int((time.time() - t) * 1000))
     except Exception as e:
         add("MongoDB", False, f"{type(e).__name__}: {e}", int((time.time() - t) * 1000))

@@ -24,7 +24,7 @@ Dieser Agent ist die passende Wahl für:
 - Aktualisierung von Tests, Dokumentation oder Deployment-Dateien zusammen mit Codeänderungen
 - Verbesserung der Wartbarkeit bei gleichzeitiger Beibehaltung des aktuellen Verhaltens
 
-Verwende den Debugging-only Agenten, wenn die Aufgabe allein Root-Cause-Analyse und Erklärung ist, ohne breitere Änderungen zu implementieren.
+Verwende den reinen Diagnose-Agenten, wenn die Aufgabe allein Ursachenanalyse und Erklärung ist, ohne breitere Änderungen zu implementieren.
 
 ## Vorgehensweise
 1. Lies die genauen betroffenen Dateien zu dem Problem oder Aufräumauftrag.
@@ -40,7 +40,7 @@ Dieser Agent soll die Diagnose nicht neu erfinden; er übernimmt den bewährten 
 - Ein Fix darf nur dann gestartet werden, wenn die Ursache auf Basis von Repo-Belegen eingegrenzt wurde.
 - Wenn eine Diagnose unklar bleibt, zurück zum Debugging-Agenten, nicht improvisieren.
 - Der Patch muss durch eine relevante Test- oder Build-Verifikation belegt werden.
-- Kein broad refactor, kein „komfortables Aufräumen“, wenn es den Scope überschreitet.
+- Kein breites Refactoring und kein „komfortables Aufräumen“, wenn es den Umfang überschreitet.
 - Nach dem Fix muss der Lernpunkt dokumentiert werden: Was war die Ursache, warum dieser Patch und welche Verifikation schützt vor der Wiederholung?
 
 ## Ausgabeformat

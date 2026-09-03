@@ -1,31 +1,31 @@
 ---
 name: solar-lokal-app-validation
-description: Validate Solar Lokal App changes with the smallest relevant backend or frontend checks while preserving the project’s energy rules, API contract, and local-first behavior.
+description: Validiere Änderungen an der Solar-Lokal-App mit den kleinsten relevanten Backend- oder Frontend-Prüfungen und bewahre dabei die Energieregeln, den API-Vertrag und das local-first Verhalten des Projekts.
 _agensi: "a80f0f9c-4de1-4c0d-b900-d19cf7b742c5"
 ---
 
-# Solar App Validation
+# Solar-App-Validierung
 
-Use this skill when the user wants to check whether a change is correct, safe, and aligned with the repo's invariants. The focus is on targeted validation rather than broad, noisy test runs.
+Verwende diesen Skill, wenn der Nutzer prüfen möchte, ob eine Änderung korrekt, sicher und an den Invarianten des Repositories ausgerichtet ist. Dieser Ablauf konzentriert sich auf gezielte Validierung statt auf breite, unübersichtliche Testläufe.
 
-## Validation goals
+## Validierungsziele
 
-Confirm that the change:
+Bestätige, dass die Änderung:
 
-- preserves the solar energy model and sign conventions
-- keeps MQTT/HTTP fallback behavior safe and local-first
-- does not break expected API fields or frontend consumers
-- passes the smallest relevant executable verification
+- das Solar-Energiemodell und die Vorzeichenkonventionen bewahrt
+- das sichere, local-first MQTT-/HTTP-Fallback-Verhalten erhält
+- erwartete API-Felder oder Frontend-Verbraucher nicht beschädigt
+- die kleinste relevante ausführbare Prüfung besteht
 
-## Validation workflow
+## Validierungsablauf
 
-1. Choose the smallest relevant command.
-   - Backend logic change: run a focused `pytest` selection for the touched area.
-   - Frontend behavior change: run a targeted test or build command for the changed screen/component.
-   - API shape change: verify the backend contract and any dependent frontend consumers.
+1. Wähle den kleinsten relevanten Befehl.
+   - Änderung an Backend-Logik: Führe eine fokussierte `pytest`-Auswahl für den geänderten Bereich aus.
+   - Änderung am Frontend-Verhalten: Führe einen gezielten Test oder Build-Befehl für die geänderte Ansicht/Komponente aus.
+   - Änderung der API-Struktur: Prüfe den Backend-Vertrag und alle abhängigen Frontend-Verbraucher.
 
-2. Prefer repo-specific checks.
-   - Backend examples:
+2. Bevorzuge Repository-spezifische Prüfungen.
+   - Backend-Beispiele:
 
 ```bash
 cd backend
@@ -34,42 +34,38 @@ MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/t
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/test_influx_points.py -q
 ```
 
-   - Frontend examples:
+   - Frontend-Beispiele:
 
 ```bash
 cd frontend
 ./node_modules/.bin/craco test --watchAll=false --runInBand
 ```
 
-3. Validate the correctness of the system semantics, not just the test pass.
-   - Check whether MPPT charging is still excluded from house consumption.
-   - Check whether battery discharge logic still follows the correct source precedence.
-   - Check whether API output still matches the expected structure.
-   - Check whether missing device fields still fall back safely.
+3. Validiere die Korrektheit der Systemsemantik, nicht nur den bestandenen Test.
+   - Prüfe, ob die MPPT-Ladung weiterhin vom Hausverbrauch ausgeschlossen ist.
+   - Prüfe, ob die Batterieentladungslogik weiterhin der korrekten Quellenpriorität folgt.
+   - Prüfe, ob die API-Ausgabe weiterhin der erwarteten Struktur entspricht.
+   - Prüfe, ob fehlende Gerätefelder weiterhin sicher auf Fallbacks zurückfallen.
 
-4. Record actual result and residual risk.
-   - Report what was verified.
-   - Call out any environment dependence or limitation.
-   - Distinguish confirmed behavior from assumptions.
+4. Dokumentiere das tatsächliche Ergebnis und verbleibende Risiken.
+   - Berichte, was geprüft wurde.
+   - Benenne Umgebungsabhängigkeiten oder Einschränkungen.
+   - Unterscheide bestätigtes Verhalten von Annahmen.
 
-## Must-hold invariants
+## Zwingend einzuhaltende Invarianten
 
-- Local-first and demo-safe behavior should remain intact.
-- MQTT parsing remains defensive and tolerant of malformed payloads.
-- `_via_mqtt`, `_fallback`, and `online` semantics remain meaningful.
-- The four-Hoymiles-channel and three-Shelly-phase structure remains stable.
-- No double-counting of DC-side charging in house consumption.
+- Local-first- und demo-sicheres Verhalten müssen erhalten bleiben.
+- MQTT-Parsing bleibt defensiv und tolerant gegenüber fehlerhaften Payloads.
+- Die Semantik von `_via_mqtt`, `_fallback` und `online` bleibt aussagekräftig.
+- Die Struktur mit vier Hoymiles-Kanälen und drei Shelly-Phasen bleibt stabil.
+- Keine doppelte Zählung der DC-seitigen Ladung im Hausverbrauch.
 
-## Evidence-before-completion rule
+## Wann dieser Skill verwendet wird
 
-Do not claim success without a fresh proving command. A skill run is only complete when the validation command has actually been executed and the result is reported clearly.
+Verwende diesen Skill für:
 
-## When to use this skill
-
-Use this skill for:
-
-- verifying a fix or refactor
-- checking whether a backend or frontend change is safe
-- validating energy semantics and API contract stability
-- confirming that a bug is actually resolved without regressions
-- deciding whether a broader suite is necessary or whether a focused check is sufficient
+- die Prüfung eines Fixes oder Refactorings
+- die Einschätzung, ob eine Backend- oder Frontend-Änderung sicher ist
+- die Validierung von Energie-Semantik und API-Vertragsstabilität
+- die Bestätigung, dass ein Fehler ohne neue Regressionen behoben ist
+- die Entscheidung, ob eine umfangreichere Testsuite nötig oder eine fokussierte Prüfung ausreichend ist

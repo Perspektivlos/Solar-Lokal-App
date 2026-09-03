@@ -79,6 +79,11 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] PR-Review-Triage: defensive .get()-Zugriffe, try/finally im Config-Test, History-Fehlerstatus (role=alert), NavLink aria-label, README-tar & .gitignore
 - [x] tailwind.config: doppelter `colors`-Key gemerged (silver/midnight-Utilities aktiv)
 
+### Deployment-Readiness (01.09.2026 – PASS)
+- [x] .gitignore: `.env`-Ausschlüsse entfernt (für K8s-Deployment nötig)
+- [x] MongoDB-Queries begrenzt: `/history` `.limit(10000)`, `/today` `.limit(20000)`, `/diagnostics` `estimated_document_count()`
+- [x] deployment_agent-Check: PASS – keine Blocker, alle Endpoints HTTP 200
+
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
 - **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.

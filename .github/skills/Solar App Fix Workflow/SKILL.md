@@ -1,70 +1,60 @@
 ---
 name: solar-lokal-app-fix-workflow
-description: Implement focused fixes for the Solar Lokal App while preserving the project’s local-first behavior, device semantics, and validation expectations.
+description: Setze fokussierte Fixes für die Solar-Lokal-App um und bewahre dabei das local-first Verhalten, die Geräte-Semantik und die Validierungserwartungen des Projekts.
 _agensi: "1d3d7ff3-5f34-49e9-8d83-0802bd69d473"
 ---
 
-# Solar App Fix Workflow
+# Solar-App-Fix-Workflow
 
-Use this skill when the user wants a practical fix for a Solar Lokal App bug or regression. This workflow favors a narrow, evidence-based change over broad cleanup.
+Verwende diesen Skill, wenn der Nutzer einen praktischen Fix für einen Fehler oder eine Regression der Solar-Lokal-App wünscht. Dieser Ablauf bevorzugt eine eng begrenzte, belegbasierte Änderung gegenüber einer breiten Bereinigung.
 
-## Fix workflow
+## Fix-Ablauf
 
-1. Confirm the failing behavior.
-   - Reproduce or localize the issue using the smallest test, code path, or symptom description available.
-   - Identify whether the problem is in parsing, collection, aggregation, API transformation, or rendering.
+1. Bestätige das fehlerhafte Verhalten.
+   - Reproduziere oder lokalisiere das Problem mit dem kleinsten verfügbaren Test, Codepfad oder der vorhandenen Symptombeschreibung.
+   - Bestimme, ob das Problem im Parsing, Sammeln, Aggregieren, der API-Transformation oder dem Rendering liegt.
 
-2. Localize the root cause.
-   - Check `backend/mqtt_client.py` for MQTT parsing and topic state handling.
-   - Check `backend/server.py` for summarization, fallback logic, API payload generation, and lifecycle behavior.
-   - Check `frontend/src/lib/api.js` and the relevant page/component when the issue is visible only in UI output.
+2. Grenze die Ursache ein.
+   - Prüfe `backend/mqtt_client.py` auf MQTT-Parsing und Verwaltung des Themenstatus.
+   - Prüfe `backend/collectors.py` und `collect_live()` auf MQTT-first-Sammlung, HTTP-Fallback und Zusammenfassung; prüfe `backend/server.py` auf API-Integration und Lebenszyklusverhalten.
+   - Prüfe `frontend/src/lib/api.js` und die relevante Seite/Komponente, wenn das Problem nur in der UI-Ausgabe sichtbar ist.
 
-3. Apply the smallest correct fix.
-   - Do not broaden scope to adjacent modules unless the root cause clearly spans them.
-   - Keep the system’s energy model consistent and avoid changing API contracts unless explicitly required.
-   - Preserve source markers, safe defaults, and demo-mode behavior.
+3. Wende den kleinsten korrekten Fix an.
+   - Erweitere den Umfang nicht auf angrenzende Module, sofern sich die Ursache nicht eindeutig über sie erstreckt.
+   - Halte das Energiemodell des Systems konsistent und ändere API-Verträge nur bei ausdrücklicher Anforderung.
+   - Bewahre bestehende Herkunftsmarker, sichere Standardwerte und das Verhalten des Demo-Modus.
 
-4. Verify with the narrowest relevant check.
-   - Backend: run a focused pytest selection for the touched logic.
-   - Frontend: run a targeted test or build step for the affected area.
-   - If no direct test exists, prefer the smallest executable validation that checks the changed behavior.
+4. Prüfe mit der engsten relevanten Gegenprobe.
+   - Backend: Führe eine fokussierte pytest-Auswahl für die geänderte Logik aus.
+   - Frontend: Führe einen gezielten Test oder Build-Schritt für den betroffenen Bereich aus.
+   - Wenn kein direkter Test existiert, bevorzuge die kleinste ausführbare Validierung, die das geänderte Verhalten prüft.
 
-## Rules to preserve
+## Zu bewahrende Regeln
 
-- Keep the DC-coupled energy model intact.
-- Do not count MPPT charging as house consumption.
-- Keep `METER` separate from battery discharge logic.
-- Preserve the established API shape and frontend conventions unless the task explicitly changes them.
-- Maintain defensive MQTT parsing and graceful degradation for missing or malformed data.
-- Preserve the local-first, demo-safe design.
+- Bewahre das DC-gekoppelte Energiemodell.
+- Zähle die MPPT-Ladung nicht als Hausverbrauch.
+- Halte `METER` getrennt von der Batterieentladungslogik.
+- Bewahre die etablierte API-Struktur und Frontend-Konventionen, sofern die Aufgabe sie nicht ausdrücklich ändert.
+- Erhalte defensives MQTT-Parsing und kontrollierte Verschlechterung bei fehlenden oder fehlerhaften Daten.
+- Bewahre das bestehende local-first- und demo-sichere Design.
 
-## Safety checklist
+## Sicherheits-Checkliste
 
-Before finishing, verify:
+Prüfe vor dem Abschluss:
 
-- the change addresses the actual root cause
-- the fix does not alter unrelated metrics
-- the API contract remains stable unless intentionally changed
-- the relevant test or validation command was run and recorded
-- any remaining uncertainty is called out clearly
+- die Änderung behebt die tatsächliche Ursache
+- der Fix verändert keine sachfremden Kennzahlen
+- der API-Vertrag bleibt stabil, sofern er nicht absichtlich geändert wird
+- der relevante Test oder Validierungsbefehl wurde ausgeführt und dokumentiert
+- verbleibende Unsicherheiten werden klar benannt
 
-## Definition of done
+## Typische Anwendungsfälle
 
-A fix is complete only when:
+Verwende diesen Skill für:
 
-- the root cause has been addressed
-- the smallest possible patch was applied
-- the relevant validation command has actually been run
-- the fix does not violate the solar energy model
-- the change is documented clearly enough for the next maintainer
-
-## Typical use cases
-
-Use this skill for:
-
-- backend bug fixes
-- MQTT or HTTP parsing corrections
-- summary logic or fallback adjustments
-- API contract mismatches
-- frontend display fixes caused by upstream data problems
-- regression fixes that must remain aligned with project invariants
+- Backend-Fehlerbehebungen
+- Korrekturen beim MQTT- oder HTTP-Parsing
+- Anpassungen an Zusammenfassungslogik oder Fallbacks
+- Abweichungen vom API-Vertrag
+- Frontend-Anzeigefixes, die durch vorgelagerte Datenprobleme verursacht werden
+- Regression-Fixes, die an den Projektinvarianten ausgerichtet bleiben müssen

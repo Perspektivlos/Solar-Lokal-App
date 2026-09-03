@@ -1,78 +1,77 @@
 ---
-name: solar-lokal-app-diagnostics
-description: Investigate root causes in the Solar Lokal App, trace telemetry from device input through aggregation to UI output, and isolate regressions without broad refactors.
+name: Solar App Diagnostics
+description: Untersuche Ursachen in der Solar-Lokal-App, verfolge Telemetrie von der Geräteeingabe über die Aggregation bis zur UI-Ausgabe und grenze Regressionen ohne breite Refactorings ein.
 _agensi: "9e9e3100-ec7b-466d-ae73-9c219355cb8d"
 ---
 
-# Solar App Diagnostics
+# Solar-App-Diagnose
 
-Use this skill for root-cause analysis in the Solar Lokal App. The goal is to find the exact failing layer before proposing or applying any fix.
+Verwende diesen Skill, wenn der Nutzer eine Ursachenanalyse für einen Fehler in der Solar-Lokal-App wünscht, besonders bei Energiekennzahlen, MQTT-Parsing, Geräte-Fallbacks oder Abweichungen in der UI.
 
-## Goal
+## Ziel
 
-Locate the defect in the correct layer: device input, MQTT/HTTP parsing, aggregation, API transformation, or UI rendering. Do not patch just the visible symptom without checking the upstream data path.
+Finde die genau fehlerhafte Schicht und erkläre, warum der Wert falsch ist. Ziel ist kein breiter Patch, sondern die Eingrenzung des Defekts und die Identifikation der richtigen Stelle für die Korrektur.
 
-## Investigation workflow
+## Untersuchungsablauf
 
-1. Identify the exact symptom.
-   - Example: battery discharge is too high, PV value is missing, grid signal is inverted, card shows stale data.
+1. Identifiziere das Symptom und den genau gemeldeten Wert.
+   - Beispiel: Die Batterieentladung ist zu hoch, der PV-Wert fehlt, das Netzsignal ist invertiert oder eine UI-Karte zeigt veraltete Daten.
 
-2. Trace the full data path.
-   - Device topic or HTTP response
-   - parser or accessor function
-   - collection logic (`collect_live()` or equivalent)
-   - summary and aggregation logic
-   - API response payload
-   - frontend page or component
+2. Verfolge den vollständigen Datenpfad.
+   - Gerätethema oder HTTP-Antwort
+   - Parser- oder Zugriffsfunktion
+   - Sammellogik (`collect_live()` oder Äquivalent)
+   - Zusammenfassungs- und Aggregationslogik
+   - API-Antwort-Payload
+   - Frontend-Seite oder -Komponente
 
-3. Check the most likely source files in order.
-   - `backend/mqtt_client.py` for MQTT state, payload parsing, and topic routing
-   - `backend/server.py` for live aggregation, summary logic, demo mode, and API output
-   - `backend/collectors.py` and `backend/routes.py` for collector- or route-specific bugs
-   - `frontend/src/lib/api.js` and the affected page/component for rendering mismatches
+3. Prüfe die wahrscheinlichsten Quelldateien in dieser Reihenfolge.
+   - `backend/mqtt_client.py` for MQTT routing, payload parsing, and in-memory state
+   - `backend/collectors.py` and `collect_live()` for MQTT-first live collection, HTTP fallback, demo logic, and summary calculations
+   - `backend/server.py` or `backend/routes.py` for application lifecycle and API output
+   - `frontend/src/lib/api.js` and the relevant page/component for display mismatches
 
-4. Verify repo invariants.
-   - Preserve `_via_mqtt`, `_fallback`, and `online` semantics.
-   - Keep the energy model DC-coupled and consistent across all layers.
-   - Determine whether the mismatch is caused by parsing, aggregation, API shaping, or frontend rendering.
+4. Prüfe die Invarianten des Repositories.
+   - Bewahre die Semantik von `_via_mqtt`, `_fallback` und `online`.
+   - Halte das Energiemodell DC-gekoppelt und über alle Schichten konsistent.
+   - Bestätige, ob die Abweichung durch Parsing, Aggregation, API-Transformation oder Frontend-Rendering verursacht wird.
 
-## Key repository checks
+## Wichtige Repository-Prüfungen
 
-Use these checks during diagnosis:
+Verwende diese Prüfungen während der Diagnose:
 
-- MQTT payloads may arrive as JSON, wrapped `{ "value": ... }`, numeric strings, or plain text.
-- Missing or malformed values must not crash the poller; they should degrade safely.
-- The system must not double-count MPPT charging as house consumption.
-- `METER` remains an independent grid signal and must not be conflated with battery logic.
-- Trucki power should prefer `ACDISPLAY` and fall back to `ACSETPOINT`.
-- Existing response shapes should stay stable unless the task explicitly changes the API contract.
-- Demo mode and fallback paths must remain local-first and safe.
+- MQTT-Payloads können als JSON, verpackte `{"value": ...}`-Objekte, numerische Zeichenfolgen oder Textwerte eintreffen.
+- Fehlende oder fehlerhafte Werte dürfen den Poller nicht beenden, sondern müssen kontrolliert abgefangen werden.
+- Das System darf die MPPT-Ladung nicht doppelt als Hausverbrauch zählen.
+- `METER` muss sein eigenes Netzsignal bleiben und darf nicht mit dem Batterieverhalten vermischt werden.
+- Die Trucki-Leistung soll `ACDISPLAY` verwenden, mit `ACSETPOINT` als Fallback.
+- Bestehende Antwortstrukturen sollen stabil bleiben, sofern die Aufgabe den API-Vertrag nicht ausdrücklich ändert.
 
-## Diagnostic questions to answer
+## Zu beantwortende Diagnosefragen
 
-Before suggesting a fix, answer these:
+Beantworte vor einem Fix-Vorschlag folgende Fragen:
 
-- Which layer is wrong: parser, collector, summary, API, or UI?
-- Is the mismatch caused by stale MQTT data, missing fallback, wrong sign convention, bad conversion, or wrong source precedence?
-- Does the issue affect live values, snapshots, or both?
-- Is the wrong value generated upstream, or only displayed incorrectly?
+- Welche Schicht ist fehlerhaft: Parser, Collector, Zusammenfassung, API oder UI?
+- Wird der Fehler durch veraltete MQTT-Daten, einen fehlenden Fallback, eine falsche Umwandlung oder ein falsches Vorzeichen verursacht?
+- Betrifft das Problem sowohl Live-Daten als auch gespeicherte Snapshots oder nur eine der beiden Arten?
+- Wird der falsche Wert bereits vorgelagert erzeugt oder nur falsch angezeigt?
 
-## Output expectations
+## Erwartungen an die Ausgabe
 
-When diagnosing a bug, provide:
+Gib bei der Diagnose eines Fehlers Folgendes an:
 
-- likely root cause
-- exact file and function involved
-- the data path that leads to the wrong result
-- minimal fix scope to apply next
-- any assumptions or risk that still needs confirmation
+- die wahrscheinliche Ursache
+- die genau betroffene Datei und Funktion
+- den Datenpfad, der zum falschen Ergebnis führt
+- den minimalen Umfang des nächsten Fixes
+- noch zu bestätigende Risiken oder Annahmen
 
-## When to use this skill
+## Wann dieser Skill verwendet wird
 
-Use this skill for:
+Verwende diesen Skill für:
 
-- debugging solar metric mismatches
-- tracing a value from MQTT or HTTP into the dashboard
-- identifying wrong energy semantics or sign conventions
-- validating whether an issue is backend logic or frontend rendering
-- narrowing a regression before changing code
+- die Fehlersuche bei Abweichungen von Solar-Kennzahlen
+- das Verfolgen eines Werts von MQTT oder HTTP bis ins Dashboard
+- das Erkennen falscher Energie-Semantik oder Vorzeichenkonventionen
+- die Prüfung, ob ein Problem in der Backend-Logik oder im Frontend-Rendering liegt
+- das Eingrenzen einer Regression vor Codeänderungen

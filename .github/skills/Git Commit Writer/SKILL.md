@@ -64,8 +64,9 @@ X-Idempotency-Key header before dispatching.
 ```
 chore(deps): upgrade React from 18.2 to 19.1
 
-BREAKING CHANGE: React 19 removes legacy context API support.
-Components using contextType must migrate to useContext hook.
+BREAKING CHANGE: React 19 removes the legacy contextTypes,
+childContextTypes, and getChildContext APIs. Migrate affected components
+to the modern Context API; the class contextType API remains supported.
 ```
 
 ```
