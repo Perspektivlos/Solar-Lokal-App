@@ -16,7 +16,7 @@ Use this skill when the user wants a practical fix for a Solar Lokal App bug or 
 
 2. Localize the root cause.
    - Check `backend/mqtt_client.py` for MQTT parsing and topic state handling.
-   - Check `backend/server.py` for summarization, fallback logic, API payload generation, and lifecycle behavior.
+   - Check `backend/collectors.py` and `collect_live()` for MQTT-first collection, HTTP fallback, and summarization; check `backend/server.py` for API integration and lifecycle behavior.
    - Check `frontend/src/lib/api.js` and the relevant page/component when the issue is visible only in UI output.
 
 3. Apply the smallest correct fix.

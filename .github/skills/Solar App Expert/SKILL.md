@@ -24,7 +24,7 @@ The system is DC-coupled and must preserve energy-calculation invariants. The ho
 ## Required workflow
 
 1. Start at the nearest owning source of truth.
-   - Use `backend/server.py` for live aggregation and API responses.
+   - Use `backend/collectors.py` and `collect_live()` for live collection and aggregation, and `backend/server.py` for application lifecycle and API integration.
    - Use `backend/mqtt_client.py` for MQTT parsing, in-memory data storage, and topic routing.
    - Use `backend/routes.py` or `backend/collectors.py` when the issue is a route or collector bug.
    - Use `frontend/src/lib/api.js` and the relevant page/component if the issue is an output rendering bug.
@@ -92,7 +92,7 @@ Or run a focused test path when available.
 - Config is merged recursively with `DEFAULT_CONFIG` into a MongoDB document keyed by `_id: "main"`.
 - Integration restart logic should be targeted; only connection-relevant config changes should restart MQTT, Victron, or InfluxDB.
 - Snapshot polling and keepalive tasks must be shut down cleanly during app shutdown.
-- Graphana dashboards and InfluxDB measurement names are coupled to telemetry names and units; adjust both together if a schema change is required.
+- Grafana dashboards and InfluxDB measurement names are coupled to telemetry names and units; adjust both together if a schema change is required.
 - Keep dark-glass / neon design patterns, existing routes, and frontend conventions unless the request explicitly says otherwise.
 
 ## Output expectations

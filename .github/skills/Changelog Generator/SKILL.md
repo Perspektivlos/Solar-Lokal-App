@@ -16,9 +16,9 @@ Generate a clear, user-facing changelog from git history. Transform technical co
    - If no tags exist: define `<range>` as the last 50 commits, or use the root commit..HEAD when fewer than 50 commits exist
 
 2. **Read the commit history**:
-   - Run `git log <range> --pretty=format:"%H %s" --no-merges` for commit subjects
+   - Run `git log <range> --pretty=format:"%H %s" --no-merges` for commit subjects. For the no-tags default, reuse the defined range with `git log "$RANGE_END" --max-count="$RANGE_COUNT" --pretty=format:"%H %s" --no-merges`.
    - For important commits, read the full message with `git log <hash> -1 --pretty=format:"%B"`
-   - Run `git diff <range> --stat` to see what files changed (helps categorize)
+   - Run `git diff <range> --stat` to see what files changed (helps categorize). For the no-tags default, reuse the defined range with `git diff "$RANGE_BASE" "$RANGE_END" --stat`.
 
 3. **Categorize the changes**:
 
