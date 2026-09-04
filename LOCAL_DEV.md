@@ -2,8 +2,12 @@
 
 ## 1. Voraussetzungen
 - **Python 3.11+**
-- **MongoDB** lokal auf `mongodb://localhost:27017` (oder MONGO_URL in `backend/.env` anpassen)
+- **KEINE MongoDB nötig** – der lokale Start nutzt standardmäßig eine In-Memory-DB.
 - (Optional) **VS Code** mit "Python"-Extension
+
+> Die App selbst bleibt unverändert. Nur für den lokalen Start wird der
+> MongoDB-Client durch einen In-Memory-Mock ersetzt (`backend/local_inmemory.py`).
+> Daten liegen im RAM und sind nach einem Neustart weg – ideal für Dev/Test.
 
 ## 2. Setup (einmalig)
 ```bash
@@ -13,10 +17,11 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r backend/requirements.txt
 pip install uvicorn python-dotenv
 ```
+> `mongomock-motor` (In-Memory-DB) ist in `backend/requirements.txt` enthalten.
 
 ## 3. Backend starten
 
-### Variante A – Terminal
+### Variante A – Terminal (In-Memory, ohne MongoDB)
 ```bash
 python run_local.py
 ```
@@ -24,8 +29,15 @@ python run_local.py
 
 ### Variante B – VS Code Debug
 1. VS Code im Ordner `/app` öffnen
-2. Debug-Panel (`Ctrl+Shift+D`) → "Backend (FastAPI)" auswählen → **F5**
+2. Debug-Panel (`Ctrl+Shift+D`) → **"Backend (In-Memory)"** auswählen → **F5**
 3. Breakpoints in `backend/server.py`, `routes.py`, `collectors.py` funktionieren direkt.
+
+### Mit echter MongoDB (falls lokal vorhanden)
+```bash
+USE_REAL_DB=1 python run_local.py
+```
+oder in VS Code die Konfiguration **"Backend (Echte MongoDB)"** wählen.
+`MONGO_URL` / `DB_NAME` kommen dann aus `backend/.env`.
 
 ## 4. Konfigurations-Overrides (optional)
 Umgebungsvariablen vor dem Start setzen:

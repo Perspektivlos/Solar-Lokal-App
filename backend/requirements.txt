@@ -124,3 +124,6 @@ watchfiles==1.2.0
 websockets==16.0
 yarl==1.24.2
 zipp==4.1.0
+mongomock==4.3.0
+mongomock-motor==0.0.36
+sentinels==1.1.1
