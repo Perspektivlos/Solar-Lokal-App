@@ -60,6 +60,13 @@ db = client[os.environ['DB_NAME']]
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # startup
+    """
+    Verwaltet den Start und die Beendigung der FastAPI-Anwendung.
+    
+    Initialisiert die Konfiguration, Hintergrundaufgaben und Integrationen beim
+    Start. Beim Beenden werden laufende Aufgaben abgebrochen, Integrationen
+    getrennt und die Datenbankverbindung geschlossen.
+    """
     await get_config()
     # Index für schnelle History-Abfragen & Retention-Deletes
     try:
@@ -182,6 +189,12 @@ _retention_task: Optional[asyncio.Task] = None
 
 
 async def poller_loop() -> None:
+    """
+    Erfasst regelmäßig aktuelle Gerätedaten und speichert daraus Snapshot-Messwerte.
+    
+    Die Funktion läuft dauerhaft, schreibt alle 15 Sekunden einen Snapshot in
+    MongoDB und überträgt die verfügbaren Gerätedaten optional an InfluxDB.
+    """
     _poller_state["running"] = True
     while True:
         try:
@@ -256,7 +269,9 @@ async def restart_integrations() -> None:
 
 
 async def victron_keepalive_loop() -> None:
-    """VenusOS only publishes data while it receives periodic keep-alive messages."""
+    """
+    Veröffentlicht regelmäßig Keepalive-Nachrichten für Venus OS über Victron MQTT.
+    """
     while True:
         try:
             cfg = await get_config()
@@ -275,7 +290,16 @@ async def victron_keepalive_loop() -> None:
 # ---------- Retention (auto cleanup of old snapshots) ----------
 
 async def _cleanup_snapshots_once(days: int) -> int:
-    """Delete snapshots older than `days`. Returns number of deleted docs."""
+    """
+    Löscht Snapshots, die älter als die angegebene Anzahl von Tagen sind.
+    
+    Parameters:
+        days (int): Alter in Tagen; Werte kleiner oder gleich null deaktivieren
+            die Löschung.
+    
+    Returns:
+        int: Anzahl der gelöschten Snapshots.
+    """
     if days <= 0:
         return 0
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
@@ -286,7 +310,12 @@ async def _cleanup_snapshots_once(days: int) -> int:
 
 
 async def retention_loop() -> None:
-    """Hourly background task that thins out old snapshot data."""
+    """
+    Führt regelmäßig die Aufbewahrung alter Snapshot-Daten aus.
+    
+    Die Konfiguration wird stündlich geprüft; aktivierte Aufbewahrung löscht
+    Snapshots, die älter als die konfigurierte Anzahl von Tagen sind.
+    """
     # Kurz warten, damit Startup nicht sofort I/O feuert
     await asyncio.sleep(60)
     while True:

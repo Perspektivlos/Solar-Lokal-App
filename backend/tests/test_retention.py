@@ -6,13 +6,29 @@ import server
 
 
 class _FakeResult:
-    def __init__(self, n): self.deleted_count = n
+    def __init__(self, n): """
+Initialisiert das Ergebnis mit der Anzahl gelöschter Datensätze.
+
+Parameters:
+	n (int): Anzahl der gelöschten Datensätze.
+"""
+self.deleted_count = n
 
 
 class _FakeSnapshots:
-    def __init__(self, data): self.data = data
+    def __init__(self, data): """Initialisiert das Objekt mit den übergebenen Daten."""
+self.data = data
 
     async def delete_many(self, query):
+        """
+        Entfernt Snapshots, deren Zeitstempel vor dem angegebenen Grenzwert liegt.
+        
+        Parameters:
+            query (dict): Abfrage mit dem Zeitgrenzwert unter `query["ts"]["$lt"]`.
+        
+        Returns:
+            _FakeResult: Ergebnis mit der Anzahl der gelöschten Snapshots.
+        """
         cutoff = query["ts"]["$lt"]
         before = len(self.data)
         self.data = [d for d in self.data if d["ts"] >= cutoff]
@@ -20,7 +36,13 @@ class _FakeSnapshots:
 
 
 class _FakeDB:
-    def __init__(self, data): self.snapshots = _FakeSnapshots(data)
+    def __init__(self, data): """
+Initialisiert eine Fake-Datenbank mit den bereitgestellten Snapshot-Daten.
+
+Parameters:
+	data: Die Snapshot-Daten, die von der Fake-Sammlung verwaltet werden.
+"""
+self.snapshots = _FakeSnapshots(data)
 
 
 def test_cleanup_snapshots_deletes_only_old(monkeypatch):
@@ -49,6 +71,9 @@ def test_cleanup_snapshots_disabled_when_zero_days(monkeypatch):
 
     class Snaps:
         async def delete_many(self, query):
+            """
+            Markiert einen unerwarteten Aufruf der Löschoperation und löst eine AssertionError-Ausnahme aus.
+            """
             called["n"] += 1
             raise AssertionError("should not be called")
 

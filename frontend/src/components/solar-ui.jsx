@@ -147,7 +147,14 @@ export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, s
   );
 }
 
-// Zurückgenommener Sekundärwert (kleiner, gedämpft) für Zusatzinfos.
+/**
+ * Zeigt eine kompakte sekundäre Kennzahl mit Beschriftung und Einheit an.
+ * @param {string} label - Beschriftung der Kennzahl.
+ * @param {string|number} value - Anzuzeigender Wert.
+ * @param {string} unit - Einheit des Werts.
+ * @param {string} [color] - Optionale CSS-Klasse für die Wertfarbe.
+ * @returns {JSX.Element} Das gerenderte Kennzahlen-Element.
+ */
 export function Stat({ label, value, unit, color, testid }) {
   return (
     <div data-testid={testid}>
@@ -161,7 +168,14 @@ export function Stat({ label, value, unit, color, testid }) {
 
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
 // Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
-// Info-Panel (gleiches Prinzip wie die IntroCard oben), gefiltert auf das Rubrik-Gerät.
+/**
+ * Rendert eine farbige Abschnittsüberschrift mit optionalem Geräte-Link und aufklappbaren Details.
+ * @param {string} label - Die angezeigte Bezeichnung des Abschnitts.
+ * @param {string} [color="#64748b"] - Die Akzentfarbe der Überschrift.
+ * @param {string} [href] - Die URL der Weboberfläche des zugehörigen Geräts.
+ * @param {Array<{label: string, body: React.ReactNode}>} [details] - Die Einträge des aufklappbaren Detailbereichs.
+ * @returns {JSX.Element} Das gerenderte Überschriftenelement mit optionalen Aktionen und Details.
+ */
 export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Array.isArray(details) && details.length > 0;
