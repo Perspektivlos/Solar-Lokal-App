@@ -158,16 +158,16 @@ body::before {
     .neon-text-cyan   { text-shadow: 0 0 8px rgba(6, 182, 212, 0.45); }
 }
 
-/* Energy flow line animation */
-@keyframes dash {
-    to { stroke-dashoffset: -40; }
+/* Energy flow line animation (fließende Partikel) */
+@keyframes flow-particles {
+    to { stroke-dashoffset: -32; }
 }
-.flow-line {
-    stroke-dasharray: 10 6;
-    animation: dash 1.4s linear infinite;
+.flow-particles {
+    stroke-dasharray: 1 15;
+    animation: flow-particles 1.4s linear infinite;
 }
-.flow-line.reverse {
-    animation: dash 1.4s linear infinite reverse;
+.flow-particles.reverse {
+    animation-direction: reverse;
 }
 
 /* Pulse dot */

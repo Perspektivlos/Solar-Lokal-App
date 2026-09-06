@@ -55,53 +55,68 @@ function Node({ x, y, w = 170, h = 96, label, value, unit, sub, color, Icon, tes
   );
 }
 
+// Straight-line path "M x1 y1 L x2 y2" umkehren (für reverse-Fluss).
+function reversePath(d) {
+  const m = d.match(/M\s*([\d.]+)\s+([\d.]+)\s+L\s*([\d.]+)\s+([\d.]+)/);
+  if (!m) return d;
+  return `M ${m[3]} ${m[4]} L ${m[1]} ${m[2]}`;
+}
+
+// Fluss-Dauer aus Leistung: viel Watt -> schneller. 0W≈2.4s … ≥3000W≈0.6s.
+function flowDurSec(watts) {
+  const w = Math.min(Math.max(watts || 0, 0), 3000);
+  const t = w / 3000;
+  return +(2.4 - t * 1.8).toFixed(2);
+}
+
 function Flow({ d, color, active, reverse, watts }) {
   if (!active) {
     return <path d={d} stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" fill="none" strokeDasharray="2 6" />;
   }
+  const dur = flowDurSec(watts);
   return (
     <>
       {/* Outer halo */}
-      <path d={d} stroke={color} strokeWidth="8" fill="none" opacity="0.15" strokeLinecap="round" />
-      {/* Main line */}
-      <path d={d} stroke={color} strokeWidth="3" fill="none" opacity="0.30" strokeLinecap="round" />
-      {/* Animated dashes */}
+      <path d={d} stroke={color} strokeWidth="8" fill="none" opacity="0.12" strokeLinecap="round" />
+      {/* Faint static base line (zeigt die Verbindung) */}
+      <path d={d} stroke={color} strokeWidth="2" fill="none" opacity="0.20" strokeLinecap="round" />
+      {/* Fließende Energie-Partikel (Geschwindigkeit ~ Leistung) */}
       <path
         d={d}
         stroke={color}
-        strokeWidth="3"
+        strokeWidth="4"
         fill="none"
-        className={reverse ? "flow-line reverse" : "flow-line"}
+        className={reverse ? "flow-particles reverse" : "flow-particles"}
         strokeLinecap="round"
-        style={{ filter: `drop-shadow(0 0 4px ${color}aa)` }}
+        style={{ animationDuration: `${dur}s`, filter: `drop-shadow(0 0 4px ${color})` }}
       />
-      {watts !== undefined && <FlowLabel d={d} color={color} reverse={reverse} />}
+      {watts !== undefined && <TravelingArrow d={d} color={color} reverse={reverse} dur={dur} />}
     </>
   );
 }
 
-function FlowLabel({ d, color, reverse }) {
-  const m = d.match(/M\s*([\d.]+)\s+([\d.]+)\s+L\s*([\d.]+)\s+([\d.]+)/);
-  if (!m) return null;
-  const x1 = parseFloat(m[1]), y1 = parseFloat(m[2]);
-  const x2 = parseFloat(m[3]), y2 = parseFloat(m[4]);
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2;
-  // Symbol statt Zahlenwert: Richtungspfeil auf der Linienmitte, zeigt die
-  // tatsächliche Flussrichtung (Quelle → Ziel, bei reverse umgekehrt).
-  const fromX = reverse ? x2 : x1, fromY = reverse ? y2 : y1;
-  const toX = reverse ? x1 : x2, toY = reverse ? y1 : y2;
-  const angle = (Math.atan2(toY - fromY, toX - fromX) * 180) / Math.PI;
+// Richtungspfeil (Kreis + Dreieck), der entlang der Linie mitfließt.
+// Zwei versetzte Marker für einen durchgehenden Flow ohne sichtbaren Sprung.
+function TravelingArrow({ d, color, reverse, dur }) {
+  const path = reverse ? reversePath(d) : d;
+  const markers = [0, -dur / 2];
   return (
-    <g>
-      <circle cx={mx} cy={my} r="11" fill="rgba(15,23,42,0.92)" stroke={color} strokeWidth="1.5" />
-      <path
-        d="M -4 -5 L 6 0 L -4 5 Z"
-        fill={color}
-        transform={`translate(${mx},${my}) rotate(${angle})`}
-        style={{ filter: `drop-shadow(0 0 3px ${color}cc)` }}
-      />
-    </g>
+    <>
+      {markers.map((begin, i) => (
+        <g key={i} style={{ filter: `drop-shadow(0 0 5px ${color})` }}>
+          <animateMotion
+            dur={`${dur}s`}
+            begin={`${begin}s`}
+            repeatCount="indefinite"
+            rotate="auto"
+            calcMode="linear"
+            path={path}
+          />
+          <circle r="9" fill="rgba(15,23,42,0.92)" stroke={color} strokeWidth="1.5" />
+          <path d="M -3.5 -4 L 5 0 L -3.5 4 Z" fill={color} />
+        </g>
+      ))}
+    </>
   );
 }
 
