@@ -65,13 +65,13 @@ async def cfg_put(update: ConfigUpdate) -> Dict[str, Any]:
 @api_router.get("/history")
 async def history(range: str = "1h") -> Dict[str, Any]:
     """
-    Lädt historische Snapshot-Daten für einen konfigurierten Zeitraum.
+    Lädt historische Snapshot-Daten für den angegebenen Zeitraum.
     
     Parameters:
-    	range (str): Zeitraum als `1h`, `6h`, `12h` oder `24h`; unbekannte Werte verwenden eine Stunde.
+    	range (str): Zeitraumkennung `1h`, `6h`, `12h` oder `24h`; unbekannte Werte werden für die Abfrage als eine Stunde behandelt.
     
     Returns:
-    	Dict[str, Any]: Ein Objekt mit dem angeforderten Zeitraum und zeitlich sortierten Snapshot-Punkten.
+    	Dict[str, Any]: Objekt mit der angeforderten Zeitraumkennung und chronologisch sortierten Snapshot-Punkten, auf höchstens 10.000 Datensätze begrenzt und bei mehr als 600 Punkten reduziert.
     """
     minutes = {"1h": 60, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
@@ -287,12 +287,12 @@ async def integrations_status() -> Dict[str, Any]:
 @api_router.post("/diagnostics/run")
 async def diagnostics_run() -> Dict[str, Any]:
     """
-    Führt Gesundheitsprüfungen für Backend, Datenbank, Integrationen und konfigurierte Geräte durch.
+    Führt Gesundheitsprüfungen für Backend, Datenbank, Integrationen, Retention und konfigurierte Geräte durch.
     
-    Die Geräte werden bei aktuellen MQTT-Daten als erreichbar bewertet; andernfalls werden HTTP-Endpunkte geprüft. Deaktivierte Geräte und Integrationen sowie der Demo-Modus werden übersprungen.
+    Aktuelle MQTT-Daten gelten innerhalb von 90 Sekunden als Erreichbarkeitsnachweis; andernfalls werden konfigurierte HTTP-Endpunkte geprüft. Deaktivierte Integrationen und Geräte sowie der Demo-Modus werden übersprungen.
     
     Returns:
-        Dict[str, Any]: Ergebnisse mit Zeitstempel, Gesamtdauer, Pass-/Fail-/Skip-Zählungen und einzelnen Prüfergebnissen.
+        Dict[str, Any]: Prüfergebnisse mit Zeitstempel, Laufzeit, Pass-/Fail-/Skip-Zählungen und Einzelergebnissen.
     """
     cfg = await get_config()
     started = time.time()
