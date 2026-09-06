@@ -12,7 +12,7 @@ const links = [
 
 /**
  * Rendert das Anwendungslayout mit Kopfbereich, Navigation, Seiteninhalt und Fußzeile.
- * @returns {JSX.Element} Das Layout der Anwendung.
+ * @returns {JSX.Element} Das gerenderte Anwendungslayout.
  */
 export default function Layout() {
   return (

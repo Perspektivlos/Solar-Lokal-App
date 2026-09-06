@@ -63,9 +63,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """
     Verwaltet den Start und die Beendigung der FastAPI-Anwendung.
     
-    Initialisiert die Konfiguration, Hintergrundaufgaben und Integrationen beim
-    Start. Beim Beenden werden laufende Aufgaben abgebrochen, Integrationen
-    getrennt und die Datenbankverbindung geschlossen.
+    Initialisiert beim Start die Konfiguration, den Snapshot-Index,
+    Hintergrundaufgaben und Integrationen. Beim Beenden werden laufende Aufgaben
+    abgebrochen, Integrationen getrennt und die Datenbankverbindung geschlossen.
     """
     await get_config()
     # Index für schnelle History-Abfragen & Retention-Deletes

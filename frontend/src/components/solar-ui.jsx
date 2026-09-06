@@ -127,7 +127,19 @@ export function Spark({ values, color = "#8C92AC", height = 24 }) {
   );
 }
 
-// Dominante Live-Metrik: große Kernzahl, kleine Einheit, optionales Vorzeichen.
+/**
+ * Stellt eine hervorgehobene Live-Metrik mit Wert, Einheit und optionalem Verlauf dar.
+ * @param {string} label - Bezeichnung der Metrik.
+ * @param {*} value - Anzuzeigender Messwert.
+ * @param {string} unit - Einheit des Messwerts.
+ * @param {string} [color] - CSS-Klasse für die Farbe des Messwerts.
+ * @param {string} [sign] - Optionales Vorzeichen vor dem Messwert.
+ * @param {React.ReactNode} [sub] - Zusätzlicher Inhalt neben der Bezeichnung.
+ * @param {number[]} [sparkValues] - Werte für die optionale Sparkline.
+ * @param {string} [sparkColor] - Farbe der Sparkline.
+ * @param {"sm"|"lg"} [size="lg"] - Größe des Messwerts.
+ * @returns {JSX.Element} Die dargestellte Live-Metrik.
+ */
 export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, sparkColor, size = "lg" }) {
   const valueCls = size === "sm" ? "text-2xl" : "text-3xl lg:text-4xl";
   return (
@@ -148,11 +160,12 @@ export function MetricBig({ label, value, unit, color, sign, sub, sparkValues, s
 }
 
 /**
- * Zeigt eine kompakte sekundäre Kennzahl mit Beschriftung und Einheit an.
+ * Zeigt eine kompakte Kennzahl mit Beschriftung und Einheit an.
  * @param {string} label - Beschriftung der Kennzahl.
  * @param {string|number} value - Anzuzeigender Wert.
  * @param {string} unit - Einheit des Werts.
  * @param {string} [color] - Optionale CSS-Klasse für die Wertfarbe.
+ * @param {string} [testid] - Optionaler Testbezeichner für das Element.
  * @returns {JSX.Element} Das gerenderte Kennzahlen-Element.
  */
 export function Stat({ label, value, unit, color, testid }) {
@@ -172,9 +185,10 @@ export function Stat({ label, value, unit, color, testid }) {
  * Rendert eine farbige Abschnittsüberschrift mit optionalem Geräte-Link und aufklappbaren Details.
  * @param {string} label - Die angezeigte Bezeichnung des Abschnitts.
  * @param {string} [color="#64748b"] - Die Akzentfarbe der Überschrift.
+ * @param {React.ComponentType} [icon] - Das optionale Symbol neben der Bezeichnung.
  * @param {string} [href] - Die URL der Weboberfläche des zugehörigen Geräts.
  * @param {Array<{label: string, body: React.ReactNode}>} [details] - Die Einträge des aufklappbaren Detailbereichs.
- * @returns {JSX.Element} Das gerenderte Überschriftenelement mit optionalen Aktionen und Details.
+ * @return {JSX.Element} Das gerenderte Überschriftenelement mit optionalen Aktionen und Details.
  */
 export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {
   const [open, setOpen] = useState(false);
