@@ -45,7 +45,7 @@ Write precise, informative commit messages following the Conventional Commits sp
 
 ## Examples
 
-```
+```text
 feat(auth): add OAuth2 login with Google provider
 
 Implements Google OAuth2 flow using passport-google-oauth20.
@@ -53,7 +53,7 @@ Adds callback route, session persistence, and logout endpoint.
 Closes #142.
 ```
 
-```
+```text
 fix(api): prevent duplicate webhook deliveries on retry
 
 The retry logic was not checking for idempotency keys, causing
@@ -61,7 +61,7 @@ duplicate event processing. Added deduplication check using the
 X-Idempotency-Key header before dispatching.
 ```
 
-```
+```text
 chore(deps): upgrade React from 18.2 to 19.1
 
 BREAKING CHANGE: React 19 removes the legacy contextTypes,
@@ -69,10 +69,10 @@ childContextTypes, and getChildContext APIs. Migrate affected components
 to the modern Context API; the class contextType API remains supported.
 ```
 
-```
+```text
 refactor(db): extract query builder into standalone module
 ```
 
-```
+```text
 docs: add API rate limiting section to README
 ```

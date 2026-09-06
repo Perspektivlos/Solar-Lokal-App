@@ -129,7 +129,7 @@ Typische Befehle:
 - Das Frontend-Health-Check-Plugin und die Dev-Server-Endpunkte sind hinter `ENABLE_HEALTH_CHECK=true` geschützt und standardmäßig deaktiviert.
 - CRACO injiziert bei jedem `yarn start`/`yarn build` automatisch `REACT_APP_VERSION` (aus der Version in `package.json`) und `REACT_APP_BUILD_DATE` (ISO-Datum). Hardcode diese Werte nicht in Komponenten, sondern lies sie aus `process.env`.
 - ESLint läuft nur innerhalb des CRACO-Dev-Servers (`yarn start`) und ist in `craco.config.js` mit `plugin:react-hooks/recommended` konfiguriert. Es gibt kein eigenständiges `yarn lint`-Skript.
-- Auf diesem Rechner ist `yarn` defekt; verwende bei einem Fehler stattdessen direkt `./node_modules/.bin/craco` für Start, Build und Tests.
+- Verwende für Start, Build und Tests weiterhin Yarn. Weiche nur bei einem tatsächlichen Yarn-Fehler direkt auf `./node_modules/.bin/craco` aus.
 
 ## Validierung und Umgebung
 
