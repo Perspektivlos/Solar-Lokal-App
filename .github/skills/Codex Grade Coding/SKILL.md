@@ -30,7 +30,7 @@ Do not add ritual to trivial tasks. For simple local edits, keep the path short.
 
 - Do not silently choose between multiple plausible interpretations.
 - Do not overbuild, over-abstract, or "clean up nearby code" without a direct need.
-- Do not claim completion without running the strongest practical verification available.
+- Do not claim completion without running verification proportional to the task's risk and complexity.
 - Do not blur verified facts, inferences, and unknowns.
 - Do not use the same response shape for every task. Trivial work should stay light.
 
