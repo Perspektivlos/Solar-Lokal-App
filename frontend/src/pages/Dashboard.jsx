@@ -39,7 +39,12 @@ const INTRO_SECTIONS = [
   },
 ];
 
-// Hinweis: Rubrik-Details werden dynamisch aus den Live-Werten gebaut (siehe Dashboard-Component).
+/**
+ * Klassifiziert den Batteriezustand anhand der Gefahrenstufe und Leistung.
+ * @param {boolean} socDanger - Gibt an, ob der Ladezustand kritisch ist.
+ * @param {number} power - Batterieleistung in Watt.
+ * @returns {string} „KRITISCH“, „LADEN“, „ENTLADEN“ oder „NORMAL“.
+ */
 
 function batteryStateKind(socDanger, power) {
   if (socDanger) return "KRITISCH";
@@ -48,6 +53,10 @@ function batteryStateKind(socDanger, power) {
   return "NORMAL";
 }
 
+/**
+ * Zeigt ein Live-Dashboard für Solarstromanlage, Batterie, Wechselrichter, Netz und Phasenmessung an.
+ * Lädt Messwerte regelmäßig nach und visualisiert aktuelle Werte, Tagesdaten sowie Verlaufskurven.
+ */
 export default function Dashboard() {
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);

@@ -64,6 +64,15 @@ async def cfg_put(update: ConfigUpdate) -> Dict[str, Any]:
 
 @api_router.get("/history")
 async def history(range: str = "1h") -> Dict[str, Any]:
+    """
+    Lädt historische Snapshot-Daten für einen konfigurierten Zeitraum.
+    
+    Parameters:
+    	range (str): Zeitraum als `1h`, `6h`, `12h` oder `24h`; unbekannte Werte verwenden eine Stunde.
+    
+    Returns:
+    	Dict[str, Any]: Ein Objekt mit dem angeforderten Zeitraum und zeitlich sortierten Snapshot-Punkten.
+    """
     minutes = {"1h": 60, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(10000)
@@ -77,7 +86,17 @@ async def history(range: str = "1h") -> Dict[str, Any]:
 
 @api_router.get("/today")
 async def today() -> Dict[str, Any]:
-    """Trapez-integration of power values from UTC midnight."""
+    """
+    Berechnet die Energie- und Leistungskennzahlen des aktuellen Tages ab UTC-Mitternacht.
+    
+    Zeitabstände von mehr als zehn Minuten werden bei der Integration übersprungen. Bei
+    fehlenden Messdaten werden alle Kennzahlen auf null gesetzt.
+    
+    Returns:
+        Dict[str, Any]: Tageswerte für PV-Erzeugung, Hausverbrauch, Netzbezug,
+        Netzeinspeisung, Eigenverbrauch, Autarkie, Durchschnittsleistungen,
+        Batterie-Lade- und Entladeenergie sowie den Round-Trip-Wirkungsgrad.
+    """
     now = datetime.now(timezone.utc)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
     cur = db.snapshots.find({"ts": {"$gte": midnight.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(20000)
@@ -267,8 +286,14 @@ async def integrations_status() -> Dict[str, Any]:
 
 @api_router.post("/diagnostics/run")
 async def diagnostics_run() -> Dict[str, Any]:
-    """Runs a series of health checks against backend, MongoDB, MQTT,
-    InfluxDB and each configured device. Returns one result per check."""
+    """
+    Führt Gesundheitsprüfungen für Backend, Datenbank, Integrationen und konfigurierte Geräte durch.
+    
+    Die Geräte werden bei aktuellen MQTT-Daten als erreichbar bewertet; andernfalls werden HTTP-Endpunkte geprüft. Deaktivierte Geräte und Integrationen sowie der Demo-Modus werden übersprungen.
+    
+    Returns:
+        Dict[str, Any]: Ergebnisse mit Zeitstempel, Gesamtdauer, Pass-/Fail-/Skip-Zählungen und einzelnen Prüfergebnissen.
+    """
     cfg = await get_config()
     started = time.time()
     results: List[Dict[str, Any]] = []

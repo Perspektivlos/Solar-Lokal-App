@@ -47,6 +47,7 @@ DB_MODE = "Echte MongoDB" if USE_REAL_DB else "In-Memory (kein MongoDB nötig)"
 
 
 def main() -> None:
+    """Startet den lokalen Solar-Dashboard-Backend-Server mit der konfigurierten Anwendung und Serverkonfiguration."""
     print(f"→ Solar Dashboard Backend startet auf http://{HOST}:{PORT}")
     print(f"   DB-Modus  = {DB_MODE}")
     if USE_REAL_DB:
