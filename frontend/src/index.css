@@ -131,6 +131,25 @@ body::before {
             0 28px 54px -24px rgba(0, 0, 0, 0.90),
             0 0 42px -16px rgba(148, 163, 201, 0.50);
     }
+    /* SCADA KPI-Zellen-Bevel */
+    .kpi-cell {
+        box-shadow: inset 0 1px 0 rgba(226, 232, 240, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kpi-cell:hover {
+        background-color: rgba(226, 232, 240, 0.035);
+        box-shadow: inset 0 1px 0 rgba(226, 232, 240, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+    }
+    /* Geprägte Metall-Platte für aktiven Nav-Tab */
+    .nav-plate {
+        background: linear-gradient(180deg, rgba(148, 163, 184, 0.16), rgba(30, 41, 59, 0.08));
+        border: 1px solid rgba(226, 232, 240, 0.14);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.20),
+            inset 0 -2px 5px rgba(0, 0, 0, 0.55),
+            0 2px 6px rgba(0, 0, 0, 0.40);
+        border-radius: 8px;
+    }
     .glass-input {
         background: rgba(0, 0, 0, 0.25) !important;
         border: 1px solid rgba(255, 255, 255, 0.10) !important;

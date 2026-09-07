@@ -29,8 +29,9 @@ export default function KpiStrip({ today, summary, trail }) {
   ];
 
   const renderCell = (m) => (
-    <div className="relative p-5 h-full transition-colors hover:bg-white/[0.03] cursor-default" data-testid={m.testid}>
+    <div className="kpi-cell relative p-5 h-full cursor-default" data-testid={m.testid}>
       <span className="absolute top-0 left-0 right-0 h-[2px] opacity-90 pointer-events-none" style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)`, boxShadow: `0 0 12px ${m.accent}, 0 1px 6px ${m.accent}aa` }} />
+      <span className="absolute top-[2px] left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, rgba(226,232,240,0.28), transparent 68%)" }} />
       <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{m.label}</div>
       <div className={`font-mono text-2xl lg:text-3xl font-semibold tracking-tight leading-none mt-1.5 ${m.color}`}>
         {m.value}<span className="text-sm ml-1 text-white/45 font-normal">{m.unit}</span>
