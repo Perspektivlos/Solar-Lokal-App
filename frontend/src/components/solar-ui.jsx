@@ -105,6 +105,13 @@ export function Delta({ prev, curr }) {
   );
 }
 
+/**
+ * Rendert eine responsive SVG-Sparkline aus Messwerten.
+ * @param {number[]} values - Die darzustellenden Werte in zeitlicher Reihenfolge.
+ * @param {string} color - Die Farbe der Linie und der Flächenfüllung.
+ * @param {number} height - Die Höhe der Sparkline in Pixeln.
+ * @return {JSX.Element|null} Das Sparkline-Element oder `null`, wenn weniger als zwei Werte vorhanden sind.
+ */
 export function Spark({ values, color = "#8C92AC", height = 24 }) {
   if (!values || values.length < 2) return null;
   const min = Math.min(...values), max = Math.max(...values);
@@ -188,6 +195,7 @@ export function Stat({ label, value, unit, color, testid }) {
  * @param {React.ComponentType} [icon] - Das optionale Symbol neben der Bezeichnung.
  * @param {string} [href] - Die URL der Weboberfläche des zugehörigen Geräts.
  * @param {Array<{label: string, body: React.ReactNode}>} [details] - Die Einträge des aufklappbaren Detailbereichs.
+ * @param {string} [testid] - Die optionale Test-ID des Überschriftenelements.
  * @return {JSX.Element} Das gerenderte Überschriftenelement mit optionalen Aktionen und Details.
  */
 export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {

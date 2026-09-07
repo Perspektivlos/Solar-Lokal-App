@@ -287,9 +287,9 @@ async def integrations_status() -> Dict[str, Any]:
 @api_router.post("/diagnostics/run")
 async def diagnostics_run() -> Dict[str, Any]:
     """
-    Führt Gesundheitsprüfungen für Backend, Datenbank, Integrationen, Retention und konfigurierte Geräte durch.
+    Führt Gesundheitsprüfungen für Backend, Datenbank, Integrationen, Datenaufbewahrung und konfigurierte Geräte durch.
     
-    Aktuelle MQTT-Daten gelten innerhalb von 90 Sekunden als Erreichbarkeitsnachweis; andernfalls werden konfigurierte HTTP-Endpunkte geprüft. Deaktivierte Integrationen und Geräte sowie der Demo-Modus werden übersprungen.
+    Aktuelle MQTT-Daten gelten innerhalb von 90 Sekunden als Erreichbarkeitsnachweis; andernfalls werden konfigurierte HTTP-Endpunkte geprüft. Deaktivierte Komponenten und Geräte sowie der Demo-Modus werden übersprungen.
     
     Returns:
         Dict[str, Any]: Prüfergebnisse mit Zeitstempel, Laufzeit, Pass-/Fail-/Skip-Zählungen und Einzelergebnissen.

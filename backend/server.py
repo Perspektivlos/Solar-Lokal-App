@@ -313,8 +313,8 @@ async def retention_loop() -> None:
     """
     Führt regelmäßig die Aufbewahrung alter Snapshot-Daten aus.
     
-    Die Konfiguration wird stündlich geprüft; aktivierte Aufbewahrung löscht
-    Snapshots, die älter als die konfigurierte Anzahl von Tagen sind.
+    Die Aufbewahrungskonfiguration wird stündlich geprüft. Aktivierte Aufbewahrung
+    löscht Snapshots, die älter als die konfigurierte Anzahl von Tagen sind.
     """
     # Kurz warten, damit Startup nicht sofort I/O feuert
     await asyncio.sleep(60)

@@ -55,7 +55,7 @@ function batteryStateKind(socDanger, power) {
 
 /**
  * Zeigt ein Live-Dashboard für Solarstromanlage, Batterie, Wechselrichter, Netz und Phasenmessung an.
- * Lädt Messwerte regelmäßig nach und visualisiert aktuelle Werte, Tagesdaten sowie Verlaufskurven.
+ * Aktualisiert Messwerte regelmäßig und visualisiert aktuelle Werte, Tagesdaten sowie Verlaufskurven.
  */
 export default function Dashboard() {
   const [live, setLive] = useState(null);
