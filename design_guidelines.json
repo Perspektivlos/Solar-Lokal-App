@@ -1,133 +1,143 @@
 {
-  "theme": "dark",
+  "design_system_identity": {
+    "theme_name": "SCADA Industrial Solar Control Room",
+    "aesthetic_archetype": "High-Density Industrial SCADA with Tactical Metallic Depth & Precision Neon Accents",
+    "core_philosophy": "Evolutionary enhancement (no rewrite). Grounding dark glassmorphism into a tactile, heavy-gauge steel & graphite SCADA control console. Deep surface layering, metallic edge highlights, bevels, inset telemetry wells, and hyper-legible monospaced data density paired with vibrant neon status indicators."
+  },
   "typography": {
-    "fonts": [
-      {
-        "role": "Headings & Primary Labels",
-        "family": "'Chakra Petch', sans-serif",
-        "import": "@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&display=swap');"
-      },
-      {
-        "role": "Body Text & UI Elements",
-        "family": "'IBM Plex Sans', sans-serif",
-        "import": "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');"
-      },
-      {
-        "role": "Numbers & Metrics",
-        "family": "'JetBrains Mono', monospace",
-        "import": "@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');"
-      }
-    ],
-    "hierarchy": {
-      "h1": "text-4xl lg:text-5xl font-bold tracking-tight text-white",
-      "h2": "text-2xl font-semibold tracking-tight text-silver",
-      "h3": "text-xl font-medium tracking-tight text-silver",
-      "h4": "text-lg font-medium text-matte-grey",
-      "body": "text-base text-matte-grey leading-relaxed",
-      "small": "text-sm text-matte-grey tracking-wide uppercase",
-      "metric_large": "text-4xl lg:text-5xl font-bold font-mono tracking-tighter text-silver",
-      "metric_medium": "text-2xl font-semibold font-mono tracking-tighter text-silver",
-      "metric_small": "text-lg font-medium font-mono text-matte-grey"
+    "font_families": {
+      "display_headings": "Chakra Petch, ui-sans-serif, system-ui, sans-serif",
+      "body_ui": "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif",
+      "telemetry_mono": "JetBrains Mono, ui-monospace, monospace"
+    },
+    "hierarchy_rules": {
+      "h1_hero_dashboard_title": "text-2xl sm:text-3xl font-sans uppercase font-bold tracking-[0.2em] text-slate-100 drop-shadow-sm",
+      "h2_section_header": "text-xs font-sans font-bold uppercase tracking-[0.22em] text-slate-300",
+      "h3_card_title": "text-[11px] font-sans font-semibold uppercase tracking-[0.2em] text-slate-400 group-hover:text-slate-200 transition-colors",
+      "telemetry_primary_metric": "font-mono text-3xl lg:text-4xl font-semibold tracking-tight leading-none",
+      "telemetry_secondary_stat": "font-mono text-lg font-medium tracking-tight",
+      "body_text": "font-body text-xs sm:text-sm text-slate-300 leading-relaxed",
+      "labels_and_badges": "font-mono text-[9px] uppercase tracking-[0.16em] font-semibold"
     }
   },
   "colors": {
-    "base": {
-      "black": "#050505",
-      "midnight_blue": "#0A1128",
-      "matte_grey": "#8C92AC",
-      "silver": "#E2E8F0"
+    "background_surfaces": {
+      "void_background": "#04060c",
+      "deep_console_slate": "#080c16",
+      "panel_base_dark": "#0f172a",
+      "panel_surface_elevated": "#141e33",
+      "recessed_well_bg": "#050811"
     },
-    "semantic_neon": {
-      "pv": "#FDE047",
-      "grid_imp": "#EF4444",
-      "grid_exp": "#22C55E",
-      "battery": "#06B6D4"
+    "metallic_ramps": {
+      "titanium_white": "#f8fafc",
+      "brushed_silver": "#e2e8f0",
+      "steel_gray": "#cbd5e1",
+      "slate_metal": "#94a3b8",
+      "graphite_muted": "#64748b",
+      "gunmetal_dark": "#334155",
+      "charcoal_edge": "#1e293b",
+      "obsidian_border": "rgba(148, 163, 201, 0.18)"
     },
-    "backgrounds": {
-      "page": "bg-gradient-to-br from-[#050505] via-[#0A1128]/50 to-[#050505] min-h-screen text-[#E2E8F0]",
-      "card_glass": "bg-[#0A1128]/40 backdrop-blur-xl",
-      "card_inner_dark": "bg-[#050505]/70 backdrop-blur-md"
+    "scada_status_indicators": {
+      "ok_normal": "#10b981",
+      "warning": "#f59e0b",
+      "critical_alarm": "#ef4444",
+      "offline_idle": "#64748b"
     },
-    "borders": {
-      "subtle": "border-[#8C92AC]/20",
-      "glow_hover": "border-[#E2E8F0]/30",
-      "divider": "border-[#8C92AC]/10"
+    "preserved_neon_data_accents": {
+      "pv_solar_gelb": "#facc15",
+      "battery_cyan": "#06b6d4",
+      "grid_export_victron_grun": "#10b981",
+      "grid_import_alarm_rot": "#ef4444",
+      "house_load_silver": "#cbd5e1"
     }
   },
-  "visual_enhancers": {
-    "glassmorphism": {
-      "backdrop_blur": "backdrop-blur-xl",
-      "border": "border border-[#8C92AC]/20",
-      "shadow": "shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+  "elevation_and_depth_system": {
+    "surface_layers": {
+      "console_frame": "Deep slate background with dark metallic radial gradient mesh (#04060c to #080c16)",
+      "scada_card_glass": "background: linear-gradient(180deg, rgba(20, 30, 51, 0.85) 0%, rgba(10, 16, 28, 0.90) 100%), 1px solid rgba(226, 232, 240, 0.15), backdrop-blur(24px)",
+      "card_header_strip": "linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.00) 100%)",
+      "recessed_input_well": "background: rgba(4, 6, 12, 0.80), border: 1px solid rgba(255, 255, 255, 0.10), shadow: inset 0 2px 6px rgba(0,0,0,0.7)"
     },
-    "glow_effects": {
-      "pv_glow": "drop-shadow-[0_0_12px_rgba(253,224,71,0.4)]",
-      "grid_imp_glow": "drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]",
-      "grid_exp_glow": "drop-shadow-[0_0_12px_rgba(34,197,94,0.4)]",
-      "battery_glow": "drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]",
-      "text_glow_hover": "drop-shadow-[0_0_8px_rgba(226,232,240,0.6)]"
-    },
-    "inner_dark_panel": "Inside the cards (e.g., around charts or metric groups), use `bg-[#050505]/70 rounded-lg p-4 shadow-inner border border-[#8C92AC]/10` to create a deep, recessed data area."
-  },
-  "layouts": {
-    "card_anatomy": {
-      "container": "relative flex flex-col rounded-xl overflow-hidden bg-[#0A1128]/40 backdrop-blur-xl border border-[#8C92AC]/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-[#E2E8F0]/30 hover:shadow-[0_8px_32px_rgba(10,17,40,0.9)] group",
-      "top_accent_bar": "absolute top-0 left-0 right-0 h-[3px] opacity-80 bg-gradient-to-r to-transparent",
-      "header_row": "flex items-center justify-between p-4 border-b border-[#8C92AC]/10 bg-gradient-to-b from-[#8C92AC]/5 to-transparent",
-      "header_title_group": "flex items-center gap-3",
-      "header_icon": "w-5 h-5 text-matte-grey group-hover:text-silver transition-colors",
-      "header_title": "text-xs font-semibold tracking-widest uppercase text-matte-grey group-hover:text-silver transition-colors",
-      "header_badge": "ml-auto",
-      "body": "flex-1 p-5 flex flex-col gap-4 relative z-10",
-      "footer": "p-4 border-t border-[#8C92AC]/10 bg-[#050505]/40 text-xs text-matte-grey flex items-center justify-between"
-    },
-    "grid_system": {
-      "kpi_top_row": "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8",
-      "main_content": "grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8",
-      "energy_flow": "col-span-1 lg:col-span-2 h-full min-h-[400px]",
-      "device_tiles": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+    "tactile_textures": {
+      "subtle_scanline_overlay": "repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px)",
+      "metallic_top_beveled_edge": "linear-gradient(90deg, var(--accent-color), rgba(226, 232, 240, 0.4) 50%, transparent 100%)",
+      "inner_glow_highlight": "inset 0 1px 0 rgba(255, 255, 255, 0.12)"
     }
   },
-  "motion": {
-    "hover_states": "Cards subtly lift (`-translate-y-1`) with increased border brightness. Icons and titles transition from matte-grey to silver.",
-    "energy_flow_particles": "SVG paths MUST use `stroke-dasharray` and CSS animations (`@keyframes flow`) to animate glowing particles along the lines. Speeds should map to energy volume.",
-    "transitions": "Use `transition-all duration-300 ease-in-out` universally for interactive feedback (buttons, cards, badges)."
+  "border_and_panel_treatments": {
+    "scada_panel_frame": "border border-slate-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.6)] rounded-md",
+    "chamfer_details": "4px subtle corner radius with top 2px metallic accent hairline stroke",
+    "recessed_grooves": "border border-slate-800/80 bg-slate-950/70 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
   },
-  "accessibility": {
-    "contrast": "Ensure silver/white text on black/midnight blue backgrounds meets at least 4.5:1 contrast. Neon semantic colors should primarily be used for data plotting, glows, and accents, not small text.",
-    "data_testid": "Add descriptive data-testid attributes to all KPI cards, chart containers, and status badges (e.g., `data-testid=\"kpi-card-pv-total\"`).",
-    "focus": "Focus rings on interactive elements should use `focus:ring-2 focus:ring-[#8C92AC]/50 focus:outline-none rounded-md`."
-  },
-  "components": [
-    {
-      "name": "GlassCard",
-      "instructions": "Standardize using the `card_anatomy` structure. EVERY card in the dashboard must use this identical container layout. The 3px top border gradient should adopt the semantic color (yellow/red/green/cyan) if the card represents a specific energy domain."
+  "component_recipes": {
+    "cards_and_panels": {
+      "glass_card_container": "glass card-lift group relative overflow-hidden h-full flex flex-col rounded-md border border-slate-700/40 bg-gradient-to-b from-[#141e33]/90 to-[#0a101c]/95 shadow-[0_18px_40px_-22px_rgba(0,0,0,0.85)]",
+      "card_header": "relative border-b border-slate-700/30 bg-gradient-to-b from-white/[0.04] to-transparent px-4 py-2.5 flex items-center justify-between gap-3"
     },
-    {
-      "name": "MetricBig",
-      "instructions": "Use JetBrains Mono. Maintain exact values and labels without modification. Apply targeted drop-shadow (glow) to the text or its icon based on the metric type."
+    "kpi_strip_card": {
+      "container": "relative overflow-hidden rounded-md border border-slate-700/40 bg-slate-900/80 p-3.5 backdrop-blur-md transition-all duration-200 hover:border-slate-500/50 shadow-md",
+      "label": "font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400",
+      "value_mono": "font-mono text-2xl lg:text-3xl font-bold tracking-tight text-slate-100 mt-1"
     },
-    {
-      "name": "Sparkline",
-      "instructions": "Wrap in the `inner_dark_panel` style (`bg-[#050505]/70`). Minimalist axes. Stroke color matches semantic neon color. Fill uses a subtle linear gradient fading into the dark panel."
+    "section_header": "flex items-center gap-3 pt-2 pb-1 border-b border-slate-800/60 mb-3",
+    "buttons": {
+      "primary": "btn-neo inline-flex items-center justify-center gap-2 px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-slate-100 bg-gradient-to-b from-slate-700/60 to-slate-800/80 border border-slate-500/40 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_8px_rgba(0,0,0,0.5)] hover:from-slate-600/70 hover:to-slate-700/90 active:translate-y-[1px] transition-all",
+      "secondary": "inline-flex items-center justify-center gap-2 px-3 py-1.5 font-mono text-xs font-medium uppercase tracking-wider text-slate-300 bg-slate-800/60 border border-slate-700/60 rounded hover:bg-slate-700/60 hover:text-white transition-all",
+      "ghost": "inline-flex items-center justify-center gap-1.5 px-2.5 py-1 font-mono text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 rounded transition-all",
+      "danger": "inline-flex items-center justify-center gap-2 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-red-200 bg-red-950/60 border border-red-500/40 rounded shadow-[0_0_10px_rgba(239,68,68,0.2)] hover:bg-red-900/80 hover:border-red-400 transition-all"
     },
-    {
-      "name": "StatusBadge",
-      "instructions": "Small pill shape (`rounded-full px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider`). Dark inner background (`bg-[#050505]/80`), glowing 1px border matching status color, and a pulsing dot."
+    "inputs_and_controls": {
+      "text_and_number_input": "glass-input w-full px-3 py-1.5 font-mono text-xs text-slate-100 bg-slate-950/80 border border-slate-700/60 rounded focus:border-cyan-500/70 focus:ring-1 focus:ring-cyan-500/30 transition-all placeholder:text-slate-600",
+      "slider_track": "h-2 w-full rounded bg-slate-950 border border-slate-800 shadow-inner",
+      "slider_thumb": "h-4 w-4 rounded-full bg-cyan-400 border border-white shadow-[0_0_8px_rgba(6,182,212,0.8)] cursor-pointer"
     },
-    {
-      "name": "EnergyFlowDiagram",
-      "instructions": "Central visual piece. Use distinct nodes (PV, Grid, Battery, Home) with glassmorphism styling. Connect them with animated SVG lines featuring the target glow effects. Ensure particles flow in the correct direction (e.g., Grid -> Home or Home -> Grid)."
+    "pills_and_badges": {
+      "base_badge": "inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-[9px] uppercase tracking-[0.16em] font-semibold border backdrop-blur-sm",
+      "badge_ok": "border-emerald-500/40 bg-emerald-950/40 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.2)]",
+      "badge_warning": "border-amber-500/40 bg-amber-950/40 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.2)]",
+      "badge_critical": "border-red-500/50 bg-red-950/60 text-red-300 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.35)]",
+      "badge_offline": "border-slate-700/50 bg-slate-900/50 text-slate-400"
+    },
+    "nav_tabs": {
+      "container": "flex items-center gap-1 p-1 bg-slate-950/80 border border-slate-800/80 rounded-md backdrop-blur-md",
+      "active_tab": "font-mono text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-b from-slate-700/80 to-slate-800/90 border border-slate-600/60 rounded px-3.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.5)]",
+      "inactive_tab": "font-mono text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 rounded px-3.5 py-1.5 transition-all"
+    },
+    "system_status_light": {
+      "ok": "w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981,0_0_20px_#10b981aa] border border-emerald-200/50 dot-pulse",
+      "warning": "w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_10px_#f59e0b,0_0_20px_#f59e0baa] border border-amber-200/50 dot-pulse",
+      "alarm": "w-3 h-3 rounded-full bg-red-500 shadow-[0_0_12px_#ef4444,0_0_24px_#ef4444aa] border border-red-200/50 animate-ping"
+    },
+    "tables": {
+      "table_wrapper": "w-full overflow-hidden rounded-md border border-slate-800 bg-slate-950/60",
+      "header_cell": "px-3 py-2 text-left font-mono text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-900/80 border-b border-slate-800",
+      "row": "border-b border-slate-800/50 hover:bg-slate-900/40 transition-colors",
+      "data_cell": "px-3 py-2 font-mono text-xs text-slate-200"
     }
+  },
+  "motion_and_microinteractions": {
+    "energy_flow_particle_lines": "SVG stroke-dasharray with keyframe 'flow-particles' moving continuously; speed varies by wattage",
+    "led_status_pulses": "dot-pulse animation (0% to 100% opacity with current-color glow shadow)",
+    "tactile_button_press": "active:translate-y-[1px] active:shadow-inner",
+    "card_hover_elevation": "card-lift effect (-4px translateY with subtle silver edge border highlight)",
+    "reduced_motion": "@media (prefers-reduced-motion: reduce) disables flow-particles and pulse keyframes"
+  },
+  "accessibility_and_testing": {
+    "contrast_compliance": "Normal text meets 4.5:1 minimum against dark slate wells; telemetry numbers in JetBrains Mono use bright silver (#F8FAFC) or neon accents with text-shadow.",
+    "testing_attributes": "All interactive elements (buttons, sliders, inputs, nav tabs, status badges) and primary stat cards MUST include explicit data-testid attributes (e.g. data-testid='nav-tab-dashboard', data-testid='kpi-pv-power')."
+  },
+  "instructions_to_main_agent": [
+    "1. Do NOT rewrite or remove existing components or page routes.",
+    "2. Update /app/frontend/src/index.css to enhance CSS variable declarations (--background, --card, --border) and augment .glass, .glass-strong, .glass-inset, .btn-neo with tactile silver/slate border highlights and SCADA shadows.",
+    "3. Update /app/frontend/tailwind.config.js to include SCADA slate/steel color definitions (e.g. slate-metal, graphite-muted, titanium-white, obsidian-border).",
+    "4. Refine /app/frontend/src/components/solar-ui.jsx styling for GlassCard, Badge, MetricBig, and SectionHeader to apply metallic chamfers, top accent hairlines, and SCADA control room density.",
+    "5. Ensure all key controls and status elements retain or gain kebab-case data-testid attributes for automated testing."
   ],
   "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
-    "HARD CONSTRAINT: NEVER alter the displayed data values, labels, or underlying logic. Purely a visual and layout upgrade.",
-    "All cards MUST follow the exact same unified anatomy (Header row with icon+title+badge, Body, optional Footer). No exceptions. This ensures visual harmony.",
-    "Enforce the new dark sci-fi color palette: Base elements use Black and Midnight Blue, structural elements use Matte Grey, text primarily uses Silver.",
-    "Use a darkened background (`bg-[#050505]/70`) INSIDE the tiles for charts, metric groups, or tables. This 'nested depth' is critical to the sci-fi aesthetic.",
-    "Do not use generic centered layouts for data. Align text/labels to the left, and numerical values/badges to the right.",
-    "Avoid fully transparent overlays or backgrounds over the page background. Always use `backdrop-blur` combined with a semi-transparent color (e.g., `bg-[#0A1128]/40`).",
-    "Apply 'data-testid' to all key elements for testing stability.",
-    "Ensure the fonts (Chakra Petch, IBM Plex Sans, JetBrains Mono) are imported and applied correctly according to the typography hierarchy."
+    "Never create standard centered white layouts or generic blue SaaS cards.",
+    "Maintain the dark SCADA control-room aesthetic with layered metallic surfaces, monospaced telemetry data, crisp 1px borders, and vivid neon status indicators.",
+    "Every button, input, slider, tab, and card must include explicit kebab-case data-testid attributes.",
+    "Ensure hover and active states provide high visual feedback with subtle metallic edge highlights and glows."
   ]
 }
