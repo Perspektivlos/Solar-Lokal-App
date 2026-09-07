@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { api, getAlarms } from "../lib/api";
 import IntroCard from "../components/IntroCard";
+import StatusBanner from "../components/StatusBanner";
 import { Check, X, Minus, PlayCircle, RefreshCw, ChevronRight } from "lucide-react";
 
 const runTests = () => api.post("/diagnostics/run", {}).then((r) => r.data);
@@ -105,14 +106,17 @@ export default function Diagnose() {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState(null);
   const [raw, setRaw] = useState(null);
+  const [alarms, setAlarms] = useState([]);
 
   const reloadRaw = useCallback(() => { getRaw().then(setRaw).catch(() => {}); }, []);
+  const reloadAlarms = useCallback(() => { getAlarms().then((a) => setAlarms(a.alarms || [])).catch(() => {}); }, []);
 
   useEffect(() => {
     reloadRaw();
-    const id = setInterval(reloadRaw, 5000);
+    reloadAlarms();
+    const id = setInterval(() => { reloadRaw(); reloadAlarms(); }, 5000);
     return () => clearInterval(id);
-  }, [reloadRaw]);
+  }, [reloadRaw, reloadAlarms]);
 
   const run = async () => {
     setRunning(true);
@@ -139,6 +143,9 @@ export default function Diagnose() {
           )}
         </button>
       </div>
+
+      {/* Live-Statusbanner (von Dashboard hierher verschoben) */}
+      <StatusBanner alarms={alarms} />
 
       <div className="glass">
         <div className="border-b border-white/10 px-4 py-2 flex items-center justify-between">

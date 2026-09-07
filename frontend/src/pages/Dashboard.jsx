@@ -9,7 +9,7 @@ import KpiStrip from "../components/KpiStrip";
 import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
-import StatusBanner from "../components/StatusBanner";
+import AlarmBadge from "../components/AlarmBadge";
 import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
 import { Cable, AlertTriangle, Activity, Sun, BatteryCharging } from "lucide-react";
 
@@ -218,6 +218,8 @@ export default function Dashboard() {
             Update: {relativeTime(timestamp, now)}
             <span className="text-white/30">·</span>
             <span>Uhr: {new Date(now).toLocaleTimeString("de-DE")}</span>
+            <span className="text-white/30">·</span>
+            <AlarmBadge alarms={alarms} />
           </div>
         </div>
         {demo_mode && (
@@ -229,7 +231,6 @@ export default function Dashboard() {
 
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
       <div data-testid="row-overview" className="space-y-8">
-        <StatusBanner alarms={alarms} />
         <KpiStrip today={today} summary={summary} trail={trail} />
         <EnergyFlow summary={summary} trucki={trucki} />
       </div>
