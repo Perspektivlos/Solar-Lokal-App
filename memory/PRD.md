@@ -135,6 +135,13 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Alarm-Schwellwerte konfigurierbar** (Settings-UI) – FERTIG 07.06.2026
 - [x] **Phase C**: Design-Evolution → Industrial/SCADA-Control-Room (Silber/Weiß/Schwarz/Grau, Tiefe, Design-System; Neon-Akzente bleiben) – FERTIG 07.06.2026 (global via index.css; Blueprint in design_guidelines.json)
 - [x] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard – FERTIG 07.06.2026 (grid_import/export_w, trucki settings, alarms-Measurement, `mode`-Tag; Dashboard-JSON in `deploy/grafana/`)
-- [ ] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard-Design an App anpassen (JSON-Export)
+- [x] **Grafana-URL konfigurierbar** – FERTIG 07.06.2026 (config `grafana_url`, Eingabe auf Geräte-Seite, Verlauf-Link nutzt Config)
+
+### Offener Backlog (nächste Kandidaten)
+- [ ] Grafana als eingebettetes Panel (iframe) in der App (z. B. Verlauf-Seite)
+- [ ] Alarm-Historie mit Zeitstempel in Verlauf/Diagnose (nutzt `alarms`-Measurement)
+- [ ] Geräte-Favoriten aufs Dashboard pinnen
+- [ ] Push-Benachrichtigungen bei Alarmen
+- [ ] Grafana Auto-Provisioning (Datasource + Dashboard per YAML)
 - P3: CSV-Datenexport – vom Nutzer ABGELEHNT
 - P3: Watt-Label am Energiefluss-Pfeil – vom Nutzer ABGELEHNT

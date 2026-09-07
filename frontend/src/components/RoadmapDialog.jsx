@@ -9,11 +9,13 @@ const SECTIONS = [
     color: "#10B981",
     items: [
       "Live-Dashboard mit animiertem Energiefluss",
-      "Verlauf, Steuerung (Hoymiles / Trucki), Geräte & Diagnose",
+      "Steuerung mit Vorbelegung der Geräte-Settings (Phase B)",
+      "Status-Alarme + konfigurierbare Schwellwerte (Phase A)",
+      "SCADA-Control-Room Design-Evolution (Phase C)",
+      "InfluxDB-Datenpunkte erweitert + Grafana-Dashboard (Phase D)",
+      "Konfigurierbare Grafana-URL",
       "Integrationen: Mosquitto MQTT & InfluxDB",
-      "DB-Retention – automatische Bereinigung alter Snapshots",
-      "Lokaler In-Memory-Start ohne MongoDB (VS Code)",
-      "Energiefluss: fließende Partikel & watt-abhängiges Tempo",
+      "DB-Retention + lokaler Start ohne MongoDB",
     ],
   },
   {
@@ -22,8 +24,9 @@ const SECTIONS = [
     Icon: Clock,
     color: "#06B6D4",
     items: [
-      "Alarm-Schwellwerte – Warnungen bei Über-/Unterspannung & Strom",
-      "Geräte-Favoriten – wichtige KPIs oben anpinnen",
+      "Grafana als eingebettetes Panel direkt in der App",
+      "Alarm-Historie (Zeitstempel) in Verlauf/Diagnose",
+      "Geräte-Favoriten aufs Dashboard pinnen",
     ],
   },
   {
@@ -32,8 +35,8 @@ const SECTIONS = [
     Icon: Lightbulb,
     color: "#FACC15",
     items: [
-      "Push-Benachrichtigungen bei Ereignissen",
-      "Historien-Vergleich Tag / Woche / Monat",
+      "Push-Benachrichtigungen bei Alarmen",
+      "Grafana Auto-Provisioning (Datasource + Dashboard)",
     ],
   },
 ];
