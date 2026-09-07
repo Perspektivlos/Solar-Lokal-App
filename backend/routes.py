@@ -23,6 +23,7 @@ from server import (
     _cleanup_snapshots_once,
 )
 from collectors import collect_live
+from alarms import evaluate_alarms, summarize_alarms
 
 api_router = APIRouter(prefix="/api")
 
@@ -34,10 +35,30 @@ async def root() -> Dict[str, Any]:
     return {"service": "solar-local-dashboard", "status": "ok"}
 
 
+def _alarm_state(cfg: Dict[str, Any]):
+    mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
+    mqtt_connected = bool(_mqtt_state.get("connected"))
+    return mqtt_enabled, mqtt_connected
+
+
 @api_router.get("/live")
 async def live() -> Dict[str, Any]:
     cfg = await get_config()
-    return await collect_live(cfg)
+    data = await collect_live(cfg)
+    mqtt_enabled, mqtt_connected = _alarm_state(cfg)
+    data["alarms"] = evaluate_alarms(data, mqtt_connected=mqtt_connected, mqtt_enabled=mqtt_enabled)
+    return data
+
+
+@api_router.get("/alarms")
+async def alarms() -> Dict[str, Any]:
+    cfg = await get_config()
+    data = await collect_live(cfg)
+    mqtt_enabled, mqtt_connected = _alarm_state(cfg)
+    items = evaluate_alarms(data, mqtt_connected=mqtt_connected, mqtt_enabled=mqtt_enabled)
+    summary = summarize_alarms(items)
+    summary["timestamp"] = data.get("timestamp")
+    return summary
 
 
 @api_router.get("/config")

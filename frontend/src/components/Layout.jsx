@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Zap, Activity, Sliders, Cpu, PlugZap, Stethoscope } from "lucide-react";
 import RoadmapDialog from "./RoadmapDialog";
+import SystemStatusLight from "./SystemStatusLight";
 
 const links = [
   { to: "/", label: "Dashboard", icon: Zap, testid: "nav-dashboard", end: true },
@@ -28,6 +29,9 @@ export default function Layout() {
             </div>
           </div>
           <nav className="flex items-stretch h-full overflow-x-auto" data-testid="nav-menu">
+            <div className="flex items-center pr-3 mr-1 border-r border-white/10">
+              <SystemStatusLight />
+            </div>
             {links.map((l) => {
               const Icon = l.icon;
               return (

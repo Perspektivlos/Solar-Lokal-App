@@ -9,6 +9,7 @@ import KpiStrip from "../components/KpiStrip";
 import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
+import StatusBanner from "../components/StatusBanner";
 import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
 import { Cable, AlertTriangle, Activity, Sun, BatteryCharging } from "lucide-react";
 
@@ -153,6 +154,8 @@ export default function Dashboard() {
   }
 
   const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp } = live;
+  const alarms = Array.isArray(live.alarms) ? live.alarms : [];
+  const alarmsFor = (device) => alarms.filter((a) => a.device === device);
   const prev = prevLive;
   const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
   const batteryKind = batteryStateKind(socDanger, summary.battery_power);
@@ -226,13 +229,14 @@ export default function Dashboard() {
 
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
       <div data-testid="row-overview" className="space-y-8">
+        <StatusBanner alarms={alarms} />
         <KpiStrip today={today} summary={summary} trail={trail} />
         <EnergyFlow summary={summary} trucki={trucki} />
       </div>
 
       {/* SEKTION · BATTERIE */}
       <div className="space-y-4">
-        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={batteryDetails} testid="section-battery" />
+        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={batteryDetails} alarms={alarmsFor("trucki")} testid="section-battery" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
             <TruckiCard trucki={trucki} />
@@ -273,7 +277,7 @@ export default function Dashboard() {
 
       {/* SEKTION · VICTRON */}
       <div className="space-y-4">
-        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} details={victronDetails} testid="section-victron" />
+        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} details={victronDetails} alarms={alarmsFor("victron")} testid="section-victron" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
             <VictronCard victron={victron} />
@@ -284,7 +288,7 @@ export default function Dashboard() {
 
       {/* SEKTION · PV & NETZ */}
       <div className="space-y-4">
-        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} details={pvGridDetails} testid="section-pv-grid" />
+        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} details={pvGridDetails} alarms={alarmsFor("ahoy")} testid="section-pv-grid" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
             <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
@@ -323,7 +327,7 @@ export default function Dashboard() {
 
       {/* SEKTION · SHELLY */}
       <div className="space-y-4">
-        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} details={shellyDetails} testid="section-shelly" />
+        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} details={shellyDetails} alarms={alarmsFor("shelly")} testid="section-shelly" />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
           <div className="lg:col-span-8">
             <GlassCard

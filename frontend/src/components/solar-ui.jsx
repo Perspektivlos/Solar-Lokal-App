@@ -162,15 +162,24 @@ export function Stat({ label, value, unit, color, testid }) {
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
 // Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
 // Info-Panel (gleiches Prinzip wie die IntroCard oben), gefiltert auf das Rubrik-Gerät.
-export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, testid }) {
+export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, alarms, testid }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Array.isArray(details) && details.length > 0;
+  const alarmList = Array.isArray(alarms) ? alarms : [];
+  const hasCritical = alarmList.some((a) => a.severity === "critical");
   return (
     <div data-testid={testid}>
       <div className="flex items-center gap-3 pt-1">
         <span className="w-1 h-5 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
         {Icon && <Icon size={16} strokeWidth={2.4} style={{ color }} />}
         <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/80">{label}</span>
+        {alarmList.length > 0 && (
+          <Badge
+            kind={hasCritical ? "KRITISCH" : "WARN"}
+            label={`${alarmList.length} ${alarmList.length === 1 ? "Alarm" : "Alarme"}`}
+            testid={testid ? `${testid}-alarm` : undefined}
+          />
+        )}
         {href && (
           <a
             href={href}

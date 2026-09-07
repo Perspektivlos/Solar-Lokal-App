@@ -50,6 +50,8 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - `POST /api/diagnostics/run` – Selbsttest
 - `GET /api/diagnostics/raw` – Rohdaten
 - `GET /api/integrations/status` – MQTT/InfluxDB/Poller Status
+- `GET /api/alarms` – Status-/Alarm-Zusammenfassung (level/count/critical/warning/alarms)
+- `GET /api/live` enthält zusätzlich Feld `alarms` (Liste aktiver Alarme)
 
 ## Completed Work
 
@@ -91,6 +93,22 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Diagnostics zeigt DB-Retention-Status (Tage, letzter Lauf, total gelöscht)
 - [x] Pytest `tests/test_retention.py` (3 Tests, 60/60 pass)
 
+### Lokaler Start ohne MongoDB (07.06.2026)
+- [x] `backend/local_inmemory.py` patcht MongoDB-Client via `mongomock-motor` (In-Memory) vor Import von `server.py`
+- [x] `run_local.py` startet standardmäßig In-Memory (`USE_REAL_DB=1` für echte MongoDB); `.vscode/launch.json` mit 2 Configs
+- [x] App-Code unverändert; nur lokaler Dev/Test-Start betroffen
+
+### Grafana-Link + Energiefluss-Animation (07.06.2026)
+- [x] Verlauf-Seite: Button „Grafana" öffnet `http://192.168.0.202:3000` (SCADA-Stil)
+- [x] EnergyFlow: fließende Partikel, watt-abhängiges Tempo (`flowDurSec`), mitfließender Richtungspfeil
+- [x] Roadmap-Dialog: Klick auf Footer-Version öffnet Roadmap (`RoadmapDialog.jsx`)
+
+### Phase A – Status-Alarme (07.06.2026)
+- [x] Backend `alarms.py`: feste Schwellwerte (Über-/Unterspannung, Überstrom, Akku-SoC/Spannung), Verbindungs-Alarme (Gerät nicht erreichbar, MQTT weg, Ahoy online aber Wechselrichter ohne Daten); Demo unterdrückt Verbindungs-Alarme
+- [x] `/api/live` enthält `alarms`; neuer `/api/alarms` (level/count/critical/warning)
+- [x] Frontend: globales `StatusBanner` (Dashboard), `SystemStatusLight` (Header, alle Seiten), Alarm-Badges an Sektions-Headern
+- [x] Pytest `tests/test_alarms.py` (12 Tests) – gesamt 72/72 pass
+
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
 - **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.
@@ -99,7 +117,10 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - **Verschachtelte Ternaries (React)**: Kosmetische Lesbarkeit, kein Bug. → Belassen.
 - Entscheidung vom Nutzer bestätigt am 28.08.2026 und erneut am 30.08.2026 (Option a: nichts ändern, nur dokumentieren).
 
-## Backlog
-- P3: CSV-Datenexport für Verlaufsdaten
-- P3: Alarm-Schwellwerte (konfigurierbare Warnungen)
-- P3: Geräte-Favoriten im Dashboard
+## Backlog / Roadmap (evolutionär, kein Rewrite)
+- [x] **Phase A**: UI-Warnungen / Status-Alarme (feste Schwellwerte) – FERTIG 07.06.2026
+- [ ] **Phase B**: Geräte-Settings auslesen & Werte für Steuerung übernehmen (alle Geräte)
+- [ ] **Phase C**: Design-Evolution → Industrial/SCADA-Control-Room (Silber/Weiß/Schwarz/Grau, Tiefe, Design-System; Neon-Akzente bleiben)
+- [ ] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard-Design an App anpassen (JSON-Export)
+- P3: CSV-Datenexport – vom Nutzer ABGELEHNT
+- P3: Watt-Label am Energiefluss-Pfeil – vom Nutzer ABGELEHNT

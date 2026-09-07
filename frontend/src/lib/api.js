@@ -13,3 +13,4 @@ export const putConfig = (payload) => api.put("/config", payload).then((r) => r.
 export const controlHoymiles = (action, value) => api.post("/control/hoymiles", { action, value }).then((r) => r.data);
 export const controlTrucki = (action, value) => api.post("/control/trucki", { action, value }).then((r) => r.data);
 export const getIntegrationsStatus = () => api.get("/integrations/status").then((r) => r.data);
+export const getAlarms = () => api.get("/alarms").then((r) => r.data);

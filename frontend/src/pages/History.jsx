@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { getHistory } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
+import { BarChart3, ExternalLink } from "lucide-react";
+
+const GRAFANA_URL = "http://192.168.0.202:3000";
 
 const RANGES = ["1h", "6h", "12h", "24h"];
 
@@ -109,20 +112,34 @@ export default function History() {
           <span className="w-1.5 h-7 rounded-sm" style={{ background: "#06B6D4", boxShadow: "0 0 10px #06B6D488" }} />
           Verlauf
         </h1>
-        <div className="flex glass overflow-hidden" data-testid="range-toggle">
-          {RANGES.map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              data-testid={`range-${r}`}
-              aria-pressed={range === r}
-              className={`px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] border-l border-white/10 first:border-l-0 transition-colors ${
-                range === r ? "bg-white/[0.10] text-white" : "text-white/55 hover:text-white hover:bg-white/[0.04]"
-              }`}
-            >
-              {r}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 flex-wrap">
+          <a
+            href={GRAFANA_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="grafana-link"
+            title={`Grafana öffnen · ${GRAFANA_URL}`}
+            className="group inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.18em] text-white/70 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors"
+          >
+            <BarChart3 size={14} className="text-cyan-400" />
+            Grafana
+            <ExternalLink size={12} className="opacity-60 group-hover:opacity-100 transition-opacity" />
+          </a>
+          <div className="flex glass overflow-hidden" data-testid="range-toggle">
+            {RANGES.map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                data-testid={`range-${r}`}
+                aria-pressed={range === r}
+                className={`px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] border-l border-white/10 first:border-l-0 transition-colors ${
+                  range === r ? "bg-white/[0.10] text-white" : "text-white/55 hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
