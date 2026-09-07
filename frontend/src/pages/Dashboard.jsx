@@ -9,7 +9,6 @@ import KpiStrip from "../components/KpiStrip";
 import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
-import AlarmBadge from "../components/AlarmBadge";
 import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
 import { Cable, AlertTriangle, Activity, Sun, BatteryCharging } from "lucide-react";
 
@@ -218,8 +217,6 @@ export default function Dashboard() {
             Update: {relativeTime(timestamp, now)}
             <span className="text-white/30">·</span>
             <span>Uhr: {new Date(now).toLocaleTimeString("de-DE")}</span>
-            <span className="text-white/30">·</span>
-            <AlarmBadge alarms={alarms} />
           </div>
         </div>
         {demo_mode && (
