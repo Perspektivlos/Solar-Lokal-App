@@ -37,7 +37,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 ```
 
 ## DB Schema
-- `config`: `{"_id": "main", "demo_mode": bool, "devices": {}, "mqtt": {}, "victron_mqtt": {}, "influx": {}, "retention": {"enabled": bool, "days": int}}`
+- `config`: `{"_id": "main", "demo_mode": bool, "devices": {}, "mqtt": {}, "victron_mqtt": {}, "influx": {}, "retention": {"enabled": bool, "days": int}, "alarms": {"enabled": bool, "grid_voltage": {...}, "phase_current": {...}, "battery_voltage": {...}, "battery_soc": {...}}}`
 - `snapshots`: Zeitreihen-Dokumente vom Poller (15s-Intervall); Index auf `ts`; stündliche Retention löscht alles älter als `retention.days` (Default 30 Tage)
 
 ## API Endpoints
@@ -109,6 +109,18 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Frontend: globales `StatusBanner` (Dashboard), `SystemStatusLight` (Header, alle Seiten), Alarm-Badges an Sektions-Headern
 - [x] Pytest `tests/test_alarms.py` (12 Tests) – gesamt 72/72 pass
 
+### Phase B – Geräte-Settings auslesen & vorbelegen (07.06.2026)
+- [x] Steuerungs-Seite lädt `/api/live` beim Mount + Button „Werte vom Gerät laden" (`btn-reload-device`)
+- [x] Slider werden aus Geräte-Werten vorbelegt: Hoymiles `limit_percent`; Trucki `ac_setpoint_w/target_w/min_power_w/max_power_w`
+- [x] Pro Slider: „Aktuell am Gerät: X" + „Übernehmen"-Pill + „synchron"-Anzeige (`*-current`, `*-adopt`)
+- [x] Trucki-Status-Pills (AC-Output/ZEPC/AC aktuell/SoC); read-only Victron-MPPT-Panel (`control-victron`)
+
+### Alarm-Schwellwerte konfigurierbar (07.06.2026)
+- [x] `config.alarms` (enabled + 4 Schwellwert-Gruppen) in DEFAULT_CONFIG + ConfigUpdate
+- [x] `alarms.merge_thresholds()` merged Config über Defaults; `/api/live` & `/api/alarms` respektieren `alarms.enabled`
+- [x] Settings-UI `AlarmSettings.jsx` auf Geräte-Seite (numerische Inputs, Master-Toggle, Standard/Speichern)
+- [x] Pytest: gesamt 15 Alarm-Tests (merge + config-driven); Frontend E2E via testing_agent iteration_13 (9/9 PASS, 100%)
+
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
 - **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.
@@ -119,7 +131,8 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 
 ## Backlog / Roadmap (evolutionär, kein Rewrite)
 - [x] **Phase A**: UI-Warnungen / Status-Alarme (feste Schwellwerte) – FERTIG 07.06.2026
-- [ ] **Phase B**: Geräte-Settings auslesen & Werte für Steuerung übernehmen (alle Geräte)
+- [x] **Phase B**: Geräte-Settings auslesen & Werte für Steuerung übernehmen (alle Geräte) – FERTIG 07.06.2026
+- [x] **Alarm-Schwellwerte konfigurierbar** (Settings-UI) – FERTIG 07.06.2026
 - [ ] **Phase C**: Design-Evolution → Industrial/SCADA-Control-Room (Silber/Weiß/Schwarz/Grau, Tiefe, Design-System; Neon-Akzente bleiben)
 - [ ] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard-Design an App anpassen (JSON-Export)
 - P3: CSV-Datenexport – vom Nutzer ABGELEHNT

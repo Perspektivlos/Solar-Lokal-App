@@ -1,5 +1,5 @@
 """Tests für die Alarm-/Status-Engine (backend/alarms.py)."""
-from alarms import evaluate_alarms, summarize_alarms
+from alarms import evaluate_alarms, summarize_alarms, merge_thresholds, DEFAULT_THRESHOLDS
 
 
 def _base_live(demo=True):
@@ -113,3 +113,28 @@ def test_summary_levels():
     s = summarize_alarms(evaluate_alarms(live))
     assert s["level"] == "critical"
     assert s["critical"] >= 1 and s["warning"] >= 1
+
+
+def test_merge_thresholds_overrides_and_keeps_defaults():
+    m = merge_thresholds({"grid_voltage": {"over": 250}, "battery_soc": {"under": 20}})
+    assert m["grid_voltage"]["over"] == 250.0
+    assert m["grid_voltage"]["under"] == DEFAULT_THRESHOLDS["grid_voltage"]["under"]
+    assert m["battery_soc"]["under"] == 20.0
+    # Defaults dürfen nicht mutiert werden
+    assert DEFAULT_THRESHOLDS["grid_voltage"]["over"] == 253.0
+
+
+def test_merge_thresholds_ignores_unknown_and_nonnumeric():
+    m = merge_thresholds({"grid_voltage": {"bogus": 1, "over": "x"}})
+    assert "bogus" not in m["grid_voltage"]
+    assert m["grid_voltage"]["over"] == 253.0  # nicht-numerisch ignoriert
+
+
+def test_custom_threshold_triggers_alarm():
+    live = _base_live()
+    live["trucki"]["soc"] = 86.0
+    # Standard: kein Alarm; mit under=95 -> Warnung
+    assert evaluate_alarms(live) == []
+    t = merge_thresholds({"battery_soc": {"under": 95}})
+    items = evaluate_alarms(live, thresholds=t)
+    assert any(a["code"] == "soc-low" and a["severity"] == "warning" for a in items)

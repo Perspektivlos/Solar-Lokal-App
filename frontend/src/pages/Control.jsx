@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
-import { controlHoymiles, controlTrucki } from "../lib/api";
+import { useState, useMemo, useEffect } from "react";
+import { controlHoymiles, controlTrucki, getLive } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import { Slider } from "../components/ui/slider";
-import { Power, RotateCw, Send } from "lucide-react";
+import { Power, RotateCw, Send, RefreshCw, Sun, CheckCircle2 } from "lucide-react";
 
 const INTRO_SECTIONS = [
   {
@@ -68,8 +68,10 @@ function PrimaryButton({ children, accent = "#06B6D4", ...props }) {
   );
 }
 
-function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, step = 1, unit = "%", accent = "#06B6D4", busy, testid }) {
+function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, step = 1, unit = "%", accent = "#06B6D4", busy, current, testid }) {
   const sliderValue = useMemo(() => [value], [value]);
+  const hasCurrent = current !== null && current !== undefined && !isNaN(current);
+  const matchesDevice = hasCurrent && Math.round(current) === Math.round(value);
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
@@ -80,6 +82,28 @@ function SliderControl({ label, value, onChange, onSend, min = 0, max = 100, ste
         </span>
       </div>
       <Slider value={sliderValue} onValueChange={(v) => onChange(v[0])} min={min} max={max} step={step} className="my-3" data-testid={`${testid}-slider`} />
+      {hasCurrent && (
+        <div className="flex items-center justify-between" data-testid={`${testid}-current`}>
+          <span className="font-mono text-[10px] text-white/50">
+            Aktuell am Gerät: <span style={{ color: accent }} className="font-semibold">{current}{unit}</span>
+          </span>
+          {matchesDevice ? (
+            <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.14em] text-emerald-300/80">
+              <CheckCircle2 size={11} /> synchron
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onChange(current)}
+              data-testid={`${testid}-adopt`}
+              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] text-white/70 hover:text-white transition-colors"
+              style={{ borderColor: `${accent}55`, background: `${accent}14` }}
+            >
+              Übernehmen
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div className="font-mono text-[10px] text-white/40">{min}{unit} ─ {max}{unit}</div>
         <PrimaryButton onClick={onSend} disabled={busy} accent={accent} data-testid={`${testid}-send`}>
@@ -100,6 +124,28 @@ function Divider({ label }) {
   );
 }
 
+function StatusPill({ label, on }) {
+  const active = on === true;
+  const known = on === true || on === false;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] px-2 py-0.5 rounded-full border ${
+        !known
+          ? "border-white/10 bg-white/[0.03] text-white/45"
+          : active
+          ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+          : "border-white/15 bg-white/[0.03] text-white/55"
+      }`}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full"
+        style={{ background: active ? "#34D399" : "#64748b", boxShadow: active ? "0 0 6px #34D399" : "none" }}
+      />
+      {label}: {!known ? "–" : active ? "EIN" : "AUS"}
+    </span>
+  );
+}
+
 export default function Control() {
   const [limit, setLimit] = useState(100);
   const [truLimit, setTruLimit] = useState(300);
@@ -109,6 +155,38 @@ export default function Control() {
   const [hoyResult, setHoyResult] = useState(null);
   const [truResult, setTruResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [device, setDevice] = useState(null);
+  const [loadedAt, setLoadedAt] = useState(null);
+  const [loadingDev, setLoadingDev] = useState(true);
+
+  const num = (v) => (v === null || v === undefined || isNaN(v) ? null : Math.round(v));
+  const dvAhoy = (k) => num(device?.ahoy?.[k]);
+  const dvTru = (k) => num(device?.trucki?.[k]);
+
+  const applyDevice = (l) => {
+    const a = l?.ahoy || {}, t = l?.trucki || {};
+    if (a.limit_percent != null) setLimit(Math.round(a.limit_percent));
+    if (t.ac_setpoint_w != null) setTruLimit(Math.round(t.ac_setpoint_w));
+    if (t.target_w != null) setTruTarget(Math.round(t.target_w));
+    if (t.min_power_w != null) setTruMin(Math.round(t.min_power_w));
+    if (t.max_power_w != null) setTruMax(Math.round(t.max_power_w));
+  };
+
+  const loadDevice = async () => {
+    setLoadingDev(true);
+    try {
+      const l = await getLive();
+      setDevice(l);
+      applyDevice(l);
+      setLoadedAt(new Date());
+    } catch {
+      /* Steuerung bleibt mit letzten Werten nutzbar */
+    } finally {
+      setLoadingDev(false);
+    }
+  };
+
+  useEffect(() => { loadDevice(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
   const runHoy = async (action, value) => {
     setBusy(true); setHoyResult({ pending: true, action });
@@ -127,10 +205,28 @@ export default function Control() {
     <div className="space-y-6" data-testid="control-page">
       <IntroCard title="Steuerung" subtitle="Hoymiles- & Trucki-Befehle, MQTT-Overrides, Settings-Editor" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
 
-      <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
-        <span className="w-1.5 h-7 rounded-sm" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
-        Steuerung
-      </h1>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
+          <span className="w-1.5 h-7 rounded-sm" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
+          Steuerung
+        </h1>
+        <div className="flex items-center gap-3">
+          {loadedAt && (
+            <span className="font-mono text-[10px] text-white/45" data-testid="control-loaded-at">
+              Geräte-Werte geladen: {loadedAt.toLocaleTimeString("de-DE")}
+            </span>
+          )}
+          <button
+            onClick={loadDevice}
+            disabled={loadingDev}
+            data-testid="btn-reload-device"
+            className="inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.16em] text-white/75 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loadingDev ? "animate-spin" : ""} />
+            {loadingDev ? "Lade…" : "Werte vom Gerät laden"}
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Hoymiles — kompakter */}
@@ -141,7 +237,7 @@ export default function Control() {
             onChange={setLimit}
             onSend={() => runHoy("limit", limit)}
             min={0} max={100} step={1} unit="%" accent="#FACC15"
-            busy={busy} testid="hoy-limit"
+            busy={busy} current={dvAhoy("limit_percent")} testid="hoy-limit"
           />
           <Divider label="Aktionen" />
           <div className="grid grid-cols-3 gap-2">
@@ -160,6 +256,21 @@ export default function Control() {
 
         {/* Trucki — UNIFIED: Steuerung + Settings */}
         <Panel title="Trucki2Shelly · Steuerung & Settings" accent="#06B6D4" testid="control-trucki">
+          {/* Aktueller Geräte-Zustand (read-only) */}
+          <div className="flex items-center gap-2 flex-wrap" data-testid="trucki-status">
+            <StatusPill label="AC-Output" on={device?.trucki?.ac_output} />
+            <StatusPill label="ZEPC" on={device?.trucki?.zepc} />
+            {dvTru("ac_display_w") != null && (
+              <span className="font-mono text-[10px] text-white/55 px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.03]">
+                AC aktuell: <span className="text-cyan-300 font-semibold">{dvTru("ac_display_w")} W</span>
+              </span>
+            )}
+            {device?.trucki?.soc != null && (
+              <span className="font-mono text-[10px] text-white/55 px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.03]">
+                SoC: <span className="text-cyan-300 font-semibold">{Math.round(device.trucki.soc)} %</span>
+              </span>
+            )}
+          </div>
           {/* Live AC-Setpoint */}
           <SliderControl
             label="AC-Setpoint (Einspeise-Leistung)"
@@ -167,7 +278,7 @@ export default function Control() {
             onChange={setTruLimit}
             onSend={() => runTru("limit", truLimit)}
             min={0} max={2400} step={10} unit=" W" accent="#06B6D4"
-            busy={busy} testid="tru-limit"
+            busy={busy} current={dvTru("ac_setpoint_w")} testid="tru-limit"
           />
           <Divider label="ZEPC & Restart" />
           <div className="grid grid-cols-3 gap-2">
@@ -189,7 +300,7 @@ export default function Control() {
             onChange={setTruTarget}
             onSend={() => runTru("target", truTarget)}
             min={-200} max={500} step={5} unit=" W" accent="#A78BFA"
-            busy={busy} testid="tru-target"
+            busy={busy} current={dvTru("target_w")} testid="tru-target"
           />
           <SliderControl
             label="MIN-Power"
@@ -197,7 +308,7 @@ export default function Control() {
             onChange={setTruMin}
             onSend={() => runTru("min", truMin)}
             min={0} max={500} step={10} unit=" W" accent="#A78BFA"
-            busy={busy} testid="tru-min"
+            busy={busy} current={dvTru("min_power_w")} testid="tru-min"
           />
           <SliderControl
             label="MAX-Power"
@@ -205,11 +316,42 @@ export default function Control() {
             onChange={setTruMax}
             onSend={() => runTru("max", truMax)}
             min={0} max={2400} step={10} unit=" W" accent="#A78BFA"
-            busy={busy} testid="tru-max"
+            busy={busy} current={dvTru("max_power_w")} testid="tru-max"
           />
           <Result res={truResult} />
         </Panel>
       </div>
+
+      {/* Victron — read-only aktuelle Einstellungen/Zustand */}
+      <Panel title="Victron SmartSolar MPPT · Aktuelle Werte (read-only)" accent="#34D399" testid="control-victron">
+        {(device?.victron?.mppts || []).length === 0 ? (
+          <div className="font-mono text-xs text-white/50">Keine Victron-Daten geladen.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3" data-testid="victron-readouts">
+            {device.victron.mppts.map((m) => (
+              <div key={m.id} className="glass-inset p-3" data-testid={`victron-mppt-${m.id}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/75 flex items-center gap-1.5">
+                    <Sun size={12} className="text-emerald-300" /> {m.name}
+                  </span>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] px-2 py-0.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 text-emerald-300">
+                    {m.state || "–"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-2 mt-3 font-mono text-[11px] text-white/80">
+                  <div><span className="text-white/45">P</span><br />{Math.round(m.pv_power || 0)} W</div>
+                  <div><span className="text-white/45">U-PV</span><br />{(m.pv_voltage ?? 0).toFixed(1)} V</div>
+                  <div><span className="text-white/45">U-Batt</span><br />{(m.battery_voltage ?? 0).toFixed(2)} V</div>
+                  <div><span className="text-white/45">Yield</span><br />{(m.yield_today ?? 0).toFixed(2)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="font-mono text-[10px] text-white/40 mt-1">
+          Victron-MPPTs laden den Akku DC-seitig und werden nicht direkt gesteuert — hier nur die aktuellen Regler-Werte.
+        </div>
+      </Panel>
     </div>
   );
 }

@@ -23,7 +23,7 @@ from server import (
     _cleanup_snapshots_once,
 )
 from collectors import collect_live
-from alarms import evaluate_alarms, summarize_alarms
+from alarms import evaluate_alarms, summarize_alarms, merge_thresholds
 
 api_router = APIRouter(prefix="/api")
 
@@ -41,12 +41,20 @@ def _alarm_state(cfg: Dict[str, Any]):
     return mqtt_enabled, mqtt_connected
 
 
+def _eval_alarms(cfg: Dict[str, Any], data: Dict[str, Any]):
+    ac = cfg.get("alarms") or {}
+    if ac.get("enabled", True) is False:
+        return []
+    mqtt_enabled, mqtt_connected = _alarm_state(cfg)
+    thresholds = merge_thresholds(ac)
+    return evaluate_alarms(data, mqtt_connected=mqtt_connected, mqtt_enabled=mqtt_enabled, thresholds=thresholds)
+
+
 @api_router.get("/live")
 async def live() -> Dict[str, Any]:
     cfg = await get_config()
     data = await collect_live(cfg)
-    mqtt_enabled, mqtt_connected = _alarm_state(cfg)
-    data["alarms"] = evaluate_alarms(data, mqtt_connected=mqtt_connected, mqtt_enabled=mqtt_enabled)
+    data["alarms"] = _eval_alarms(cfg, data)
     return data
 
 
@@ -54,8 +62,7 @@ async def live() -> Dict[str, Any]:
 async def alarms() -> Dict[str, Any]:
     cfg = await get_config()
     data = await collect_live(cfg)
-    mqtt_enabled, mqtt_connected = _alarm_state(cfg)
-    items = evaluate_alarms(data, mqtt_connected=mqtt_connected, mqtt_enabled=mqtt_enabled)
+    items = _eval_alarms(cfg, data)
     summary = summarize_alarms(items)
     summary["timestamp"] = data.get("timestamp")
     return summary

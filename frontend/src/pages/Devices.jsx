@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getConfig, putConfig } from "../lib/api";
 import IntroCard from "../components/IntroCard";
+import AlarmSettings from "../components/AlarmSettings";
 import { Switch } from "../components/ui/switch";
 import { toast } from "sonner";
 
@@ -120,6 +121,9 @@ export default function Devices() {
           </div>
         ))}
       </div>
+
+      {/* Alarm-Schwellwerte (konfigurierbar) */}
+      <AlarmSettings />
     </div>
   );
 }

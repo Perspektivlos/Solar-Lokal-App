@@ -128,6 +128,13 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "enabled": True,
         "days": 30,
     },
+    "alarms": {
+        "enabled": True,
+        "grid_voltage": {"under": 207.0, "over": 253.0, "under_crit": 195.0, "over_crit": 265.0},
+        "phase_current": {"over": 25.0, "over_crit": 32.0},
+        "battery_voltage": {"under": 48.0, "over": 56.0, "under_crit": 46.4, "over_crit": 57.6},
+        "battery_soc": {"under": 15.0, "under_crit": 8.0},
+    },
 }
 
 
@@ -159,6 +166,7 @@ class ConfigUpdate(BaseModel):
     influx: Optional[Dict[str, Any]] = None
     victron_mqtt: Optional[Dict[str, Any]] = None
     retention: Optional[Dict[str, Any]] = None
+    alarms: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):

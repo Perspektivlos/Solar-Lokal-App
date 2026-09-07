@@ -134,3 +134,16 @@ def summarize_alarms(items: List[Dict[str, Any]]) -> Dict[str, Any]:
     warn = sum(1 for a in items if a["severity"] == "warning")
     level = "critical" if crit else ("warning" if warn else "ok")
     return {"count": len(items), "critical": crit, "warning": warn, "level": level, "alarms": items}
+
+
+def merge_thresholds(cfg_alarms: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
+    """Deep-merge konfigurierte Schwellwerte über die Standardwerte."""
+    out = {k: dict(v) for k, v in DEFAULT_THRESHOLDS.items()}
+    cfg_alarms = cfg_alarms or {}
+    for cat, defaults in out.items():
+        override = cfg_alarms.get(cat)
+        if isinstance(override, dict):
+            for k, v in override.items():
+                if k in defaults and isinstance(v, (int, float)):
+                    defaults[k] = float(v)
+    return out

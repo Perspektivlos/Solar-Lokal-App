@@ -1,0 +1,24 @@
+{
+  "summary": "Frontend-only validation for Phase B (control prefill) and configurable alarm thresholds. All 9 requested scenarios PASS on https://solar-control-5.preview.emergentagent.com. Steuerung prefills all sliders from /api/live (Hoymiles limit + 4 Trucki sliders), 'Aktuell am Gerät: X' lines present via *-current testids, 'synchron' badges appear when values match, 'Übernehmen' button appears when slider is moved (verified via keyboard ArrowLeft on Radix thumb) and resets to device value on click. 'Werte vom Gerät laden' updates control-loaded-at timestamp. Trucki status pills show AC-Output=EIN, ZEPC=EIN, AC aktuell=62W, SoC=82%. Victron read-only panel renders both MPPTs with P/U-PV/U-Batt/Yield + BULK state badge. Demo send returns {ok:true, demo:true, ...} in control-result. Geräte alarm-settings card renders with all numeric inputs, switch-alarms-enabled, btn-alarms-reset, btn-alarms-save. E2E threshold test: set alarm-battery_soc-under=95 -> toast 'Alarm-Schwellwerte gespeichert' -> Dashboard shows status-banner '1 Warnung ... Akku-Ladezustand niedrig: 82% (< 95%)' and system-status-light='WARNUNG 1'. Cleanup to 15 restored status-banner-ok and system-status-light='OK'. Verlauf shows grafana-link with href=http://192.168.0.202:3000 target=_blank.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Verlauf (mount)", "issues": ["Recharts prints benign console warnings 'width(-1) height(-1)' during initial responsive container mount. Cosmetic only, charts render correctly after data loads."]}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_13.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Control.jsx: loadDevice() swallows errors silently (empty catch). Consider surfacing a subtle toast/badge when /api/live fails so user knows sliders show stale values.",
+    "AlarmSettings.jsx: number inputs accept empty string ('') state; on save this becomes NaN via Number(''). Backend must guard against non-numeric threshold values (currently reliant on merge_thresholds/Pydantic).",
+    "History.jsx: GRAFANA_URL is hardcoded (http://192.168.0.202:3000). Consider sourcing from config or env for flexibility across deployments."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped)", "frontend": "100%"},
+  "seed_data_creation": "None. Alarm threshold set to 95 for E2E and reset to 15 during cleanup as instructed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase A (alarms) covered by /app/backend/tests/test_alarms.py + iteration_12. Phase B verified this iteration. Demo mode kept ON. If retesting E2E threshold: use data-testid=alarm-battery_soc-under=95, save, verify data-testid=status-banner on dashboard, then reset to 15."
+}
