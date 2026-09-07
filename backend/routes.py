@@ -289,7 +289,7 @@ async def diagnostics_run() -> Dict[str, Any]:
     """
     Führt Gesundheitsprüfungen für Backend, Datenbank, Integrationen, Datenaufbewahrung und konfigurierte Geräte durch.
     
-    Aktuelle MQTT-Daten gelten innerhalb von 90 Sekunden als Erreichbarkeitsnachweis; andernfalls werden konfigurierte HTTP-Endpunkte geprüft. Deaktivierte Komponenten und Geräte sowie der Demo-Modus werden übersprungen.
+    Aktuelle MQTT-Daten innerhalb von 90 Sekunden gelten als Erreichbarkeitsnachweis. Andernfalls werden konfigurierte HTTP-Endpunkte geprüft. Deaktivierte Komponenten, Geräte und der Demo-Modus werden übersprungen.
     
     Returns:
         Dict[str, Any]: Prüfergebnisse mit Zeitstempel, Laufzeit, Pass-/Fail-/Skip-Zählungen und Einzelergebnissen.
