@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Zap, Activity, Sliders, Cpu, PlugZap, Stethoscope } from "lucide-react";
+import RoadmapDialog from "./RoadmapDialog";
 
 const links = [
   { to: "/", label: "Dashboard", icon: Zap, testid: "nav-dashboard", end: true },
@@ -68,10 +69,10 @@ export default function Layout() {
           <span>Lokale Steuerung · Mosquitto · InfluxDB · MongoDB</span>
           <div className="flex items-center gap-4 flex-wrap">
             <span data-testid="footer-copyright">© {new Date().getFullYear()} THcentral.de</span>
-            <span data-testid="footer-version" className="text-silver/70">
+            <RoadmapDialog>
               v{process.env.REACT_APP_VERSION || "1.3.0"}
               {process.env.REACT_APP_BUILD_DATE ? ` · ${process.env.REACT_APP_BUILD_DATE}` : ""}
-            </span>
+            </RoadmapDialog>
             <a
               href="https://app.emergent.sh/?utm_source=emergent-badge"
               target="_blank"
