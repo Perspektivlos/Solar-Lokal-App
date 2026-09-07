@@ -68,10 +68,10 @@ async def history(range: str = "1h") -> Dict[str, Any]:
     Lädt historische Snapshot-Daten für den angegebenen Zeitraum.
     
     Parameters:
-    	range (str): Zeitraumkennung `1h`, `6h`, `12h` oder `24h`; unbekannte Werte werden für die Abfrage als eine Stunde behandelt.
+    	range (str): Zeitraumkennung `1h`, `6h`, `12h` oder `24h`. Unbekannte Werte verwenden eine Stunde für die Abfrage, werden in der Antwort jedoch unverändert zurückgegeben.
     
     Returns:
-    	Dict[str, Any]: Objekt mit der angeforderten Zeitraumkennung und chronologisch sortierten Snapshot-Punkten, auf höchstens 10.000 Datensätze begrenzt und bei mehr als 600 Punkten reduziert.
+    	Dict[str, Any]: Objekt mit der Zeitraumkennung und chronologisch sortierten Snapshot-Punkten. Die Abfrage ist auf 10.000 Datensätze begrenzt; größere Ergebnismengen werden durch Auswahl jedes n-ten Punkts reduziert.
     """
     minutes = {"1h": 60, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
@@ -289,7 +289,7 @@ async def diagnostics_run() -> Dict[str, Any]:
     """
     Führt Gesundheitsprüfungen für Backend, Datenbank, Integrationen, Datenaufbewahrung und konfigurierte Geräte durch.
     
-    Aktuelle MQTT-Daten innerhalb von 90 Sekunden gelten als Erreichbarkeitsnachweis. Andernfalls werden konfigurierte HTTP-Endpunkte geprüft. Deaktivierte Komponenten, Geräte und der Demo-Modus werden übersprungen.
+    Aktuelle MQTT-Daten gelten innerhalb von 90 Sekunden als Erreichbarkeitsnachweis. Andernfalls werden konfigurierte HTTP-Endpunkte geprüft. Deaktivierte Komponenten und Geräte sowie der Demo-Modus werden übersprungen.
     
     Returns:
         Dict[str, Any]: Prüfergebnisse mit Zeitstempel, Laufzeit, Pass-/Fail-/Skip-Zählungen und Einzelergebnissen.

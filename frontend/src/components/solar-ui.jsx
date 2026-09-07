@@ -95,9 +95,9 @@ export function SourceBadge({ data, testid }) {
 
 /**
  * Zeigt die Änderung eines Leistungswerts gegenüber einem vorherigen Wert an.
- * @param {number|null|undefined} prev - Der vorherige Wert.
- * @param {number|null|undefined} curr - Der aktuelle Wert.
- * @returns {JSX.Element|null} Eine formatierte Änderung, `±0` bei Änderungen unter 0,5 oder `null` bei fehlenden Werten.
+ * @param {number|null|undefined} prev - Der vorherige Leistungswert in Watt.
+ * @param {number|null|undefined} curr - Der aktuelle Leistungswert in Watt.
+ * @returns {JSX.Element|null} Eine farbige Änderungsanzeige oder `null` bei fehlenden Werten.
  */
 export function Delta({ prev, curr }) {
   if (prev === undefined || curr === undefined || prev === null || curr === null) return null;
