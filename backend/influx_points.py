@@ -24,12 +24,15 @@ def _pt_solar(summary: Dict[str, Any]) -> "Point":
     def f(k: str) -> float:
         return float(summary.get(k, 0) or 0)
     autarky, self_cons = _instant_ratios(summary)
+    gp = f("grid_power")
     return (
         Point("solar")
         .field("pv_power", f("pv_power"))
         .field("pv_ac_power", f("pv_ac_power"))
         .field("pv_dc_power", f("pv_dc_power"))
-        .field("grid_power", f("grid_power"))
+        .field("grid_power", gp)
+        .field("grid_import_w", round(max(0.0, gp), 1))
+        .field("grid_export_w", round(max(0.0, -gp), 1))
         .field("battery_power", f("battery_power"))
         .field("battery_charge_w", f("battery_charge_w"))
         .field("battery_discharge_w", f("battery_discharge_w"))
@@ -103,11 +106,15 @@ def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
         .field("ac_power", float(trucki.get("battery_power", 0) or 0))
         .field("soc", float(trucki.get("soc", 0) or 0))
         .field("zepc", 1 if trucki.get("zepc") else 0)
+        .field("ac_output", 1 if trucki.get("ac_output") else 0)
     )
     for src, dst in [
         ("temperature", "temperature"),
         ("ac_setpoint_w", "ac_setpoint"),
         ("ac_display_w", "ac_display"),
+        ("target_w", "target"),
+        ("min_power_w", "min_power"),
+        ("max_power_w", "max_power"),
         ("day_energy_kwh", "day_energy"),
         ("total_energy_kwh", "total_energy"),
     ]:
@@ -116,18 +123,41 @@ def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
     return tp
 
 
+def _pts_alarms(data: Dict[str, Any]) -> list:
+    """Alarm-Zusammenfassung als Zeitreihe (nur wenn 'alarms' vorhanden).
+
+    level: 0=ok, 1=warning, 2=critical – gut für Grafana-State-Timeline/Threshold.
+    """
+    al = data.get("alarms")
+    if al is None:
+        return []
+    crit = sum(1 for a in al if a.get("severity") == "critical")
+    warn = sum(1 for a in al if a.get("severity") == "warning")
+    level = 2 if crit else (1 if warn else 0)
+    return [
+        Point("alarms")
+        .field("total", len(al))
+        .field("critical", crit)
+        .field("warning", warn)
+        .field("level", level)
+    ]
+
+
 def _build_influx_points(data: Dict[str, Any]) -> list:
     """Erzeugt einen reichen Satz InfluxDB-Punkte aus einer collect_live()-Payload.
 
     Measurements:
-      - solar        : Summary (pv/grid/battery/house/soc + autarky/self-consumption %)
+      - solar        : Summary (pv/grid/battery/house/soc + import/export + autarky/self-consumption %)
       - shelly_phase : pro Phase (tag phase=L1..L3) power/voltage/current/pf
       - shelly       : total_power
       - hoymiles     : total_power, limit_percent
       - hoymiles_ch  : pro Kanal (tag ch=1..4) power/voltage/current/yield_day
       - victron      : total_power
       - victron_mppt : pro MPPT (tag mppt=<instanz>) pv_power/pv_voltage/battery_voltage/yield_today/state
-      - trucki       : vbat/ac_power/soc/zepc/temperature/ac_setpoint/ac_display/day_energy/total_energy
+      - trucki       : vbat/ac_power/soc/zepc/ac_output/settings (setpoint/target/min/max)/energy
+      - alarms       : total/critical/warning/level (nur wenn ausgewertet)
+
+    Alle Punkte erhalten den Tag ``mode`` = demo|live zum Filtern in Grafana.
     """
     pts: list = [_pt_solar(data.get("summary") or {})]
     pts += _pts_shelly(data.get("shelly") or {})
@@ -136,4 +166,8 @@ def _build_influx_points(data: Dict[str, Any]) -> list:
     trucki_pt = _pt_trucki(data.get("trucki") or {})
     if trucki_pt is not None:
         pts.append(trucki_pt)
+    pts += _pts_alarms(data)
+    mode = "demo" if data.get("demo_mode") else "live"
+    for p in pts:
+        p.tag("mode", mode)
     return pts

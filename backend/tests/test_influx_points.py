@@ -88,3 +88,50 @@ def test_summary_point_has_autarky_field() -> None:
     solar = next(p for p in pts if p._name == "solar")
     assert "autarky_pct" in solar._fields
     assert "self_consumption_pct" in solar._fields
+
+
+def test_solar_has_grid_import_export() -> None:
+    pts = server._build_influx_points(_sample_payload())
+    solar = next(p for p in pts if p._name == "solar")
+    # grid_power=-500 -> export 500, import 0
+    assert solar._fields["grid_export_w"] == 500.0
+    assert solar._fields["grid_import_w"] == 0.0
+
+
+def test_mode_tag_live_and_demo() -> None:
+    live_pts = server._build_influx_points(_sample_payload())
+    assert all(p._tags.get("mode") == "live" for p in live_pts)
+    demo_payload = _sample_payload()
+    demo_payload["demo_mode"] = True
+    demo_pts = server._build_influx_points(demo_payload)
+    assert all(p._tags.get("mode") == "demo" for p in demo_pts)
+
+
+def test_trucki_settings_fields() -> None:
+    payload = _sample_payload()
+    payload["trucki"].update({"target_w": 15.0, "min_power_w": 0.0, "max_power_w": 800.0, "ac_output": True})
+    trucki = next(p for p in server._build_influx_points(payload) if p._name == "trucki")
+    for k in ("target", "min_power", "max_power", "ac_output", "ac_setpoint"):
+        assert k in trucki._fields
+
+
+def test_alarms_measurement_present_and_levels() -> None:
+    # ohne alarms-Key -> kein alarms-Measurement
+    assert "alarms" not in _measurements(server._build_influx_points(_sample_payload()))
+    # mit alarms -> Measurement mit level
+    payload = _sample_payload()
+    payload["alarms"] = [
+        {"severity": "critical"}, {"severity": "warning"}, {"severity": "warning"},
+    ]
+    al = next(p for p in server._build_influx_points(payload) if p._name == "alarms")
+    assert al._fields["total"] == 3
+    assert al._fields["critical"] == 1
+    assert al._fields["warning"] == 2
+    assert al._fields["level"] == 2  # critical vorhanden
+
+
+def test_alarms_level_warning_only() -> None:
+    payload = _sample_payload()
+    payload["alarms"] = [{"severity": "warning"}]
+    al = next(p for p in server._build_influx_points(payload) if p._name == "alarms")
+    assert al._fields["level"] == 1

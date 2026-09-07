@@ -1,0 +1,292 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
+      "description": "InfluxDB 2.x Datasource (Flux) des Solar-Dashboards",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "influxdb", "name": "InfluxDB", "version": "1.0.0" }
+  ],
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "style": "dark",
+  "tags": ["solar", "scada", "haucklab"],
+  "timezone": "browser",
+  "title": "Solar · SCADA Control Room",
+  "uid": "solar-scada",
+  "version": 1,
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_INFLUXDB",
+        "label": "Datasource",
+        "type": "datasource",
+        "query": "influxdb",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "bucket",
+        "label": "Bucket",
+        "type": "textbox",
+        "query": "solar",
+        "current": { "text": "solar", "value": "solar" },
+        "hide": 0
+      },
+      {
+        "name": "mode",
+        "label": "Modus",
+        "type": "custom",
+        "query": "live,demo",
+        "options": [
+          { "text": "live", "value": "live", "selected": true },
+          { "text": "demo", "value": "demo", "selected": false }
+        ],
+        "current": { "text": "live", "value": "live" },
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Übersicht",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Leistungsfluss (W)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 12, "showPoints": "never", "spanNulls": true, "gradientMode": "opacity" },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "/pv_power/" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "#facc15" } }, { "id": "displayName", "value": "PV" } ] },
+          { "matcher": { "id": "byRegexp", "options": "/house_power/" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "#cbd5e1" } }, { "id": "displayName", "value": "Haus" } ] },
+          { "matcher": { "id": "byRegexp", "options": "/grid_power/" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "#f59e0b" } }, { "id": "displayName", "value": "Netz (+Bezug/-Einsp.)" } ] },
+          { "matcher": { "id": "byRegexp", "options": "/battery_power/" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "#06b6d4" } }, { "id": "displayName", "value": "Akku" } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "min", "max"] }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])" },
+        { "refId": "B", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])" },
+        { "refId": "C", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"grid_power\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])" },
+        { "refId": "D", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_power\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])" }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "Autarkie",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 5, "w": 4, "x": 16, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [ { "color": "#ef4444", "value": null }, { "color": "#f59e0b", "value": 40 }, { "color": "#10b981", "value": 70 } ] } } },
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"autarky_pct\" and r.mode == \"${mode}\")\n  |> last()" } ]
+    },
+    {
+      "type": "gauge",
+      "title": "Eigenverbrauch",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 1 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [ { "color": "#64748b", "value": null }, { "color": "#06b6d4", "value": 50 } ] } } },
+      "options": { "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"self_consumption_pct\" and r.mode == \"${mode}\")\n  |> last()" } ]
+    },
+    {
+      "type": "gauge",
+      "title": "Akku SoC",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 6 },
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [ { "color": "#ef4444", "value": null }, { "color": "#f59e0b", "value": 15 }, { "color": "#10b981", "value": 40 } ] } } },
+      "options": { "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_soc\" and r.mode == \"${mode}\")\n  |> last()" } ]
+    },
+    {
+      "type": "row",
+      "title": "Netz · Shelly Pro 3EM",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 10 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Phasenspannung (V)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 11 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 6, "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "transparent", "value": null } ] }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"shelly_phase\" and r._field == \"voltage\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> group(columns: [\"phase\"])", "alias": "$tag_phase" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Phasenleistung (W)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 11 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"shelly_phase\" and r._field == \"power\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> group(columns: [\"phase\"])", "alias": "$tag_phase" } ]
+    },
+    {
+      "type": "row",
+      "title": "PV · Hoymiles & Victron",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Hoymiles Kanäle (W)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 12, "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "continuous-YlRd" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"hoymiles_ch\" and r._field == \"power\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> group(columns: [\"ch\"])", "alias": "CH $tag_ch" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Victron MPPT PV-Leistung (W)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 12, "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "fixed", "fixedColor": "#10b981" }
+        },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"victron_mppt\" and r._field == \"pv_power\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> group(columns: [\"mppt\"])", "alias": "MPPT $tag_mppt" } ]
+    },
+    {
+      "type": "row",
+      "title": "Speicher · Trucki2Shelly",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Akku-Spannung (V) & SoC (%)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 8, "showPoints": "never", "spanNulls": true, "axisPlacement": "auto" },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "/vbat/" }, "properties": [ { "id": "unit", "value": "volt" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#06b6d4" } }, { "id": "displayName", "value": "Vbat (V)" } ] },
+          { "matcher": { "id": "byRegexp", "options": "/soc/" }, "properties": [ { "id": "unit", "value": "percent" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#a78bfa" } }, { "id": "displayName", "value": "SoC (%)" }, { "id": "custom.axisPlacement", "value": "right" } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"trucki\" and r._field == \"vbat\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])" },
+        { "refId": "B", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"trucki\" and r._field == \"soc\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Trucki Setpoint / Target / Min / Max (W)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 29 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 4, "showPoints": "never", "spanNulls": true },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "/ac_setpoint/" }, "properties": [ { "id": "displayName", "value": "AC-Setpoint" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#06b6d4" } } ] },
+          { "matcher": { "id": "byRegexp", "options": "/target/" }, "properties": [ { "id": "displayName", "value": "Target" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#a78bfa" } } ] },
+          { "matcher": { "id": "byRegexp", "options": "/min_power/" }, "properties": [ { "id": "displayName", "value": "Min" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#64748b" } } ] },
+          { "matcher": { "id": "byRegexp", "options": "/max_power/" }, "properties": [ { "id": "displayName", "value": "Max" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "#cbd5e1" } } ] }
+        ]
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"trucki\" and (r._field == \"ac_setpoint\" or r._field == \"target\" or r._field == \"min_power\" or r._field == \"max_power\") and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> group(columns: [\"_field\"])" } ]
+    },
+    {
+      "type": "row",
+      "title": "Status · Alarme",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 37 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Status jetzt",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 38 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "OK", "color": "#10b981" }, "1": { "text": "WARNUNG", "color": "#f59e0b" }, "2": { "text": "ALARM", "color": "#ef4444" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "#10b981", "value": null }, { "color": "#f59e0b", "value": 1 }, { "color": "#ef4444", "value": 2 } ] },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"alarms\" and r._field == \"level\" and r.mode == \"${mode}\")\n  |> last()" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Alarm-Verlauf (0=OK · 1=Warnung · 2=Alarm)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 6, "w": 18, "x": 6, "y": 38 },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 2,
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 25, "showPoints": "never", "spanNulls": true, "lineInterpolation": "stepAfter", "gradientMode": "scheme" },
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "#10b981", "value": null }, { "color": "#f59e0b", "value": 1 }, { "color": "#ef4444", "value": 2 } ] }
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [ { "refId": "A", "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" }, "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"alarms\" and r._field == \"level\" and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: max, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\"])" } ]
+    }
+  ]
+}

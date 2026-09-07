@@ -134,7 +134,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Phase B**: Geräte-Settings auslesen & Werte für Steuerung übernehmen (alle Geräte) – FERTIG 07.06.2026
 - [x] **Alarm-Schwellwerte konfigurierbar** (Settings-UI) – FERTIG 07.06.2026
 - [x] **Phase C**: Design-Evolution → Industrial/SCADA-Control-Room (Silber/Weiß/Schwarz/Grau, Tiefe, Design-System; Neon-Akzente bleiben) – FERTIG 07.06.2026 (global via index.css; Blueprint in design_guidelines.json)
-- [ ] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard-Design an App anpassen (JSON-Export)
+- [x] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard – FERTIG 07.06.2026 (grid_import/export_w, trucki settings, alarms-Measurement, `mode`-Tag; Dashboard-JSON in `deploy/grafana/`)
 - [ ] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard-Design an App anpassen (JSON-Export)
 - P3: CSV-Datenexport – vom Nutzer ABGELEHNT
 - P3: Watt-Label am Energiefluss-Pfeil – vom Nutzer ABGELEHNT

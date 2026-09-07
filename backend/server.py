@@ -49,6 +49,7 @@ from influx_points import (
     _pt_trucki,
     _build_influx_points,
 )
+from alarms import evaluate_alarms, merge_thresholds
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -195,6 +196,17 @@ async def poller_loop() -> None:
         try:
             cfg = await get_config()
             data = await collect_live(cfg)
+            # Alarme auswerten und an data hängen (für InfluxDB-Zeitreihe)
+            _ac = cfg.get("alarms") or {}
+            if _ac.get("enabled", True) is False:
+                data["alarms"] = []
+            else:
+                data["alarms"] = evaluate_alarms(
+                    data,
+                    mqtt_connected=bool(_mqtt_state.get("connected")),
+                    mqtt_enabled=bool((cfg.get("mqtt") or {}).get("enabled")),
+                    thresholds=merge_thresholds(_ac),
+                )
             snap = {
                 "ts": data["timestamp"],
                 "pv_power": data["summary"]["pv_power"],
