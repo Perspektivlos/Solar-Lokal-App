@@ -136,6 +136,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "battery_voltage": {"under": 48.0, "over": 56.0, "under_crit": 46.4, "over_crit": 57.6},
         "battery_soc": {"under": 15.0, "under_crit": 8.0},
     },
+    "grafana_url": "http://192.168.0.202:3000",
 }
 
 
@@ -168,6 +169,7 @@ class ConfigUpdate(BaseModel):
     victron_mqtt: Optional[Dict[str, Any]] = None
     retention: Optional[Dict[str, Any]] = None
     alarms: Optional[Dict[str, Any]] = None
+    grafana_url: Optional[str] = None
 
 
 class HoymilesControl(BaseModel):

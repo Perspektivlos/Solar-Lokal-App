@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { getHistory } from "../lib/api";
+import { getHistory, getConfig } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import { BarChart3, ExternalLink } from "lucide-react";
 
-const GRAFANA_URL = "http://192.168.0.202:3000";
+const GRAFANA_URL_FALLBACK = "http://192.168.0.202:3000";
 
 const RANGES = ["1h", "6h", "12h", "24h"];
 
@@ -80,6 +80,11 @@ export default function History() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [grafanaUrl, setGrafanaUrl] = useState(GRAFANA_URL_FALLBACK);
+
+  useEffect(() => {
+    getConfig().then((c) => { if (c?.grafana_url) setGrafanaUrl(c.grafana_url); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -114,11 +119,11 @@ export default function History() {
         </h1>
         <div className="flex items-center gap-3 flex-wrap">
           <a
-            href={GRAFANA_URL}
+            href={grafanaUrl}
             target="_blank"
             rel="noopener noreferrer"
             data-testid="grafana-link"
-            title={`Grafana öffnen · ${GRAFANA_URL}`}
+            title={`Grafana öffnen · ${grafanaUrl}`}
             className="group inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.18em] text-white/70 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors"
           >
             <BarChart3 size={14} className="text-cyan-400" />
