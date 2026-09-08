@@ -213,23 +213,24 @@ export default function Control() {
             <p className="font-mono text-[11px] text-white/55 mt-1" data-testid="control-subtitle">
               Hoymiles- &amp; Trucki-Befehle, MQTT-Overrides, Settings-Editor
             </p>
-            {loadedAt && (
-              <div className="font-mono text-[11px] text-white/60 mt-1.5 flex items-center gap-2" data-testid="control-update-indicator">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" />
-                Geräte-Werte geladen: {loadedAt.toLocaleTimeString("de-DE")}
-              </div>
-            )}
           </div>
         </div>
-        <button
-          onClick={loadDevice}
-          disabled={loadingDev}
-          data-testid="btn-reload-device"
-          className="inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.16em] text-white/75 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw size={14} className={loadingDev ? "animate-spin" : ""} />
-          {loadingDev ? "Lade…" : "Werte vom Gerät laden"}
-        </button>
+        <div className="flex items-center gap-3">
+          {loadedAt && (
+            <span className="font-mono text-[10px] text-white/45" data-testid="control-loaded-at">
+              Geräte-Werte geladen: {loadedAt.toLocaleTimeString("de-DE")}
+            </span>
+          )}
+          <button
+            onClick={loadDevice}
+            disabled={loadingDev}
+            data-testid="btn-reload-device"
+            className="inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.16em] text-white/75 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loadingDev ? "animate-spin" : ""} />
+            {loadingDev ? "Lade…" : "Werte vom Gerät laden"}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
