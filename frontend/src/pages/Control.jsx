@@ -203,13 +203,18 @@ export default function Control() {
 
   return (
     <div className="space-y-6" data-testid="control-page">
-      <IntroCard title="Steuerung" subtitle="Hoymiles- & Trucki-Befehle, MQTT-Overrides, Settings-Editor" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
+      <IntroCard title="Steuerung" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
 
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
-          <span className="w-1.5 h-7 rounded-sm" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
-          Steuerung
-        </h1>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
+            <span className="w-1.5 h-7 rounded-sm" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
+            Steuerung
+          </h1>
+          <p className="font-mono text-[11px] text-white/55 mt-1.5 pl-[18px]" data-testid="control-subtitle">
+            Hoymiles- &amp; Trucki-Befehle, MQTT-Overrides, Settings-Editor
+          </p>
+        </div>
         <div className="flex items-center gap-3">
           {loadedAt && (
             <span className="font-mono text-[10px] text-white/45" data-testid="control-loaded-at">

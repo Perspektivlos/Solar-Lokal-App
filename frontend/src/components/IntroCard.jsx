@@ -29,7 +29,7 @@ export default function IntroCard({ title, subtitle, sections = [], defaultOpen 
         </span>
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-sm tracking-tight text-white">{title}</div>
-          <div className="font-mono text-[11px] text-white/55 truncate">{subtitle}</div>
+          {subtitle && <div className="font-mono text-[11px] text-white/55 truncate">{subtitle}</div>}
         </div>
         <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/50">
           {open ? "schließen" : "details"}
