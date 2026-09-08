@@ -206,31 +206,30 @@ export default function Control() {
       <IntroCard title="Steuerung" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
 
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
-            <span className="w-1.5 h-7 rounded-sm" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
-            Steuerung
-          </h1>
-          <p className="font-mono text-[11px] text-white/55 mt-1.5 pl-[18px]" data-testid="control-subtitle">
-            Hoymiles- &amp; Trucki-Befehle, MQTT-Overrides, Settings-Editor
-          </p>
+        <div className="flex items-stretch gap-3">
+          <span className="w-1.5 self-stretch rounded-sm shrink-0" style={{ background: "#F87171", boxShadow: "0 0 10px #F8717188" }} />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-white">Steuerung</h1>
+            <p className="font-mono text-[11px] text-white/55 mt-1" data-testid="control-subtitle">
+              Hoymiles- &amp; Trucki-Befehle, MQTT-Overrides, Settings-Editor
+            </p>
+            {loadedAt && (
+              <div className="font-mono text-[11px] text-white/60 mt-1.5 flex items-center gap-2" data-testid="control-update-indicator">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" />
+                Geräte-Werte geladen: {loadedAt.toLocaleTimeString("de-DE")}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {loadedAt && (
-            <span className="font-mono text-[10px] text-white/45" data-testid="control-loaded-at">
-              Geräte-Werte geladen: {loadedAt.toLocaleTimeString("de-DE")}
-            </span>
-          )}
-          <button
-            onClick={loadDevice}
-            disabled={loadingDev}
-            data-testid="btn-reload-device"
-            className="inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.16em] text-white/75 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={loadingDev ? "animate-spin" : ""} />
-            {loadingDev ? "Lade…" : "Werte vom Gerät laden"}
-          </button>
-        </div>
+        <button
+          onClick={loadDevice}
+          disabled={loadingDev}
+          data-testid="btn-reload-device"
+          className="inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.16em] text-white/75 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={loadingDev ? "animate-spin" : ""} />
+          {loadingDev ? "Lade…" : "Werte vom Gerät laden"}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
