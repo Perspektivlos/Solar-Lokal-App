@@ -6,6 +6,13 @@ _agensi: "1d3d7ff3-5f34-49e9-8d83-0802bd69d473"
 
 # Solar-App-Fix-Workflow
 
+## Gemeinsamer Vertrag
+
+Vor dem Patch [`../../../solar-lokal-agent-toolbelt.md`](../../../solar-lokal-agent-toolbelt.md)
+lesen. Ein Fix startet nur mit einem belegten Ursachepfad oder einer
+ausdrücklichen Nutzerfreigabe für eine Untersuchung; nach der Änderung werden
+Verifikation und ein einzelner Lernpunkt dokumentiert.
+
 Verwende diesen Skill, wenn der Nutzer einen praktischen Fix für einen Fehler oder eine Regression der Solar-Lokal-App wünscht. Dieser Ablauf bevorzugt eine eng begrenzte, belegbasierte Änderung gegenüber einer breiten Bereinigung.
 
 ## Fix-Ablauf

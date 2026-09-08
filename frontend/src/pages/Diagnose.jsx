@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, getAlarms } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import StatusBanner from "../components/StatusBanner";
+import AlarmHistory from "../components/AlarmHistory";
 import { Check, X, Minus, PlayCircle, RefreshCw, ChevronRight } from "lucide-react";
 
 const runTests = () => api.post("/diagnostics/run", {}).then((r) => r.data);
@@ -146,6 +147,9 @@ export default function Diagnose() {
 
       {/* Live-Statusbanner (von Dashboard hierher verschoben) */}
       <StatusBanner alarms={alarms} />
+
+      {/* Alarm-Historie (raised/resolved mit Zeitstempel) */}
+      <AlarmHistory limit={50} />
 
       <div className="glass">
         <div className="border-b border-white/10 px-4 py-2 flex items-center justify-between">

@@ -1,84 +1,144 @@
-# Status-Update: Solar-Lokal-App (Entwicklungsstand)
+# Status-Update: Solar-Lokal-App
 
-Dieses Dokument gibt einen strukturierten Überblick über die jüngsten Entwicklungen, Fehlerbehebungen und Funktionserweiterungen der **Solar-Lokal-App** auf Basis der letzten Git-Commits und System-Iterationen.
+**Stand:** 07.09.2026
+**Branch:** `fork-update2.6`
 
----
+## Kurzstatus
 
-## 1. Kürzliche Commits & Git-Historie
+Die Solar-Lokal-App besitzt weiterhin ihre bestehende Backend-/Frontend-
+Architektur mit FastAPI, MQTT, MongoDB, optionaler InfluxDB und React. Das
+Energie- und API-Modell bleibt die fachliche Leitplanke.
 
-*Hinweis:* Dieser Fork (`fork-update`) hat **noch keine Git-Commits** — der Arbeitsstand liegt vollständig als untracked-Dateien vor. Die unten genannten Commit-Hashes stammen aus der **ursprünglichen Emergent-/Upstream-Historie** und sind in diesem Checkout **nicht vorhanden**. Sie dienen hier nur als grober Herkunftsnachweis, nicht als verifizierbare Historie dieses Forks.
+Parallel läuft eine Modernisierung der Agenten-, Skill- und Workflow-Struktur.
+Diese Migration ist im aktuellen Arbeitsbaum noch nicht abgeschlossen.
 
-*   **Commit `9e1cc36` (Upstream, aktuellster Stand)**: *Revise license section to include copyright details*
-    *   Überarbeitung der rechtlichen Rahmenbedingungen und Urheberrechtsangaben im Hauptverzeichnis.
-    *   Präzisierung der Eigentumsverhältnisse und Verweis auf das Urheberrecht von T. Hauck (THCoding) in `COPYRIGHT.md` und `README.md`.
-*   **Commit `35fd019` (Upstream)**: *Added P2 features and backlog items with Readme*
-    *   Großes Feature-Paket und System-Härtung (siehe Detailauflistung unten).
-    *   Inbetriebnahme der Erweiterten InfluxDB-Anbindung, Härtung der Geräte-Parser, sowie Einführung der Batterie-Wirkungsgrad-Berechnung.
-*   **Commit `f84c352` / `9cc5ceb` (Upstream)**: *Text Abschnitte angepasst & Auto-generated changes*
-    *   Lokalisierungsanpassungen im React-Frontend.
-    *   Korrektur des App-Titels in der `index.html`.
+## Aktueller Git-Stand
 
-### 1a. Änderungen in diesem Fork (noch nicht committet)
+Die letzten fünf Commits des Branches sind:
 
-*   **Workspace-Dokumentation und Projektstatus aktualisiert**. Der Fork enthält weiterhin keine eigenen Git-Commits; die lokale Arbeitskopie ist daher nicht durch diese Upstream-Historie verifiziert.
+| Commit | Nachricht |
+|---|---|
+| `2137127` | Auto-generated changes |
+| `e738b30` | Auto-generated changes |
+| `8b5df87` | Auto-generated changes |
+| `cec3235` | Abschluss - Roadmap aktualisiert |
+| `2d60090` | Grafana-URL konfigurierbar statt hartkodiert |
 
----
+Der Arbeitsbaum enthält derzeit:
 
-## 2. Detaillierte Übersicht der umgesetzten Verbesserungen
+- Änderungen an `.github/copilot-instructions.md`
+- die neue Datei `.github/copilot-instructions.modernization.md`
+- neue Agenten-, Skill-, Prompt-, Extension- und Memory-Dateien
+- zur Ablösung markierte ältere Agenten und Skills
+- die aktualisierte Datei `STATUS_UPDATE.md`
 
-In den letzten Entwicklungs-Zyklen wurden kritische architektonische Verbesserungen, Fehlerbehebungen und kosmetische Anpassungen durchgeführt:
+Diese Änderungen sind noch nicht als abgeschlossene Migration zu betrachten.
 
-### A. Physikalische Korrektur des Energie- & Verbrauchsmodells (DC-Kopplung)
-*   **Problem**: Zuvor kam es im Energiefluss-Diagramm zur fehlerhaften Mitzählung der Victron-MPPT-Ladeleistung als Hauslast, wodurch der Hausverbrauch um bis zu several kW falsch berechnet wurde (~4558 W statt tatsächlichen ~1760 W). Zudem leitete das System `battery_power` fälschlicherweise aus `Trucki/METER` ab, was dem Netz-Messwert entsprach und identische Werte für Netz und Batterie erzeugte.
-*   **Lösung**:
-    *   Einführung der physikalisch korrekten Formel:
-        $$\text{Hausverbrauch} = \text{PV\_AC (Hoymiles)} + \text{Batterie-Entladung (SUN)} + \text{Netzbezug/Einspeisung}$$
-    *   Die MPPT-Ladeleistung lädt nun rein die Batterie (DC) und wird nicht mehr doppelt gezählt.
-    *   Die Batterieleistung kommt nun korrekt und unabhängig aus `Trucki/ACDISPLAY` (bzw. Fallback `Trucki/ACSETPOINT`). Entladungen werden im Energiefluss getrennt von Ladevorgängen dargestellt.
+## Produktstand
 
-### B. Härtung des Hoymiles/AhoyDTU-Parsers
-*   **Problem**: AhoyDTU publiziert modulspezifische Spannungs- und Leistungswerte als JSON-Objekt unter den Topics `HM1500/ch1` bis `HM1500/ch4`. Der alte Parser suchte nach flachen Keys (wie `P_DC`) und fiel auf 0 W zurück.
-*   **Lösung**: Der Parser `fetch_ahoy_from_mqtt` wurde grundlegend überarbeitet. Er liest nun die JSON-Payloads pro Kanal vollständig aus, extrahiert die Felder `P_DC`, `U_DC`, `I_DC` sowie `YieldDay` sauber und liest das Leistungslimit direkt aus `ack_pwr_limit` aus.
+### Energie- und Verbrauchsmodell
 
-### C. Batterie Round-Trip-Wirkungsgrad-Kachel
-*   **Neues Feature**: Einbindung einer interaktiven Kachel (`RoundTripCard.jsx`) in der Summary-Spalte des Dashboards.
-*   **Funktion**: Integriert die Ladeleistungen (MPPT/DC) und Entladeleistungen (SUN/AC) trapezförmig über den Tag hinweg in Wattstunden und berechnet daraus live den aktuellen Wirkungsgrad der Batterie:
-    $$\text{Effizienz \%} = \frac{\text{Entladene AC-Energie (SUN) heute in kWh}}{\text{Geladene DC-Energie (MPPT) heute in kWh}} \times 100$$
-*   **Anzeigeverhalten**: Farblich adaptiver Ring-Fortschritt (Grün $\ge 85\%$, Cyan $\ge 70\%$, sonst Orange) mit intelligenter Ausblendung („–“) bei unzureichender Tagesladung ($< 0.05$ kWh), um Division-by-Zero-Fehler am Morgen zu vermeiden.
+Das System verwendet für die Hauslast das DC-gekoppelte Modell:
 
-### D. Erweiterung der InfluxDB- & Grafana-Langzeitanalyse
-*   **Reiche Telemetriedaten**: Das Backend schreibt nun hochauflösende Messdaten pro Zyklus (15s) in InfluxDB:
-    *   `solar`: System-Messdaten inklusive Echtzeit-Autarkie (`autarky_pct`) und Eigenverbrauch (`self_consumption_pct`).
-    *   `shelly_phase`: Phasen-Messwerte (L1–L3) für präzise Schieflasterkennungen.
-    *   `hoymiles_ch`: Modulgenaue Erträge der Kanäle 1–4.
-    *   `victron_mppt`: Status- und Leistungsdaten je Laderegler-Instanz.
-    *   `trucki`: Betriebsdaten (Spannung, Strom, Temperatur, ZEPC).
-*   **Dashboards im App-Stil**: Die beiden Grafana-Dashboards (`solar-influxdb-dashboard.json` und `solar-devices-dashboard.json`) wurden mit transparenten Panels, weichen Gradienten-Linien und der Neon-Farbpalette der App (PV Gelb, Netz Rot, Autarkie/Einspeisung Grün, Akku Cyan, Haus Silber) ausgestattet und gegenseitig verlinkt.
-*   **Datenbank-Härtung**: Korrektur des InfluxDB-Organisation-Mismatches (Umstellung von `home` auf die vom User genutzte Org `Solar Lokal`).
+$$
+\text{Hausverbrauch} = \text{Hoymiles PV_AC} + \text{SUN-Batterieentladung} + \text{Shelly-Netzfluss}
+$$
 
-### E. Bereinigung & Deployment-Härtung
-*   **Cleanups**: Das vom User unerwünschte Prognose-Menü (Forecast) und die Autarkie-Ziel-Kachel sind vollständig aus Frontend UND Backend entfernt.
-    *   *Frontend*: Keine Forecast-/Prognose-Ansicht im Routing oder Dashboard.
-    *   *Backend*: Der Endpunkt `/api/forecast`, die Open-Meteo-Anbindung, der `forecast`-Block in `DEFAULT_CONFIG` und das `forecast`-Feld in `ConfigUpdate` wurden vollständig entfernt (im aktuellen Code per Grep verifiziert: 0 Treffer). Hinweis: `autarky_pct`/`self_consumption_pct` sind davon unabhängige, berechnete Live-Kennzahlen und bleiben bestehen.
-*   **Fehlerfreie Builds**: Löschen ungenutzter shadcn-Komponenten (`carousel.jsx`, `calendar.jsx`, `command.jsx`) zur Behebung von blockierenden ESLint-Fehlern.
-*   **Deployment-Reihenfolge**: Im Proxmox-Deployment-Skript `build-app.sh` wird das Backend nun *vor* dem rechenintensiven Frontend-Build gestartet, um Systemausfälle bei OOM-Fehlern zu minimieren. Zudem wurde das Node-Speicherlimit auf `2048 MB` angehoben.
+Die Victron-MPPT-Ladeleistung liegt auf der DC-Seite und wird nicht zusätzlich
+als Hausverbrauch gezählt. Die Batterieentladung wird aus `ACDISPLAY` bezogen,
+mit `ACSETPOINT` als Fallback. Das Netzsignal `METER` bleibt davon getrennt.
 
----
+### Geräte und Datenquellen
 
-## 3. Aktueller Status & Projekt-Gesundheit
+- MQTT wird bevorzugt verwendet.
+- HTTP dient als kurzer Fallback, wenn MQTT-Werte fehlen oder veraltet sind.
+- Der Demo-Modus bleibt lokal und ohne externe Cloud-Abhängigkeit nutzbar.
+- Das API-Format behält vier Hoymiles-Kanäle und drei Shelly-Phasen bei.
+- Herkunftsmarker wie `_via_mqtt`, `_fallback` und `online` bleiben Teil des
+  Datenmodells.
 
-*   **Backend-Tests**: Vorhanden sind fünf Testdateien: `test_mqtt_client.py`, `test_influx_points.py`, `test_get_config_merge.py`, `test_refactor_lifespan.py` und `test_solar_dashboard.py`. Die früher dokumentierte Zahl „17 passed“ bezog sich nur auf drei Unit-Testdateien und ist als historischer Stand zu verstehen; eine aktuelle Gesamtausführung muss separat verifiziert werden.
-*   **Backend-Integration**: `test_solar_dashboard.py` enthält Tests für die Dashboard-Endpunkte und kann externe Dienste beziehungsweise eine laufende App-Umgebung voraussetzen. Ergebnisse aus früheren Upstream- oder Preview-Läufen sind nicht automatisch für diesen Fork gültig.
-*   **Frontend**: Die App kompiliert fehlerfrei (Exit Code 0, „Compiled successfully"), und die automatische Versionierung (`REACT_APP_VERSION` aus der `package.json` $\to$ `v1.3.0`) plus Build-Datum ist aktiv. Keine `forecast`-Referenzen mehr im Frontend-Code.
-*   **API-Stand**: Die API umfasst `/api/live`, `/api/today`, `/api/history`, `/api/config` sowie Steuerungs-, Diagnose- und Integrations-Routen. Eine `/api/forecast`-Route existiert **nicht** (Forecast vollständig entfernt).
+### Bereits vorhandene Funktionen
 
----
+Nach der bestehenden Projektentwicklung umfasst die Anwendung unter anderem:
 
-## 4. Zukünftiger Backlog (Vorschläge)
+- robuste MQTT-Auswertung für Trucki, Hoymiles/AhoyDTU, Victron und Shelly
+- Live-, Tages- und Verlaufsdaten
+- Round-Trip-Wirkungsgrad der Batterie auf Basis trapezförmiger Integration
+- InfluxDB-Messungen für Solar-, Geräte-, Phasen- und Batteriedaten
+- Grafana-Dashboards für System- und Gerätedaten
+- Steuerungs-, Diagnose- und Integrationsbereiche
+- konfigurierbare Grafana-Verbindung
+- Proxmox-Deployment mit Backend- und Frontend-Build
 
-1.  **P2: MPPT- und Schieflast-Verlauf in Grafana/InfluxDB**
-    *   Historische Panels für den Vergleich der MPPT-Erträge und die 3-Phasen-Schieflast ergänzen.
-2.  **P2: Round-Trip-Verlauf in Grafana/InfluxDB**
-    *   Batterie-Wirkungsgrad über Wochen und Monate auswertbar machen.
-3.  **P2: Konfigurations- und Verlaufs-Export**
-    *   JSON-Export/-Import der Konfiguration sowie Wochen-/Monatsverlauf und CSV-Export ergänzen.
+Diese Punkte sind aus der Projektstruktur und der bestehenden Dokumentation
+übernommen. Sie wurden für dieses Update nicht erneut als End-to-End-
+Funktionstest ausgeführt.
+
+### Entfernte Funktionen
+
+Forecast-/Prognose-Funktionen und die frühere Autarkie-Zielkachel gehören nicht
+mehr zum vorgesehenen Produktumfang. Die berechneten Live-Kennzahlen
+`autarky_pct` und `self_consumption_pct` sind davon unabhängig.
+
+## Test- und Build-Stand
+
+Im Repository liegen derzeit sieben Backend-Testdateien:
+
+- `test_alarms.py`
+- `test_get_config_merge.py`
+- `test_influx_points.py`
+- `test_mqtt_client.py`
+- `test_refactor_lifespan.py`
+- `test_retention.py`
+- `test_solar_dashboard.py`
+
+Die Testdateien sind nicht alle gleich einzuordnen:
+
+- Parser-, Konfigurations-, Influx- und Retention-Tests können grundsätzlich
+  als Offline-Tests ausgeführt werden.
+- `test_solar_dashboard.py` und Teile der Lifespan-Prüfung können einen
+  erreichbaren Dienst, MongoDB oder weitere Umgebungsvariablen benötigen.
+- Ein aktueller vollständiger Testlauf wurde für dieses Status-Update nicht
+  behauptet und muss separat ausgeführt werden.
+
+Die kanonischen Befehle stehen in
+`.github/copilot-instructions.modernization.md`. Dort ist ebenfalls festgehalten,
+dass aktuell kein verifiziertes Typecheck-, E2E- oder CI-Gate existiert.
+
+## Agenten- und Skill-Modernisierung
+
+Die neue Struktur umfasst:
+
+- `.github/.agents/Solar_Lokal_Agent/` für gebündelte Agentenrollen
+- `.github/solar-lokal-agent-toolbelt.md` als gemeinsamen Rollen- und
+  Handoff-Vertrag
+- `.github/skills/` für Changelog, Code Review, Coding-Workflow, Commit-Texte
+  und verifiziertes Agent-Memory
+- `.github/extensions/solar-lokal-toolbelt/` für die Memory-Werkzeuge
+- `.github/copilot-instructions.modernization.md` für Phasen-Gates, H1-H8-
+  Pre-flight-Prüfungen und CI-Ziele
+
+Vor dem Abschluss dieser Migration müssen die neuen und entfernten Dateien
+geprüft, die Instructions konsolidiert und die resultierenden Tests ausgeführt
+werden.
+
+## Nächste sinnvolle Schritte
+
+1. Modernisierungsänderungen prüfen und eine klare Zielstruktur festlegen.
+2. Alte und neue Agenten-/Skill-Pfade auf doppelte oder fehlende Rollen prüfen.
+3. Die kanonischen Backend-Pure-Tests ausführen.
+4. Den Frontend-Build ausführen.
+5. Erst danach die Migration als eigene Phase dokumentieren und versionieren.
+
+## Fachliche Invarianten
+
+Bei allen weiteren Änderungen müssen erhalten bleiben:
+
+- keine Doppelzählung der Victron-MPPT-DC-Ladung als Hausverbrauch
+- MQTT-first mit sicherem HTTP-Fallback
+- lokaler Demo-Modus
+- stabile API-Felder, Einheiten und Vorzeichen
+- vier Hoymiles-Kanäle und drei Shelly-Phasen
+- defensive Behandlung fehlender oder fehlerhafter Gerätedaten
+- keine Secrets, Tokens, `.env`-Dateien, Builds oder Dependency-Verzeichnisse
+  im Repository

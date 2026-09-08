@@ -12,6 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import asyncio
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pydantic import BaseModel
@@ -67,6 +68,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await db.snapshots.create_index("ts")
     except Exception as e:
         logger.warning("snapshot index create failed: %s", e)
+    try:
+        await db.alarm_events.create_index("ts")
+    except Exception as e:
+        logger.warning("alarm_events index create failed: %s", e)
     global _poll_task, _keepalive_task, _retention_task
     _poll_task = asyncio.create_task(poller_loop())
     _keepalive_task = asyncio.create_task(victron_keepalive_loop())
@@ -191,6 +196,47 @@ _poll_task: Optional[asyncio.Task] = None
 _keepalive_task: Optional[asyncio.Task] = None
 _retention_task: Optional[asyncio.Task] = None
 
+# Aktuell aktive Alarme (id -> alarm) für Zustandswechsel-Erkennung (raised/resolved)
+_active_alarms: Dict[str, Any] = {}
+
+
+async def _log_alarm_transitions(active_list: list, demo: bool) -> None:
+    """Vergleicht die aktuell aktiven Alarme mit dem letzten Stand und
+    protokolliert neue (raised) bzw. behobene (resolved) Alarme mit Zeitstempel
+    in der MongoDB-Collection ``alarm_events``."""
+    global _active_alarms
+    current = {a["id"]: a for a in (active_list or [])}
+    now = datetime.now(timezone.utc).isoformat()
+    mode = "demo" if demo else "live"
+    events = []
+
+    def _evt(a: Dict[str, Any], kind: str) -> Dict[str, Any]:
+        return {
+            "id": str(uuid.uuid4()),
+            "ts": now,
+            "event": kind,
+            "code": a.get("code"),
+            "device": a.get("device"),
+            "device_label": a.get("device_label"),
+            "severity": a.get("severity"),
+            "message": a.get("message"),
+            "mode": mode,
+        }
+
+    for aid, a in current.items():
+        if aid not in _active_alarms:
+            events.append(_evt(a, "raised"))
+    for aid, a in _active_alarms.items():
+        if aid not in current:
+            events.append(_evt(a, "resolved"))
+
+    _active_alarms = current
+    if events:
+        try:
+            await db.alarm_events.insert_many(events)
+        except Exception as e:
+            logger.warning("alarm_events insert failed: %s", e)
+
 
 async def poller_loop() -> None:
     _poller_state["running"] = True
@@ -209,6 +255,8 @@ async def poller_loop() -> None:
                     mqtt_enabled=bool((cfg.get("mqtt") or {}).get("enabled")),
                     thresholds=merge_thresholds(_ac),
                 )
+            # Alarm-Zustandswechsel (raised/resolved) protokollieren
+            await _log_alarm_transitions(data["alarms"], demo=bool(data.get("demo_mode")))
             snap = {
                 "ts": data["timestamp"],
                 "pv_power": data["summary"]["pv_power"],
@@ -307,6 +355,15 @@ async def _cleanup_snapshots_once(days: int) -> int:
     return int(result.deleted_count or 0)
 
 
+async def _cleanup_alarm_events_once(days: int) -> int:
+    """Delete alarm_events older than `days`. Returns number of deleted docs."""
+    if days <= 0:
+        return 0
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    result = await db.alarm_events.delete_many({"ts": {"$lt": cutoff.isoformat()}})
+    return int(result.deleted_count or 0)
+
+
 async def retention_loop() -> None:
     """Hourly background task that thins out old snapshot data."""
     # Kurz warten, damit Startup nicht sofort I/O feuert
@@ -318,11 +375,12 @@ async def retention_loop() -> None:
             if ret.get("enabled", True):
                 days = int(ret.get("days", 30))
                 deleted = await _cleanup_snapshots_once(days)
+                deleted_ev = await _cleanup_alarm_events_once(days)
                 _retention_state["last_deleted"] = deleted
-                _retention_state["total_deleted"] += deleted
+                _retention_state["total_deleted"] += deleted + deleted_ev
                 _retention_state["last_error"] = None
-                if deleted:
-                    logger.info("retention: %d alte Snapshots (>%dd) gelöscht", deleted, days)
+                if deleted or deleted_ev:
+                    logger.info("retention: %d Snapshots + %d Alarm-Events (>%dd) gelöscht", deleted, deleted_ev, days)
             _retention_state["last_run"] = datetime.now(timezone.utc).isoformat()
         except Exception as e:
             _retention_state["last_error"] = str(e)

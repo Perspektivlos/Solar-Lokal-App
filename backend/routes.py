@@ -58,6 +58,14 @@ async def live() -> Dict[str, Any]:
     return data
 
 
+@api_router.get("/alarms/history")
+async def alarms_history(limit: int = 50) -> Dict[str, Any]:
+    limit = max(1, min(int(limit), 200))
+    cur = db.alarm_events.find({}, {"_id": 0}).sort("ts", -1).limit(limit)
+    rows = await cur.to_list(limit)
+    return {"events": rows, "count": len(rows)}
+
+
 @api_router.get("/alarms")
 async def alarms() -> Dict[str, Any]:
     cfg = await get_config()

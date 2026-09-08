@@ -14,3 +14,4 @@ export const controlHoymiles = (action, value) => api.post("/control/hoymiles", 
 export const controlTrucki = (action, value) => api.post("/control/trucki", { action, value }).then((r) => r.data);
 export const getIntegrationsStatus = () => api.get("/integrations/status").then((r) => r.data);
 export const getAlarms = () => api.get("/alarms").then((r) => r.data);
+export const getAlarmHistory = (limit = 50) => api.get("/alarms/history", { params: { limit } }).then((r) => r.data);

@@ -1,5 +1,14 @@
 # Copilot-Anweisungen für Solar-Lokal-App
 
+## Agenten- und Skill-Vertrag
+
+Für alle Solar-Lokal-Agenten und -Skills gilt
+[`solar-lokal-agent-toolbelt.md`](solar-lokal-agent-toolbelt.md) als gemeinsamer
+Werkzeug-, Rollen- und Handoff-Vertrag. `/agentmemory` verwaltet ausschließlich
+verifizierte Lernnotizen; Memory ersetzt weder Tests noch aktuelle
+Repository-Dokumentation. Die Extension `solar-lokal-toolbelt` stellt dafür
+`solar_lokal_memory_read` und `solar_lokal_memory_append` bereit.
+
 ## Projektübersicht
 
 Solar-Lokal-App ist ein cloudfreies Dashboard für ein DC-gekoppeltes PV- und Batteriesystem im Heimnetzwerk. Das Backend ist ein FastAPI-Dienst. Es bezieht Gerätedaten über MQTT und HTTP, aggregiert Live- und Verlaufswerte, speichert Konfiguration und Snapshots in MongoDB und schreibt optional Zeitreihendaten nach InfluxDB. Das Frontend ist eine React-19-Single-Page-Anwendung, die produktiv über nginx ausgeliefert wird.

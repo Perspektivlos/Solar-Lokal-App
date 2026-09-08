@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getHistory, getConfig } from "../lib/api";
 import IntroCard from "../components/IntroCard";
+import AlarmHistory from "../components/AlarmHistory";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import { BarChart3, ExternalLink } from "lucide-react";
 
@@ -176,6 +177,9 @@ export default function History() {
           )}
         </div>
       </div>
+
+      {/* Kompakte Alarm-Historie */}
+      <AlarmHistory limit={8} compact />
     </div>
   );
 }

@@ -6,6 +6,12 @@ _agensi: "a80f0f9c-4de1-4c0d-b900-d19cf7b742c5"
 
 # Solar-App-Validierung
 
+## Gemeinsamer Vertrag
+
+Vor der Prüfung [`../../../solar-lokal-agent-toolbelt.md`](../../../solar-lokal-agent-toolbelt.md)
+lesen. `execute` ist der maßgebliche Werkzeuggürtel-Schritt; Memory darf nur
+bereits bestätigte Ergebnisse speichern und niemals einen Test ersetzen.
+
 Verwende diesen Skill, wenn der Nutzer prüfen möchte, ob eine Änderung korrekt, sicher und an den Invarianten des Repositories ausgerichtet ist. Dieser Ablauf konzentriert sich auf gezielte Validierung statt auf breite, unübersichtliche Testläufe.
 
 ## Validierungsziele

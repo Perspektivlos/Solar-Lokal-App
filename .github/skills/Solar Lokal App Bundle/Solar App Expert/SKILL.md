@@ -6,6 +6,12 @@ _agensi: "d3f0d1f0-0d2e-4ca5-8c65-5627672d7e9a"
 
 # Solar-App-Experte
 
+## Gemeinsamer Vertrag
+
+Vor jeder domänenweiten Änderung [`../../../solar-lokal-agent-toolbelt.md`](../../../solar-lokal-agent-toolbelt.md)
+lesen. Verwende den Werkzeugkatalog und Handoff-Vertrag daraus; Memory-Notizen
+sind nur bestätigte Ergänzungen zu Code, Tests und aktueller Repo-Dokumentation.
+
 Verwende diesen Skill für Arbeiten am Repository der Solar-Lokal-App. Er hält Änderungen an Architektur, Energie-Semantik und Validierungserwartungen des Repositories ausgerichtet.
 
 ## Projektkontext

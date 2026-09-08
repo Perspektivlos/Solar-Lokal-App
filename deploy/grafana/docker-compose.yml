@@ -1,0 +1,25 @@
+services:
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: solar-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # --- InfluxDB-Anbindung (in die Datasource-Provisioning eingesetzt) ---
+      INFLUX_URL: "${INFLUX_URL:-http://192.168.0.203:8086}"
+      INFLUX_ORG: "${INFLUX_ORG:-Solar Lokal}"
+      INFLUX_BUCKET: "${INFLUX_BUCKET:-solar}"
+      INFLUX_TOKEN: "${INFLUX_TOKEN:?INFLUX_TOKEN muss gesetzt sein}"
+      # --- Grafana-Grundeinstellungen ---
+      GF_SECURITY_ADMIN_USER: "${GF_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GF_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Erlaubt das Einbetten von Grafana per iframe in die App
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning:ro
+
+volumes:
+  grafana-data:

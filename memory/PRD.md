@@ -121,6 +121,13 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Settings-UI `AlarmSettings.jsx` auf Geräte-Seite (numerische Inputs, Master-Toggle, Standard/Speichern)
 - [x] Pytest: gesamt 15 Alarm-Tests (merge + config-driven); Frontend E2E via testing_agent iteration_13 (9/9 PASS, 100%)
 
+### Alarm-Historie + Grafana Auto-Provisioning (08.06.2026)
+- [x] Backend protokolliert Alarm-Zustandswechsel (raised/resolved) mit Zeitstempel in MongoDB-Collection `alarm_events` (`_log_alarm_transitions` im Poller); Index `alarm_events.ts`; Retention bereinigt auch alarm_events
+- [x] Neuer Endpoint `GET /api/alarms/history?limit=` (neueste zuerst)
+- [x] Frontend `AlarmHistory.jsx`: volle Liste auf Diagnose, kompakt auf Verlauf (raised=„Ausgelöst", resolved=„Behoben")
+- [x] Grafana Auto-Provisioning: `deploy/grafana/provisioning/` (Datasource `influxdb-solar` + Dashboard-Provider + provisioniertes Dashboard) + `docker-compose.yml` (ENV-gesteuert, `GF_SECURITY_ALLOW_EMBEDDING=true`)
+- [x] Pytest `tests/test_alarm_history.py` (5 Tests) – gesamt 85/85 pass
+
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
 - **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.
@@ -136,12 +143,12 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Phase C**: Design-Evolution → Industrial/SCADA-Control-Room (Silber/Weiß/Schwarz/Grau, Tiefe, Design-System; Neon-Akzente bleiben) – FERTIG 07.06.2026 (global via index.css; Blueprint in design_guidelines.json)
 - [x] **Phase D**: InfluxDB-Datenpunkte erweitern/aufräumen + Grafana-Dashboard – FERTIG 07.06.2026 (grid_import/export_w, trucki settings, alarms-Measurement, `mode`-Tag; Dashboard-JSON in `deploy/grafana/`)
 - [x] **Grafana-URL konfigurierbar** – FERTIG 07.06.2026 (config `grafana_url`, Eingabe auf Geräte-Seite, Verlauf-Link nutzt Config)
+- [x] **Alarm-Historie** mit Zeitstempel in Verlauf/Diagnose – FERTIG 08.06.2026 (MongoDB `alarm_events`, `/api/alarms/history`, `AlarmHistory.jsx`)
+- [x] **Grafana Auto-Provisioning** (Datasource + Dashboard per YAML) – FERTIG 08.06.2026 (`deploy/grafana/provisioning/` + `docker-compose.yml`)
 
 ### Offener Backlog (nächste Kandidaten)
 - [ ] Grafana als eingebettetes Panel (iframe) in der App (z. B. Verlauf-Seite)
-- [ ] Alarm-Historie mit Zeitstempel in Verlauf/Diagnose (nutzt `alarms`-Measurement)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen bei Alarmen
-- [ ] Grafana Auto-Provisioning (Datasource + Dashboard per YAML)
 - P3: CSV-Datenexport – vom Nutzer ABGELEHNT
 - P3: Watt-Label am Energiefluss-Pfeil – vom Nutzer ABGELEHNT

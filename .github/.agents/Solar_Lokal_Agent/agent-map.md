@@ -1,5 +1,8 @@
 # Agent-Map für Solar-Lokal-App
 
+> Verbindlicher Vertrag: [`../../solar-lokal-agent-toolbelt.md`](../../solar-lokal-agent-toolbelt.md).
+> Vor workflow- oder domänenweiten Entscheidungen `/agentmemory` verwenden.
+
 ## Überblick
 
 Diese Agenten sind bewusst in klare Rollen aufgeteilt, damit die Arbeit sauber zwischen Analyse, Umsetzung und Agenten-Verbesserung getrennt bleibt.
@@ -119,3 +122,18 @@ Wenn du eine domänenweite Sicherheit/Logikprüfung brauchst
 ## Grundsatz
 
 Die Agenten sollen jeweils eine klare Aufgabe übernehmen, statt alles gleichzeitig zu versuchen. Das macht die Zusammenarbeit robuster, verständlicher und besser wartbar.
+
+## Werkzeuggürtel
+
+Alle Solar-Lokal-Agenten arbeiten mit `read`, `search`, `todo`, `execute` und
+`edit`. Die Extension `solar-lokal-toolbelt` ergänzt
+`solar_lokal_memory_read` und `solar_lokal_memory_append`; diese Werkzeuge
+werden nur für verifizierte Lernpunkte verwendet. Kein Agent darf Memory als
+Ersatz für Codebelege oder Tests behandeln.
+
+## Verbindlicher Handoff
+
+`Ziel | Dateien | Beleg/Datenpfad | Ursache/Unsicherheit | nächster Schritt | Verifikation | Lernpunkt`
+
+Ein Handoff ohne diese sieben Angaben bleibt Analyse und darf nicht automatisch
+in einen Fix übergehen.

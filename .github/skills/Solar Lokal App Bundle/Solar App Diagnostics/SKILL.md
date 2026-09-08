@@ -6,6 +6,13 @@ _agensi: "9e9e3100-ec7b-466d-ae73-9c219355cb8d"
 
 # Solar-App-Diagnose
 
+## Gemeinsamer Vertrag
+
+Vor der Diagnose [`../../../solar-lokal-agent-toolbelt.md`](../../../solar-lokal-agent-toolbelt.md)
+lesen. Diagnose liefert den Handoff mit Ziel, Datenpfad, Belegen, Ursache,
+Unsicherheit, Fix-Scope, Verifikation und Lernpunkt; sie patcht nicht ohne
+ausdrücklichen Fix-Auftrag.
+
 Verwende diesen Skill, wenn der Nutzer eine Ursachenanalyse für einen Fehler in der Solar-Lokal-App wünscht, besonders bei Energiekennzahlen, MQTT-Parsing, Geräte-Fallbacks oder Abweichungen in der UI.
 
 ## Ziel
