@@ -210,6 +210,19 @@ body::before {
 }
 .dot-pulse { animation: pulse-dot 1.8s ease-in-out infinite; }
 
+/* IntroCard: farbige Hervorhebungen statt monotoner Schrift */
+.intro-body b, .intro-body strong {
+    color: var(--hl, #e2e8f0);
+    font-weight: 600;
+}
+.intro-body code {
+    color: #67e8f9;
+    background: rgba(6, 182, 212, 0.10);
+    padding: 0 5px;
+    border-radius: 4px;
+    font-size: 0.92em;
+}
+
 /* Subtle scrollbar (metallic) */
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: rgba(4, 6, 12, 0.5); }

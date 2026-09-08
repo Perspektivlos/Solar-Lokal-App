@@ -13,6 +13,7 @@ import { ChevronDown, BookOpen } from "lucide-react";
  */
 export default function IntroCard({ title, subtitle, sections = [], defaultOpen = false, accent = "#06B6D4", testid }) {
   const [open, setOpen] = useState(defaultOpen);
+  const PALETTE = ["#FACC15", "#06B6D4", "#34D399", "#A78BFA", "#F87171", "#38BDF8"];
   return (
     <div className="glass-strong" data-testid={testid || "intro-card"}>
       <button
@@ -40,18 +41,28 @@ export default function IntroCard({ title, subtitle, sections = [], defaultOpen 
         />
       </button>
       {open && (
-        <div className="border-t border-white/10 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          {sections.map((s) => (
-            <div key={s.label} data-testid={`intro-section-${s.label}`}>
+        <div className="border-t border-white/10 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+          {sections.map((s, i) => {
+            const c = PALETTE[i % PALETTE.length];
+            return (
               <div
-                className="font-mono text-[10px] uppercase tracking-[0.22em] mb-1.5 pb-1 border-b"
-                style={{ color: accent, borderColor: `${accent}33` }}
+                key={s.label}
+                data-testid={`intro-section-${s.label}`}
+                className="glass-inset p-3 rounded-lg transition-colors hover:bg-white/[0.03]"
+                style={{ borderLeft: `3px solid ${c}` }}
               >
-                {s.label}
+                <div className="flex items-center gap-2 mb-1.5 pb-1 border-b" style={{ borderColor: `${c}33` }}>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c, boxShadow: `0 0 6px ${c}` }} />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: c }}>
+                    {s.label}
+                  </span>
+                </div>
+                <div className="intro-body text-[13px] leading-relaxed text-white/80" style={{ "--hl": c }}>
+                  {s.body}
+                </div>
               </div>
-              <div className="text-[13px] leading-relaxed text-white/75">{s.body}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
