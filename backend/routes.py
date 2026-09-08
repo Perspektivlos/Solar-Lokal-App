@@ -50,6 +50,59 @@ def _eval_alarms(cfg: Dict[str, Any], data: Dict[str, Any]):
     return evaluate_alarms(data, mqtt_connected=mqtt_connected, mqtt_enabled=mqtt_enabled, thresholds=thresholds)
 
 
+# ---------- Energiebilanz (kWh je Tag/Monat aus Snapshots) ----------
+
+ENERGY_SAMPLE_SECONDS = 15  # Poller-Intervall (siehe server.poller_loop)
+
+
+def _rows_to_balance(rows: List[Dict[str, Any]], sample_seconds: int = ENERGY_SAMPLE_SECONDS) -> List[Dict[str, Any]]:
+    """Wandelt gruppierte Leistungs-Summen (W je Sample) in kWh je Bucket um.
+
+    Energie ≈ Σ(Leistung[W]) · Sample-Intervall[h] / 1000 → kWh. Eigenverbrauch = PV − Einspeisung.
+    """
+    factor = sample_seconds / 3600.0 / 1000.0
+    out: List[Dict[str, Any]] = []
+    for r in rows:
+        pv = round(float(r.get("pv", 0) or 0) * factor, 2)
+        imp = round(float(r.get("imp", 0) or 0) * factor, 2)
+        exp = round(float(r.get("exp", 0) or 0) * factor, 2)
+        self_kwh = round(max(0.0, pv - exp), 2)
+        out.append({
+            "period": r["_id"],
+            "pv_kwh": pv,
+            "import_kwh": imp,
+            "export_kwh": exp,
+            "self_kwh": self_kwh,
+        })
+    return out
+
+
+@api_router.get("/energy/balance")
+async def energy_balance(period: str = "day", limit: int = 14) -> Dict[str, Any]:
+    period = "month" if period == "month" else "day"
+    limit = max(1, min(int(limit), 60))
+    if period == "day":
+        start = (datetime.now(timezone.utc) - timedelta(days=limit)).isoformat()
+        bucket = {"$substr": ["$ts", 0, 10]}
+    else:
+        start = (datetime.now(timezone.utc) - timedelta(days=limit * 31)).isoformat()
+        bucket = {"$substr": ["$ts", 0, 7]}
+    pipeline = [
+        {"$match": {"ts": {"$gte": start}}},
+        {"$group": {
+            "_id": bucket,
+            "pv": {"$sum": "$pv_power"},
+            "imp": {"$sum": {"$cond": [{"$gt": ["$grid_power", 0]}, "$grid_power", 0]}},
+            "exp": {"$sum": {"$cond": [{"$lt": ["$grid_power", 0]}, {"$multiply": ["$grid_power", -1]}, 0]}},
+            "n": {"$sum": 1},
+        }},
+        {"$sort": {"_id": 1}},
+    ]
+    rows = await db.snapshots.aggregate(pipeline).to_list(1000)
+    buckets = _rows_to_balance(rows)[-limit:]
+    return {"period": period, "buckets": buckets}
+
+
 @api_router.get("/live")
 async def live() -> Dict[str, Any]:
     cfg = await get_config()

@@ -128,6 +128,12 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Grafana Auto-Provisioning: `deploy/grafana/provisioning/` (Datasource `influxdb-solar` + Dashboard-Provider + provisioniertes Dashboard) + `docker-compose.yml` (ENV-gesteuert, `GF_SECURITY_ALLOW_EMBEDDING=true`)
 - [x] Pytest `tests/test_alarm_history.py` (5 Tests) – gesamt 85/85 pass
 
+### Grafana-Embed + Energiebilanz (08.06.2026)
+- [x] Verlauf-Seite: einklappbares **Grafana-iframe-Panel** (`grafana-embed`), nutzt konfigurierbare `grafana_url` (Embedding im Compose aktiviert)
+- [x] Neuer Endpoint `GET /api/energy/balance?period=day|month&limit=` (kWh aus Snapshots aggregiert; PV/Bezug/Einspeisung/Eigenverbrauch)
+- [x] Frontend `EnergyBalance.jsx`: kWh-Balkendiagramm mit Tag/Monat-Umschaltung auf der Verlauf-Seite
+- [x] Pytest `tests/test_energy_balance.py` (3 Tests) – gesamt 88/88 pass
+
 ## Bekannte False Positives / bewusste Design-Entscheidungen (NICHT „fixen")
 - **React Hook Dependencies (Code Quality Report)**: Alle gemeldeten `useEffect`/`useCallback`-„missing deps" sind bewusste Mount-only-Poller mit `[]` (Intervalle). Der Report listet zudem lokale Variablen (`id`, `n`, `alive`, `d`) als Deps – technisch unmöglich. Hinzufügen würde Poller bei jedem Render neu starten (Endlosschleifen). → NICHT ändern.
 - **Zirkulärer Import routes.py ↔ server.py**: Bewusst via späte Bindung am Dateiende gelöst (`server.py`, `# noqa` + Kommentar), Standard-FastAPI-Muster, keine Runtime-Fehler. → NICHT umbauen.
@@ -145,10 +151,12 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Grafana-URL konfigurierbar** – FERTIG 07.06.2026 (config `grafana_url`, Eingabe auf Geräte-Seite, Verlauf-Link nutzt Config)
 - [x] **Alarm-Historie** mit Zeitstempel in Verlauf/Diagnose – FERTIG 08.06.2026 (MongoDB `alarm_events`, `/api/alarms/history`, `AlarmHistory.jsx`)
 - [x] **Grafana Auto-Provisioning** (Datasource + Dashboard per YAML) – FERTIG 08.06.2026 (`deploy/grafana/provisioning/` + `docker-compose.yml`)
+- [x] **Grafana eingebettet** (iframe) auf Verlauf-Seite – FERTIG 08.06.2026
+- [x] **Tages-/Monatsbilanz** (kWh-Balken PV/Bezug/Einspeisung/Eigenverbrauch) – FERTIG 08.06.2026 (`/api/energy/balance`, `EnergyBalance.jsx`)
 
 ### Offener Backlog (nächste Kandidaten)
-- [ ] Grafana als eingebettetes Panel (iframe) in der App (z. B. Verlauf-Seite)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
-- [ ] Push-Benachrichtigungen bei Alarmen
+- [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
+- [ ] Energiekosten (€/kWh) für Bezug/Einspeisung
 - P3: CSV-Datenexport – vom Nutzer ABGELEHNT
 - P3: Watt-Label am Energiefluss-Pfeil – vom Nutzer ABGELEHNT

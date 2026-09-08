@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { getHistory, getConfig } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import AlarmHistory from "../components/AlarmHistory";
+import EnergyBalance from "../components/EnergyBalance";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
-import { BarChart3, ExternalLink } from "lucide-react";
+import { BarChart3, ExternalLink, LineChart as LineIcon, Eye, EyeOff } from "lucide-react";
 
 const GRAFANA_URL_FALLBACK = "http://192.168.0.202:3000";
 
@@ -82,6 +83,7 @@ export default function History() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [grafanaUrl, setGrafanaUrl] = useState(GRAFANA_URL_FALLBACK);
+  const [showGrafana, setShowGrafana] = useState(false);
 
   useEffect(() => {
     getConfig().then((c) => { if (c?.grafana_url) setGrafanaUrl(c.grafana_url); }).catch(() => {});
@@ -176,6 +178,49 @@ export default function History() {
             </ResponsiveContainer>
           )}
         </div>
+      </div>
+
+      {/* Energiebilanz (kWh je Tag/Monat) */}
+      <EnergyBalance />
+
+      {/* Grafana eingebettet (iframe) */}
+      <div className="glass" data-testid="grafana-embed">
+        <div className="border-b border-white/10 px-4 py-2 flex items-center gap-2 flex-wrap">
+          <BarChart3 size={14} className="text-cyan-400" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/70">Grafana</span>
+          <div className="ml-auto flex items-center gap-2">
+            <a
+              href={grafanaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="grafana-embed-open"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 glass font-mono text-[10px] uppercase tracking-[0.16em] text-white/65 hover:text-cyan-300 transition-colors"
+            >
+              <ExternalLink size={12} /> Neuer Tab
+            </a>
+            <button
+              onClick={() => setShowGrafana((v) => !v)}
+              data-testid="grafana-embed-toggle"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 glass font-mono text-[10px] uppercase tracking-[0.16em] text-white/75 hover:text-cyan-300 transition-colors"
+            >
+              {showGrafana ? <EyeOff size={12} /> : <Eye size={12} />}
+              {showGrafana ? "Ausblenden" : "Einblenden"}
+            </button>
+          </div>
+        </div>
+        {showGrafana ? (
+          <iframe
+            title="Grafana"
+            src={grafanaUrl}
+            data-testid="grafana-iframe"
+            className="w-full"
+            style={{ height: 620, border: "none", background: "#0b101c" }}
+          />
+        ) : (
+          <div className="px-4 py-6 font-mono text-xs text-white/45" data-testid="grafana-embed-hint">
+            Grafana-Oberfläche eingebettet anzeigen (Ziel: <span className="text-cyan-300">{grafanaUrl}</span>). URL änderbar unter Geräte.
+          </div>
+        )}
       </div>
 
       {/* Kompakte Alarm-Historie */}

@@ -15,3 +15,4 @@ export const controlTrucki = (action, value) => api.post("/control/trucki", { ac
 export const getIntegrationsStatus = () => api.get("/integrations/status").then((r) => r.data);
 export const getAlarms = () => api.get("/alarms").then((r) => r.data);
 export const getAlarmHistory = (limit = 50) => api.get("/alarms/history", { params: { limit } }).then((r) => r.data);
+export const getEnergyBalance = (period = "day", limit = 14) => api.get("/energy/balance", { params: { period, limit } }).then((r) => r.data);
