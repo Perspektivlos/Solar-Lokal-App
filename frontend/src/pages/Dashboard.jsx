@@ -212,18 +212,45 @@ export default function Dashboard() {
             <span className="w-1.5 h-7 rounded-sm" style={{ background: COLOR.pv, boxShadow: `0 0 10px ${COLOR.pv}aa` }} />
             Solar · Live
           </h1>
-          <div className="font-mono text-[11px] text-white/60 mt-1 flex items-center gap-2 flex-wrap">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" />
-            Update: {relativeTime(timestamp, now)}
-            <span className="text-white/30">·</span>
+          <div className="font-mono text-[11px] text-white/60 mt-1.5 flex items-center gap-x-3 gap-y-1.5 flex-wrap" data-testid="dashboard-status-line">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse" />
+              Update: {relativeTime(timestamp, now)}
+            </span>
+            <span className="text-white/25">·</span>
             <span>Uhr: {new Date(now).toLocaleTimeString("de-DE")}</span>
+            <span className="text-white/25">·</span>
+            <span
+              data-testid="status-mode"
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${demo_mode ? "border-yellow-400/40 bg-yellow-400/10 text-yellow-300" : "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"}`}
+            >
+              {demo_mode ? "⚠ Demo · simuliert" : "● Live"}
+            </span>
+            {(() => {
+              const crit = alarms.filter((a) => a.severity === "critical").length;
+              const warn = alarms.filter((a) => a.severity === "warning").length;
+              const cls = crit
+                ? "border-red-400/50 bg-red-400/15 text-red-300"
+                : warn
+                ? "border-orange-400/45 bg-orange-400/10 text-orange-300"
+                : "border-emerald-400/40 bg-emerald-400/10 text-emerald-300";
+              const label = crit
+                ? `${crit} kritisch${warn ? ` · ${warn} Warn.` : ""}`
+                : warn
+                ? `${warn} Warnung${warn > 1 ? "en" : ""}`
+                : "System OK";
+              return (
+                <span data-testid="status-alarms" className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${cls}`}>
+                  {label}
+                </span>
+              );
+            })()}
+            <span className="text-white/25">·</span>
+            <span data-testid="status-devices">
+              {[shelly, ahoy, trucki, victron].filter((d) => d?.online).length}/4 Geräte online
+            </span>
           </div>
         </div>
-        {demo_mode && (
-          <div className="border border-yellow-400/40 bg-yellow-400/10 text-yellow-300 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] rounded" data-testid="demo-banner">
-            ⚠ Demo-Modus aktiv · Werte werden simuliert
-          </div>
-        )}
       </div>
 
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
