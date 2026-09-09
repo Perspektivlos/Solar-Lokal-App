@@ -215,12 +215,7 @@ export default function Control() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {loadedAt && (
-            <span className="font-mono text-[10px] text-white/45" data-testid="control-loaded-at">
-              Geräte-Werte geladen: {loadedAt.toLocaleTimeString("de-DE")}
-            </span>
-          )}
+        <div className="flex flex-col items-end gap-1.5">
           <button
             onClick={loadDevice}
             disabled={loadingDev}
@@ -230,6 +225,11 @@ export default function Control() {
             <RefreshCw size={14} className={loadingDev ? "animate-spin" : ""} />
             {loadingDev ? "Lade…" : "Werte vom Gerät laden"}
           </button>
+          {loadedAt && (
+            <span className="font-mono text-[10px] text-white/45" data-testid="control-loaded-at">
+              Geräte-Werte geladen: {loadedAt.toLocaleTimeString("de-DE")}
+            </span>
+          )}
         </div>
       </div>
 
