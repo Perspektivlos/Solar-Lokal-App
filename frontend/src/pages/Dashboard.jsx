@@ -226,25 +226,6 @@ export default function Dashboard() {
             >
               {demo_mode ? "⚠ Demo · simuliert" : "● Live"}
             </span>
-            {(() => {
-              const crit = alarms.filter((a) => a.severity === "critical").length;
-              const warn = alarms.filter((a) => a.severity === "warning").length;
-              const cls = crit
-                ? "border-red-400/50 bg-red-400/15 text-red-300"
-                : warn
-                ? "border-orange-400/45 bg-orange-400/10 text-orange-300"
-                : "border-emerald-400/40 bg-emerald-400/10 text-emerald-300";
-              const label = crit
-                ? `${crit} kritisch${warn ? ` · ${warn} Warn.` : ""}`
-                : warn
-                ? `${warn} Warnung${warn > 1 ? "en" : ""}`
-                : "System OK";
-              return (
-                <span data-testid="status-alarms" className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${cls}`}>
-                  {label}
-                </span>
-              );
-            })()}
             <span className="text-white/25">·</span>
             <span data-testid="status-devices">
               {[shelly, ahoy, trucki, victron].filter((d) => d?.online).length}/4 Geräte online
