@@ -145,35 +145,6 @@ export default function Diagnose() {
         </button>
       </div>
 
-      {/* Live-Statusbanner (von Dashboard hierher verschoben) */}
-      <StatusBanner alarms={alarms} />
-
-      {/* Alarm-Historie (raised/resolved mit Zeitstempel) */}
-      <AlarmHistory limit={50} />
-
-      <div className="glass">
-        <div className="border-b border-white/10 px-4 py-2 flex items-center justify-between">
-          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/65">Selbst-Test</div>
-          {result && (
-            <div className="flex gap-3 font-mono text-[10px]" data-testid="test-summary">
-              <span className="text-emerald-300">PASS {result.summary.pass}</span>
-              <span className="text-red-300">FAIL {result.summary.fail}</span>
-              <span className="text-white/45">SKIP {result.summary.skip}</span>
-              <span className="text-white/30">·</span>
-              <span className="text-white/55">{result.duration_ms} ms</span>
-            </div>
-          )}
-        </div>
-        <div className="p-4 space-y-2">
-          {!result && (
-            <div className="font-mono text-sm text-white/55 flex items-center gap-2">
-              <ChevronRight size={14} /> {'Klicke „Selbst-Test starten" um alle Komponenten zu prüfen.'}
-            </div>
-          )}
-          {result?.tests?.map((t, i) => <ResultRow key={i} {...t} />)}
-        </div>
-      </div>
-
       <div className="pb-2 border-b border-white/10">
         <h2 className="text-lg font-semibold tracking-tight text-white">Geräte-Details (MQTT-Rohdaten)</h2>
         <div className="font-mono text-xs text-white/55 mt-0.5">Live-Werte direkt aus dem MQTT-Stream · Auto-Refresh 5 s</div>
@@ -248,6 +219,35 @@ export default function Diagnose() {
             <FieldTable obj={fields} testid={`raw-victron-${inst}`} />
           </DeviceBlock>
         ))}
+      </div>
+
+      {/* Live-Statusbanner (von Dashboard hierher verschoben) */}
+      <StatusBanner alarms={alarms} />
+
+      {/* Alarm-Historie (raised/resolved mit Zeitstempel) */}
+      <AlarmHistory limit={50} />
+
+      <div className="glass">
+        <div className="border-b border-white/10 px-4 py-2 flex items-center justify-between">
+          <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/65">Selbst-Test</div>
+          {result && (
+            <div className="flex gap-3 font-mono text-[10px]" data-testid="test-summary">
+              <span className="text-emerald-300">PASS {result.summary.pass}</span>
+              <span className="text-red-300">FAIL {result.summary.fail}</span>
+              <span className="text-white/45">SKIP {result.summary.skip}</span>
+              <span className="text-white/30">·</span>
+              <span className="text-white/55">{result.duration_ms} ms</span>
+            </div>
+          )}
+        </div>
+        <div className="p-4 space-y-2">
+          {!result && (
+            <div className="font-mono text-sm text-white/55 flex items-center gap-2">
+              <ChevronRight size={14} /> {'Klicke „Selbst-Test starten" um alle Komponenten zu prüfen.'}
+            </div>
+          )}
+          {result?.tests?.map((t, i) => <ResultRow key={i} {...t} />)}
+        </div>
       </div>
     </div>
   );
