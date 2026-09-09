@@ -83,7 +83,7 @@ export default function Integrations() {
   const save = async () => {
     setSaving(true);
     try {
-      const r = await putConfig({ mqtt: cfg.mqtt, influx: cfg.influx, victron_mqtt: cfg.victron_mqtt });
+      const r = await putConfig({ mqtt: cfg.mqtt, influx: cfg.influx, victron_mqtt: cfg.victron_mqtt, grafana_url: cfg.grafana_url });
       setCfg(r);
       toast.success("Integrationen aktualisiert");
     } catch (e) {
@@ -184,6 +184,19 @@ export default function Integrations() {
           Writes: <span className="text-white">{status?.influx?.writes ?? 0}</span>
         </div>
       </Section>
+
+      {/* Grafana-URL */}
+      <div className="glass p-4" style={{ borderLeft: "3px solid #06B6D4" }} data-testid="grafana-url-row">
+        <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">Grafana-URL</label>
+        <div className="text-sm mt-1 text-white/60 mb-2">Ziel des „Grafana"-Buttons auf der Verlauf-Seite (z. B. http://192.168.0.202:3000).</div>
+        <input
+          value={cfg.grafana_url ?? ""}
+          onChange={(e) => setCfg({ ...cfg, grafana_url: e.target.value })}
+          placeholder="http://192.168.0.202:3000"
+          className="glass-input w-full px-3 py-2 font-mono text-sm"
+          data-testid="input-grafana-url"
+        />
+      </div>
     </div>
   );
 }
