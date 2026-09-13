@@ -220,18 +220,16 @@ export default function Dashboard() {
             <span className="text-white/25">·</span>
             <span>Uhr: {new Date(now).toLocaleTimeString("de-DE")}</span>
             <span className="text-white/25">·</span>
-            <span
-              data-testid="status-mode"
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${demo_mode ? "border-yellow-400/40 bg-yellow-400/10 text-yellow-300" : "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"}`}
-            >
-              {demo_mode ? "⚠ Demo · simuliert" : "● Live"}
-            </span>
-            <span className="text-white/25">·</span>
             <span data-testid="status-devices">
               {[shelly, ahoy, trucki, victron].filter((d) => d?.online).length}/4 Geräte online
             </span>
           </div>
         </div>
+        {demo_mode && (
+          <div className="border border-yellow-400/40 bg-yellow-400/10 text-yellow-300 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] rounded" data-testid="demo-banner">
+            ⚠ Demo-Modus aktiv · Werte werden simuliert
+          </div>
+        )}
       </div>
 
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
