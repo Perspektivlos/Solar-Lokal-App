@@ -13,14 +13,14 @@ Datenmodell, das das Dashboard schreibt (sobald InfluxDB aktiv ist):
 
 | Measurement     | Tags         | Felder                                                                 |
 |-----------------|--------------|------------------------------------------------------------------------|
-| `solar`         | –            | `pv_power`, `grid_power`, `battery_power`, `house_power`, `battery_soc`, `autarky_pct`, `self_consumption_pct` |
+| `solar`         | –            | `pv_power`, `grid_power`, `battery_power`, `battery_net_w`, `house_power`, `battery_soc`, `autarky_pct`, `self_consumption_pct` |
 | `shelly_phase`  | `phase`      | `power`, `voltage`, `current`, `pf`                                     |
-| `shelly`        | –            | `total_power`                                                          |
+| `shelly`        | –            | `total_power`, `phase_spread_w`, `active_phases_count`                  |
 | `hoymiles`      | –            | `total_power`, `limit_percent`                                         |
 | `hoymiles_ch`   | `ch`         | `power`, `voltage`, `current`, `yield_day`                             |
-| `victron`       | –            | `total_power`                                                         |
+| `victron`       | –            | `total_power`, `yield_today_total`, `active_mppt_count`                |
 | `victron_mppt`  | `mppt`       | `pv_power`, `pv_voltage`, `battery_voltage`, `yield_today`, `state`     |
-| `trucki`        | –            | `vbat`, `ac_power`, `soc`, `zepc`, `temperature`, `ac_setpoint`, `ac_display`, `day_energy`, `total_energy` |
+| `trucki`        | –            | `vbat`, `ac_power`, `soc`, `zepc`, `temperature`, `headroom_w`, `ac_setpoint`, `ac_display`, `day_energy`, `total_energy` |
 
 Leistungen in Watt, SoC/Autarkie/Eigenverbrauch in %, Energie in kWh.
 
@@ -148,8 +148,8 @@ Es gibt **zwei** Dashboards – beide gleich importieren:
 
 | Datei | Inhalt | UID |
 |-------|--------|-----|
-| `solar-influxdb-dashboard.json` | **Übersicht**: PV/Netz/Haus/SoC-Kacheln, Leistungsfluss, SoC-Verlauf, kWh-Energie, Autarkie heute | `solar-lokal` |
-| `solar-devices-dashboard.json`  | **Geräte-Detail**: Shelly pro Phase, Hoymiles CH1–CH4, Victron pro MPPT, Trucki (VBAT/AC/SoC/Temp), Autarkie & Eigenverbrauch-Verlauf | `solar-geraete` |
+| `solar-scada-overview.json` | **Übersicht**: PV/Netz/Haus/SoC-Kacheln, Energiematrix-Verlauf, Autarkie/Eigenverbrauch, Netz-Bilanz (Bezug vs. Einspeisung), Alarm-Statusliste | `solar-scada-overview` |
+| `solar-scada-devices.json`  | **Telemetrie & Geräte**: Shelly pro Phase + Schieflast `phase_spread_w`, Hoymiles CH1–CH4 + Kanal-Erträge/Limit, Victron pro MPPT + Gesamtertrag, Trucki (Setpoints/AC/Headroom, VBAT/Temperatur/Energie) | `solar-scada-devices` |
 
 Pro Datei:
 
@@ -159,22 +159,21 @@ Pro Datei:
    `InfluxDB-Solar` auswählen.
 4. **Import**.
 
-Das **Übersichts-Dashboard** (`solar-lokal`) enthält:
-- Live-Kacheln: PV-Leistung, Netz, Hausverbrauch, Batterie-SoC (Gauge)
-- Leistungsfluss-Verlauf (PV / Netz / Batterie / Haus)
-- Batterie-SoC-Verlauf
-- Energie im Zeitraum (kWh, per Integral)
-- **Autarkie heute** (Gauge in %): Anteil des Hausverbrauchs, der NICHT aus dem Netz bezogen wurde — berechnet als `(Hausenergie − Netzbezug) / Hausenergie`.
+Das **Übersichts-Dashboard** (`solar-scada-overview`) enthält:
+- Live-Kacheln: PV-Leistung, Netz (Bezug/Einspeisung), Hausverbrauch, Akku-Netto-Leistung, Akku-SoC (Gauge)
+- Autarkie & Eigenverbrauch (Gauge in %)
+- Sci-Fi Energiematrix-Verlauf (PV / Netz / Batterie / Haus)
+- Netz-Bilanz: Bezug vs. Einspeisung (W)
+- Alarm-Statusliste & Hoymiles-Kanalstatus (Tabellen)
 
-Das **Geräte-Detail-Dashboard** (`solar-geraete`) enthält gruppierte Zeilen:
-- **Shelly Pro 3EM**: Leistung & Spannung je Phase (L1–L3)
-- **Hoymiles HM1500**: Leistung je Kanal (CH1–CH4), Gesamt-AC, Leistungslimit
-- **Victron MPPT**: PV-Leistung & PV-Spannung je MPPT-Instanz
-- **Trucki2Shelly**: Akku-Spannung (VBAT), AC-Ausgang/Entladung, SoC-Gauge, Temperatur
-- **Autarkie & Eigenverbrauch** (momentaner Verlauf in %)
+Das **Telemetrie-Dashboard** (`solar-scada-devices`) enthält gruppierte Zeilen:
+- **Shelly Pro 3EM**: Leistung, Spannung (+ Schieflast `phase_spread_w`), Strom & Power-Factor je Phase (L1–L3)
+- **Hoymiles HM1500 & Ahoy DTU**: Leistung je Kanal (CH1–CH4), Kanalspannung/-strom, Kanal-Tageserträge & Limit
+- **Victron SmartSolar MPPT**: PV-Leistung, PV-Spannung, Akku-Spannung & Gesamtertrag je MPPT-Instanz
+- **Trucki Speicher-Gateway**: Setpoints/AC-Leistung/Headroom, VBAT & Temperatur, kumulierte Energie (Tag/Gesamt)
 
 > Beide Dashboards sind oben über das „Dashboards"-Dropdown verlinkt.
-> Auto-Refresh **15s**, Standard-Zeitraum **letzte 24h**.
+> Auto-Refresh **5s**, Standard-Zeitraum **letzte 6h**.
 
 ---
 

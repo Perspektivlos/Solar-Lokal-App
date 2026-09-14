@@ -1,14 +1,11 @@
 apiVersion: 1
 
-# Lädt alle Dashboards aus dem JSON-Ordner automatisch beim Grafana-Start.
 providers:
-  - name: Solar SCADA
+  - name: 'Solar SCADA Provisioning'
     orgId: 1
-    folder: Solar
+    folder: 'Solar SCADA'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 30
-    allowUiUpdates: true
+    editable: true
     options:
       path: /etc/grafana/provisioning/dashboards/json
-      foldersFromFilesStructure: false
