@@ -29,6 +29,17 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
+  "links": [
+    {
+      "title": "⚡ SCADA Telemetrie & Geräte",
+      "url": "/d/solar-scada-devices/solar-scada-telemetrie-gerate",
+      "type": "link",
+      "icon": "cog",
+      "targetBlank": false,
+      "keepTime": true,
+      "includeVars": true
+    }
+  ],
   "style": "dark",
   "tags": [
     "solar",
@@ -39,7 +50,7 @@
   "timezone": "browser",
   "title": "Solar · SCADA Live Matrix Übersicht",
   "uid": "solar-scada-overview",
-  "version": 3,
+  "version": 4,
   "schemaVersion": 39,
   "refresh": "5s",
   "time": {
@@ -95,109 +106,40 @@
   "panels": [
     {
       "type": "row",
-      "title": "SCI-FI MATRIX · LIVE STATUS & KPIS",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
+      "title": "SCI-FI SCADA STRIP · KANALE & KPIS",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false,
       "panels": []
     },
     {
       "type": "stat",
-      "title": "PV GENERATION",
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${DS_INFLUXDB}"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 0,
-        "y": 1
-      },
+      "title": "PV ERZEUGUNG (AKTUELL)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "#FACC15"
-          }
+          "color": { "mode": "fixed", "fixedColor": "#FACC15" }
         }
       },
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        }
+        "reduceOptions": { "calcs": ["lastNotNull"] }
       },
       "targets": [
         {
           "refId": "A",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${DS_INFLUXDB}"
-          },
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
           "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\" and r.mode == \"${mode}\")\n  |> last()"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "HAUS CONSUMPTION",
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${DS_INFLUXDB}"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 6,
-        "y": 1
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "watt",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "#38BDF8"
-          }
-        }
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${DS_INFLUXDB}"
-          },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\" and r.mode == \"${mode}\")\n  |> last()"
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "title": "GRID POWER (+BEZUG / -EINSP)",
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${DS_INFLUXDB}"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 1
-      },
+      "title": "NETZ BEZUG / EINSPEISUNG",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
@@ -214,74 +156,140 @@
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        }
+        "reduceOptions": { "calcs": ["lastNotNull"] }
       },
       "targets": [
         {
           "refId": "A",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${DS_INFLUXDB}"
-          },
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
           "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"grid_power\" and r.mode == \"${mode}\")\n  |> last()"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "BATTERY SOC & POWER",
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${DS_INFLUXDB}"
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 1
-      },
+      "title": "HAUS VERBRAUCH",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "#06B6D4"
-          }
+          "unit": "watt",
+          "color": { "mode": "fixed", "fixedColor": "#38BDF8" }
         }
       },
       "options": {
         "colorMode": "value",
         "graphMode": "area",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        }
+        "reduceOptions": { "calcs": ["lastNotNull"] }
       },
       "targets": [
         {
           "refId": "A",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "${DS_INFLUXDB}"
-          },
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\" and r.mode == \"${mode}\")\n  |> last()"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "AKKU NETTO LEISTUNG",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "color": { "mode": "fixed", "fixedColor": "#06B6D4" }
+        }
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_power\" and r.mode == \"${mode}\")\n  |> last()"
+        }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "AKKU SOC",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#EF4444", "value": null },
+              { "color": "#F59E0B", "value": 15 },
+              { "color": "#10B981", "value": 40 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "showThresholdMarkers": true,
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
           "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_soc\" and r.mode == \"${mode}\")\n  |> last()"
         }
       ]
     },
     {
+      "type": "gauge",
+      "title": "AUTARKIE",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#EF4444", "value": null },
+              { "color": "#F59E0B", "value": 40 },
+              { "color": "#10B981", "value": 75 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "showThresholdMarkers": true,
+        "reduceOptions": { "calcs": ["lastNotNull"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"autarky_pct\" and r.mode == \"${mode}\")\n  |> last()"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "ENERGIEFLUSS & MATRIX BILANZEN",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
       "type": "timeseries",
-      "title": "SCADA ENERGIEFLUSS MATRIX (W)",
-      "datasource": {
-        "type": "influxdb",
-        "uid": "${DS_INFLUXDB}"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 16,
-        "x": 0,
-        "y": 5
-      },
+      "title": "SCI-FI SCADA ENERGIEFLUSS MATRIX TREND (W)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 6 },
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
@@ -354,41 +362,9 @@
     },
     {
       "type": "gauge",
-      "title": "AUTARKIE RATIO (%)",
-      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 5 },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "#EF4444", "value": null },
-              { "color": "#F59E0B", "value": 40 },
-              { "color": "#10B981", "value": 75 }
-            ]
-          }
-        }
-      },
-      "options": {
-        "showThresholdMarkers": true,
-        "reduceOptions": { "calcs": ["lastNotNull"] }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"autarky_pct\" and r.mode == \"${mode}\")\n  |> last()"
-        }
-      ]
-    },
-    {
-      "type": "gauge",
       "title": "EIGENVERBRAUCH RATIO (%)",
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 5 },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 6 },
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -419,7 +395,7 @@
       "type": "timeseries",
       "title": "NETZ-BILANZ: BEZUG VS. EINSPEISUNG (W)",
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
-      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 9 },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 10 },
       "fieldConfig": {
         "defaults": {
           "unit": "watt",
@@ -448,6 +424,59 @@
           "refId": "A",
           "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
           "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and (r._field == \"grid_import_w\" or r._field == \"grid_export_w\") and r.mode == \"${mode}\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "GERÄTESTATUS & ALARME LISTE",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "ALARM- STATUSLISTE (LIVE AKTUELLE ALARME)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        }
+      },
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"alarms\" and r.mode == \"${mode}\")\n  |> last()"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "HOYMILES CH KANÄLE STATUS (POWER / YIELD / VOLTAGE)",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 16 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left"
+          }
+        }
+      },
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "${DS_INFLUXDB}" },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"hoymiles_ch\" and r.mode == \"${mode}\")\n  |> last()\n  |> keep(columns: [\"ch\", \"_field\", \"_value\"])"
         }
       ]
     }

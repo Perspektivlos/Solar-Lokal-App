@@ -29,6 +29,17 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
+  "links": [
+    {
+      "title": "📊 SCADA Live Matrix Übersicht",
+      "url": "/d/solar-scada-overview/solar-scada-live-matrix-ubersicht",
+      "type": "link",
+      "icon": "dashboard",
+      "targetBlank": false,
+      "keepTime": true,
+      "includeVars": true
+    }
+  ],
   "style": "dark",
   "tags": [
     "solar",
@@ -40,7 +51,7 @@
   "timezone": "browser",
   "title": "Solar · SCADA Telemetrie & Geräte",
   "uid": "solar-scada-devices",
-  "version": 3,
+  "version": 4,
   "schemaVersion": 39,
   "refresh": "5s",
   "time": {
@@ -96,7 +107,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "SHELLY PRO 3EM · NETZ3PHASEN TELEMETRIE",
+      "title": "SHELLY PRO 3EM · NETZ 3PHASEN TELEMETRIE",
       "gridPos": {
         "h": 1,
         "w": 24,
