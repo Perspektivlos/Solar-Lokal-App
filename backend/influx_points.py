@@ -20,11 +20,12 @@ def _instant_ratios(summary: Dict[str, Any]) -> tuple:
 
 
 def _pt_solar(summary: Dict[str, Any]) -> "Point":
-    """Summary-Measurement inkl. momentaner Autarkie/Eigenverbrauch."""
+    """Summary-Measurement inkl. momentaner Autarkie/Eigenverbrauch & Netto-Bilanzen."""
     def f(k: str) -> float:
         return float(summary.get(k, 0) or 0)
     autarky, self_cons = _instant_ratios(summary)
     gp = f("grid_power")
+    bp = f("battery_power")
     return (
         Point("solar")
         .field("pv_power", f("pv_power"))
@@ -33,9 +34,10 @@ def _pt_solar(summary: Dict[str, Any]) -> "Point":
         .field("grid_power", gp)
         .field("grid_import_w", round(max(0.0, gp), 1))
         .field("grid_export_w", round(max(0.0, -gp), 1))
-        .field("battery_power", f("battery_power"))
+        .field("battery_power", bp)
         .field("battery_charge_w", f("battery_charge_w"))
         .field("battery_discharge_w", f("battery_discharge_w"))
+        .field("battery_net_w", round(bp, 1))
         .field("house_power", f("house_power"))
         .field("battery_soc", f("battery_soc"))
         .field("autarky_pct", round(autarky, 1))
@@ -44,6 +46,7 @@ def _pt_solar(summary: Dict[str, Any]) -> "Point":
 
 
 def _pts_shelly(shelly: Dict[str, Any]) -> list:
+    phases = shelly.get("phases") or []
     pts = [
         Point("shelly_phase")
         .tag("phase", str(ph.get("phase", "?")))
@@ -51,10 +54,19 @@ def _pts_shelly(shelly: Dict[str, Any]) -> list:
         .field("voltage", float(ph.get("voltage", 0) or 0))
         .field("current", float(ph.get("current", 0) or 0))
         .field("pf", float(ph.get("pf", 0) or 0))
-        for ph in (shelly.get("phases") or [])
+        for ph in phases
     ]
-    if shelly.get("total_power") is not None:
-        pts.append(Point("shelly").field("total_power", float(shelly.get("total_power", 0) or 0)))
+    if shelly.get("total_power") is not None or phases:
+        tot_power = float(shelly.get("total_power", 0) or 0)
+        p_vals = [abs(float(p.get("power", 0) or 0)) for p in phases]
+        spread = max(p_vals) - min(p_vals) if p_vals else 0.0
+        s_pt = (
+            Point("shelly")
+            .field("total_power", tot_power)
+            .field("phase_spread_w", round(spread, 1))
+            .field("active_phases_count", len(phases))
+        )
+        pts.append(s_pt)
     return pts
 
 
@@ -80,9 +92,16 @@ def _pts_hoymiles(ahoy: Dict[str, Any]) -> list:
 
 def _pts_victron(victron: Dict[str, Any]) -> list:
     pts = []
-    if victron.get("total_power") is not None:
-        pts.append(Point("victron").field("total_power", float(victron.get("total_power", 0) or 0)))
-    for m in (victron.get("mppts") or []):
+    mppts = victron.get("mppts") or []
+    if victron.get("total_power") is not None or mppts:
+        tot_yield = sum(float(m.get("yield_today", 0) or 0) for m in mppts)
+        pts.append(
+            Point("victron")
+            .field("total_power", float(victron.get("total_power", 0) or 0))
+            .field("yield_today_total", round(tot_yield, 3))
+            .field("active_mppt_count", len(mppts))
+        )
+    for m in mppts:
         vp = (
             Point("victron_mppt")
             .tag("mppt", str(m.get("id", "?")))
@@ -100,13 +119,17 @@ def _pts_victron(victron: Dict[str, Any]) -> list:
 def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
     if not trucki.get("online"):
         return None
+    setpoint = float(trucki.get("ac_setpoint_w", 0) or 0)
+    power = float(trucki.get("battery_power", 0) or 0)
+    headroom = max(0.0, float(trucki.get("max_power_w", 1000) or 1000) - abs(power))
     tp = (
         Point("trucki")
         .field("vbat", float(trucki.get("battery_voltage", 0) or 0))
-        .field("ac_power", float(trucki.get("battery_power", 0) or 0))
+        .field("ac_power", power)
         .field("soc", float(trucki.get("soc", 0) or 0))
         .field("zepc", 1 if trucki.get("zepc") else 0)
         .field("ac_output", 1 if trucki.get("ac_output") else 0)
+        .field("headroom_w", round(headroom, 1))
     )
     for src, dst in [
         ("temperature", "temperature"),
@@ -147,14 +170,14 @@ def _build_influx_points(data: Dict[str, Any]) -> list:
     """Erzeugt einen reichen Satz InfluxDB-Punkte aus einer collect_live()-Payload.
 
     Measurements:
-      - solar        : Summary (pv/grid/battery/house/soc + import/export + autarky/self-consumption %)
+      - solar        : Summary (pv/grid/battery/house/soc + import/export + autarky/self-consumption % + battery_net_w)
       - shelly_phase : pro Phase (tag phase=L1..L3) power/voltage/current/pf
-      - shelly       : total_power
+      - shelly       : total_power, phase_spread_w, active_phases_count
       - hoymiles     : total_power, limit_percent
       - hoymiles_ch  : pro Kanal (tag ch=1..4) power/voltage/current/yield_day
-      - victron      : total_power
+      - victron      : total_power, yield_today_total, active_mppt_count
       - victron_mppt : pro MPPT (tag mppt=<instanz>) pv_power/pv_voltage/battery_voltage/yield_today/state
-      - trucki       : vbat/ac_power/soc/zepc/ac_output/settings (setpoint/target/min/max)/energy
+      - trucki       : vbat/ac_power/soc/zepc/ac_output/headroom_w/settings (setpoint/target/min/max)/energy
       - alarms       : total/critical/warning/level (nur wenn ausgewertet)
 
     Alle Punkte erhalten den Tag ``mode`` = demo|live zum Filtern in Grafana.
