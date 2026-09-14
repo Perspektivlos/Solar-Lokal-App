@@ -71,8 +71,7 @@ nutzt du als bestehende Instanz (LXC 102, `http://192.168.0.91:3000`).
 
 Enthaltene Dateien:
 - `pve-create-influxdb-lxc.sh` – installiert InfluxDB 2.7 als LXC (Org `home`, Bucket `solar`, Auto-Token)
-- `grafana/solar-scada-overview.json` – fertiges Grafana-Dashboard (Live-Matrix-Übersicht) zum Importieren
-- `grafana/solar-scada-devices.json` – fertiges Grafana-Dashboard (Telemetrie & Geräte) zum Importieren
+- `grafana/solar-influxdb-dashboard.json` – fertiges Grafana-Dashboard zum Importieren
 - `grafana/influxdb-datasource.yaml` – optionale Grafana-Datenquellen-Provisionierung
 
 ## Konfiguration

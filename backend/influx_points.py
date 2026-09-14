@@ -119,6 +119,7 @@ def _pts_victron(victron: Dict[str, Any]) -> list:
 def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
     if not trucki.get("online"):
         return None
+    setpoint = float(trucki.get("ac_setpoint_w", 0) or 0)
     power = float(trucki.get("battery_power", 0) or 0)
     headroom = max(0.0, float(trucki.get("max_power_w", 1000) or 1000) - abs(power))
     tp = (

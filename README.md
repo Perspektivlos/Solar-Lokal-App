@@ -82,8 +82,8 @@ Im 15-Sekunden-Takt schreibt das Backend detaillierte, mehrdimensionale Datenpun
 -   `trucki`: Detaillierte Batterie-Betriebsdaten (Zellspannung `vbat`, AC-Ausgang, ZEPC-Status, Temperatur).
 
 ### Zwei vorgefertigte Grafana-Dashboards (`deploy/proxmox/grafana/`)
-1.  **Übersichts-Dashboard (`solar-scada-overview.json`, UID `solar-scada-overview`)**: Visualisiert die wichtigsten KPIs des aktuellen Tages, den Leistungsverlauf und den Ladezustand der Batterie.
-2.  **Telemetrie-Dashboard (`solar-scada-devices.json`, UID `solar-scada-devices`)**: Zeigt detaillierte Phasen-Belastungen des Shellys (inkl. Schieflast `phase_spread_w`), Modul-Erträge des Hoymiles, Ladekurven und Gesamtertrag der Victron MPPTs sowie Setpoints/Headroom des Trucki-Gateways.
+1.  **Übersichts-Dashboard (`solar-influxdb-dashboard.json`)**: Visualisiert die wichtigsten KPIs des aktuellen Tages, den Leistungsverlauf und den Ladezustand der Batterie.
+2.  **Geräte-Detail-Dashboard (`solar-devices-dashboard.json`)**: Zeigt detaillierte Phasen-Belastungen des Shellys, Modul-Erträge des Hoymiles, Ladekurven der Victron MPPTs sowie Status-Metriken des Trucki-Gateways.
 
 *Styling-Highlights:* Beide Dashboards sind im **App-Neon-Design** gestaltet (PV Gelb `#FACC15`, Netz Rot `#F87171`, Autarkie/Einspeisung Grün `#10B981`, Batterie Cyan `#06B6D4`, Haus Silber `#cbd5e1`), verwenden transparente Panel-Hintergründe und bieten gegenseitige Cross-Links für eine nahtlose Navigation.
 
