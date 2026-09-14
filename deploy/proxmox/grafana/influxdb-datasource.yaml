@@ -6,7 +6,7 @@
 #   2. systemctl restart grafana-server
 #
 # Danach erscheint die Datenquelle "InfluxDB-Solar" automatisch und kann beim
-# Import von solar-influxdb-dashboard.json / solar-devices-dashboard.json
+# Import von solar-scada-overview.json / solar-scada-devices.json
 # ausgewählt werden.
 #
 # WICHTIG (Check & Repair):

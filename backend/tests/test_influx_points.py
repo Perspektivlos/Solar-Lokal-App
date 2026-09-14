@@ -135,3 +135,60 @@ def test_alarms_level_warning_only() -> None:
     payload["alarms"] = [{"severity": "warning"}]
     al = next(p for p in server._build_influx_points(payload) if p._name == "alarms")
     assert al._fields["level"] == 1
+
+
+def test_summary_has_battery_net_w() -> None:
+    pts = server._build_influx_points(_sample_payload())
+    solar = next(p for p in pts if p._name == "solar")
+    # battery_power=-300 -> battery_net_w=-300.0 (Netto-Bilanz)
+    assert solar._fields["battery_net_w"] == -300.0
+
+
+def test_shelly_point_has_spread_and_active_phases() -> None:
+    pts = server._build_influx_points(_sample_payload())
+    shelly = next(p for p in pts if p._name == "shelly")
+    # |L1|=200, |L2|=150, |L3|=150 -> Spread 50, alle drei Phasen gezählt
+    assert shelly._fields["total_power"] == -500.0
+    assert shelly._fields["phase_spread_w"] == 50.0
+    assert shelly._fields["active_phases_count"] == 3
+
+
+def test_shelly_point_emitted_with_phases_but_no_total_power() -> None:
+    payload = _sample_payload()
+    payload["shelly"].pop("total_power")
+    shelly = next(p for p in server._build_influx_points(payload) if p._name == "shelly")
+    # Fallback: Phasen-Telemetrie geht nicht verloren, total_power fällt auf 0
+    assert shelly._fields["total_power"] == 0.0
+    assert shelly._fields["active_phases_count"] == 3
+
+
+def test_victron_point_has_total_yield_and_active_mppt_count() -> None:
+    pts = server._build_influx_points(_sample_payload())
+    victron = next(p for p in pts if p._name == "victron")
+    # yield_today 1.2 + 1.1 = 2.3
+    assert victron._fields["total_power"] == 600.0
+    assert victron._fields["yield_today_total"] == 2.3
+    assert victron._fields["active_mppt_count"] == 2
+
+
+def test_victron_point_emitted_with_mppts_but_no_total_power() -> None:
+    payload = _sample_payload()
+    payload["victron"].pop("total_power")
+    victron = next(p for p in server._build_influx_points(payload) if p._name == "victron")
+    # Fallback: MPPT-Telemetrie geht nicht verloren, total_power fällt auf 0
+    assert victron._fields["total_power"] == 0.0
+    assert victron._fields["active_mppt_count"] == 2
+
+
+def test_trucki_headroom_w() -> None:
+    # Default max_power_w=1000, battery_power=-300 -> Headroom 700
+    trucki = next(p for p in server._build_influx_points(_sample_payload()) if p._name == "trucki")
+    assert trucki._fields["headroom_w"] == 700.0
+    # max_power_w 800 -> Headroom 500; nie negativ (|power| > max -> 0)
+    payload = _sample_payload()
+    payload["trucki"].update({"max_power_w": 800.0, "battery_power": -300.0})
+    trucki2 = next(p for p in server._build_influx_points(payload) if p._name == "trucki")
+    assert trucki2._fields["headroom_w"] == 500.0
+    payload["trucki"]["battery_power"] = -1000.0
+    trucki3 = next(p for p in server._build_influx_points(payload) if p._name == "trucki")
+    assert trucki3._fields["headroom_w"] == 0.0
