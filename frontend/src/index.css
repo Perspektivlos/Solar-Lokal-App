@@ -191,7 +191,7 @@ body::before {
     .neon-text-cyan   { text-shadow: 0 0 8px rgba(6, 182, 212, 0.45); }
 }
 
-/* Energy flow line animation (fließende Partikel) */
+/* Energy flow line animation (fließende Partikel & Sci-Fi Lasers) */
 @keyframes flow-particles {
     to { stroke-dashoffset: -32; }
 }
@@ -200,6 +200,17 @@ body::before {
     animation: flow-particles 1.4s linear infinite;
 }
 .flow-particles.reverse {
+    animation-direction: reverse;
+}
+
+@keyframes scifi-flow-particles {
+    to { stroke-dashoffset: -40; }
+}
+.scifi-flow-particles {
+    stroke-dasharray: 2 12;
+    animation: scifi-flow-particles 1.2s linear infinite;
+}
+.scifi-flow-particles.reverse {
     animation-direction: reverse;
 }
 
