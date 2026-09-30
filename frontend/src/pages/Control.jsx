@@ -179,7 +179,8 @@ export default function Control() {
       setDevice(l);
       applyDevice(l);
       setLoadedAt(new Date());
-    } catch {
+    } catch (e) {
+      console.error("Geräte-Werte laden fehlgeschlagen:", e);
       /* Steuerung bleibt mit letzten Werten nutzbar */
     } finally {
       setLoadingDev(false);

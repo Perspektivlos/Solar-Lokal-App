@@ -75,9 +75,9 @@ export default function RoadmapDialog({ children }) {
                 {title}
               </div>
               <ul className="space-y-1.5">
-                {items.map((it, i) => (
+                {items.map((it) => (
                   <li
-                    key={i}
+                    key={it}
                     className="flex items-start gap-2 text-[13px] text-white/75 leading-snug"
                   >
                     <span
