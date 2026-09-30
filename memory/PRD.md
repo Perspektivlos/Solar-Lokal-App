@@ -128,6 +128,9 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Grafana Auto-Provisioning: `deploy/grafana/provisioning/` (Datasource `influxdb-solar` + Dashboard-Provider + provisioniertes Dashboard) + `docker-compose.yml` (ENV-gesteuert, `GF_SECURITY_ALLOW_EMBEDDING=true`)
 - [x] Pytest `tests/test_alarm_history.py` (5 Tests) – gesamt 85/85 pass
 
+### Grafana-Dashboards kombiniert & überarbeitet (09.06.2026)
+- [x] Manuelle + provisionierte Variante aus EINER Quelle; neue Reihe „Netzbilanz & PV-Steuerung" (Netz Bezug/Einspeisung, Autarkie/Eigenverbrauch-Verlauf, Hoymiles-Limit, Victron-Akkuspannung je MPPT); 16 Panels/6 Reihen; README aktualisiert
+
 ### Grafana-Embed + Energiebilanz (08.06.2026)
 - [x] Verlauf-Seite: einklappbares **Grafana-iframe-Panel** (`grafana-embed`), nutzt konfigurierbare `grafana_url` (Embedding im Compose aktiviert)
 - [x] Neuer Endpoint `GET /api/energy/balance?period=day|month&limit=` (kWh aus Snapshots aggregiert; PV/Bezug/Einspeisung/Eigenverbrauch)

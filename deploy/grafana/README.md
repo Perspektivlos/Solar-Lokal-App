@@ -34,6 +34,16 @@ Datei `solar-scada-dashboard.json` in Grafana unter **Dashboards → New → Imp
 - **Bucket**: InfluxDB-Bucket (Default `solar`).
 - **Modus**: `live` (echte Daten) oder `demo` (simuliert). Der Poller taggt jeden Punkt mit `mode`.
 
+## Panels (ein gepflegtes Dashboard, 6 Reihen)
+- **Übersicht**: Leistungsfluss (PV/Haus/Netz/Akku), Autarkie, Eigenverbrauch, Akku-SoC.
+- **Netz · Shelly**: Phasenspannung & Phasenleistung (L1–L3).
+- **PV · Hoymiles & Victron**: Hoymiles-Kanäle, Victron-MPPT PV-Leistung.
+- **Speicher · Trucki**: Vbat/SoC, Setpoint/Target/Min/Max.
+- **Status · Alarme**: aktueller Status (OK/WARNUNG/ALARM) + Alarm-Verlauf (level 0/1/2).
+- **Netzbilanz & PV-Steuerung**: Netz Bezug vs. Einspeisung, Autarkie/Eigenverbrauch-Verlauf, Hoymiles Power-Limit, Victron Akku-Spannung je MPPT.
+
+> Beide Dateien (`solar-scada-dashboard.json` für Import, `provisioning/dashboards/json/solar-scada.json` für Auto-Provisioning) stammen aus **einer** Quelle und sind inhaltlich identisch.
+
 ## InfluxDB-Measurements (vom Poller geschrieben)
 `solar` (inkl. `grid_import_w`/`grid_export_w`/`autarky_pct`/`self_consumption_pct`),
 `shelly` + `shelly_phase` (tag `phase`), `hoymiles` + `hoymiles_ch` (tag `ch`),
