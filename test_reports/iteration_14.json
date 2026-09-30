@@ -1,0 +1,24 @@
+{
+  "summary": "Regression smoke test after cosmetic frontend fixes (RoadmapDialog stable keys, Control.loadDevice console.error, SystemStatusLight console.debug). All 4 main pages load without errors: Dashboard (KPIs, energy flow, header status line 'Update · Uhr · 4/4 online'), Steuerung (sliders prefilled, 'Werte vom Gerät laden' updates 'Geräte-Werte geladen: HH:MM:SS'), Verlauf (charts, Energiebilanz), Diagnose (Geräte-Details, StatusBanner, Alarm-Historie, Selbst-Test). System status light shows level=ok. Roadmap dialog opens on footer version click and renders all 3 sections (Erledigt/Geplant/Ideen) — stable keys did not break rendering.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "RoadmapDialog", "issues": ["Console warning: Missing Description/aria-describedby on Radix DialogContent (a11y). Non-blocking."]},
+      {"screen": "Verlauf charts", "issues": ["Recharts warns about container width/height(-1) during initial mount — chart still renders correctly after layout settles."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "RoadmapDialog uses item text as React key which is unique for current content, but if two items ever share the same text it will break — acceptable for a static list.",
+    "Consider adding a DialogDescription to RoadmapDialog to silence the Radix a11y warning."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 14 covered the cosmetic-fix regression: Dashboard, Steuerung, Verlauf, Diagnose, Roadmap dialog, and system status light all verified. Only pre-existing benign console warnings (Radix DialogContent aria-describedby, Recharts initial container size)."
+}
