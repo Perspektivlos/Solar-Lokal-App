@@ -235,7 +235,7 @@ export default function Dashboard() {
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
       <div data-testid="row-overview" className="space-y-8">
         <KpiStrip today={today} summary={summary} trail={trail} />
-        <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} />
+        <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} />
       </div>
 
       {/* SEKTION · BATTERIE */}

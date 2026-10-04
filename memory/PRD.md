@@ -167,6 +167,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Phase 2: Dynamischer Plasma-Energiefluss** – FERTIG 04.10.2026 (EnergyFlow.jsx neu: gruppierte Knoten PV-Block/Akku/Netz/Haus mit lebendigen Emblemen – rotierende Plasma-Sonne, SoC-Ladering, Netz-Oszilloskop, Haus; Watt-abhängige Plasma-Ströme mit Photonen-Schwärmen; Knoten erscheinen/verschwinden je nach aktivem Gerät; Hover-Highlighting + Wert-Pills). Testing-Agent 100% (iteration_16).
 - [x] **Fluss-Tooltip (Hover-Inspector)** – FERTIG 04.10.2026 (EnergyFlow.jsx `buildDetail`: Overlay-Panel beim Überfahren eines Knotens mit Spannung/Strom/SoC/Temperatur/Phasen je Knoten; Props shelly/ahoy/victron/trucki). Testing-Agent 100% (iteration_17).
 - [x] **Doku-Vergleich (Änderungserkennung)** – FERTIG 04.10.2026 (discovery.py `annotate_changes` + routes `_save_device_info` `changed_count`/`prev_detected_at`; DeviceDocPanel zeigt „N geändert"-Chip, Feld-Badge „geändert" + „vorher: X", sonst „unverändert seit letztem Scan"). Tests in test_discovery.py.
+- [x] **PV-Knoten nachts: „Sonnenaufgang in X h"** – FERTIG 04.10.2026 (EnergyFlow.jsx, UTC-Sonnenmodell 05–21 Uhr; Knoten-Sub + PV-Inspector-Zeile). Visuell verifiziert.
 - [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen

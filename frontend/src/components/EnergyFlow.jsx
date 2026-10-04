@@ -221,7 +221,7 @@ const avg = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) / a.length : 
 const sumA = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) : null);
 const f1 = (x) => (x == null || isNaN(x) ? "n/a" : Math.round(x * 10) / 10);
 
-export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron }) {
+export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp }) {
   const [hover, setHover] = useState(null);
 
   const pv = summary?.pv_power || 0;
@@ -242,6 +242,16 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const houseActive = house > 5;
   const pvProducing = pv > 5;
 
+  // Tag/Nacht nach demselben Sonnenmodell wie die Mock-Daten (UTC, 05–21 Uhr).
+  // Nachts zeigt der PV-Knoten dezent die Zeit bis zum Sonnenaufgang.
+  const SUNRISE_H = 5, SUNSET_H = 21;
+  const _now = timestamp ? new Date(timestamp) : new Date();
+  const _h = _now.getUTCHours() + _now.getUTCMinutes() / 60;
+  const isNight = _h < SUNRISE_H || _h >= SUNSET_H;
+  const hoursToSunrise = _h < SUNRISE_H ? SUNRISE_H - _h : 24 - _h + SUNRISE_H;
+  const sunriseStr = `${hoursToSunrise.toFixed(1).replace(".", ",")} h`;
+  const pvNightSub = isNight ? `Sonnenaufgang in ${sunriseStr}` : "inaktiv";
+
   const gridColor = grid >= 0 ? COLOR.grid_import : COLOR.grid_export;
   let gridLabel = "ausgeglichen";
   if (importActive) gridLabel = "Bezug";
@@ -259,7 +269,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const nodes = [];
   if (pvEnabled) nodes.push({ key: "pv", x: 450, y: 66, color: COLOR.pv, active: pvProducing, emblem: "sun",
     label: "PV-Block", value: round(pv), unit: "W", testid: "flow-pv",
-    sub: pvProducing ? `AC ${round(pvAc)} · DC ${round(pvDc)} W` : "nachts / inaktiv" });
+    sub: pvProducing ? `AC ${round(pvAc)} · DC ${round(pvDc)} W` : pvNightSub });
   if (gridEnabled) nodes.push({ key: "grid", x: 120, y: 210, color: gridColor, active: importActive || exportActive, emblem: "grid",
     label: "Netz", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
   if (batteryEnabled) nodes.push({ key: "battery", x: 780, y: 210, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
@@ -300,6 +310,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       if (acI != null) rows.push({ l: "· Σ Strom", v: `${f1(acI)} A` });
       rows.push({ l: "DC Victron", v: `${round(pvDc)} W` });
       if (dcV != null) rows.push({ l: "· Ø PV-Spannung", v: `${f1(dcV)} V` });
+      if (!pvProducing && isNight) rows.push({ l: "Sonnenaufgang", v: `in ${sunriseStr}` });
       return { title: "PV-Block", color: COLOR.pv, rows };
     }
     if (key === "grid") {
