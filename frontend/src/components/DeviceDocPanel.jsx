@@ -1,9 +1,15 @@
-import { ChevronDown, ChevronRight, Loader2, ScanLine, CheckCircle2, AlertTriangle, FlaskConical } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, ScanLine, CheckCircle2, AlertTriangle, FlaskConical, ArrowUpCircle, HelpCircle } from "lucide-react";
 
 const STATUS_META = {
   demo: { label: "Demo", cls: "text-yellow-300", Icon: FlaskConical },
   ok: { label: "Erkannt", cls: "text-emerald-300", Icon: CheckCircle2 },
   error: { label: "Fehlgeschlagen", cls: "text-red-300", Icon: AlertTriangle },
+};
+
+const FW_META = {
+  current: { label: "Aktuell", cls: "text-emerald-300 border-emerald-400/30 bg-emerald-400/10", Icon: CheckCircle2 },
+  outdated: { label: "Update verfügbar", cls: "text-amber-300 border-amber-400/40 bg-amber-400/10", Icon: ArrowUpCircle },
+  unknown: { label: "Version unbekannt", cls: "text-white/50 border-white/20 bg-white/5", Icon: HelpCircle },
 };
 
 function fmtTime(iso) {
@@ -15,11 +21,27 @@ function fmtTime(iso) {
   }
 }
 
+const FwBadge = ({ status, latest, hint, testid }) => {
+  const m = FW_META[status];
+  if (!m) return null;
+  const text = status === "outdated" ? (hint || `Update verfügbar → v${latest}`) : m.label;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-mono text-[9px] uppercase tracking-[0.12em] ${m.cls}`}
+      data-testid={testid}
+    >
+      <m.Icon size={11} /> {text}
+    </span>
+  );
+};
+
 export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscover, expanded, onToggle }) => {
   const status = info?.status;
   const meta = STATUS_META[status];
   const fields = info?.fields || [];
   const hasData = fields.length > 0;
+  const fwStatus = info?.firmware?.status;
+  const fwOutdated = fwStatus === "outdated";
 
   return (
     <div className="mt-4 border-t border-white/10 pt-3" data-testid={`doc-panel-${deviceKey}`}>
@@ -32,7 +54,15 @@ export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscove
           {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
           Typenschild / Doku
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {fwOutdated && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-amber-400/40 bg-amber-400/10 text-amber-300 font-mono text-[9px] uppercase tracking-[0.12em]"
+              data-testid={`doc-fw-chip-${deviceKey}`}
+            >
+              <ArrowUpCircle size={11} /> FW-Update
+            </span>
+          )}
           {meta && (
             <span
               className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] ${meta.cls}`}
@@ -71,7 +101,12 @@ export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscove
               {fields.map((f) => (
                 <div key={f.label} className="flex flex-col">
                   <dt className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/40">{f.label}</dt>
-                  <dd className="font-mono text-sm text-white/90 break-all">{f.value}</dd>
+                  <dd className="font-mono text-sm text-white/90 break-all flex items-center gap-2 flex-wrap">
+                    {f.value}
+                    {f.fw_status && (
+                      <FwBadge status={f.fw_status} latest={f.fw_latest} hint={f.fw_hint} testid={`doc-fw-${deviceKey}`} />
+                    )}
+                  </dd>
                 </div>
               ))}
             </dl>

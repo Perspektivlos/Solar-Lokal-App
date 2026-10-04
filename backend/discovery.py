@@ -9,8 +9,9 @@ daher kein Zirkularimport.
 """
 
 import logging
+import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 
@@ -27,9 +28,77 @@ DEVICE_LABELS = {
     "victron": "Victron VenusOS Large",
 }
 
+# Aktuell bekannte (empfohlene) Firmware-Stände je Gerät (Stand 2026).
+# Wird gegen die erkannte Version verglichen, um Update-Empfehlungen zu geben.
+LATEST_FIRMWARE = {
+    "shelly": "1.4.4",
+    "ahoy": "0.8.150",
+    "trucki": "2.3",
+    "victron": "3.50",
+}
+
+# Welches Doku-Feld je Gerät die Firmware-/Versionsangabe enthält.
+FW_FIELD_LABELS = {
+    "shelly": "Firmware-Version",
+    "ahoy": "Firmware-Version",
+    "trucki": "Firmware/Version",
+    "victron": "VenusOS-Version",
+}
+
 
 def _field(label: str, value: Any) -> Dict[str, str]:
     return {"label": label, "value": str(value) if value not in (None, "") else NA}
+
+
+def _parse_version(text: Any) -> Optional[Tuple[int, ...]]:
+    """Extrahiert eine Versions-Nummer (z. B. '1.4.4', '0.8.145', '3.40') aus
+    einem beliebigen String und gibt sie als Tupel zurück."""
+    if text is None:
+        return None
+    m = re.search(r"(\d+(?:\.\d+)+)", str(text))
+    if not m:
+        return None
+    try:
+        return tuple(int(p) for p in m.group(1).split("."))
+    except ValueError:
+        return None
+
+
+def _cmp_versions(cur: Tuple[int, ...], latest: Tuple[int, ...]) -> int:
+    n = max(len(cur), len(latest))
+    cur = cur + (0,) * (n - len(cur))
+    latest = latest + (0,) * (n - len(latest))
+    if cur < latest:
+        return -1
+    if cur > latest:
+        return 1
+    return 0
+
+
+def _annotate_firmware(key: str, fields: List[Dict[str, str]]) -> Tuple[List[Dict[str, str]], Optional[Dict[str, str]]]:
+    """Markiert das Firmware-Feld mit einem Status (current/outdated/unknown)
+    und liefert eine kompakte Zusammenfassung für die Karten-Ansicht."""
+    label = FW_FIELD_LABELS.get(key)
+    latest = LATEST_FIRMWARE.get(key)
+    summary: Optional[Dict[str, str]] = None
+    if not (label and latest):
+        return fields, summary
+    latest_v = _parse_version(latest)
+    for f in fields:
+        if f["label"] != label:
+            continue
+        cur_v = _parse_version(f["value"])
+        f["fw_latest"] = latest
+        if cur_v is None or latest_v is None:
+            f["fw_status"] = "unknown"
+        elif _cmp_versions(cur_v, latest_v) < 0:
+            f["fw_status"] = "outdated"
+            f["fw_hint"] = f"Update verfügbar → v{latest}"
+        else:
+            f["fw_status"] = "current"
+        summary = {"status": f["fw_status"], "current": f["value"], "latest": latest}
+        break
+    return fields, summary
 
 
 async def _http_get_json(url: str, timeout: float = 2.0) -> Optional[Any]:
@@ -198,7 +267,7 @@ async def discover_device(cfg: Dict[str, Any], key: str) -> Dict[str, Any]:
     base = {"device": key, "device_label": label, "detected_at": now}
 
     if key not in MOCK_FNS:
-        return {**base, "status": "error", "fields": [], "error": f"Unbekanntes Gerät: {key}", "ip": ""}
+        return {**base, "status": "error", "fields": [], "firmware": None, "error": f"Unbekanntes Gerät: {key}", "ip": ""}
 
     demo = bool(cfg.get("demo_mode"))
     devs = cfg.get("devices")
@@ -206,7 +275,8 @@ async def discover_device(cfg: Dict[str, Any], key: str) -> Dict[str, Any]:
     ip = dcfg.get("ip", "")
 
     if demo:
-        return {**base, "status": "demo", "fields": MOCK_FNS[key](), "error": None, "ip": ip}
+        fields, fw = _annotate_firmware(key, MOCK_FNS[key]())
+        return {**base, "status": "demo", "fields": fields, "firmware": fw, "error": None, "ip": ip}
 
     try:
         if key == "shelly":
@@ -222,6 +292,7 @@ async def discover_device(cfg: Dict[str, Any], key: str) -> Dict[str, Any]:
         fields = None
 
     if not fields:
-        return {**base, "status": "error", "fields": [],
+        return {**base, "status": "error", "fields": [], "firmware": None,
                 "error": f"{label} nicht erreichbar ({ip or 'keine IP'})", "ip": ip}
-    return {**base, "status": "ok", "fields": fields, "error": None, "ip": ip}
+    fields, fw = _annotate_firmware(key, fields)
+    return {**base, "status": "ok", "fields": fields, "firmware": fw, "error": None, "ip": ip}

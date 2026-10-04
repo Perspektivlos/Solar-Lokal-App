@@ -168,6 +168,7 @@ async def _save_device_info(result: Dict[str, Any]) -> Dict[str, Any]:
             "ip": result.get("ip"),
             "last_attempt_at": result["detected_at"],
             "fields": existing.get("fields", []),
+            "firmware": existing.get("firmware"),
             "detected_at": existing.get("detected_at"),
         }
     else:
@@ -177,6 +178,7 @@ async def _save_device_info(result: Dict[str, Any]) -> Dict[str, Any]:
             "status": result["status"],
             "error": None,
             "fields": result["fields"],
+            "firmware": result.get("firmware"),
             "ip": result.get("ip"),
             "detected_at": result["detected_at"],
             "last_attempt_at": result["detected_at"],

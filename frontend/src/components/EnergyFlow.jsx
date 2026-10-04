@@ -1,53 +1,158 @@
-/* Animated SVG energy flow diagram (PV / Haus / Netz / Akku) - dark glassmorphism */
-import { Sun, Home, Cable, BatteryCharging, Activity } from "lucide-react";
+/* Phase 2 – Dynamischer Plasma-Energiefluss (SVG).
+ * Logisch gruppierte Knoten (PV-Block / Akku / Netz / Haus), dynamisch je nach
+ * aktivierten Geräten. Energieströme als leuchtende Plasma-Bahnen mit Photonen-
+ * Schwärmen – Geschwindigkeit, Dichte und Glow skalieren mit der Wattleistung.
+ * Interaktiv: Knoten/Pfad überfahren hebt den Pfad hervor und blendet Werte ein. */
+import { useState } from "react";
+import { Activity } from "lucide-react";
 
 const COLOR = {
   pv: "#FACC15",
   grid_import: "#F87171",
   grid_export: "#10B981",
   battery: "#06B6D4",
+  house: "#cbd5e1",
 };
 
-function Node({ x, y, w = 170, h = 96, label, value, unit, sub, color, Icon, testid, glow }) {
+const NODE_W = 190;
+const NODE_H = 92;
+
+const round = (w) => Math.round(w || 0);
+
+// Fluss-Dauer aus Leistung: viel Watt -> schneller. 0W≈2.4s … ≥3000W≈0.6s.
+function flowDurSec(watts) {
+  const w = Math.min(Math.max(watts || 0, 0), 3000);
+  return +(2.4 - (w / 3000) * 1.8).toFixed(2);
+}
+
+function reversePath(d) {
+  const m = d.match(/M\s*([\d.]+)\s+([\d.]+)\s+L\s*([\d.]+)\s+([\d.]+)/);
+  if (!m) return d;
+  return `M ${m[3]} ${m[4]} L ${m[1]} ${m[2]}`;
+}
+
+function pathMid(d) {
+  const m = d.match(/M\s*([\d.]+)\s+([\d.]+)\s+L\s*([\d.]+)\s+([\d.]+)/);
+  if (!m) return { x: 0, y: 0 };
+  return { x: (+m[1] + +m[3]) / 2, y: (+m[2] + +m[4]) / 2 };
+}
+
+// ---------- Knoten-Embleme (lebendige Symbole) ----------
+
+function SunEmblem({ cx, cy, color, active }) {
+  const rays = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4;
+    const c = Math.cos(a), s = Math.sin(a);
+    rays.push(
+      <line key={i} x1={cx + c * 10} y1={cy + s * 10} x2={cx + c * 16} y2={cy + s * 16}
+            stroke={color} strokeWidth="2" strokeLinecap="round" opacity={active ? 0.85 : 0.3} />
+    );
+  }
   return (
-    <g data-testid={testid}>
-      <defs>
-        <filter id={`glow-${testid}`} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      {/* Subtle outer glow */}
-      <rect x={x - w / 2 - 2} y={y - h / 2 - 2} width={w + 4} height={h + 4} rx="8" fill="none"
-            stroke={color} strokeWidth="1" opacity={glow ? "0.40" : "0.10"}
-            filter={glow ? `url(#glow-${testid})` : undefined} />
-      {/* Main glass card */}
-      <rect x={x - w / 2} y={y - h / 2} width={w} height={h} rx="6" fill="rgba(15,23,42,0.7)" stroke="rgba(255,255,255,0.10)" strokeWidth="1" />
-      {/* Color accent bar */}
-      <rect x={x - w / 2} y={y - h / 2} width="4" height={h} rx="2" fill={color} opacity="0.85" />
-      {/* Label row (icon would need <image>, we use SVG <foreignObject> only for the icon) */}
-      <foreignObject x={x - w / 2 + 12} y={y - h / 2 + 8} width={20} height={20}>
-        <div xmlns="http://www.w3.org/1999/xhtml">
-          <Icon size={14} color={color} strokeWidth={2.2} />
-        </div>
-      </foreignObject>
-      <text x={x - w / 2 + 36} y={y - h / 2 + 21} fontSize="10" fontFamily="JetBrains Mono"
-            fontWeight="700" letterSpacing="1.6" fill="rgba(255,255,255,0.55)">
+    <g>
+      <circle cx={cx} cy={cy} r="18" fill={color} opacity={active ? 0.14 : 0.05}>
+        {active && <animate attributeName="r" values="15;20;15" dur="2.8s" repeatCount="indefinite" />}
+        {active && <animate attributeName="opacity" values="0.10;0.22;0.10" dur="2.8s" repeatCount="indefinite" />}
+      </circle>
+      <g>
+        {rays}
+        {active && <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="16s" repeatCount="indefinite" />}
+      </g>
+      <circle cx={cx} cy={cy} r="7" fill={color} opacity={active ? 0.95 : 0.45}
+              style={{ filter: `drop-shadow(0 0 5px ${color})` }} />
+    </g>
+  );
+}
+
+function BatteryRing({ cx, cy, color, soc, active }) {
+  const r = 15;
+  const circ = 2 * Math.PI * r;
+  const filled = (circ * Math.max(0, Math.min(100, soc))) / 100;
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="3" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
+              strokeDasharray={`${filled} ${circ}`} transform={`rotate(-90 ${cx} ${cy})`}
+              style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
+      {active && (
+        <g>
+          <circle cx={cx} cy={cy - r} r="2.6" fill={color} style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
+          <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="3s" repeatCount="indefinite" />
+        </g>
+      )}
+      <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fontWeight="600" fill="rgba(255,255,255,0.85)">{round(soc)}</text>
+    </g>
+  );
+}
+
+function GridWave({ cx, cy, color, active, uid }) {
+  return (
+    <>
+      <clipPath id={`gw-${uid}`}><rect x={cx - 17} y={cy - 13} width="34" height="26" /></clipPath>
+      <g clipPath={`url(#gw-${uid})`}>
+        <g transform={`translate(${cx} ${cy})`}>
+          <g>
+            <path d="M -24 0 Q -19 -8 -14 0 T -4 0 T 6 0 T 16 0 T 26 0 T 36 0"
+                  stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"
+                  opacity={active ? 0.9 : 0.35} style={{ filter: `drop-shadow(0 0 3px ${color})` }} />
+            {active && <animateTransform attributeName="transform" type="translate" from="0 0" to="-20 0" dur="1.3s" repeatCount="indefinite" />}
+          </g>
+        </g>
+      </g>
+      <line x1={cx - 17} y1={cy} x2={cx + 17} y2={cy} stroke={color} strokeWidth="0.6" opacity="0.25" />
+    </>
+  );
+}
+
+function HouseEmblem({ cx, cy, color, active }) {
+  return (
+    <g opacity={active ? 1 : 0.55} style={{ filter: active ? `drop-shadow(0 0 4px ${color}88)` : "none" }}>
+      <path d={`M ${cx - 13} ${cy - 1} L ${cx} ${cy - 13} L ${cx + 13} ${cy - 1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x={cx - 9} y={cy - 1} width="18" height="13" rx="1.5" stroke={color} strokeWidth="2" fill="none" />
+      {active && <animate attributeName="opacity" values="0.65;1;0.65" dur="2.4s" repeatCount="indefinite" />}
+    </g>
+  );
+}
+
+function Emblem({ node }) {
+  const ex = node.x - NODE_W / 2 + 34;
+  const ey = node.y;
+  if (node.emblem === "sun") return <SunEmblem cx={ex} cy={ey} color={node.color} active={node.active} />;
+  if (node.emblem === "battery") return <BatteryRing cx={ex} cy={ey} color={node.color} soc={node.soc} active={node.active} />;
+  if (node.emblem === "grid") return <GridWave cx={ex} cy={ey} color={node.color} active={node.active} uid={node.key} />;
+  return <HouseEmblem cx={ex} cy={ey} color={node.color} active={node.active} />;
+}
+
+// ---------- Knoten-Karte ----------
+
+function NodeCard({ node, dim, onHover }) {
+  const { x, y, color, active, value, unit, label, sub, testid } = node;
+  const left = x - NODE_W / 2;
+  const top = y - NODE_H / 2;
+  const tx = left + 66;
+  return (
+    <g data-testid={testid}
+       onMouseEnter={() => onHover(node.key)} onMouseLeave={() => onHover(null)}
+       style={{ opacity: dim ? 0.3 : 1, transition: "opacity 0.25s", cursor: "pointer" }}>
+      {active && (
+        <rect x={left - 2} y={top - 2} width={NODE_W + 4} height={NODE_H + 4} rx="9" fill="none"
+              stroke={color} strokeWidth="1" opacity="0.45" style={{ filter: `drop-shadow(0 0 7px ${color})` }} />
+      )}
+      <rect x={left} y={top} width={NODE_W} height={NODE_H} rx="7" fill="rgba(13,19,33,0.85)"
+            stroke={active ? `${color}` : "rgba(255,255,255,0.10)"} strokeOpacity={active ? 0.5 : 1} strokeWidth="1" />
+      <rect x={left} y={top} width="4" height={NODE_H} rx="2" fill={color} opacity="0.85" />
+      <Emblem node={node} />
+      <text x={tx} y={top + 22} fontSize="10" fontFamily="JetBrains Mono" fontWeight="700" letterSpacing="1.4" fill="rgba(255,255,255,0.55)">
         {String(label).toUpperCase()}
       </text>
-      {/* Value: rendered as SVG <text> so it never wraps */}
-      <text x={x - w / 2 + 14} y={y + 8} fontSize="28" fontFamily="JetBrains Mono"
-            fontWeight="500" fill="#ffffff"
-            style={glow ? { filter: `drop-shadow(0 0 6px ${color}99)` } : undefined}>
+      <text x={tx} y={y + 8} fontSize="26" fontFamily="JetBrains Mono" fontWeight="500" fill="#ffffff"
+            style={active ? { filter: `drop-shadow(0 0 6px ${color}99)` } : undefined}>
         {value}
-        <tspan fontSize="13" fill="rgba(255,255,255,0.45)" dx="4">{unit}</tspan>
+        <tspan fontSize="12" fill="rgba(255,255,255,0.45)" dx="4">{unit}</tspan>
       </text>
       {sub && (
-        <text x={x - w / 2 + 14} y={y + h / 2 - 10} fontSize="10" fontFamily="JetBrains Mono"
-              fill="rgba(255,255,255,0.55)">
+        <text x={tx} y={top + NODE_H - 12} fontSize="9.5" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.55)">
           {sub}
         </text>
       )}
@@ -55,79 +160,73 @@ function Node({ x, y, w = 170, h = 96, label, value, unit, sub, color, Icon, tes
   );
 }
 
-// Straight-line path "M x1 y1 L x2 y2" umkehren (für reverse-Fluss).
-function reversePath(d) {
-  const m = d.match(/M\s*([\d.]+)\s+([\d.]+)\s+L\s*([\d.]+)\s+([\d.]+)/);
-  if (!m) return d;
-  return `M ${m[3]} ${m[4]} L ${m[1]} ${m[2]}`;
+// ---------- Plasma-Fluss ----------
+
+function Photons({ d, color, reverse, dur, n }) {
+  const path = reverse ? reversePath(d) : d;
+  return [...Array(n)].map((_, i) => (
+    <circle key={i} r="2.4" fill={color} style={{ filter: `drop-shadow(0 0 4px ${color})` }}>
+      <animateMotion dur={`${dur}s`} begin={`${-(dur / n) * i}s`} repeatCount="indefinite" path={path} calcMode="linear" />
+    </circle>
+  ));
 }
 
-// Fluss-Dauer aus Leistung: viel Watt -> schneller. 0W≈2.4s … ≥3000W≈0.6s.
-function flowDurSec(watts) {
-  const w = Math.min(Math.max(watts || 0, 0), 3000);
-  const t = w / 3000;
-  return +(2.4 - t * 1.8).toFixed(2);
-}
-
-function Flow({ d, color, active, reverse, watts }) {
+function Flow({ flow, hover, onHover }) {
+  const { d, color, active, watts, reverse, id, from, to } = flow;
+  const related = !hover || [id, from, to].includes(hover);
+  const dim = hover && !related;
+  const style = { opacity: dim ? 0.28 : 1, transition: "opacity 0.25s" };
   if (!active) {
-    return <path d={d} stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" fill="none" strokeDasharray="2 6" />;
+    return (
+      <g style={style}>
+        <path d={d} stroke="rgba(255,255,255,0.10)" strokeWidth="1.5" fill="none" strokeDasharray="2 7" />
+        <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
+              onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />
+      </g>
+    );
   }
   const dur = flowDurSec(watts);
+  const intensity = Math.min((watts || 0) / 3000, 1);
+  const halo = 0.1 + intensity * 0.22;
+  const haloW = 6 + intensity * 7;
+  const n = watts < 150 ? 1 : watts < 600 ? 2 : watts < 1500 ? 3 : 4;
+  const emph = hover && related;
   return (
-    <>
-      {/* Outer halo */}
-      <path d={d} stroke={color} strokeWidth="8" fill="none" opacity="0.12" strokeLinecap="round" />
-      {/* Faint static base line (zeigt die Verbindung) */}
-      <path d={d} stroke={color} strokeWidth="2" fill="none" opacity="0.20" strokeLinecap="round" />
-      {/* Fließende Energie-Partikel (Geschwindigkeit ~ Leistung) */}
-      <path
-        d={d}
-        stroke={color}
-        strokeWidth="4"
-        fill="none"
-        className={reverse ? "flow-particles reverse" : "flow-particles"}
-        strokeLinecap="round"
-        style={{ animationDuration: `${dur}s`, filter: `drop-shadow(0 0 4px ${color})` }}
-      />
-      {watts !== undefined && <TravelingArrow d={d} color={color} reverse={reverse} dur={dur} />}
-    </>
+    <g style={style}>
+      <path d={d} stroke={color} strokeWidth={haloW} fill="none" opacity={halo} strokeLinecap="round" />
+      <path d={d} stroke={color} strokeWidth="2" fill="none" opacity="0.22" strokeLinecap="round" />
+      <path d={d} stroke={color} strokeWidth={emph ? 4.5 : 3.5} fill="none"
+            className={reverse ? "flow-particles reverse" : "flow-particles"} strokeLinecap="round"
+            style={{ animationDuration: `${dur}s`, filter: `drop-shadow(0 0 ${emph ? 6 : 4}px ${color})` }} />
+      <Photons d={d} color={color} reverse={reverse} dur={dur} n={n} />
+      <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
+            onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />
+    </g>
   );
 }
 
-// Richtungspfeil (Kreis + Dreieck), der entlang der Linie mitfließt.
-// Zwei versetzte Marker für einen durchgehenden Flow ohne sichtbaren Sprung.
-function TravelingArrow({ d, color, reverse, dur }) {
-  const path = reverse ? reversePath(d) : d;
-  const markers = [0, -dur / 2];
+function ValuePill({ x, y, text, color }) {
+  const w = 20 + text.length * 7;
   return (
-    <>
-      {markers.map((begin, i) => (
-        <g key={i} style={{ filter: `drop-shadow(0 0 5px ${color})` }}>
-          <animateMotion
-            dur={`${dur}s`}
-            begin={`${begin}s`}
-            repeatCount="indefinite"
-            rotate="auto"
-            calcMode="linear"
-            path={path}
-          />
-          <circle r="9" fill="rgba(15,23,42,0.92)" stroke={color} strokeWidth="1.5" />
-          <path d="M -3.5 -4 L 5 0 L -3.5 4 Z" fill={color} />
-        </g>
-      ))}
-    </>
+    <g style={{ pointerEvents: "none" }}>
+      <rect x={x - w / 2} y={y - 11} width={w} height="22" rx="5" fill="rgba(2,6,16,0.94)" stroke={color} strokeWidth="1" />
+      <text x={x} y={y + 4.5} textAnchor="middle" fontSize="11" fontFamily="JetBrains Mono" fontWeight="600" fill="#ffffff">{text}</text>
+    </g>
   );
 }
 
-export default function EnergyFlow({ summary, trucki }) {
-  const pv = summary?.pv_power || 0;            // Gesamt-PV-Erzeugung
-  const pvAc = summary?.pv_ac_power ?? pv;      // Hoymiles AC → Haus
-  const pvDc = summary?.pv_dc_power || 0;       // Victron MPPT → Akku (laden)
+// ---------- Hauptkomponente ----------
+
+export default function EnergyFlow({ summary, trucki, devices }) {
+  const [hover, setHover] = useState(null);
+
+  const pv = summary?.pv_power || 0;
+  const pvAc = summary?.pv_ac_power ?? pv;
+  const pvDc = summary?.pv_dc_power || 0;
   const grid = summary?.grid_power || 0;
-  const battery = summary?.battery_power || 0;  // Netto: + lädt, − entlädt
-  const charge = summary?.battery_charge_w || 0;       // MPPT-Ladung (DC)
-  const discharge = summary?.battery_discharge_w || 0; // SUN-Entladung → Haus
+  const battery = summary?.battery_power || 0;
+  const charge = summary?.battery_charge_w || 0;
+  const discharge = summary?.battery_discharge_w || 0;
   const house = summary?.house_power || 0;
   const soc = summary?.battery_soc || 0;
 
@@ -139,19 +238,47 @@ export default function EnergyFlow({ summary, trucki }) {
   const houseActive = house > 5;
   const pvProducing = pv > 5;
 
-  let gridLabel = "balanced";
+  const gridColor = grid >= 0 ? COLOR.grid_import : COLOR.grid_export;
+  let gridLabel = "ausgeglichen";
   if (importActive) gridLabel = "Bezug";
   else if (exportActive) gridLabel = "Einspeisung";
-  const gridColor = grid >= 0 ? COLOR.grid_import : COLOR.grid_export;
-  let batteryMode = "idle";
-  if (battery > 20) batteryMode = "lädt";
-  else if (battery < -20) batteryMode = "entlädt";
 
-  // Akku-Sub: Lade-/Entlade-Aufteilung (DC-Kopplung); ZEPC-Limit wenn aktiv
-  let batterySub = `${Math.round(soc)}% · ↑${Math.round(charge)} ↓${Math.round(discharge)}W`;
-  if (trucki?.zepc && trucki?.ac_setpoint_w) {
-    batterySub = `${Math.round(soc)}% · ZEPC ${Math.round(trucki.ac_setpoint_w)}W`;
-  }
+  let batterySub = `${round(soc)}% · ↑${round(charge)} ↓${round(discharge)}W`;
+  if (trucki?.zepc && trucki?.ac_setpoint_w) batterySub = `${round(soc)}% · ZEPC ${round(trucki.ac_setpoint_w)}W`;
+
+  // Geräte-Aktivierung steuert, welche Knoten erscheinen (Default: an).
+  const en = (k) => devices?.[k]?.enabled !== false;
+  const pvEnabled = en("ahoy") || en("victron");
+  const gridEnabled = en("shelly");
+  const batteryEnabled = en("trucki");
+
+  const nodes = [];
+  if (pvEnabled) nodes.push({ key: "pv", x: 450, y: 66, color: COLOR.pv, active: pvProducing, emblem: "sun",
+    label: "PV-Block", value: round(pv), unit: "W", testid: "flow-pv",
+    sub: pvProducing ? `AC ${round(pvAc)} · DC ${round(pvDc)} W` : "nachts / inaktiv" });
+  if (gridEnabled) nodes.push({ key: "grid", x: 120, y: 210, color: gridColor, active: importActive || exportActive, emblem: "grid",
+    label: "Netz", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
+  if (batteryEnabled) nodes.push({ key: "battery", x: 780, y: 210, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
+    label: "Akku", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
+  nodes.push({ key: "house", x: 450, y: 210, color: COLOR.house, active: houseActive, emblem: "house",
+    label: "Haus", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
+
+  const present = new Set(nodes.map((n) => n.key));
+  const allFlows = [
+    { id: "pv-house", from: "pv", to: "house", d: "M 450 112 L 450 164", color: COLOR.pv, active: pvAcActive, watts: pvAc, reverse: false },
+    { id: "pv-batt", from: "pv", to: "battery", d: "M 522 100 L 712 168", color: COLOR.pv, active: chargeActive, watts: charge, reverse: false },
+    { id: "grid-house", from: "grid", to: "house", d: "M 210 210 L 360 210", color: gridColor, active: importActive || exportActive, watts: Math.abs(grid), reverse: exportActive },
+    { id: "batt-house", from: "battery", to: "house", d: "M 692 210 L 540 210", color: COLOR.battery, active: dischargeActive, watts: discharge, reverse: false },
+  ];
+  const flows = allFlows.filter((f) => present.has(f.from) && present.has(f.to));
+
+  const nodeKeys = {};
+  nodes.forEach((n) => { nodeKeys[n.key] = [n.key]; });
+  flows.forEach((f) => { nodeKeys[f.from]?.push(f.id); nodeKeys[f.to]?.push(f.id); });
+
+  const activePills = hover
+    ? flows.filter((f) => f.active && [f.id, f.from, f.to].includes(hover))
+    : [];
 
   return (
     <div className="glass-strong h-full flex flex-col">
@@ -160,42 +287,35 @@ export default function EnergyFlow({ summary, trucki }) {
           <Activity size={12} className="text-cyan-400 neon-cyan" />
           Energiefluss · Live
         </div>
-        <div className="flex items-center gap-2 font-mono text-[10px] text-white/70">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" /> AKTIV
+        <div className="flex items-center gap-3 font-mono text-[10px] text-white/55">
+          <span className="hidden sm:inline text-white/40">Knoten/Pfad überfahren für Werte</span>
+          <span className="inline-flex items-center gap-1.5 text-white/70">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" /> AKTIV
+          </span>
         </div>
       </div>
       <div className="p-4 flex-1 flex items-center">
-        <svg viewBox="0 0 900 360" className="w-full" data-testid="energy-flow-svg" style={{ maxHeight: 520 }}>
+        <svg viewBox="0 0 900 300" className="w-full" data-testid="energy-flow-svg" style={{ maxHeight: 520 }}>
           <defs>
             <pattern id="bggrid" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
             </pattern>
+            <radialGradient id="efcenter" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="rgba(6,182,212,0.05)" />
+              <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+            </radialGradient>
           </defs>
-          <rect width="900" height="360" fill="url(#bggrid)" />
+          <rect x="0" y="0" width="900" height="300" fill="url(#bggrid)" />
+          <rect x="0" y="0" width="900" height="300" fill="url(#efcenter)" />
 
-          <Node x={450} y={70} label="PV-Anlage" value={Math.round(pv)} unit="W" color={COLOR.pv} Icon={Sun}
-                testid="flow-pv" sub={pvProducing ? `AC ${Math.round(pvAc)} · DC ${Math.round(pvDc)} W` : "nachts / inaktiv"} glow={pvProducing} />
-          <Node x={450} y={260} label="Haus" value={Math.round(house)} unit="W" color="#cbd5e1" Icon={Home}
-                testid="flow-house" sub={houseActive ? "Verbrauch" : "Standby"} glow={houseActive} />
-          <Node x={130} y={260} label="Netz" value={Math.round(Math.abs(grid))} unit="W"
-                color={gridColor} Icon={Cable} testid="flow-grid" sub={gridLabel} glow={importActive || exportActive} />
-          <Node x={770} y={260} label="Akku" value={Math.round(Math.abs(battery))} unit="W"
-                color={COLOR.battery} Icon={BatteryCharging} testid="flow-battery"
-                sub={batterySub}
-                glow={chargeActive || dischargeActive} />
-
-          {/* PV (Hoymiles AC) → Haus */}
-          <Flow d="M 450 118 L 450 212" color={COLOR.pv} active={pvAcActive} watts={pvAcActive ? pvAc : undefined} />
-          {/* PV (Victron MPPT) → Akku laden (Diagonale) */}
-          <Flow d="M 528 110 L 690 214" color={COLOR.pv} active={chargeActive} watts={chargeActive ? charge : undefined} />
-          {/* Netz ↔ Haus */}
-          <Flow d="M 215 260 L 365 260" color={importActive ? COLOR.grid_import : COLOR.grid_export}
-                active={importActive || exportActive} reverse={exportActive}
-                watts={(importActive || exportActive) ? Math.abs(grid) : undefined} />
-          {/* Akku → Haus entladen (SUN) */}
-          <Flow d="M 685 260 L 535 260" color={COLOR.battery}
-                active={dischargeActive}
-                watts={dischargeActive ? discharge : undefined} />
+          {flows.map((f) => <Flow key={f.id} flow={f} hover={hover} onHover={setHover} />)}
+          {nodes.map((n) => (
+            <NodeCard key={n.key} node={n} dim={hover && !nodeKeys[n.key]?.includes(hover)} onHover={setHover} />
+          ))}
+          {activePills.map((f) => {
+            const m = pathMid(f.d);
+            return <ValuePill key={f.id} x={m.x} y={m.y} text={`${round(f.watts)} W`} color={f.color} />;
+          })}
         </svg>
       </div>
     </div>

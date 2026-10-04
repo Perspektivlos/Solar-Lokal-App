@@ -48,6 +48,30 @@ def test_unknown_device_is_error():
     assert r["fields"] == []
 
 
+def test_firmware_annotation_outdated_and_current():
+    cfg = _demo_cfg()
+    # Ahoy mock fw = 0.8.145, latest = 0.8.150 -> outdated
+    a = asyncio.run(discovery.discover_device(cfg, "ahoy"))
+    fw_field = next(f for f in a["fields"] if f["label"] == "Firmware-Version")
+    assert fw_field["fw_status"] == "outdated"
+    assert "Update" in fw_field["fw_hint"]
+    assert a["firmware"]["status"] == "outdated"
+    # Shelly mock fw = 1.4.4, latest = 1.4.4 -> current
+    s = asyncio.run(discovery.discover_device(cfg, "shelly"))
+    sf = next(f for f in s["fields"] if f["label"] == "Firmware-Version")
+    assert sf["fw_status"] == "current"
+    assert s["firmware"]["status"] == "current"
+
+
+def test_version_parsing():
+    assert discovery._parse_version("v3.40 (large)") == (3, 40)
+    assert discovery._parse_version("AhoyDTU 0.8.145") == (0, 8, 145)
+    assert discovery._parse_version("Trucki2Shelly v2.3") == (2, 3)
+    assert discovery._parse_version("keine zahl") is None
+    assert discovery._cmp_versions((0, 8, 145), (0, 8, 150)) < 0
+    assert discovery._cmp_versions((1, 4, 4), (1, 4, 4)) == 0
+
+
 def test_live_unreachable_returns_error():
     cfg = {"demo_mode": False, "devices": {"shelly": {"ip": "10.255.255.1", "enabled": True}}}
     r = asyncio.run(discovery.discover_device(cfg, "shelly"))
