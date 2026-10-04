@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getLive, getToday, getHistory, getConfig } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
+import SunTimeline from "../components/SunTimeline";
 import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
@@ -236,6 +237,7 @@ export default function Dashboard() {
       <div data-testid="row-overview" className="space-y-8">
         <KpiStrip today={today} summary={summary} trail={trail} />
         <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} />
+        <SunTimeline timestamp={timestamp} />
       </div>
 
       {/* SEKTION · BATTERIE */}

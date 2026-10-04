@@ -168,6 +168,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Fluss-Tooltip (Hover-Inspector)** – FERTIG 04.10.2026 (EnergyFlow.jsx `buildDetail`: Overlay-Panel beim Überfahren eines Knotens mit Spannung/Strom/SoC/Temperatur/Phasen je Knoten; Props shelly/ahoy/victron/trucki). Testing-Agent 100% (iteration_17).
 - [x] **Doku-Vergleich (Änderungserkennung)** – FERTIG 04.10.2026 (discovery.py `annotate_changes` + routes `_save_device_info` `changed_count`/`prev_detected_at`; DeviceDocPanel zeigt „N geändert"-Chip, Feld-Badge „geändert" + „vorher: X", sonst „unverändert seit letztem Scan"). Tests in test_discovery.py.
 - [x] **PV-Knoten nachts: „Sonnenaufgang in X h"** – FERTIG 04.10.2026 (EnergyFlow.jsx, UTC-Sonnenmodell 05–21 Uhr; Knoten-Sub + PV-Inspector-Zeile). Visuell verifiziert.
+- [x] **Tagesverlauf-Sonnenbogen** – FERTIG 04.10.2026 (SunTimeline.jsx: Halbbogen Aufgang→Untergang mit Stundenpunkten, zentrale Rest-Sonnenstunden, Sonne/Mond-Marker; unter dem Energiefluss). Visuell verifiziert.
 - [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen

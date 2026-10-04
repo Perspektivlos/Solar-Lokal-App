@@ -1,0 +1,124 @@
+/* Tagesverlauf als Sonnen-Bogen: die Sonne wandert entlang eines Halbbogens
+ * von Aufgang (links) bis Untergang (rechts); zentral die Rest-Sonnenstunden.
+ * Nutzt dasselbe UTC-Sonnenmodell (05–21 Uhr) wie der Energiefluss. */
+import { Sun } from "lucide-react";
+
+const SUNRISE = 5;
+const SUNSET = 21;
+const DAY_LEN = SUNSET - SUNRISE;
+
+// Bogen-Geometrie (Ellipsenbogen)
+const RX = 250;
+const RY = 120;
+const CX = 300;
+const BASE = 150;
+const arcPoint = (t) => {
+  const th = Math.PI * (1 - t);
+  return { x: CX + RX * Math.cos(th), y: BASE - RY * Math.sin(th) };
+};
+
+const comma = (n) => n.toFixed(1).replace(".", ",");
+
+export default function SunTimeline({ timestamp }) {
+  const now = timestamp ? new Date(timestamp) : new Date();
+  const h = now.getUTCHours() + now.getUTCMinutes() / 60;
+  const isDay = h >= SUNRISE && h < SUNSET;
+
+  const dayT = Math.max(0, Math.min(1, (h - SUNRISE) / DAY_LEN));
+  const markerT = isDay ? dayT : h < SUNRISE ? 0 : 1;
+  const m = arcPoint(markerT);
+
+  // Rest-Sonnenstunden heute
+  let restHours;
+  if (isDay) restHours = SUNSET - h;
+  else if (h < SUNRISE) restHours = DAY_LEN;
+  else restHours = 0;
+
+  const toRise = h < SUNRISE ? SUNRISE - h : 24 - h + SUNRISE;
+  const status = isDay ? `Rest-Sonne ${comma(restHours)} h` : `Sonnenaufgang in ${comma(toRise)} h`;
+
+  const hourDots = [];
+  for (let hh = SUNRISE; hh <= SUNSET; hh++) {
+    const p = arcPoint((hh - SUNRISE) / DAY_LEN);
+    const noon = hh === 12;
+    hourDots.push(<circle key={hh} cx={p.x} cy={p.y} r={noon ? 2.4 : 1.6} fill="#ffffff" opacity={noon ? 0.5 : 0.22} />);
+  }
+
+  return (
+    <div className="glass-strong" data-testid="sun-timeline">
+      <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
+        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2">
+          <Sun size={12} className="text-yellow-300 neon-yellow" /> Tagesverlauf
+        </div>
+        <span className="font-mono text-[10px] text-white/60" data-testid="sun-timeline-status">{status}</span>
+      </div>
+
+      <div className="px-4 py-3">
+        <svg viewBox="0 0 600 180" className="w-full" style={{ maxHeight: 240 }} data-testid="sun-timeline-svg">
+          <defs>
+            <linearGradient id="sunarc" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#e8a13a" />
+              <stop offset="50%" stopColor="#fcd34d" />
+              <stop offset="100%" stopColor="#e8a13a" />
+            </linearGradient>
+          </defs>
+
+          {/* Horizont */}
+          <line x1="40" y1={BASE} x2="560" y2={BASE} stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
+          <line x1="40" y1={BASE} x2="560" y2={BASE} stroke="rgba(255,255,255,0.14)" strokeWidth="1" strokeDasharray="2 6" />
+
+          {/* Bogen-Track */}
+          <path d={`M 50 ${BASE} A ${RX} ${RY} 0 0 1 550 ${BASE}`} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
+          {/* zurückgelegter Teil (nur tagsüber) */}
+          <path
+            d={`M 50 ${BASE} A ${RX} ${RY} 0 0 1 550 ${BASE}`}
+            fill="none"
+            stroke="url(#sunarc)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            pathLength="100"
+            strokeDasharray={`${isDay ? dayT * 100 : 0} 100`}
+            style={{ filter: "drop-shadow(0 0 4px rgba(252,211,77,0.5))" }}
+          />
+
+          {hourDots}
+
+          {/* Stundenmarken-Beschriftung */}
+          <text x="50" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.75)">05:00</text>
+          <text x="50" y={BASE + 32} textAnchor="middle" fontSize="8" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)" letterSpacing="1">AUFGANG</text>
+          <text x="550" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(192,132,252,0.8)">21:00</text>
+          <text x="550" y={BASE + 32} textAnchor="middle" fontSize="8" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)" letterSpacing="1">UNTERGANG</text>
+          <text x={CX} y="22" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)">12:00</text>
+
+          {/* Zentrale Anzeige: Rest-Sonnenstunden */}
+          <text x={CX} y="92" textAnchor="middle" fontSize="38" fontFamily="JetBrains Mono" fontWeight="500" fill="#ffffff"
+                style={isDay ? { filter: "drop-shadow(0 0 8px rgba(252,211,77,0.4))" } : undefined}>
+            {comma(restHours)}
+            <tspan fontSize="16" fill="rgba(255,255,255,0.5)" dx="4">h</tspan>
+          </text>
+          <text x={CX} y="112" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.45)" letterSpacing="2">REST-SONNE HEUTE</text>
+
+          {/* Marker: Sonne (Tag) / Mond (Nacht) */}
+          {isDay ? (
+            <g>
+              {[...Array(8)].map((_, i) => {
+                const a = (i * Math.PI) / 4;
+                return <line key={i} x1={m.x + Math.cos(a) * 9} y1={m.y + Math.sin(a) * 9} x2={m.x + Math.cos(a) * 14} y2={m.y + Math.sin(a) * 14} stroke="#fcd34d" strokeWidth="2" strokeLinecap="round" />;
+              })}
+              <circle cx={m.x} cy={m.y} r="14" fill="#fcd34d" opacity="0.18">
+                <animate attributeName="r" values="12;16;12" dur="3s" repeatCount="indefinite" />
+              </circle>
+              <circle cx={m.x} cy={m.y} r="7" fill="#fcd34d" style={{ filter: "drop-shadow(0 0 7px #fcd34d)" }} />
+            </g>
+          ) : (
+            <g>
+              <circle cx={m.x} cy={m.y} r="10" fill="#38bdf8" opacity="0.14" />
+              <circle cx={m.x} cy={m.y} r="7" fill="#cbd5e1" style={{ filter: "drop-shadow(0 0 6px #38bdf8)" }} />
+              <circle cx={m.x + 3} cy={m.y - 2} r="6" fill="#0d1320" />
+            </g>
+          )}
+        </svg>
+      </div>
+    </div>
+  );
+}
