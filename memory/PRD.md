@@ -165,7 +165,9 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
   - Tests: `tests/test_discovery.py` (unit) + `tests/test_discovery_endpoints.py` (HTTP) – 100% grün
 - [x] **Firmware-Update-Hinweise** – FERTIG 04.10.2026 (discovery.py `_annotate_firmware` + `LATEST_FIRMWARE`; Doku-Feld bekommt Badge current/outdated/unknown, Karte zeigt amber „FW-UPDATE"-Chip; Ahoy & Victron veraltet im Demo). Tests in test_discovery.py.
 - [x] **Phase 2: Dynamischer Plasma-Energiefluss** – FERTIG 04.10.2026 (EnergyFlow.jsx neu: gruppierte Knoten PV-Block/Akku/Netz/Haus mit lebendigen Emblemen – rotierende Plasma-Sonne, SoC-Ladering, Netz-Oszilloskop, Haus; Watt-abhängige Plasma-Ströme mit Photonen-Schwärmen; Knoten erscheinen/verschwinden je nach aktivem Gerät; Hover-Highlighting + Wert-Pills). Testing-Agent 100% (iteration_16).
-- [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung) – Firmware-Hinweise bereits erledigt
+- [x] **Fluss-Tooltip (Hover-Inspector)** – FERTIG 04.10.2026 (EnergyFlow.jsx `buildDetail`: Overlay-Panel beim Überfahren eines Knotens mit Spannung/Strom/SoC/Temperatur/Phasen je Knoten; Props shelly/ahoy/victron/trucki). Testing-Agent 100% (iteration_17).
+- [x] **Doku-Vergleich (Änderungserkennung)** – FERTIG 04.10.2026 (discovery.py `annotate_changes` + routes `_save_device_info` `changed_count`/`prev_detected_at`; DeviceDocPanel zeigt „N geändert"-Chip, Feld-Badge „geändert" + „vorher: X", sonst „unverändert seit letztem Scan"). Tests in test_discovery.py.
+- [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
 - [ ] Energiekosten (€/kWh) für Bezug/Einspeisung
