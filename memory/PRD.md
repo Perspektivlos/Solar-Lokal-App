@@ -154,7 +154,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Grafana-URL konfigurierbar** – FERTIG 07.06.2026 (config `grafana_url`, Eingabe auf Geräte-Seite, Verlauf-Link nutzt Config)
 - [x] **Alarm-Historie** mit Zeitstempel in Verlauf/Diagnose – FERTIG 08.06.2026 (MongoDB `alarm_events`, `/api/alarms/history`, `AlarmHistory.jsx`)
 - [x] **Grafana Auto-Provisioning** (Datasource + Dashboard per YAML) – FERTIG 08.06.2026 (`deploy/grafana/provisioning/` + `docker-compose.yml`)
-- [x] **Grafana eingebettet** (iframe) auf Verlauf-Seite – FERTIG 08.06.2026
+- [x] **Grafana eingebettet** (iframe) auf Verlauf-Seite – FERTIG 08.06.2026; ENTFERNT 04.10.2026 auf Nutzerwunsch (Link oben reicht), ungenutzte Imports/States bereinigt
 - [x] **Tages-/Monatsbilanz** (kWh-Balken PV/Bezug/Einspeisung/Eigenverbrauch) – FERTIG 08.06.2026 (`/api/energy/balance`, `EnergyBalance.jsx`)
 
 ### Offener Backlog (nächste Kandidaten)
