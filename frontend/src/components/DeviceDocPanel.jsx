@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Loader2, ScanLine, CheckCircle2, AlertTriangle, FlaskConical, ArrowUpCircle, HelpCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, Loader2, ScanLine, CheckCircle2, AlertTriangle, FlaskConical, ArrowUpCircle, HelpCircle, GitCompare } from "lucide-react";
 
 const STATUS_META = {
   demo: { label: "Demo", cls: "text-yellow-300", Icon: FlaskConical },
@@ -26,10 +26,7 @@ const FwBadge = ({ status, latest, hint, testid }) => {
   if (!m) return null;
   const text = status === "outdated" ? (hint || `Update verfügbar → v${latest}`) : m.label;
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-mono text-[9px] uppercase tracking-[0.12em] ${m.cls}`}
-      data-testid={testid}
-    >
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-mono text-[9px] uppercase tracking-[0.12em] ${m.cls}`} data-testid={testid}>
       <m.Icon size={11} /> {text}
     </span>
   );
@@ -40,8 +37,9 @@ export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscove
   const meta = STATUS_META[status];
   const fields = info?.fields || [];
   const hasData = fields.length > 0;
-  const fwStatus = info?.firmware?.status;
-  const fwOutdated = fwStatus === "outdated";
+  const fwOutdated = info?.firmware?.status === "outdated";
+  const changedCount = info?.changed_count || 0;
+  const hasPrevScan = !!info?.prev_detected_at;
 
   return (
     <div className="mt-4 border-t border-white/10 pt-3" data-testid={`doc-panel-${deviceKey}`}>
@@ -55,6 +53,14 @@ export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscove
           Typenschild / Doku
         </button>
         <div className="flex items-center gap-3 flex-wrap">
+          {changedCount > 0 && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-amber-400/40 bg-amber-400/10 text-amber-300 font-mono text-[9px] uppercase tracking-[0.12em]"
+              data-testid={`doc-changed-chip-${deviceKey}`}
+            >
+              <GitCompare size={11} /> {changedCount} geändert
+            </span>
+          )}
           {fwOutdated && (
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-amber-400/40 bg-amber-400/10 text-amber-300 font-mono text-[9px] uppercase tracking-[0.12em]"
@@ -64,10 +70,7 @@ export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscove
             </span>
           )}
           {meta && (
-            <span
-              className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] ${meta.cls}`}
-              data-testid={`doc-status-${deviceKey}`}
-            >
+            <span className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.16em] ${meta.cls}`} data-testid={`doc-status-${deviceKey}`}>
               <meta.Icon size={12} /> {meta.label}
             </span>
           )}
@@ -86,6 +89,11 @@ export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscove
       {info?.detected_at && (
         <div className="mt-1.5 font-mono text-[10px] text-white/40" data-testid={`doc-time-${deviceKey}`}>
           zuletzt erkannt: {fmtTime(info.detected_at)}
+          {changedCount > 0
+            ? ` · ${changedCount} Wert(e) geändert`
+            : hasPrevScan
+            ? " · unverändert seit letztem Scan"
+            : ""}
         </div>
       )}
       {status === "error" && info?.error && (
@@ -101,12 +109,21 @@ export const DeviceDocPanel = ({ deviceKey, accent, info, discovering, onDiscove
               {fields.map((f) => (
                 <div key={f.label} className="flex flex-col">
                   <dt className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/40">{f.label}</dt>
-                  <dd className="font-mono text-sm text-white/90 break-all flex items-center gap-2 flex-wrap">
-                    {f.value}
-                    {f.fw_status && (
-                      <FwBadge status={f.fw_status} latest={f.fw_latest} hint={f.fw_hint} testid={`doc-fw-${deviceKey}`} />
+                  <dd className="font-mono text-sm break-all flex items-center gap-2 flex-wrap">
+                    <span className={f.changed ? "text-amber-300" : "text-white/90"}>{f.value}</span>
+                    {f.fw_status && <FwBadge status={f.fw_status} latest={f.fw_latest} hint={f.fw_hint} testid={`doc-fw-${deviceKey}`} />}
+                    {f.changed && (
+                      <span
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-amber-400/40 bg-amber-400/10 text-amber-300 font-mono text-[9px] uppercase tracking-[0.1em]"
+                        data-testid={`doc-changed-${deviceKey}`}
+                      >
+                        <GitCompare size={10} /> geändert
+                      </span>
                     )}
                   </dd>
+                  {f.changed && f.prev != null && (
+                    <span className="font-mono text-[9px] text-white/35 mt-0.5">vorher: {f.prev}</span>
+                  )}
                 </div>
               ))}
             </dl>

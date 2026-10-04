@@ -257,6 +257,19 @@ async def live_discover_victron(ip: str, cfg_victron: Dict[str, Any]) -> Optiona
     ]
 
 
+def annotate_changes(fields: List[Dict[str, str]], prev_fields: Dict[str, str]) -> int:
+    """Markiert Felder, deren Wert sich gegenüber dem letzten Scan (Label→Wert)
+    geändert hat (setzt ``changed`` + ``prev``). Gibt die Anzahl Änderungen zurück."""
+    changed = 0
+    for f in fields:
+        pv = prev_fields.get(f["label"])
+        if pv is not None and pv != f["value"]:
+            f["changed"] = True
+            f["prev"] = pv
+            changed += 1
+    return changed
+
+
 # ---------- Orchestrator ----------
 
 async def discover_device(cfg: Dict[str, Any], key: str) -> Dict[str, Any]:

@@ -24,7 +24,7 @@ from server import (
 )
 from collectors import collect_live
 from alarms import evaluate_alarms, summarize_alarms, merge_thresholds
-from discovery import discover_device, DEVICE_LABELS
+from discovery import discover_device, DEVICE_LABELS, annotate_changes
 
 api_router = APIRouter(prefix="/api")
 
@@ -158,8 +158,8 @@ async def _save_device_info(result: Dict[str, Any]) -> Dict[str, Any]:
     """Persistiert das Erkennungs-Ergebnis als Doku. Bei Fehlern bleiben die
     zuletzt erfolgreich erkannten Kenndaten erhalten (Plan: auch offline sichtbar)."""
     key = result["device"]
+    existing = await db.device_info.find_one({"_id": key}) or {}
     if result["status"] == "error":
-        existing = await db.device_info.find_one({"_id": key}) or {}
         doc = {
             "device": key,
             "device_label": result["device_label"],
@@ -170,8 +170,12 @@ async def _save_device_info(result: Dict[str, Any]) -> Dict[str, Any]:
             "fields": existing.get("fields", []),
             "firmware": existing.get("firmware"),
             "detected_at": existing.get("detected_at"),
+            "changed_count": 0,
+            "prev_detected_at": existing.get("prev_detected_at"),
         }
     else:
+        prev_fields = {f["label"]: f["value"] for f in (existing.get("fields") or [])}
+        changed = annotate_changes(result["fields"], prev_fields)
         doc = {
             "device": key,
             "device_label": result["device_label"],
@@ -182,6 +186,8 @@ async def _save_device_info(result: Dict[str, Any]) -> Dict[str, Any]:
             "ip": result.get("ip"),
             "detected_at": result["detected_at"],
             "last_attempt_at": result["detected_at"],
+            "changed_count": changed,
+            "prev_detected_at": existing.get("detected_at"),
         }
     await db.device_info.update_one({"_id": key}, {"$set": doc}, upsert=True)
     return doc

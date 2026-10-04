@@ -133,7 +133,7 @@ function NodeCard({ node, dim, onHover }) {
   const tx = left + 66;
   return (
     <g data-testid={testid}
-       onMouseEnter={() => onHover(node.key)} onMouseLeave={() => onHover(null)}
+       onMouseEnter={() => onHover(node.key)} onMouseLeave={() => onHover(null)} onClick={() => onHover(node.key)}
        style={{ opacity: dim ? 0.3 : 1, transition: "opacity 0.25s", cursor: "pointer" }}>
       {active && (
         <rect x={left - 2} y={top - 2} width={NODE_W + 4} height={NODE_H + 4} rx="9" fill="none"
@@ -217,7 +217,11 @@ function ValuePill({ x, y, text, color }) {
 
 // ---------- Hauptkomponente ----------
 
-export default function EnergyFlow({ summary, trucki, devices }) {
+const avg = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) / a.length : null);
+const sumA = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) : null);
+const f1 = (x) => (x == null || isNaN(x) ? "n/a" : Math.round(x * 10) / 10);
+
+export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron }) {
   const [hover, setHover] = useState(null);
 
   const pv = summary?.pv_power || 0;
@@ -280,6 +284,48 @@ export default function EnergyFlow({ summary, trucki, devices }) {
     ? flows.filter((f) => f.active && [f.id, f.from, f.to].includes(hover))
     : [];
 
+  // Mini-Inspektor-Panel: zusätzliche Messwerte (Spannung/Strom/SoC) je Knoten
+  const isNodeHover = hover && !hover.includes("-");
+  const ahoyCh = ahoy?.channels || [];
+  const acV = avg(ahoyCh.map((c) => c.voltage));
+  const acI = sumA(ahoyCh.map((c) => c.current));
+  const mpptsArr = victron?.mppts || [];
+  const dcV = avg(mpptsArr.map((m) => m.pv_voltage));
+  const phasesArr = shelly?.phases || [];
+
+  const buildDetail = (key) => {
+    if (key === "pv") {
+      const rows = [{ l: "Gesamt", v: `${round(pv)} W` }, { l: "AC Hoymiles", v: `${round(pvAc)} W` }];
+      if (acV != null) rows.push({ l: "· Ø Spannung", v: `${f1(acV)} V` });
+      if (acI != null) rows.push({ l: "· Σ Strom", v: `${f1(acI)} A` });
+      rows.push({ l: "DC Victron", v: `${round(pvDc)} W` });
+      if (dcV != null) rows.push({ l: "· Ø PV-Spannung", v: `${f1(dcV)} V` });
+      return { title: "PV-Block", color: COLOR.pv, rows };
+    }
+    if (key === "grid") {
+      const rows = [{ l: "Σ Leistung", v: `${round(Math.abs(grid))} W` }, { l: "Status", v: gridLabel }];
+      phasesArr.forEach((p) => rows.push({ l: p.phase, v: `${f1(p.voltage)} V · ${f1(p.current)} A` }));
+      return { title: "Netz · Shelly 3EM", color: gridColor, rows };
+    }
+    if (key === "battery") {
+      const kind = charge > discharge ? "Laden" : discharge > 0 ? "Entladen" : "Leerlauf";
+      const rows = [{ l: "Ladezustand", v: `${round(soc)} %` }];
+      if (trucki?.battery_voltage != null) rows.push({ l: "Spannung", v: `${f1(trucki.battery_voltage)} V` });
+      rows.push({ l: "Leistung", v: `${round(Math.abs(battery))} W · ${kind}` });
+      if (trucki?.temperature != null) rows.push({ l: "Temperatur", v: `${round(trucki.temperature)} °C` });
+      rows.push({ l: "ZEPC", v: trucki?.zepc ? "EIN" : "AUS" });
+      return { title: "Akku · Trucki/SUN", color: COLOR.battery, rows };
+    }
+    const rows = [
+      { l: "Verbrauch", v: `${round(house)} W` },
+      { l: "aus PV (AC)", v: `${round(pvAc)} W` },
+      { l: "aus Akku", v: `${round(discharge)} W` },
+      { l: "aus Netz", v: `${round(Math.max(0, grid))} W` },
+    ];
+    return { title: "Haus", color: COLOR.house, rows };
+  };
+  const detail = isNodeHover ? buildDetail(hover) : null;
+
   return (
     <div className="glass-strong h-full flex flex-col">
       <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
@@ -294,7 +340,25 @@ export default function EnergyFlow({ summary, trucki, devices }) {
           </span>
         </div>
       </div>
-      <div className="p-4 flex-1 flex items-center">
+      <div className="p-4 flex-1 flex items-center relative">
+        {detail && (
+          <div className="absolute top-3 right-3 z-10 w-[210px] pointer-events-none" data-testid="flow-inspector">
+            <div className="glass-strong rounded-md border px-3 py-2.5" style={{ borderColor: `${detail.color}66`, boxShadow: `0 0 16px ${detail.color}22` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full" style={{ background: detail.color, boxShadow: `0 0 6px ${detail.color}` }} />
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/80" data-testid="flow-inspector-title">{detail.title}</span>
+              </div>
+              <dl className="space-y-1">
+                {detail.rows.map((r, i) => (
+                  <div key={i} className="flex items-baseline justify-between gap-3">
+                    <dt className="font-mono text-[10px] text-white/45">{r.l}</dt>
+                    <dd className="font-mono text-[11px] text-white/90 text-right">{r.v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        )}
         <svg viewBox="0 0 900 300" className="w-full" data-testid="energy-flow-svg" style={{ maxHeight: 520 }}>
           <defs>
             <pattern id="bggrid" width="40" height="40" patternUnits="userSpaceOnUse">

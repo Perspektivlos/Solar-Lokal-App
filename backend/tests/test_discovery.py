@@ -72,6 +72,26 @@ def test_version_parsing():
     assert discovery._cmp_versions((1, 4, 4), (1, 4, 4)) == 0
 
 
+def test_annotate_changes():
+    fields = [
+        {"label": "Firmware-Version", "value": "0.8.150"},
+        {"label": "Seriennummer", "value": "114182920147"},
+    ]
+    prev = {"Firmware-Version": "0.8.145", "Seriennummer": "114182920147"}
+    changed = discovery.annotate_changes(fields, prev)
+    assert changed == 1
+    fw = next(f for f in fields if f["label"] == "Firmware-Version")
+    assert fw["changed"] is True and fw["prev"] == "0.8.145"
+    ser = next(f for f in fields if f["label"] == "Seriennummer")
+    assert "changed" not in ser
+
+
+def test_annotate_changes_no_prev():
+    fields = [{"label": "Firmware-Version", "value": "1.0.0"}]
+    assert discovery.annotate_changes(fields, {}) == 0
+    assert "changed" not in fields[0]
+
+
 def test_live_unreachable_returns_error():
     cfg = {"demo_mode": False, "devices": {"shelly": {"ip": "10.255.255.1", "enabled": True}}}
     r = asyncio.run(discovery.discover_device(cfg, "shelly"))
