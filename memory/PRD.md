@@ -163,8 +163,9 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
   - Endpoints: `GET /api/devices/info`, `POST /api/devices/{key}/discover`, `POST /api/devices/discover-all`
   - Frontend: aufklappbare „Typenschild/Doku"-Karten auf Geräte-Seite, „Erkennen" + „Alle erkennen", Status-Badge (Demo/Erkannt/Fehlgeschlagen) + „zuletzt erkannt"
   - Tests: `tests/test_discovery.py` (unit) + `tests/test_discovery_endpoints.py` (HTTP) – 100% grün
-- [ ] **Phase 2: Dynamischer Energiefluss** (gruppierte Knoten PV/Akku/Netz/Haus, dynamisch je aktiven Geräten, Plasma/Laser-Ströme Watt-abhängig, Hover-Interaktivität) – NÄCHSTE PHASE (nach Freigabe)
-- [ ] **Phase 3: Feinschliff** (Firmware-Veraltet-Hinweise, Animations-Politur, Mobile-Responsive)
+- [x] **Firmware-Update-Hinweise** – FERTIG 04.10.2026 (discovery.py `_annotate_firmware` + `LATEST_FIRMWARE`; Doku-Feld bekommt Badge current/outdated/unknown, Karte zeigt amber „FW-UPDATE"-Chip; Ahoy & Victron veraltet im Demo). Tests in test_discovery.py.
+- [x] **Phase 2: Dynamischer Plasma-Energiefluss** – FERTIG 04.10.2026 (EnergyFlow.jsx neu: gruppierte Knoten PV-Block/Akku/Netz/Haus mit lebendigen Emblemen – rotierende Plasma-Sonne, SoC-Ladering, Netz-Oszilloskop, Haus; Watt-abhängige Plasma-Ströme mit Photonen-Schwärmen; Knoten erscheinen/verschwinden je nach aktivem Gerät; Hover-Highlighting + Wert-Pills). Testing-Agent 100% (iteration_16).
+- [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung) – Firmware-Hinweise bereits erledigt
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
 - [ ] Energiekosten (€/kWh) für Bezug/Einspeisung
