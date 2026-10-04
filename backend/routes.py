@@ -24,6 +24,7 @@ from server import (
 )
 from collectors import collect_live
 from alarms import evaluate_alarms, summarize_alarms, merge_thresholds
+from discovery import discover_device, DEVICE_LABELS
 
 api_router = APIRouter(prefix="/api")
 
@@ -149,6 +150,64 @@ async def cfg_put(update: ConfigUpdate) -> Dict[str, Any]:
     if integration_keys & set(payload.keys()):
         await restart_integrations()
     return current
+
+
+# ---------- Geräte-Erkennung / Anlagendokumentation ----------
+
+async def _save_device_info(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Persistiert das Erkennungs-Ergebnis als Doku. Bei Fehlern bleiben die
+    zuletzt erfolgreich erkannten Kenndaten erhalten (Plan: auch offline sichtbar)."""
+    key = result["device"]
+    if result["status"] == "error":
+        existing = await db.device_info.find_one({"_id": key}) or {}
+        doc = {
+            "device": key,
+            "device_label": result["device_label"],
+            "status": "error",
+            "error": result.get("error"),
+            "ip": result.get("ip"),
+            "last_attempt_at": result["detected_at"],
+            "fields": existing.get("fields", []),
+            "detected_at": existing.get("detected_at"),
+        }
+    else:
+        doc = {
+            "device": key,
+            "device_label": result["device_label"],
+            "status": result["status"],
+            "error": None,
+            "fields": result["fields"],
+            "ip": result.get("ip"),
+            "detected_at": result["detected_at"],
+            "last_attempt_at": result["detected_at"],
+        }
+    await db.device_info.update_one({"_id": key}, {"$set": doc}, upsert=True)
+    return doc
+
+
+@api_router.get("/devices/info")
+async def devices_info() -> Dict[str, Any]:
+    cur = db.device_info.find({}, {"_id": 0})
+    rows = await cur.to_list(50)
+    return {"devices": rows}
+
+
+@api_router.post("/devices/discover-all")
+async def devices_discover_all() -> Dict[str, Any]:
+    cfg = await get_config()
+    keys = list(DEVICE_LABELS.keys())
+    results = await asyncio.gather(*[discover_device(cfg, k) for k in keys])
+    docs = [await _save_device_info(r) for r in results]
+    return {"devices": docs}
+
+
+@api_router.post("/devices/{key}/discover")
+async def devices_discover(key: str) -> Dict[str, Any]:
+    if key not in DEVICE_LABELS:
+        raise HTTPException(404, f"Unbekanntes Gerät: {key}")
+    cfg = await get_config()
+    result = await discover_device(cfg, key)
+    return await _save_device_info(result)
 
 
 @api_router.get("/history")

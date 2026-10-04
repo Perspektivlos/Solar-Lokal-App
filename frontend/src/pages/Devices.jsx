@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { getConfig, putConfig } from "../lib/api";
+import { getConfig, putConfig, getDeviceInfo, discoverDevice, discoverAll } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import AlarmSettings from "../components/AlarmSettings";
+import DeviceDocPanel from "../components/DeviceDocPanel";
 import { Switch } from "../components/ui/switch";
+import { ScanLine, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const DEVICES = [
@@ -42,8 +44,19 @@ const INTRO_SECTIONS = [
 export default function Devices() {
   const [cfg, setCfg] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [info, setInfo] = useState({});
+  const [expanded, setExpanded] = useState({});
+  const [discovering, setDiscovering] = useState({});
+  const [discoveringAll, setDiscoveringAll] = useState(false);
 
   useEffect(() => { getConfig().then(setCfg); }, []);
+  useEffect(() => {
+    getDeviceInfo().then((d) => {
+      const map = {};
+      (d.devices || []).forEach((x) => { map[x.device] = x; });
+      setInfo(map);
+    }).catch(() => {});
+  }, []);
 
   if (!cfg) return <div className="font-mono text-sm text-white/55">Lade Konfiguration...</div>;
 
@@ -64,6 +77,40 @@ export default function Devices() {
     }
   };
 
+  const runDiscover = async (key) => {
+    setDiscovering((s) => ({ ...s, [key]: true }));
+    try {
+      const doc = await discoverDevice(key);
+      setInfo((m) => ({ ...m, [key]: doc }));
+      setExpanded((e) => ({ ...e, [key]: true }));
+      if (doc.status === "error") toast.error(`${doc.device_label}: ${doc.error}`);
+      else toast.success(`${doc.device_label} erkannt${doc.status === "demo" ? " (Demo)" : ""}`);
+    } catch (e) {
+      toast.error("Erkennung fehlgeschlagen: " + e.message);
+    } finally {
+      setDiscovering((s) => ({ ...s, [key]: false }));
+    }
+  };
+
+  const runDiscoverAll = async () => {
+    setDiscoveringAll(true);
+    try {
+      const d = await discoverAll();
+      setInfo((m) => {
+        const map = { ...m };
+        (d.devices || []).forEach((x) => { map[x.device] = x; });
+        return map;
+      });
+      const nErr = (d.devices || []).filter((x) => x.status === "error").length;
+      if (nErr) toast.warning(`Erkennung abgeschlossen · ${nErr} Gerät(e) nicht erreichbar`);
+      else toast.success("Alle Geräte erkannt");
+    } catch (e) {
+      toast.error("Erkennung fehlgeschlagen: " + e.message);
+    } finally {
+      setDiscoveringAll(false);
+    }
+  };
+
   return (
     <div className="space-y-6" data-testid="devices-page">
       <IntroCard title="Geräte" subtitle="IP-Adressen, Aktiv-Status und Demo-Modus" sections={INTRO_SECTIONS} accent="#34D399" testid="intro-devices" />
@@ -73,12 +120,20 @@ export default function Devices() {
           <span className="w-1.5 h-7 rounded-sm" style={{ background: "#34D399", boxShadow: "0 0 10px #34D39988" }} />
           Geräte
         </h1>
-        <button onClick={save} disabled={saving}
-          className="px-4 py-2 font-mono text-xs uppercase tracking-[0.14em] rounded text-slate-900 font-semibold disabled:opacity-50"
-          style={{ background: "linear-gradient(180deg, #6ee7b7, #10B981)", boxShadow: "0 0 12px rgba(16,185,129,0.4)" }}
-          data-testid="btn-save-devices">
-          {saving ? "Speichern..." : "Speichern"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={runDiscoverAll} disabled={discoveringAll}
+            className="inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.14em] text-white/80 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors disabled:opacity-50"
+            data-testid="btn-discover-all">
+            {discoveringAll ? <Loader2 size={14} className="animate-spin" /> : <ScanLine size={14} className="text-cyan-400" />}
+            {discoveringAll ? "Erkenne…" : "Alle erkennen"}
+          </button>
+          <button onClick={save} disabled={saving}
+            className="px-4 py-2 font-mono text-xs uppercase tracking-[0.14em] rounded text-slate-900 font-semibold disabled:opacity-50"
+            style={{ background: "linear-gradient(180deg, #6ee7b7, #10B981)", boxShadow: "0 0 12px rgba(16,185,129,0.4)" }}
+            data-testid="btn-save-devices">
+            {saving ? "Speichern..." : "Speichern"}
+          </button>
+        </div>
       </div>
 
       {/* Demo Mode */}
@@ -118,6 +173,15 @@ export default function Devices() {
                        className="glass-input w-32 px-3 py-2 font-mono text-sm mt-1" data-testid="input-ahoy-id" />
               </div>
             )}
+            <DeviceDocPanel
+              deviceKey={d.key}
+              accent={d.accent}
+              info={info[d.key]}
+              discovering={!!discovering[d.key]}
+              expanded={!!expanded[d.key]}
+              onToggle={() => setExpanded((e) => ({ ...e, [d.key]: !e[d.key] }))}
+              onDiscover={() => runDiscover(d.key)}
+            />
           </div>
         ))}
       </div>
