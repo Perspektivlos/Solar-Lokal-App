@@ -1,0 +1,21 @@
+{
+  "summary": "Phase 1 Device Discovery / Anlagen-Doku fully verified. Backend: 8 new HTTP-level pytest cases cover POST /api/devices/discover-all (4 devices, field counts 5/5/3/3, status=demo, non-empty values), POST /api/devices/{key}/discover for each of shelly/ahoy/trucki/victron (correct labels incl. Modellkennung/MAC-Adresse/Geräte-ID/Phasen-Profil/Firmware-Version for shelly, detected_at ISO ts), 404 on unknown key, GET /api/devices/info returning persisted docs with status=demo+detected_at+fields. All 8 tests PASS. Frontend (/geraete): All 4 device cards render with data-testid device-row-<key>, doc-toggle-<key>, btn-discover-<key>, plus header btn-discover-all. Clicking Erkennen on Shelly auto-expands panel, shows Demo status badge, 'zuletzt erkannt' timestamp, and renders Modellkennung/MAC-Adresse etc. Toggle on Ahoy expands then collapses doc-fields-ahoy. 'Alle erkennen' populates status/time for all 4 cards. After full page reload, GET /api/devices/info rehydrates status badges and timestamps for all devices. No console errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_discovery_endpoints.py",
+    "/app/test_reports/pytest/discovery_endpoints.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes._save_device_info: on status=='error' the overwritten doc intentionally omits 'ip' from existing (reset to current attempt ip) and preserves fields/detected_at – matches spec of 'last-known values retained'. Behavior cannot be exercised in cloud (demo always wins), already acknowledged in request.",
+    "discovery.discover_device returns status='error' for unknown key but routes raises 404 before reaching it – unknown-key branch in orchestrator is effectively dead code (defensive, acceptable).",
+    "Devices.jsx DEVICES array is defined inside module scope (good), useEffects use empty deps – initial load correct; no refetch after save, but config save does not touch discovery data so acceptable."
+  ],
+  "updated_files": ["/app/backend/tests/test_discovery_endpoints.py"],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "100%"},
+  "seed_data_creation": "device_info collection populated via discover-all during tests (demo data, idempotent upserts).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Phase 1 discovery feature verified end-to-end. New test file: /app/backend/tests/test_discovery_endpoints.py (HTTP). Pre-existing /app/backend/tests/test_discovery.py (unit) also still passes. Demo_mode remained True throughout. Live-mode error-retention path is untestable in cloud and was skipped per request."
+}

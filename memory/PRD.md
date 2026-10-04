@@ -158,6 +158,13 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Tages-/Monatsbilanz** (kWh-Balken PV/Bezug/Einspeisung/Eigenverbrauch) – FERTIG 08.06.2026 (`/api/energy/balance`, `EnergyBalance.jsx`)
 
 ### Offener Backlog (nächste Kandidaten)
+- [x] **Phase 1: Geräte-Erkennung & Anlagendokumentation** – FERTIG 04.10.2026
+  - Backend `discovery.py` (Mock + Live best-effort je Gerät), Collection `device_info` (persistiert, letzte Werte bleiben bei Fehler erhalten)
+  - Endpoints: `GET /api/devices/info`, `POST /api/devices/{key}/discover`, `POST /api/devices/discover-all`
+  - Frontend: aufklappbare „Typenschild/Doku"-Karten auf Geräte-Seite, „Erkennen" + „Alle erkennen", Status-Badge (Demo/Erkannt/Fehlgeschlagen) + „zuletzt erkannt"
+  - Tests: `tests/test_discovery.py` (unit) + `tests/test_discovery_endpoints.py` (HTTP) – 100% grün
+- [ ] **Phase 2: Dynamischer Energiefluss** (gruppierte Knoten PV/Akku/Netz/Haus, dynamisch je aktiven Geräten, Plasma/Laser-Ströme Watt-abhängig, Hover-Interaktivität) – NÄCHSTE PHASE (nach Freigabe)
+- [ ] **Phase 3: Feinschliff** (Firmware-Veraltet-Hinweise, Animations-Politur, Mobile-Responsive)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
 - [ ] Energiekosten (€/kWh) für Bezug/Einspeisung
