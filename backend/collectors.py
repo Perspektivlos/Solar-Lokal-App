@@ -125,6 +125,7 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     sunrise_dt, sunset_dt = st if st else (None, None)
     intensity = sun_intensity(now_dt, sunrise_dt, sunset_dt)
     civil = event_times(lat, lon, now_dt, -6.0)       # blaue Stunde / bürgerliche Dämmerung
+    astro = event_times(lat, lon, now_dt, -18.0)       # astronomische Dämmerung (Nacht)
     golden = event_times(lat, lon, now_dt, 6.0)        # goldene Stunde (Sonne bis 6°)
     _iso = lambda d: d.isoformat() if d else None
     sun_payload = {
@@ -132,6 +133,8 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         "sunset": _iso(sunset_dt),
         "civil_dawn": _iso(civil[0]) if civil else None,
         "civil_dusk": _iso(civil[1]) if civil else None,
+        "astro_dawn": _iso(astro[0]) if astro else None,
+        "astro_dusk": _iso(astro[1]) if astro else None,
         "golden_morning_end": _iso(golden[0]) if golden else None,
         "golden_evening_start": _iso(golden[1]) if golden else None,
     }

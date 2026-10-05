@@ -64,8 +64,11 @@ export default function SunTimeline({ timestamp, sun }) {
   const tOf = (iso) => (hasSun && iso ? (new Date(iso).getTime() - srMs) / (ssMs - srMs) : null);
   const tGM = tOf(sun?.golden_morning_end);
   const tGE = tOf(sun?.golden_evening_start);
-  const tDawn = tOf(sun?.civil_dawn);
-  const tDusk = tOf(sun?.civil_dusk);
+  // Dämmerungs-Tails unter dem Horizont (visuell begrenzt, damit sie nicht überlaufen)
+  const civilDawnT = sun?.civil_dawn ? Math.max(tOf(sun.civil_dawn), -0.06) : null;
+  const astroDawnT = sun?.astro_dawn ? Math.max(tOf(sun.astro_dawn), -0.12) : null;
+  const civilDuskT = sun?.civil_dusk ? Math.min(tOf(sun.civil_dusk), 1.06) : null;
+  const astroDuskT = sun?.astro_dusk ? Math.min(tOf(sun.astro_dusk), 1.12) : null;
 
   return (
     <div className="glass-strong" data-testid="sun-timeline">
@@ -77,7 +80,7 @@ export default function SunTimeline({ timestamp, sun }) {
       </div>
 
       <div className="px-4 py-3">
-        <svg viewBox="0 0 600 180" className="w-full" style={{ maxHeight: 240 }} data-testid="sun-timeline-svg">
+        <svg viewBox="0 0 600 205" className="w-full" style={{ maxHeight: 250 }} data-testid="sun-timeline-svg">
           <defs>
             <linearGradient id="sunarc" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#e8a13a" />
@@ -93,9 +96,12 @@ export default function SunTimeline({ timestamp, sun }) {
           {/* Bogen-Track */}
           <path d={`M 50 ${BASE} A ${RX} ${RY} 0 0 1 550 ${BASE}`} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
 
-          {/* Blaue Stunde (bürgerliche Dämmerung, unter dem Horizont) */}
-          {tDawn != null && <path d={arcSub(tDawn, 0)} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" opacity="0.8" style={{ filter: "drop-shadow(0 0 4px #3b82f6)" }} data-testid="blue-dawn" />}
-          {tDusk != null && <path d={arcSub(1, tDusk)} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" opacity="0.8" style={{ filter: "drop-shadow(0 0 4px #3b82f6)" }} data-testid="blue-dusk" />}
+          {/* Astronomische Dämmerung (Nacht, −18°) – dunkelste Zone, unter dem Horizont */}
+          {astroDawnT != null && <path d={arcSub(astroDawnT, civilDawnT ?? -0.06)} fill="none" stroke="#4338ca" strokeWidth="3" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #4338ca)" }} data-testid="astro-dawn" />}
+          {astroDuskT != null && <path d={arcSub(civilDuskT ?? 1.06, astroDuskT)} fill="none" stroke="#4338ca" strokeWidth="3" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #4338ca)" }} data-testid="astro-dusk" />}
+          {/* Blaue Stunde (bürgerliche Dämmerung, −6°) */}
+          {civilDawnT != null && <path d={arcSub(civilDawnT, 0)} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" opacity="0.85" style={{ filter: "drop-shadow(0 0 4px #3b82f6)" }} data-testid="blue-dawn" />}
+          {civilDuskT != null && <path d={arcSub(1, civilDuskT)} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" opacity="0.85" style={{ filter: "drop-shadow(0 0 4px #3b82f6)" }} data-testid="blue-dusk" />}
           {/* Goldene Stunde (knapp über Horizont, leicht außen) */}
           {tGM != null && <path d={arcSub(0, Math.min(1, tGM), 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #f59e0b)" }} data-testid="golden-morning" />}
           {tGE != null && <path d={arcSub(Math.max(0, tGE), 1, 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #f59e0b)" }} data-testid="golden-evening" />}
@@ -115,11 +121,9 @@ export default function SunTimeline({ timestamp, sun }) {
 
           {hourDots}
 
-          {/* Stundenmarken-Beschriftung (lokale Zeit) */}
-          <text x="50" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.75)" data-testid="sun-sunrise-label">{srLabel}</text>
-          <text x="50" y={BASE + 32} textAnchor="middle" fontSize="8" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)" letterSpacing="1">AUFGANG</text>
-          <text x="550" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(192,132,252,0.8)" data-testid="sun-sunset-label">{ssLabel}</text>
-          <text x="550" y={BASE + 32} textAnchor="middle" fontSize="8" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)" letterSpacing="1">UNTERGANG</text>
+          {/* Zeiten (lokal) – außerhalb der Dämmerungs-Tails */}
+          <text x="44" y="142" textAnchor="end" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.8)" data-testid="sun-sunrise-label">↑{srLabel}</text>
+          <text x="556" y="142" textAnchor="start" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(192,132,252,0.85)" data-testid="sun-sunset-label">{ssLabel}↓</text>
           <text x={CX} y="22" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)">{noonLabel}</text>
 
           {/* Zentrale Anzeige: Rest-Sonnenstunden */}
@@ -150,7 +154,10 @@ export default function SunTimeline({ timestamp, sun }) {
             </g>
           )}
         </svg>
-        <div className="flex items-center justify-center gap-6 pb-2 -mt-1" data-testid="sun-legend">
+        <div className="flex items-center justify-center gap-5 pb-2 -mt-1" data-testid="sun-legend">
+          <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-white/55">
+            <span className="w-2 h-2 rounded-full" style={{ background: "#4338ca", boxShadow: "0 0 5px #4338ca" }} /> Astronom. Nacht
+          </span>
           <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-white/55">
             <span className="w-2 h-2 rounded-full" style={{ background: "#3b82f6", boxShadow: "0 0 5px #3b82f6" }} /> Blaue Stunde
           </span>

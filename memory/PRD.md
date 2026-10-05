@@ -172,6 +172,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Saisonale Sonnenzeiten (Standort)** – FERTIG 05.10.2026 (`sun.py` NOAA-Sonnenaufgangsgleichung; Config `location` {lat,lon,name}; `/api/live` liefert `sun.sunrise/sunset` (UTC); Geräte-Seite Standort-Eingabe). Unit-Tests `test_sun.py` (4) grün; curl-Round-trip (DE/Tromsø/Madrid) verifiziert. Demo-PV-Kurve nutzt jetzt dieselben realen Zeiten.
 - [x] **Sonnenbogen-Füllung tagsüber** – FERTIG 05.10.2026 (SunTimeline amber `stroke-dasharray`-Fortschritt von Aufgang→aktueller Position; Zeiten lokal, Marker Sonne/Mond). Live verifiziert (Tag: gefüllter Bogen + aktiver PV-Block).
 - [x] **Dämmerungsphasen im Sonnenbogen (blaue/goldene Stunde)** – FERTIG 05.10.2026 (`sun.event_times` für −6°/+6°; Payload `civil_dawn/dusk`, `golden_morning_end/evening_start`; SunTimeline markiert blaue Tails unter Horizont + goldene Segmente knapp darüber, inkl. Legende). Zeiten geprüft, visuell verifiziert.
+- [x] **Astronomische Dämmerung (−18°) im Sonnenbogen** – FERTIG 05.10.2026 (`event_times(-18°)`; Payload `astro_dawn/astro_dusk`; SunTimeline zeigt dritte, dunkle Indigo-Zone unter der blauen Stunde; Tails visuell begrenzt; Legende mit 3 Phasen). Visuell verifiziert.
 - [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
