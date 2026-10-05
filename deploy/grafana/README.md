@@ -34,15 +34,35 @@ Datei `solar-scada-dashboard.json` in Grafana unter **Dashboards → New → Imp
 - **Bucket**: InfluxDB-Bucket (Default `solar`).
 - **Modus**: `live` (echte Daten) oder `demo` (simuliert). Der Poller taggt jeden Punkt mit `mode`.
 
-## Panels (ein gepflegtes Dashboard, 6 Reihen)
-- **Übersicht**: Leistungsfluss (PV/Haus/Netz/Akku), Autarkie, Eigenverbrauch, Akku-SoC.
-- **Netz · Shelly**: Phasenspannung & Phasenleistung (L1–L3).
-- **PV · Hoymiles & Victron**: Hoymiles-Kanäle, Victron-MPPT PV-Leistung.
-- **Speicher · Trucki**: Vbat/SoC, Setpoint/Target/Min/Max.
-- **Status · Alarme**: aktueller Status (OK/WARNUNG/ALARM) + Alarm-Verlauf (level 0/1/2).
-- **Netzbilanz & PV-Steuerung**: Netz Bezug vs. Einspeisung, Autarkie/Eigenverbrauch-Verlauf, Hoymiles Power-Limit, Victron Akku-Spannung je MPPT.
+## Panels (7 Reihen, 42 Panels · Design der App)
+Generiert aus `_generate_dashboard.py` (schema-konsistent, reproduzierbar) – bei Änderungen Skript anpassen und neu ausführen:
+```bash
+cd deploy/grafana && python3 _generate_dashboard.py   # schreibt beide JSON-Dateien identisch
+```
 
-> Beide Dateien (`solar-scada-dashboard.json` für Import, `provisioning/dashboards/json/solar-scada.json` für Auto-Provisioning) stammen aus **einer** Quelle und sind inhaltlich identisch.
+1. **Leistungsübersicht** – Leistungsfluss PV/Haus/Netz/Akku (Timeseries), Akku-SoC (**D3 Gauge**), KPI-Leiste (6× **Stat**: PV/Netz/Akku/Haus/Autarkie/Eigenverbrauch).
+2. **Effizienz & Netzbilanz** – Autarkie & Eigenverbrauch (2× **D3 Gauge** + Verlauf), Netz Bezug vs. Einspeisung (gestapelt), Hausversorgungs-Mix (Piechart).
+3. **Netz · Shelly Pro 3EM** – Phasen-Leistung/-Spannung/-Strom (L1–L3) + Leistungsfaktor.
+4. **PV · Hoymiles HM1500** – Kanal-Leistung/-Spannung, Kanal-Ertrag heute (Bargauge), Power-Limit (**D3 Gauge**), Gesamt-AC.
+5. **PV · Victron SmartSolar MPPT** – MPPT PV-Leistung/-Spannung, Ertrag heute (Bargauge), **MPPT-Ertrag · Pareto**, Akku-Spannung je MPPT.
+6. **Speicher · Trucki2Shelly** – Vbat & SoC, Steuerung (AC/Setpoint/Target/Min/Max), Ertrag heute/gesamt + Temperatur (Stat).
+7. **Status · Alarme** – Alarm-Status-Verlauf (State-Timeline OK/Warnung/Alarm), Kritisch-/Warn-Zähler (Stat).
+
+Design: Dark/SCADA, Neon-Farben (PV=Gelb `#FACC15`, PV-DC=Orange `#F59E0B`, Netz-Bezug=Rot, Einspeisung=Grün, Akku=Cyan `#06B6D4`, Haus=Silber). Variablen **Bucket** + **Modus** (live|demo) oben.
+
+### Genutzte Grafana-Plugins
+- **Stat** (Built-in) · **D3 Gauge** (`briangann-gauge-panel`) · **Pareto Chart** (`isaozler-paretochart-panel`)
+- Built-ins: Timeseries, Bargauge, Piechart, State-Timeline, Gauge.
+
+### Weitere installierte Plugins (optional ergänzbar)
+Diese Plugins sind installiert und können bei Bedarf eingehängt werden (Panel-`type` jeweils angegeben); da ihre Options-Schemata gerätespezifisch sind, bitte in Grafana final konfigurieren:
+- **SCADAvis Synoptic Panel** (`scadavis-synoptic-panel`) – Synoptik/Energiefluss-Mimik; eigenes SVG + Werte-Bindings. Ideal als zweites „Leistungsfluss"-Panel analog zur App.
+- **Flow** (`andrewbmchugh-flow-panel`) / **Solar Flow** – animierter Energiefluss auf Basis eines SVG.
+- **Arc Diagram** – Verteilungs-/Flussdarstellung (z. B. Erzeuger→Verbraucher).
+- **Gantt** (`marcusolsson-gantt-panel`) – Zeitbalken; sinnvoll sobald Alarm-Events mit Start/Ende als Tabelle vorliegen (aktuell liefert `alarms` nur den Level-Zeitverlauf → State-Timeline).
+- **Grafmaid** – Mermaid-Diagramme für statische Anlagen-Topologie.
+
+Panel hinzufügen: im Dashboard **Add → Visualization**, Typ wählen, Datasource *InfluxDB Solar*, Flux-Query im gleichen Stil wie die bestehenden Panels (`r._measurement`, `r._field`, `r.mode == "${mode}"`).
 
 ## InfluxDB-Measurements (vom Poller geschrieben)
 `solar` (inkl. `grid_import_w`/`grid_export_w`/`autarky_pct`/`self_consumption_pct`),
