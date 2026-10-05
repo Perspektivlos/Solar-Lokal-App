@@ -181,6 +181,9 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
   - Getestet (testing_agent iteration_21, 100 % / 5 Szenarien): kein Crash in Kompakt/Detail, Persistenz über In-App-Navigation, Mobile 390px→Kompakt ohne Overflow, Hover-Inspektor PV-Block AC/DC
   - Bekannt/harmlos: vorbestehende Recharts-Warnung width/height(-1) (verstecktes Sparkline-Container) – nicht blockierend
   - Feinschliff 06.06.2026: digitale Uhr (Neon-Chip) in die „Solar · Live"-Titelleiste verschoben (`dashboard-clock`), KPI-Sparklines feiner (non-scaling-stroke 1.25px), MPPT-Balken mit Tages-Peak-Marker (Reset bei Datumswechsel) + Inspektor-Zeile „Peak heute"
+  - Typografie/Readout 06.06.2026: **KPI-Werte** jetzt DSEG7-7-Segment-LCD in eingelassenen Panels (Geister-Ziffern, Neon-Glow) via `.font-dseg` (CDN: dseg@0.46.0, Family `DSEG7-Classic`); **Grundschrift** auf **Sora** umgestellt (body; SCADA-Labels bleiben Chakra Petch, Zahlen JetBrains/DSEG)
+  - **Verschattungs-Hinweis** 06.06.2026: MPPT-Knoten zeigt amber Warn-Dreieck + Inspektor-Hinweis, wenn ein String bei guter Produktion (>25 % Peak) >25 %-Punkte Auslastung hinter dem anderen liegt (mögliche Teilverschattung)
+  - **Vorschau-Konzept aufbewahrt**: `/kpi-preview` (Route `KpiPreview.jsx`) mit Schrift-Umschalter (DSEG7/Orbitron/Share Tech Mono/JetBrains) + allgemeinem Schriftvergleich (Space Grotesk/Sora/IBM Plex) – als wiederverwendbares Muster für künftige Design-Previews behalten
 - [x] **Energiefluss: 6 getrennte Geräte-Knoten** – FERTIG 06.06.2026
   - Statt aggregiertem „PV-Block" nun einzelne Knoten: MPPT 1, MPPT 2 (Victron DC), Hoymiles HM1500 (AC), Akku (Trucki/SUN), Netz (Shelly 3EM), Haus
   - DC-gekoppelte Topologie: MPPT1/2 → Akku, Akku → Haus, Hoymiles → Haus, Netz ↔ Haus; eigene Plasma-Flüsse + Watt-Pills je Pfad

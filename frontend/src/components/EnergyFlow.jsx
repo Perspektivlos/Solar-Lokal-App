@@ -140,7 +140,7 @@ function Emblem({ node, reduced }) {
 // ---------- Knoten-Karte ----------
 
 function NodeCard({ node, dim, reduced, onHover }) {
-  const { x, y, color, active, value, unit, label, sub, testid, badge, util, peakUtil } = node;
+  const { x, y, color, active, value, unit, label, sub, testid, badge, util, peakUtil, warn } = node;
   const left = x - NODE_W / 2;
   const top = y - NODE_H / 2;
   const right = left + NODE_W;
@@ -208,6 +208,16 @@ function NodeCard({ node, dim, reduced, onHover }) {
               style={active ? { filter: `drop-shadow(0 0 5px ${color})` } : undefined}>
         {active && !reduced && <animate attributeName="opacity" values="1;0.35;1" dur="1.6s" repeatCount="indefinite" />}
       </circle>
+      {/* Verschattungs-Warnung */}
+      {warn && (
+        <g transform={`translate(${right - 30}, ${y - 8})`} pointerEvents="none">
+          <title>Mögliche Teilverschattung</title>
+          <path d="M7 0 L14 12 L0 12 Z" fill="rgba(245,158,11,0.14)" stroke="#f59e0b" strokeWidth="1.3" strokeLinejoin="round" />
+          <rect x="6.1" y="3.8" width="1.8" height="4.4" rx="0.9" fill="#f59e0b" />
+          <circle cx="7" cy="10" r="1" fill="#f59e0b" />
+          {!reduced && <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite" />}
+        </g>
+      )}
     </g>
   );
 }
@@ -374,17 +384,23 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     ];
   } else {
     const MPPT_POS = [{ x: 135, y: 105 }, { x: 135, y: 325 }];
+    // Verschattungs-Heuristik: bei guter Produktion (ein String > 25% Peak) wird
+    // ein deutlich schwächerer String (>25 %-Punkte Auslastungs-Rückstand) markiert.
+    const mUtil = mppts.slice(0, 2).map((m, i) => { const pk = mpptPeak(i); return pk > 0 ? (m.pv_power || 0) / pk : 0; });
+    const maxU = mUtil.length ? Math.max(...mUtil) : 0;
     if (victronEnabled) {
       mppts.slice(0, 2).forEach((m, i) => {
         const w = m.pv_power || 0;
         const peak = mpptPeak(i);
         const curPeak = Math.max(peakRef.current.vals[i] || 0, w);
         peakRef.current.vals[i] = curPeak;
+        const warn = maxU > 0.25 && mUtil[i] < maxU - 0.25;
         nodes.push({
           key: `mppt${i + 1}`, x: MPPT_POS[i].x, y: MPPT_POS[i].y, color: COLOR.dc, active: w > 5, emblem: "sun",
           label: `MPPT ${i + 1}`, badge: "1-STR·DC", value: round(w), unit: "W", testid: `flow-mppt${i + 1}`,
           util: peak > 0 ? Math.max(0, Math.min(1, w / peak)) : null,
           peakUtil: peak > 0 && curPeak > w + 1 ? Math.max(0, Math.min(1, curPeak / peak)) : null,
+          warn,
           sub: w > 5 ? `${f1(m.pv_voltage)} V · ${peak ? Math.round((w / peak) * 100) + "%" : m.state || "–"}` : "inaktiv",
         });
       });
@@ -458,6 +474,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
         { l: "Auslastung", v: `${round(p)} / ${peak} Wp · ${pct} %` },
         { l: "Peak heute", v: `${round(dayPeak)} W · ${peakPct} %` },
       ];
+      if (nodes.find((n) => n.key === key)?.warn) rows.push({ l: "Hinweis", v: "⚠ Mögliche Teilverschattung" });
       return { title: m.name || key.toUpperCase(), badge: "VENUS-OS", color: COLOR.dc, rows };
     }
     if (key === "hoymiles") {

@@ -2,6 +2,9 @@ import { COLOR, formatNum, Spark } from "./solar-ui";
 import { exportNowW, isExporting } from "../lib/power";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
+// Ziffern durch 8 ersetzen → „Geister-Segmente" hinter dem LCD-Wert.
+const ghostDigits = (val) => String(val).replace(/[0-9]/g, "8");
+
 // Min/Ø/Max der Sparkline-Datenreihe (letzte 15 Min) berechnen.
 function sparkStats(values) {
   if (!values || values.length < 2) return null;
@@ -33,8 +36,12 @@ export default function KpiStrip({ today, summary, trail }) {
       <span className="absolute top-0 left-0 right-0 h-[2px] opacity-90 pointer-events-none" style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)`, boxShadow: `0 0 12px ${m.accent}, 0 1px 6px ${m.accent}aa` }} />
       <span className="absolute top-[2px] left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, rgba(226,232,240,0.28), transparent 68%)" }} />
       <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{m.label}</div>
-      <div className={`font-mono text-2xl lg:text-3xl font-semibold tracking-tight leading-none mt-1.5 ${m.color}`}>
-        {m.value}<span className="text-sm ml-1 text-white/45 font-normal">{m.unit}</span>
+      <div className="relative mt-2 rounded-md px-2.5 py-2 overflow-hidden" style={{ background: "rgba(2,6,14,0.72)", border: "1px solid rgba(148,163,184,0.09)", boxShadow: "inset 0 2px 12px rgba(0,0,0,0.75)" }}>
+        <div className="relative leading-none" style={{ height: "1.95rem" }}>
+          <span className="font-dseg absolute inset-0 text-[1.9rem] leading-none select-none" style={{ color: m.accent, opacity: 0.06 }} aria-hidden>{ghostDigits(m.value)}</span>
+          <span className={`font-dseg relative text-[1.9rem] leading-none ${m.color}`}>{m.value}</span>
+          <span className="font-mono text-xs ml-1.5 text-white/40 align-top">{m.unit}</span>
+        </div>
       </div>
       {m.spark && m.spark.length > 1 && <div className="mt-2"><Spark values={m.spark} color={m.sparkColor} height={20} /></div>}
     </div>
