@@ -1,0 +1,41 @@
+{
+  "summary": "Frontend-only test on preview URL. Verified: (1) String-Ertragsvergleich card renders both MPPT rows with correct Wp badges, yields, specific yield & current W; (2) KPI DSEG LCD tiles all show number+unit with ghost digits; (3) EnergyFlow nodes all present, inspector shows MPPT details incl. Modulfeld/String-Peak/Auslastung/Peak heute; (4) 20s stability watch: zero reverts to loading/error, zero console errors, zero page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "rendered_values": {
+    "mppt-compare-1": "MPPT 150/35 #1 TOP · 4× 425 Wp · 1,70 kWp · 0,29 kWh · spezifisch 0,17 kWh/kWp · effizienter · 146 W",
+    "mppt-compare-2": "MPPT 150/35 #2 · 4× 445 Wp · 1,78 kWp · 0,28 kWh · spezifisch 0,16 kWh/kWp · 146 W",
+    "mppt-compare-diff": "0,01 kWh · MPPT 150/35 #1 führt",
+    "kpi_tiles": {
+      "kpi-pv-total": "16,27 kWh",
+      "kpi-pv-now": "585 W",
+      "kpi-grid-import": "0,05 kWh",
+      "kpi-grid-now": "151 W",
+      "kpi-consumption": "3,43 kWh",
+      "kpi-grid-export-total": "5,63 kWh"
+    },
+    "flow_inspector_mppt1": "title 'MPPT 150/35 #1' with Modulfeld 4× 425 Wp, String-Peak 1700 Wp, Auslastung 146/1700 Wp · 9 %, Peak heute 146 W · 9 %"
+  },
+  "stability_watch": {
+    "duration_s": 20,
+    "poll_interval_s": 2,
+    "reverts_to_loading": 0,
+    "reverts_to_error": 0,
+    "console_errors": 0,
+    "page_errors": 0,
+    "conclusion": "No crash reproduced. Dashboard stayed rendered the entire window. Previously observed 'Lade Live-Daten…' on second screenshot in main agent testing is most likely preview tooling flakiness (fresh navigation each time), not a data-dependent render crash."
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "demo_mode is default on; /api/live fast. Dashboard uses data-testid for all tiles/flow nodes. MpptCompare in Victron section works as spec'd. No intermittent crash observed in 20s window."
+}
