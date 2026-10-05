@@ -8,6 +8,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Activity } from "lucide-react";
 import { useMotion } from "../lib/motion";
+import { MPPT_ARRAY, mpptPeakW as mpptPeak } from "../lib/mppt";
 
 const COLOR = {
   pv: "#FACC15",        // Hoymiles (AC-Solar)
@@ -20,14 +21,6 @@ const COLOR = {
 
 const NODE_W = 182;
 const NODE_H = 82;
-
-// Physische PV-Konfiguration je Victron-MPPT (vom Nutzer angegeben):
-// MPPT 1 = 4× 425 Wp, MPPT 2 = 4× 445 Wp (je 1 String).
-const MPPT_ARRAY = [
-  { panels: 4, wp: 425 },
-  { panels: 4, wp: 445 },
-];
-const mpptPeak = (i) => (MPPT_ARRAY[i] ? MPPT_ARRAY[i].panels * MPPT_ARRAY[i].wp : 0);
 
 const round = (w) => Math.round(w || 0);
 
