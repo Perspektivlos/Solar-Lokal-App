@@ -21,6 +21,14 @@ const COLOR = {
 const NODE_W = 182;
 const NODE_H = 82;
 
+// Physische PV-Konfiguration je Victron-MPPT (vom Nutzer angegeben):
+// MPPT 1 = 4× 425 Wp, MPPT 2 = 4× 445 Wp (je 1 String).
+const MPPT_ARRAY = [
+  { panels: 4, wp: 425 },
+  { panels: 4, wp: 445 },
+];
+const mpptPeak = (i) => (MPPT_ARRAY[i] ? MPPT_ARRAY[i].panels * MPPT_ARRAY[i].wp : 0);
+
 const round = (w) => Math.round(w || 0);
 
 // Fluss-Dauer aus Leistung: viel Watt -> schneller. 0W≈2.4s … ≥3000W≈0.6s.
@@ -132,7 +140,7 @@ function Emblem({ node, reduced }) {
 // ---------- Knoten-Karte ----------
 
 function NodeCard({ node, dim, reduced, onHover }) {
-  const { x, y, color, active, value, unit, label, sub, testid, badge } = node;
+  const { x, y, color, active, value, unit, label, sub, testid, badge, util } = node;
   const left = x - NODE_W / 2;
   const top = y - NODE_H / 2;
   const right = left + NODE_W;
@@ -181,6 +189,14 @@ function NodeCard({ node, dim, reduced, onHover }) {
         <text x={tx} y={top + NODE_H - 12} fontSize="9.5" fontFamily="JetBrains Mono" fill="rgba(203,213,225,0.58)">
           {sub}
         </text>
+      )}
+      {/* String-Auslastungsbalken (nur MPPT) */}
+      {util != null && (
+        <g pointerEvents="none">
+          <rect x={tx} y={y + 16} width={right - 12 - tx} height="3" rx="1.5" fill="rgba(255,255,255,0.12)" />
+          <rect x={tx} y={y + 16} width={(right - 12 - tx) * util} height="3" rx="1.5" fill={color} opacity="0.95"
+                style={active ? { filter: `drop-shadow(0 0 4px ${color})` } : undefined} />
+        </g>
       )}
       {/* Status-Beacon */}
       <circle cx={right - 12} cy={bottom - 12} r="2.6" fill={active ? color : "rgba(148,163,184,0.4)"}
@@ -351,10 +367,12 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     if (victronEnabled) {
       mppts.slice(0, 2).forEach((m, i) => {
         const w = m.pv_power || 0;
+        const peak = mpptPeak(i);
         nodes.push({
           key: `mppt${i + 1}`, x: MPPT_POS[i].x, y: MPPT_POS[i].y, color: COLOR.dc, active: w > 5, emblem: "sun",
           label: `MPPT ${i + 1}`, badge: "1-STR·DC", value: round(w), unit: "W", testid: `flow-mppt${i + 1}`,
-          sub: w > 5 ? `${f1(m.pv_voltage)} V · ${m.state || "–"}` : "inaktiv",
+          util: peak > 0 ? Math.max(0, Math.min(1, w / peak)) : null,
+          sub: w > 5 ? `${f1(m.pv_voltage)} V · ${peak ? Math.round((w / peak) * 100) + "%" : m.state || "–"}` : "inaktiv",
         });
       });
     }
@@ -410,6 +428,9 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       const p = m.pv_power || 0;
       const u = m.pv_voltage || 0;
       const cur = u > 0 ? p / u : 0;
+      const cfg = MPPT_ARRAY[idx] || { panels: 4, wp: 0 };
+      const peak = mpptPeak(idx);
+      const pct = peak > 0 ? Math.round((p / peak) * 100) : 0;
       const rows = [
         { l: "PV-Leistung", v: `${round(p)} W` },
         { l: "PV-Spannung", v: `${f1(u)} V` },
@@ -417,7 +438,9 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
         { l: "Batterie", v: `${f1(m.battery_voltage)} V` },
         { l: "Status", v: m.state || "–" },
         { l: "Ertrag heute", v: `${f1(m.yield_today)} kWh` },
-        { l: "Modulfeld", v: "4 Panels · 1 String" },
+        { l: "Modulfeld", v: `${cfg.panels}× ${cfg.wp} Wp` },
+        { l: "String-Peak", v: `${peak} Wp` },
+        { l: "Auslastung", v: `${round(p)} / ${peak} Wp · ${pct} %` },
       ];
       return { title: m.name || key.toUpperCase(), badge: "VENUS-OS", color: COLOR.dc, rows };
     }
