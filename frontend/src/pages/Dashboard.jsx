@@ -203,7 +203,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8" data-testid="dashboard">
+    <div className="space-y-8 page-reveal" data-testid="dashboard">
       <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent="#FACC15" testid="intro-dashboard" />
 
       {/* Header strip */}

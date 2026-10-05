@@ -126,7 +126,7 @@ export default function Diagnose() {
   };
 
   return (
-    <div className="space-y-6" data-testid="diagnose-page">
+    <div className="space-y-6 page-reveal" data-testid="diagnose-page">
       <IntroCard title="Diagnose" subtitle="Selbst-Test aller Integrationen + Roh-MQTT-Geräteanzeige" sections={INTRO_SECTIONS} accent="#A78BFA" testid="intro-diagnose" />
 
       <div className="flex items-center justify-between gap-3 flex-wrap">

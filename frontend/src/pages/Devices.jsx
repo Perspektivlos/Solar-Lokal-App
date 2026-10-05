@@ -4,6 +4,7 @@ import IntroCard from "../components/IntroCard";
 import AlarmSettings from "../components/AlarmSettings";
 import DeviceDocPanel from "../components/DeviceDocPanel";
 import { Switch } from "../components/ui/switch";
+import { useMotion } from "../lib/motion";
 import { ScanLine, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +42,12 @@ const INTRO_SECTIONS = [
   },
 ];
 
+const MOTION_OPTS = [
+  { v: "auto", label: "Automatisch" },
+  { v: "off", label: "Immer an" },
+  { v: "on", label: "Reduziert" },
+];
+
 export default function Devices() {
   const [cfg, setCfg] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -48,6 +55,7 @@ export default function Devices() {
   const [expanded, setExpanded] = useState({});
   const [discovering, setDiscovering] = useState({});
   const [discoveringAll, setDiscoveringAll] = useState(false);
+  const { pref: motionPref, setPref: setMotionPref } = useMotion();
 
   useEffect(() => { getConfig().then(setCfg); }, []);
   useEffect(() => {
@@ -149,6 +157,29 @@ export default function Devices() {
           </div>
         </div>
         <Switch checked={cfg.demo_mode} onCheckedChange={(v) => setCfg({ ...cfg, demo_mode: v })} data-testid="switch-demo" />
+      </div>
+
+      {/* Darstellung · Animationen (Reduced-Motion-Option) */}
+      <div className="glass p-4" style={{ borderLeft: "3px solid #06B6D4" }} data-testid="motion-row">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">Darstellung · Animationen</div>
+            <div className="text-sm mt-1 text-white/70">
+              Energiefluss, Sonnenbogen &amp; gestaffelte Einblendungen. „Automatisch&ldquo; folgt der System-Einstellung
+              (<code className="text-cyan-300">prefers-reduced-motion</code>), „Reduziert&ldquo; blendet Bewegung dezent ab.
+            </div>
+          </div>
+          <div className="inline-flex rounded-md overflow-hidden border border-white/12 shrink-0" data-testid="motion-toggle" role="group" aria-label="Animationen">
+            {MOTION_OPTS.map((o) => (
+              <button key={o.v} type="button" onClick={() => setMotionPref(o.v)}
+                aria-pressed={motionPref === o.v}
+                data-testid={`motion-opt-${o.v}`}
+                className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${motionPref === o.v ? "bg-cyan-400/20 text-cyan-200" : "text-white/55 hover:text-white hover:bg-white/5"}`}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Standort für Sonnenzeiten */}

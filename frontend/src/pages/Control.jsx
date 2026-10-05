@@ -203,7 +203,7 @@ export default function Control() {
   };
 
   return (
-    <div className="space-y-6" data-testid="control-page">
+    <div className="space-y-6 page-reveal" data-testid="control-page">
       <IntroCard title="Steuerung" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
 
       <div className="flex items-start justify-between gap-3 flex-wrap">

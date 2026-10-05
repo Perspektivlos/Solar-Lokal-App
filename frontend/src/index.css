@@ -250,9 +250,35 @@ body::after {
     opacity: 0.5;
 }
 
-/* Barrierefreiheit: Animationen reduzieren */
-@media (prefers-reduced-motion: reduce) {
-    .flow-particles, .dot-pulse { animation: none !important; }
-    body::before { animation: none !important; }
-    .card-lift { transition: none !important; }
+/* Gestaffelte Einblendung (Seiten-/Karten-Reveal) */
+@keyframes reveal-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
+.page-reveal > * {
+    animation: reveal-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.page-reveal > *:nth-child(1) { animation-delay: 0.04s; }
+.page-reveal > *:nth-child(2) { animation-delay: 0.10s; }
+.page-reveal > *:nth-child(3) { animation-delay: 0.16s; }
+.page-reveal > *:nth-child(4) { animation-delay: 0.22s; }
+.page-reveal > *:nth-child(5) { animation-delay: 0.28s; }
+.page-reveal > *:nth-child(6) { animation-delay: 0.34s; }
+.page-reveal > *:nth-child(7) { animation-delay: 0.40s; }
+.page-reveal > *:nth-child(n+8) { animation-delay: 0.46s; }
+
+/* Barrierefreiheit: Animationen reduzieren.
+   Greift bei System-Pref (sofern Nutzer nicht „immer an" erzwingt) ODER
+   manueller Option (.reduce-motion). */
+@media (prefers-reduced-motion: reduce) {
+    :root:not(.motion-force-on) .flow-particles,
+    :root:not(.motion-force-on) .dot-pulse { animation: none !important; }
+    :root:not(.motion-force-on) body::before { animation: none !important; }
+    :root:not(.motion-force-on) .card-lift { transition: none !important; }
+    :root:not(.motion-force-on) .page-reveal > * { animation: none !important; }
+}
+.reduce-motion .flow-particles,
+.reduce-motion .dot-pulse { animation: none !important; }
+.reduce-motion body::before { animation: none !important; }
+.reduce-motion .card-lift { transition: none !important; }
+.reduce-motion .page-reveal > * { animation: none !important; }

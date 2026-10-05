@@ -111,7 +111,7 @@ export default function History() {
   }, [range]);
 
   return (
-    <div className="space-y-6" data-testid="history-page">
+    <div className="space-y-6 page-reveal" data-testid="history-page">
       <IntroCard title="Verlauf" subtitle="Historische Leistungs- und SoC-Kurven aus MongoDB-Snapshots" sections={INTRO_SECTIONS} accent="#06B6D4" testid="intro-history" />
 
       <div className="flex items-center justify-between gap-3 flex-wrap">

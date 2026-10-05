@@ -4,6 +4,7 @@
  * Payload; Anzeige in lokaler Zeit. */
 import { useState } from "react";
 import { Sun } from "lucide-react";
+import { useMotion } from "../lib/motion";
 
 const RX = 250;
 const RY = 120;
@@ -26,6 +27,7 @@ const hhmm = (ms) => new Date(ms).toLocaleTimeString("de-DE", { hour: "2-digit",
 
 export default function SunTimeline({ timestamp, sun }) {
   const [hover, setHover] = useState(null);
+  const { reduced } = useMotion();
   const nowMs = timestamp ? new Date(timestamp).getTime() : Date.now();
   const srMs = sun?.sunrise ? new Date(sun.sunrise).getTime() : null;
   const ssMs = sun?.sunset ? new Date(sun.sunset).getTime() : null;
@@ -163,7 +165,7 @@ export default function SunTimeline({ timestamp, sun }) {
                 return <line key={i} x1={m.x + Math.cos(a) * 9} y1={m.y + Math.sin(a) * 9} x2={m.x + Math.cos(a) * 14} y2={m.y + Math.sin(a) * 14} stroke="#fcd34d" strokeWidth="2" strokeLinecap="round" />;
               })}
               <circle cx={m.x} cy={m.y} r="14" fill="#fcd34d" opacity="0.18">
-                <animate attributeName="r" values="12;16;12" dur="3s" repeatCount="indefinite" />
+                {!reduced && <animate attributeName="r" values="12;16;12" dur="3s" repeatCount="indefinite" />}
               </circle>
               <circle cx={m.x} cy={m.y} r="7" fill="#fcd34d" style={{ filter: "drop-shadow(0 0 7px #fcd34d)" }} />
             </g>

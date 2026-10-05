@@ -1,6 +1,7 @@
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import { MotionProvider } from "./lib/motion";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
@@ -11,6 +12,7 @@ import Integrations from "./pages/Integrations";
 
 function App() {
   return (
+    <MotionProvider>
     <div className="App">
       <BrowserRouter>
         <Routes>
@@ -26,6 +28,7 @@ function App() {
       </BrowserRouter>
       <Toaster position="top-right" richColors theme="dark" />
     </div>
+    </MotionProvider>
   );
 }
 

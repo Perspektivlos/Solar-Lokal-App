@@ -5,6 +5,7 @@
  * Interaktiv: Knoten/Pfad überfahren hebt den Pfad hervor und blendet Werte ein. */
 import { useState } from "react";
 import { Activity } from "lucide-react";
+import { useMotion } from "../lib/motion";
 
 const COLOR = {
   pv: "#FACC15",
@@ -39,7 +40,7 @@ function pathMid(d) {
 
 // ---------- Knoten-Embleme (lebendige Symbole) ----------
 
-function SunEmblem({ cx, cy, color, active }) {
+function SunEmblem({ cx, cy, color, active, anim }) {
   const rays = [];
   for (let i = 0; i < 8; i++) {
     const a = (i * Math.PI) / 4;
@@ -52,12 +53,12 @@ function SunEmblem({ cx, cy, color, active }) {
   return (
     <g>
       <circle cx={cx} cy={cy} r="18" fill={color} opacity={active ? 0.14 : 0.05}>
-        {active && <animate attributeName="r" values="15;20;15" dur="2.8s" repeatCount="indefinite" />}
-        {active && <animate attributeName="opacity" values="0.10;0.22;0.10" dur="2.8s" repeatCount="indefinite" />}
+        {anim && <animate attributeName="r" values="15;20;15" dur="2.8s" repeatCount="indefinite" />}
+        {anim && <animate attributeName="opacity" values="0.10;0.22;0.10" dur="2.8s" repeatCount="indefinite" />}
       </circle>
       <g>
         {rays}
-        {active && <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="16s" repeatCount="indefinite" />}
+        {anim && <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="16s" repeatCount="indefinite" />}
       </g>
       <circle cx={cx} cy={cy} r="7" fill={color} opacity={active ? 0.95 : 0.45}
               style={{ filter: `drop-shadow(0 0 5px ${color})` }} />
@@ -65,7 +66,7 @@ function SunEmblem({ cx, cy, color, active }) {
   );
 }
 
-function BatteryRing({ cx, cy, color, soc, active }) {
+function BatteryRing({ cx, cy, color, soc, active, anim }) {
   const r = 15;
   const circ = 2 * Math.PI * r;
   const filled = (circ * Math.max(0, Math.min(100, soc))) / 100;
@@ -78,7 +79,7 @@ function BatteryRing({ cx, cy, color, soc, active }) {
       {active && (
         <g>
           <circle cx={cx} cy={cy - r} r="2.6" fill={color} style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
-          <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="3s" repeatCount="indefinite" />
+          {anim && <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="3s" repeatCount="indefinite" />}
         </g>
       )}
       <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fontWeight="600" fill="rgba(255,255,255,0.85)">{round(soc)}</text>
@@ -86,7 +87,7 @@ function BatteryRing({ cx, cy, color, soc, active }) {
   );
 }
 
-function GridWave({ cx, cy, color, active, uid }) {
+function GridWave({ cx, cy, color, active, anim, uid }) {
   return (
     <>
       <clipPath id={`gw-${uid}`}><rect x={cx - 17} y={cy - 13} width="34" height="26" /></clipPath>
@@ -96,7 +97,7 @@ function GridWave({ cx, cy, color, active, uid }) {
             <path d="M -24 0 Q -19 -8 -14 0 T -4 0 T 6 0 T 16 0 T 26 0 T 36 0"
                   stroke={color} strokeWidth="2" fill="none" strokeLinecap="round"
                   opacity={active ? 0.9 : 0.35} style={{ filter: `drop-shadow(0 0 3px ${color})` }} />
-            {active && <animateTransform attributeName="transform" type="translate" from="0 0" to="-20 0" dur="1.3s" repeatCount="indefinite" />}
+            {anim && <animateTransform attributeName="transform" type="translate" from="0 0" to="-20 0" dur="1.3s" repeatCount="indefinite" />}
           </g>
         </g>
       </g>
@@ -105,28 +106,29 @@ function GridWave({ cx, cy, color, active, uid }) {
   );
 }
 
-function HouseEmblem({ cx, cy, color, active }) {
+function HouseEmblem({ cx, cy, color, active, anim }) {
   return (
     <g opacity={active ? 1 : 0.55} style={{ filter: active ? `drop-shadow(0 0 4px ${color}88)` : "none" }}>
       <path d={`M ${cx - 13} ${cy - 1} L ${cx} ${cy - 13} L ${cx + 13} ${cy - 1}`} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x={cx - 9} y={cy - 1} width="18" height="13" rx="1.5" stroke={color} strokeWidth="2" fill="none" />
-      {active && <animate attributeName="opacity" values="0.65;1;0.65" dur="2.4s" repeatCount="indefinite" />}
+      {anim && <animate attributeName="opacity" values="0.65;1;0.65" dur="2.4s" repeatCount="indefinite" />}
     </g>
   );
 }
 
-function Emblem({ node }) {
+function Emblem({ node, reduced }) {
   const ex = node.x - NODE_W / 2 + 34;
   const ey = node.y;
-  if (node.emblem === "sun") return <SunEmblem cx={ex} cy={ey} color={node.color} active={node.active} />;
-  if (node.emblem === "battery") return <BatteryRing cx={ex} cy={ey} color={node.color} soc={node.soc} active={node.active} />;
-  if (node.emblem === "grid") return <GridWave cx={ex} cy={ey} color={node.color} active={node.active} uid={node.key} />;
-  return <HouseEmblem cx={ex} cy={ey} color={node.color} active={node.active} />;
+  const anim = node.active && !reduced;
+  if (node.emblem === "sun") return <SunEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
+  if (node.emblem === "battery") return <BatteryRing cx={ex} cy={ey} color={node.color} soc={node.soc} active={node.active} anim={anim} />;
+  if (node.emblem === "grid") return <GridWave cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} uid={node.key} />;
+  return <HouseEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
 }
 
 // ---------- Knoten-Karte ----------
 
-function NodeCard({ node, dim, onHover }) {
+function NodeCard({ node, dim, reduced, onHover }) {
   const { x, y, color, active, value, unit, label, sub, testid } = node;
   const left = x - NODE_W / 2;
   const top = y - NODE_H / 2;
@@ -134,7 +136,7 @@ function NodeCard({ node, dim, onHover }) {
   return (
     <g data-testid={testid}
        onMouseEnter={() => onHover(node.key)} onMouseLeave={() => onHover(null)} onClick={() => onHover(node.key)}
-       style={{ opacity: dim ? 0.3 : 1, transition: "opacity 0.25s", cursor: "pointer" }}>
+       style={{ opacity: dim ? 0.3 : 1, transition: "opacity 0.3s cubic-bezier(0.4,0,0.2,1)", cursor: "pointer" }}>
       {active && (
         <rect x={left - 2} y={top - 2} width={NODE_W + 4} height={NODE_H + 4} rx="9" fill="none"
               stroke={color} strokeWidth="1" opacity="0.45" style={{ filter: `drop-shadow(0 0 7px ${color})` }} />
@@ -142,7 +144,7 @@ function NodeCard({ node, dim, onHover }) {
       <rect x={left} y={top} width={NODE_W} height={NODE_H} rx="7" fill="rgba(13,19,33,0.85)"
             stroke={active ? `${color}` : "rgba(255,255,255,0.10)"} strokeOpacity={active ? 0.5 : 1} strokeWidth="1" />
       <rect x={left} y={top} width="4" height={NODE_H} rx="2" fill={color} opacity="0.85" />
-      <Emblem node={node} />
+      <Emblem node={node} reduced={reduced} />
       <text x={tx} y={top + 22} fontSize="10" fontFamily="JetBrains Mono" fontWeight="700" letterSpacing="1.4" fill="rgba(255,255,255,0.55)">
         {String(label).toUpperCase()}
       </text>
@@ -171,11 +173,11 @@ function Photons({ d, color, reverse, dur, n }) {
   ));
 }
 
-function Flow({ flow, hover, onHover }) {
+function Flow({ flow, hover, reduced, onHover }) {
   const { d, color, active, watts, reverse, id, from, to } = flow;
   const related = !hover || [id, from, to].includes(hover);
   const dim = hover && !related;
-  const style = { opacity: dim ? 0.28 : 1, transition: "opacity 0.25s" };
+  const style = { opacity: dim ? 0.28 : 1, transition: "opacity 0.3s cubic-bezier(0.4,0,0.2,1)" };
   if (!active) {
     return (
       <g style={style}>
@@ -196,9 +198,9 @@ function Flow({ flow, hover, onHover }) {
       <path d={d} stroke={color} strokeWidth={haloW} fill="none" opacity={halo} strokeLinecap="round" />
       <path d={d} stroke={color} strokeWidth="2" fill="none" opacity="0.22" strokeLinecap="round" />
       <path d={d} stroke={color} strokeWidth={emph ? 4.5 : 3.5} fill="none"
-            className={reverse ? "flow-particles reverse" : "flow-particles"} strokeLinecap="round"
+            className={reduced ? "" : (reverse ? "flow-particles reverse" : "flow-particles")} strokeLinecap="round"
             style={{ animationDuration: `${dur}s`, filter: `drop-shadow(0 0 ${emph ? 6 : 4}px ${color})` }} />
-      <Photons d={d} color={color} reverse={reverse} dur={dur} n={n} />
+      {!reduced && <Photons d={d} color={color} reverse={reverse} dur={dur} n={n} />}
       <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
             onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />
     </g>
@@ -223,6 +225,7 @@ const f1 = (x) => (x == null || isNaN(x) ? "n/a" : Math.round(x * 10) / 10);
 
 export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp, sun }) {
   const [hover, setHover] = useState(null);
+  const { reduced } = useMotion();
 
   const pv = summary?.pv_power || 0;
   const pvAc = summary?.pv_ac_power ?? pv;
@@ -391,9 +394,9 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
           <rect x="0" y="0" width="900" height="300" fill="url(#bggrid)" />
           <rect x="0" y="0" width="900" height="300" fill="url(#efcenter)" />
 
-          {flows.map((f) => <Flow key={f.id} flow={f} hover={hover} onHover={setHover} />)}
+          {flows.map((f) => <Flow key={f.id} flow={f} hover={hover} reduced={reduced} onHover={setHover} />)}
           {nodes.map((n) => (
-            <NodeCard key={n.key} node={n} dim={hover && !nodeKeys[n.key]?.includes(hover)} onHover={setHover} />
+            <NodeCard key={n.key} node={n} dim={hover && !nodeKeys[n.key]?.includes(hover)} reduced={reduced} onHover={setHover} />
           ))}
           {activePills.map((f) => {
             const m = pathMid(f.d);
