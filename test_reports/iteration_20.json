@@ -1,0 +1,21 @@
+{
+  "summary": "Frontend-only testing of rebuilt EnergyFlow diagram with six per-device nodes. All six nodes (flow-mppt1, flow-mppt2, flow-hoymiles, flow-battery, flow-house, flow-grid) render visible with correct watt values and sub-labels on '/'. Hover inspector shows correct titles: 'MPPT 150/35 #1', 'MPPT 150/35 #2', 'Hoymiles HM1500' (with Kanal 1..4 rows), 'Akku · Trucki/SUN', 'Netz · Shelly 3EM' (with L1/L2/L3 rows), 'Haus'. flow-mppt1 lists PV-Spannung and Status rows. 13 animateMotion photon elements present. No node bounding-box overlaps. Responsive at 390x844 and 768x1024 with no horizontal overflow (scrollWidth==innerWidth). Zero console errors (after filtering benign Recharts width/height warnings).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "EnergyFlow.jsx is 443 lines — still manageable but approaching split-threshold; could extract Emblems and Flow into separate files for maintainability.",
+    "NodeCard uses onClick to toggle hover on touch devices which is good; however the <g> has cursor:pointer even for the Haus node (no inspector interaction); minor UX nit."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "EnergyFlow now renders 6 separate device nodes with testids flow-mppt1/flow-mppt2/flow-hoymiles/flow-battery/flow-house/flow-grid. Hover-based inspector (flow-inspector / flow-inspector-title) works via mouse.move to bbox center. SVG viewBox 0 0 1060 420 scales cleanly on mobile/tablet. Device enable toggles live on /geraete (do not persist-toggle during tests). Previous 4-node aggregated flow (flow-pv) removed."
+}

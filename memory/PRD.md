@@ -174,6 +174,12 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Dämmerungsphasen im Sonnenbogen (blaue/goldene Stunde)** – FERTIG 05.10.2026 (`sun.event_times` für −6°/+6°; Payload `civil_dawn/dusk`, `golden_morning_end/evening_start`; SunTimeline markiert blaue Tails unter Horizont + goldene Segmente knapp darüber, inkl. Legende). Zeiten geprüft, visuell verifiziert.
 - [x] **Astronomische Dämmerung (−18°) im Sonnenbogen** – FERTIG 05.10.2026 (`event_times(-18°)`; Payload `astro_dawn/astro_dusk`; SunTimeline zeigt dritte, dunkle Indigo-Zone unter der blauen Stunde; Tails visuell begrenzt; Legende mit 3 Phasen). Visuell verifiziert.
 - [x] **Phasen-Zeiten als Hover-Tooltip** – FERTIG 05.10.2026 (SunTimeline: Hit-Flächen pro Dämmerungszone + Tooltip mit Phasenname & genauem Zeitbereich, z. B. „Blaue Stunde · 16:48–17:21"). Testing-Agent 100% (iteration_18).
+- [x] **Energiefluss: 6 getrennte Geräte-Knoten** – FERTIG 06.06.2026
+  - Statt aggregiertem „PV-Block" nun einzelne Knoten: MPPT 1, MPPT 2 (Victron DC), Hoymiles HM1500 (AC), Akku (Trucki/SUN), Netz (Shelly 3EM), Haus
+  - DC-gekoppelte Topologie: MPPT1/2 → Akku, Akku → Haus, Hoymiles → Haus, Netz ↔ Haus; eigene Plasma-Flüsse + Watt-Pills je Pfad
+  - Pro-Knoten-Inspektor: MPPT (PV-/Batterie-Spannung, Status, Ertrag), Hoymiles (4 Kanäle, Limit, Ø V / Σ A), Akku (SoC, DC-Ladung, Temp, ZEPC), Netz (L1/L2/L3), Haus (Quellen-Aufschlüsselung)
+  - Node-Testids: flow-mppt1/flow-mppt2/flow-hoymiles/flow-battery/flow-house/flow-grid; viewBox 1060×420, Knoten 182×82; getestet (testing_agent iteration_20, 100 %)
+
 - [x] **Phase 3: Feinschliff** – FERTIG 06.06.2026
   - Animations-Politur: weicheres Easing (cubic-bezier) für Energiefluss-Hover/Dimming; gestaffelte Seiten-/Karten-Einblendung (`.page-reveal` in index.css, auf allen 6 Seiten-Wurzeln)
   - **Reduced-Motion als Nutzer-Option** (`lib/motion.jsx` MotionProvider): Tri-State Automatisch/Immer an/Reduziert, in localStorage (`solar.motionPref`) persistiert, Segmented-Control auf Geräte-Seite (`motion-toggle`). Setzt `.reduce-motion` / `.motion-force-on` auf <html>; EnergyFlow & SunTimeline überspringen SMIL-Photonen/`flow-particles` im reduzierten Modus
