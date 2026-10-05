@@ -2,6 +2,7 @@
  * von Aufgang (links) bis Untergang (rechts); zentral die Rest-Sonnenstunden.
  * Auf-/Untergang kommen als reale UTC-Zeiten (Standort-abhängig) aus dem Live-
  * Payload; Anzeige in lokaler Zeit. */
+import { useState } from "react";
 import { Sun } from "lucide-react";
 
 const RX = 250;
@@ -24,6 +25,7 @@ const comma = (n) => n.toFixed(1).replace(".", ",");
 const hhmm = (ms) => new Date(ms).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
 export default function SunTimeline({ timestamp, sun }) {
+  const [hover, setHover] = useState(null);
   const nowMs = timestamp ? new Date(timestamp).getTime() : Date.now();
   const srMs = sun?.sunrise ? new Date(sun.sunrise).getTime() : null;
   const ssMs = sun?.sunset ? new Date(sun.sunset).getTime() : null;
@@ -70,6 +72,19 @@ export default function SunTimeline({ timestamp, sun }) {
   const civilDuskT = sun?.civil_dusk ? Math.min(tOf(sun.civil_dusk), 1.06) : null;
   const astroDuskT = sun?.astro_dusk ? Math.min(tOf(sun.astro_dusk), 1.12) : null;
 
+  // Hover-Zonen (Dämmerungsphasen) mit genauen Zeiten
+  const zones = [];
+  const addZone = (key, label, color, t0, t1, from, to, ex = 0) => {
+    if (t0 != null && t1 != null && from && to) zones.push({ key, label, color, t0, t1, from, to, ex });
+  };
+  addZone("astro-dawn", "Astron. Dämmerung", "#4338ca", astroDawnT, civilDawnT ?? -0.06, sun?.astro_dawn, sun?.civil_dawn ?? sun?.sunrise);
+  addZone("blue-dawn", "Blaue Stunde", "#3b82f6", civilDawnT, 0, sun?.civil_dawn, sun?.sunrise);
+  addZone("golden-morning", "Goldene Stunde", "#f59e0b", 0, tGM != null ? Math.min(1, tGM) : null, sun?.sunrise, sun?.golden_morning_end, 6);
+  addZone("golden-evening", "Goldene Stunde", "#f59e0b", tGE != null ? Math.max(0, tGE) : null, 1, sun?.golden_evening_start, sun?.sunset, 6);
+  addZone("blue-dusk", "Blaue Stunde", "#3b82f6", 1, civilDuskT, sun?.sunset, sun?.civil_dusk);
+  addZone("astro-dusk", "Astron. Dämmerung", "#4338ca", civilDuskT ?? 1.06, astroDuskT, sun?.civil_dusk, sun?.astro_dusk);
+  const hz = zones.find((z) => z.key === hover);
+
   return (
     <div className="glass-strong" data-testid="sun-timeline">
       <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
@@ -105,6 +120,12 @@ export default function SunTimeline({ timestamp, sun }) {
           {/* Goldene Stunde (knapp über Horizont, leicht außen) */}
           {tGM != null && <path d={arcSub(0, Math.min(1, tGM), 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #f59e0b)" }} data-testid="golden-morning" />}
           {tGE != null && <path d={arcSub(Math.max(0, tGE), 1, 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #f59e0b)" }} data-testid="golden-evening" />}
+
+          {/* Unsichtbare Hover-Flächen für die Dämmerungszonen */}
+          {zones.map((z) => (
+            <path key={`hit-${z.key}`} d={arcSub(z.t0, z.t1, z.ex, z.ex)} fill="none" stroke="transparent" strokeWidth="14"
+                  style={{ cursor: "pointer" }} onMouseEnter={() => setHover(z.key)} onMouseLeave={() => setHover(null)} data-testid={`hit-${z.key}`} />
+          ))}
 
           {/* zurückgelegter Teil (nur tagsüber) */}
           <path
@@ -151,6 +172,22 @@ export default function SunTimeline({ timestamp, sun }) {
               <circle cx={m.x} cy={m.y} r="10" fill="#38bdf8" opacity="0.14" />
               <circle cx={m.x} cy={m.y} r="7" fill="#cbd5e1" style={{ filter: "drop-shadow(0 0 6px #38bdf8)" }} />
               <circle cx={m.x + 3} cy={m.y - 2} r="6" fill="#0d1320" />
+            </g>
+          )}
+
+          {/* Phasen-Tooltip beim Überfahren */}
+          {hz && (
+            <g data-testid="phase-tooltip" style={{ pointerEvents: "none" }}>
+              {(() => {
+                const txt = `${hz.label} · ${hhmm(new Date(hz.from).getTime())}–${hhmm(new Date(hz.to).getTime())}`;
+                const w = 26 + txt.length * 6.0;
+                return (
+                  <>
+                    <rect x={CX - w / 2} y={42} width={w} height={21} rx={5} fill="rgba(2,6,16,0.96)" stroke={hz.color} strokeWidth="1" style={{ filter: `drop-shadow(0 0 6px ${hz.color}66)` }} />
+                    <text x={CX} y={56} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="#ffffff" data-testid="phase-tooltip-text">{txt}</text>
+                  </>
+                );
+              })()}
             </g>
           )}
         </svg>
