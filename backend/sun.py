@@ -26,7 +26,14 @@ def _from_julian(jd: float) -> datetime:
 
 def sun_times(lat: float, lon: float, dt: datetime) -> Optional[Tuple[datetime, datetime]]:
     """Gibt (sunrise, sunset) als UTC-datetimes für das Datum von *dt* zurück.
-    None bei Polartag/Polarnacht (Sonne geht nicht auf/unter)."""
+    None bei Polartag/Polarnacht."""
+    return event_times(lat, lon, dt, -0.833)
+
+
+def event_times(lat: float, lon: float, dt: datetime, altitude_deg: float) -> Optional[Tuple[datetime, datetime]]:
+    """Zeiten (UTC), zu denen die Sonne die gegebene Höhe (Grad) über-/unterschreitet
+    – morgens (aufsteigend) und abends (absteigend). None, wenn an diesem Tag/Ort
+    nicht erreicht (Polartag/-nacht, oder Winkel nie erreicht)."""
     jd = _to_julian(dt)
     n = round(jd - 2451545.0 + 0.0008)
     Jstar = n - lon / 360.0
@@ -38,13 +45,11 @@ def sun_times(lat: float, lon: float, dt: datetime) -> Optional[Tuple[datetime, 
     denom = math.cos(lat * _RAD) * math.cos(delta)
     if denom == 0:
         return None
-    cos_omega = (math.sin(-0.833 * _RAD) - math.sin(lat * _RAD) * math.sin(delta)) / denom
+    cos_omega = (math.sin(altitude_deg * _RAD) - math.sin(lat * _RAD) * math.sin(delta)) / denom
     if cos_omega >= 1 or cos_omega <= -1:
-        return None  # Polarnacht / Polartag
+        return None
     omega = math.degrees(math.acos(cos_omega))
-    Jrise = Jtransit - omega / 360.0
-    Jset = Jtransit + omega / 360.0
-    return _from_julian(Jrise), _from_julian(Jset)
+    return _from_julian(Jtransit - omega / 360.0), _from_julian(Jtransit + omega / 360.0)
 
 
 def sun_intensity(now: datetime, sunrise: Optional[datetime], sunset: Optional[datetime]) -> float:

@@ -19,7 +19,7 @@ from mqtt_client import (
     fetch_victron_from_mqtt,
 )
 from mocks import mock_shelly, mock_ahoy, mock_trucki, mock_victron
-from sun import sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
+from sun import event_times, sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
 
 logger = logging.getLogger("solar")
 
@@ -124,6 +124,17 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     st = sun_times(lat, lon, now_dt)
     sunrise_dt, sunset_dt = st if st else (None, None)
     intensity = sun_intensity(now_dt, sunrise_dt, sunset_dt)
+    civil = event_times(lat, lon, now_dt, -6.0)       # blaue Stunde / bürgerliche Dämmerung
+    golden = event_times(lat, lon, now_dt, 6.0)        # goldene Stunde (Sonne bis 6°)
+    _iso = lambda d: d.isoformat() if d else None
+    sun_payload = {
+        "sunrise": _iso(sunrise_dt),
+        "sunset": _iso(sunset_dt),
+        "civil_dawn": _iso(civil[0]) if civil else None,
+        "civil_dusk": _iso(civil[1]) if civil else None,
+        "golden_morning_end": _iso(golden[0]) if golden else None,
+        "golden_evening_start": _iso(golden[1]) if golden else None,
+    }
 
     async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
         if not enabled:
@@ -206,6 +217,7 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         "sun": {
             "sunrise": sunrise_dt.isoformat() if sunrise_dt else None,
             "sunset": sunset_dt.isoformat() if sunset_dt else None,
+            **sun_payload,
         },
         "shelly": shelly,
         "ahoy": ahoy,
