@@ -180,6 +180,7 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
   - Design-Agent-Blueprint (`/app/design_guidelines.json`) umgesetzt: maschinierte Titan-Knotenkarten (url(#nodeFill)-Gradient, Metall-Oberkanten-Hairline), taktische Eckwinkel, Geräte-Badges (1-STR·DC/AHOY-DTU/TRUCKI/AC-LAST/PRO 3EM), Status-Beacons, Laser-Reticle-Marken, aufgewertetes Inspektor-Panel (Titan-Glas + Badge)
   - Getestet (testing_agent iteration_21, 100 % / 5 Szenarien): kein Crash in Kompakt/Detail, Persistenz über In-App-Navigation, Mobile 390px→Kompakt ohne Overflow, Hover-Inspektor PV-Block AC/DC
   - Bekannt/harmlos: vorbestehende Recharts-Warnung width/height(-1) (verstecktes Sparkline-Container) – nicht blockierend
+  - Feinschliff 06.06.2026: digitale Uhr (Neon-Chip) in die „Solar · Live"-Titelleiste verschoben (`dashboard-clock`), KPI-Sparklines feiner (non-scaling-stroke 1.25px), MPPT-Balken mit Tages-Peak-Marker (Reset bei Datumswechsel) + Inspektor-Zeile „Peak heute"
 - [x] **Energiefluss: 6 getrennte Geräte-Knoten** – FERTIG 06.06.2026
   - Statt aggregiertem „PV-Block" nun einzelne Knoten: MPPT 1, MPPT 2 (Victron DC), Hoymiles HM1500 (AC), Akku (Trucki/SUN), Netz (Shelly 3EM), Haus
   - DC-gekoppelte Topologie: MPPT1/2 → Akku, Akku → Haus, Hoymiles → Haus, Netz ↔ Haus; eigene Plasma-Flüsse + Watt-Pills je Pfad

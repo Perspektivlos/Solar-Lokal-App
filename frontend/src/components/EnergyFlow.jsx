@@ -5,7 +5,7 @@
  * DC-gekoppelt: Victron-MPPTs laden den Akku, Trucki entlädt ihn ins AC-Netz,
  * Hoymiles speist AC direkt. Energieströme als leuchtende Plasma-Bahnen mit
  * Photonen-Schwärmen – Geschwindigkeit/Dichte/Glow skalieren mit der Wattleistung. */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Activity } from "lucide-react";
 import { useMotion } from "../lib/motion";
 
@@ -140,7 +140,7 @@ function Emblem({ node, reduced }) {
 // ---------- Knoten-Karte ----------
 
 function NodeCard({ node, dim, reduced, onHover }) {
-  const { x, y, color, active, value, unit, label, sub, testid, badge, util } = node;
+  const { x, y, color, active, value, unit, label, sub, testid, badge, util, peakUtil } = node;
   const left = x - NODE_W / 2;
   const top = y - NODE_H / 2;
   const right = left + NODE_W;
@@ -190,12 +190,17 @@ function NodeCard({ node, dim, reduced, onHover }) {
           {sub}
         </text>
       )}
-      {/* String-Auslastungsbalken (nur MPPT) */}
+      {/* String-Auslastungsbalken (nur MPPT) + Tages-Peak-Marker */}
       {util != null && (
         <g pointerEvents="none">
           <rect x={tx} y={y + 16} width={right - 12 - tx} height="3" rx="1.5" fill="rgba(255,255,255,0.12)" />
           <rect x={tx} y={y + 16} width={(right - 12 - tx) * util} height="3" rx="1.5" fill={color} opacity="0.95"
                 style={active ? { filter: `drop-shadow(0 0 4px ${color})` } : undefined} />
+          {peakUtil != null && (
+            <rect x={tx + (right - 12 - tx) * peakUtil - 0.8} y={y + 13.5} width="1.6" height="8" rx="0.8" fill="#e2e8f0" opacity="0.85">
+              <title>Tages-Peak</title>
+            </rect>
+          )}
         </g>
       )}
       {/* Status-Beacon */}
@@ -271,6 +276,11 @@ const f1 = (x) => (x == null || isNaN(x) ? "n/a" : Math.round(x * 10) / 10);
 export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp, sun }) {
   const [hover, setHover] = useState(null);
   const { reduced } = useMotion();
+
+  // Tages-Peak je MPPT (Höchstwert seit Mitternacht, Reset bei Datumswechsel).
+  const peakRef = useRef({ day: null, vals: {} });
+  const _todayKey = new Date().toDateString();
+  if (peakRef.current.day !== _todayKey) peakRef.current = { day: _todayKey, vals: {} };
 
   const pv = summary?.pv_power || 0;
   const pvAc = summary?.pv_ac_power ?? pv;
@@ -368,10 +378,13 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       mppts.slice(0, 2).forEach((m, i) => {
         const w = m.pv_power || 0;
         const peak = mpptPeak(i);
+        const curPeak = Math.max(peakRef.current.vals[i] || 0, w);
+        peakRef.current.vals[i] = curPeak;
         nodes.push({
           key: `mppt${i + 1}`, x: MPPT_POS[i].x, y: MPPT_POS[i].y, color: COLOR.dc, active: w > 5, emblem: "sun",
           label: `MPPT ${i + 1}`, badge: "1-STR·DC", value: round(w), unit: "W", testid: `flow-mppt${i + 1}`,
           util: peak > 0 ? Math.max(0, Math.min(1, w / peak)) : null,
+          peakUtil: peak > 0 && curPeak > w + 1 ? Math.max(0, Math.min(1, curPeak / peak)) : null,
           sub: w > 5 ? `${f1(m.pv_voltage)} V · ${peak ? Math.round((w / peak) * 100) + "%" : m.state || "–"}` : "inaktiv",
         });
       });
@@ -431,6 +444,8 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       const cfg = MPPT_ARRAY[idx] || { panels: 4, wp: 0 };
       const peak = mpptPeak(idx);
       const pct = peak > 0 ? Math.round((p / peak) * 100) : 0;
+      const dayPeak = Math.max(peakRef.current.vals[idx] || 0, p);
+      const peakPct = peak > 0 ? Math.round((dayPeak / peak) * 100) : 0;
       const rows = [
         { l: "PV-Leistung", v: `${round(p)} W` },
         { l: "PV-Spannung", v: `${f1(u)} V` },
@@ -441,6 +456,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
         { l: "Modulfeld", v: `${cfg.panels}× ${cfg.wp} Wp` },
         { l: "String-Peak", v: `${peak} Wp` },
         { l: "Auslastung", v: `${round(p)} / ${peak} Wp · ${pct} %` },
+        { l: "Peak heute", v: `${round(dayPeak)} W · ${peakPct} %` },
       ];
       return { title: m.name || key.toUpperCase(), badge: "VENUS-OS", color: COLOR.dc, rows };
     }

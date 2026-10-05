@@ -209,17 +209,22 @@ export default function Dashboard() {
       {/* Header strip */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white flex-wrap">
             <span className="w-1.5 h-7 rounded-sm" style={{ background: COLOR.pv, boxShadow: `0 0 10px ${COLOR.pv}aa` }} />
             Solar · Live
+            <span
+              className="font-mono text-base sm:text-lg font-medium tracking-[0.18em] text-cyan-300 neon-text-cyan px-2.5 py-1 rounded-md border border-cyan-400/25 bg-cyan-400/[0.06]"
+              data-testid="dashboard-clock"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {new Date(now).toLocaleTimeString("de-DE")}
+            </span>
           </h1>
           <div className="font-mono text-[11px] text-white/60 mt-1.5 flex items-center gap-x-3 gap-y-1.5 flex-wrap" data-testid="dashboard-status-line">
             <span className="inline-flex items-center gap-1.5">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse" />
               Update: {relativeTime(timestamp, now)}
             </span>
-            <span className="text-white/25">·</span>
-            <span>Uhr: {new Date(now).toLocaleTimeString("de-DE")}</span>
             <span className="text-white/25">·</span>
             <span data-testid="status-devices">
               {[shelly, ahoy, trucki, victron].filter((d) => d?.online).length}/4 Geräte online
