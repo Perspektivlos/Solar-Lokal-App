@@ -173,7 +173,8 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Sonnenbogen-Füllung tagsüber** – FERTIG 05.10.2026 (SunTimeline amber `stroke-dasharray`-Fortschritt von Aufgang→aktueller Position; Zeiten lokal, Marker Sonne/Mond). Live verifiziert (Tag: gefüllter Bogen + aktiver PV-Block).
 - [x] **Dämmerungsphasen im Sonnenbogen (blaue/goldene Stunde)** – FERTIG 05.10.2026 (`sun.event_times` für −6°/+6°; Payload `civil_dawn/dusk`, `golden_morning_end/evening_start`; SunTimeline markiert blaue Tails unter Horizont + goldene Segmente knapp darüber, inkl. Legende). Zeiten geprüft, visuell verifiziert.
 - [x] **Astronomische Dämmerung (−18°) im Sonnenbogen** – FERTIG 05.10.2026 (`event_times(-18°)`; Payload `astro_dawn/astro_dusk`; SunTimeline zeigt dritte, dunkle Indigo-Zone unter der blauen Stunde; Tails visuell begrenzt; Legende mit 3 Phasen). Visuell verifiziert.
-- [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung)
+- [x] **Phasen-Zeiten als Hover-Tooltip** – FERTIG 05.10.2026 (SunTimeline: Hit-Flächen pro Dämmerungszone + Tooltip mit Phasenname & genauem Zeitbereich, z. B. „Blaue Stunde · 16:48–17:21"). Testing-Agent 100% (iteration_18).
+- [ ] **Phase 3: Feinschliff** – offen: Animations-Politur, Performance-Optimierung, Mobile-Responsive-Check (Firmware-Hinweise bereits erledigt)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
 - [ ] Energiekosten (€/kWh) für Bezug/Einspeisung
