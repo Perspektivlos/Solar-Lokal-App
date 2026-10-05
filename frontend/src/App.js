@@ -9,6 +9,7 @@ import Control from "./pages/Control";
 import Devices from "./pages/Devices";
 import Diagnose from "./pages/Diagnose";
 import Integrations from "./pages/Integrations";
+import KpiPreview from "./pages/KpiPreview";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="diagnose" element={<Diagnose />} />
             <Route path="integrationen" element={<Integrations />} />
           </Route>
+          <Route path="/kpi-preview" element={<KpiPreview />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors theme="dark" />

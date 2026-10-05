@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/dseg@0.46.0/css/dseg.css');
 
 @tailwind base;
 @tailwind components;
@@ -43,6 +45,13 @@ body::before {
 .font-mono, code {
     font-family: 'JetBrains Mono', monospace;
 }
+
+/* Vorschau-Schriften (nur für /kpi-preview) */
+.font-dseg { font-family: 'DSEG7-Classic', 'JetBrains Mono', monospace; font-weight: 700; letter-spacing: 0.015em; }
+.font-orbitron { font-family: 'Orbitron', 'JetBrains Mono', monospace; }
+.font-techmono { font-family: 'Share Tech Mono', 'JetBrains Mono', monospace; }
+.font-space { font-family: 'Space Grotesk', sans-serif; }
+.font-sora { font-family: 'Sora', sans-serif; }
 
 @layer base {
     :root {
