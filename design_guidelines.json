@@ -1,143 +1,132 @@
 {
-  "design_system_identity": {
-    "theme_name": "SCADA Industrial Solar Control Room",
-    "aesthetic_archetype": "High-Density Industrial SCADA with Tactical Metallic Depth & Precision Neon Accents",
-    "core_philosophy": "Evolutionary enhancement (no rewrite). Grounding dark glassmorphism into a tactile, heavy-gauge steel & graphite SCADA control console. Deep surface layering, metallic edge highlights, bevels, inset telemetry wells, and hyper-legible monospaced data density paired with vibrant neon status indicators."
-  },
+  "project_name": "Solar SCADA Control-Room Elevation",
+  "app_type": "dashboard",
+  "theme": "dark",
+  "archetype": "ARCHETYPE 2: THE PERFORMANCE PRO & INDUSTRIAL SCADA (Deep Obsidian + Tactical Chamfer + Neon Glows)",
+  "instructions_to_main_agent": [
+    "Retain all existing functionality, routes, and data flows. Do NOT redesign from scratch and do NOT remove features.",
+    "Elevate the visual experience to an Awwwards/industrial level HMI control room aesthetic: machined metallic bevels, deep obsidian surface depth, crisp neon telemetry, photon plasma energy flows, tactile chrome headers, and micro-grid textures.",
+    "Implement the Compact/Detail view toggle for the EnergyFlow component as requested by the user.",
+    "Ensure the MPPT nodes clearly reflect the user physical topology: each MPPT (Victron SmartSolar) has exactly 1 PV input string running to Akku.",
+    "Every key interactive element and telemetry cell must keep or have robust data-testid attributes for automated testing.",
+    "Never use completely transparent backgrounds for overlays, floating inspector panels, tooltips, or dropdowns. Always use high-contrast solid/crystal-glass with backdrops."
+  ],
   "typography": {
-    "font_families": {
-      "display_headings": "Chakra Petch, ui-sans-serif, system-ui, sans-serif",
-      "body_ui": "IBM Plex Sans, ui-sans-serif, system-ui, sans-serif",
-      "telemetry_mono": "JetBrains Mono, ui-monospace, monospace"
-    },
-    "hierarchy_rules": {
-      "h1_hero_dashboard_title": "text-2xl sm:text-3xl font-sans uppercase font-bold tracking-[0.2em] text-slate-100 drop-shadow-sm",
-      "h2_section_header": "text-xs font-sans font-bold uppercase tracking-[0.22em] text-slate-300",
-      "h3_card_title": "text-[11px] font-sans font-semibold uppercase tracking-[0.2em] text-slate-400 group-hover:text-slate-200 transition-colors",
-      "telemetry_primary_metric": "font-mono text-3xl lg:text-4xl font-semibold tracking-tight leading-none",
-      "telemetry_secondary_stat": "font-mono text-lg font-medium tracking-tight",
-      "body_text": "font-body text-xs sm:text-sm text-slate-300 leading-relaxed",
-      "labels_and_badges": "font-mono text-[9px] uppercase tracking-[0.16em] font-semibold"
+    "font_family_heading": "Chakra Petch, ui-sans-serif, system-ui, sans-serif",
+    "font_family_body": "IBM Plex Sans, -apple-system, BlinkMacSystemFont, sans-serif",
+    "font_family_telemetry_mono": "JetBrains Mono, ui-monospace, monospace",
+    "hierarchy": {
+      "h1": "text-2xl sm:text-3xl font-semibold tracking-tight uppercase",
+      "h2": "text-xl sm:text-2xl font-semibold tracking-tight uppercase",
+      "h3": "text-lg sm:text-xl font-medium tracking-normal",
+      "h4": "text-sm sm:text-base font-medium tracking-wide uppercase",
+      "telemetry_hero": "text-2xl sm:text-3xl lg:text-4xl font-mono font-semibold tracking-tight",
+      "telemetry_compact": "text-xl sm:text-2xl font-mono font-semibold tracking-tight",
+      "labels_scada": "text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-[0.18em] text-white/60",
+      "mono_subtext": "text-[10px] sm:text-[11px] font-mono text-white/50"
     }
   },
   "colors": {
-    "background_surfaces": {
-      "void_background": "#04060c",
-      "deep_console_slate": "#080c16",
-      "panel_base_dark": "#0f172a",
-      "panel_surface_elevated": "#141e33",
-      "recessed_well_bg": "#050811"
+    "background_base": "#030712",
+    "background_canvas_gradient": "linear-gradient(165deg, #030712 0%, #060d1f 45%, #02040a 100%)",
+    "surfaces": {
+      "panel_bg": "linear-gradient(180deg, rgba(17, 24, 39, 0.88), rgba(8, 13, 24, 0.94))",
+      "panel_header_bg": "linear-gradient(180deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.85))",
+      "inset_well": "rgba(3, 7, 18, 0.78)",
+      "card_node_bg": "linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(9, 14, 26, 0.96) 100%)",
+      "inspector_card": "rgba(6, 11, 24, 0.96)"
     },
-    "metallic_ramps": {
-      "titanium_white": "#f8fafc",
-      "brushed_silver": "#e2e8f0",
-      "steel_gray": "#cbd5e1",
-      "slate_metal": "#94a3b8",
-      "graphite_muted": "#64748b",
-      "gunmetal_dark": "#334155",
-      "charcoal_edge": "#1e293b",
-      "obsidian_border": "rgba(148, 163, 201, 0.18)"
+    "borders": {
+      "panel_border": "rgba(148, 163, 184, 0.16)",
+      "panel_active_glow": "rgba(6, 182, 212, 0.45)",
+      "hairline_top": "linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.45) 50%, transparent)",
+      "chamfer_accent": "rgba(255, 255, 255, 0.08)"
     },
-    "scada_status_indicators": {
-      "ok_normal": "#10b981",
-      "warning": "#f59e0b",
-      "critical_alarm": "#ef4444",
-      "offline_idle": "#64748b"
+    "telemetry_accents": {
+      "solar_ac_hoymiles": "#FACC15",
+      "solar_dc_mppt": "#F59E0B",
+      "battery_trucki": "#06B6D4",
+      "grid_import": "#F87171",
+      "grid_export": "#10B981",
+      "house_load": "#94A3B8",
+      "status_ok": "#10B981",
+      "status_warn": "#F59E0B",
+      "status_crit": "#EF4444"
     },
-    "preserved_neon_data_accents": {
-      "pv_solar_gelb": "#facc15",
-      "battery_cyan": "#06b6d4",
-      "grid_export_victron_grun": "#10b981",
-      "grid_import_alarm_rot": "#ef4444",
-      "house_load_silver": "#cbd5e1"
+    "glow_recipes": {
+      "cyan_beam": "0 0 14px rgba(6, 182, 212, 0.40), inset 0 0 8px rgba(6, 182, 212, 0.18)",
+      "amber_beam": "0 0 14px rgba(245, 158, 11, 0.40), inset 0 0 8px rgba(245, 158, 11, 0.18)",
+      "yellow_beam": "0 0 14px rgba(250, 204, 21, 0.40), inset 0 0 8px rgba(250, 204, 21, 0.18)",
+      "emerald_beam": "0 0 14px rgba(16, 185, 129, 0.40), inset 0 0 8px rgba(16, 185, 129, 0.18)",
+      "red_beam": "0 0 14px rgba(239, 68, 68, 0.40), inset 0 0 8px rgba(239, 68, 68, 0.18)",
+      "panel_elevation_shadow": "0 24px 48px -18px rgba(0, 0, 0, 0.95), 0 0 32px -16px rgba(14, 165, 233, 0.15)"
     }
   },
-  "elevation_and_depth_system": {
-    "surface_layers": {
-      "console_frame": "Deep slate background with dark metallic radial gradient mesh (#04060c to #080c16)",
-      "scada_card_glass": "background: linear-gradient(180deg, rgba(20, 30, 51, 0.85) 0%, rgba(10, 16, 28, 0.90) 100%), 1px solid rgba(226, 232, 240, 0.15), backdrop-blur(24px)",
-      "card_header_strip": "linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.00) 100%)",
-      "recessed_input_well": "background: rgba(4, 6, 12, 0.80), border: 1px solid rgba(255, 255, 255, 0.10), shadow: inset 0 2px 6px rgba(0,0,0,0.7)"
+  "visual_enhancers": {
+    "chamfered_corners": "clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%) or tactical corner notches",
+    "scada_screws": "Four corner micro-rivets: radial-gradient(circle, #64748B 30%, #0F172A 70%) with 1px border for industrial rack-mount look",
+    "scanline_texture": "repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04) 1px, transparent 1px, transparent 3px)",
+    "laser_guide_crosshairs": "Delicate SVG reticle marks (+) at coordinate intersections in the SVG EnergyFlow canvas",
+    "pulse_beacons": "Animated CSS status pills with soft outer halo for active inverter and MPPT relays"
+  },
+  "energy_flow_diagram_spec": {
+    "svg_viewbox": "0 0 1060 420",
+    "layout_modes": {
+      "detail_mode": "Shows 6 full device nodes with secondary metrics (V, A, Limit, State, Channel breakdown) and animated telemetry pills along flow lines",
+      "compact_mode": "Streamlined control room view with condensed node footprints (NODE_W 154, NODE_H 64), primary wattage and active spark halos for high density monitoring"
     },
-    "tactile_textures": {
-      "subtle_scanline_overlay": "repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px)",
-      "metallic_top_beveled_edge": "linear-gradient(90deg, var(--accent-color), rgba(226, 232, 240, 0.4) 50%, transparent 100%)",
-      "inner_glow_highlight": "inset 0 1px 0 rgba(255, 255, 255, 0.12)"
+    "node_coordinates": {
+      "mppt1": { "x": 135, "y": 105, "label": "MPPT 1", "sub": "Victron 1-String DC", "color": "#F59E0B" },
+      "mppt2": { "x": 135, "y": 325, "label": "MPPT 2", "sub": "Victron 1-String DC", "color": "#F59E0B" },
+      "battery": { "x": 420, "y": 215, "label": "Akku", "sub": "Trucki / SUN LiFePO4", "color": "#06B6D4" },
+      "hoymiles": { "x": 725, "y": 105, "label": "Hoymiles", "sub": "HM1500 (Ahoy AC)", "color": "#FACC15" },
+      "house": { "x": 725, "y": 325, "label": "Haus", "sub": "AC Gesamtlast", "color": "#94A3B8" },
+      "grid": { "x": 965, "y": 325, "label": "Netz", "sub": "Shelly Pro 3EM", "color_import": "#F87171", "color_export": "#10B981" }
+    },
+    "node_card_visual_elevation": {
+      "bevel_top": "1px metallic silver highlight line with 45% center glow",
+      "left_indicator_bar": "4px wide rounded status bar colored by active telemetry state with drop-shadow glow",
+      "corner_accents": "Tactical bracket borders (2px top-left and bottom-right L-shaped markers) to give an aerospace SCADA display feel",
+      "badge_pill": "Device interface tag (e.g., '1-STRING DC', 'VENUS-OS', 'AHOY-DTU', 'PRO 3EM') in JetBrains Mono 8px uppercase tracking-[0.2em]"
+    },
+    "flow_plasma_pipeline": {
+      "base_glow_track": "stroke-width: 8px to 14px, opacity 0.12 - 0.28, matching color with blur effect",
+      "core_wire": "stroke-width: 2px, stroke: rgba(255,255,255,0.18), continuous reference track",
+      "plasma_stream": "stroke-width: 3.5px, stroke-dasharray: 2 12, animated with dynamic speed flowDurSec (0.5s for 3000W down to 2.2s for idle)",
+      "photon_particles": "Glowing photon orbs moving along path using SVG animateMotion with staggered delays and drop-shadow halo",
+      "flow_pills": "Interactive wattage badges floating on flow segment midpoints on hover or in detail mode"
+    },
+    "inspector_panel": {
+      "position": "Absolute top-3 right-3 floating overlay",
+      "visual_style": "Machined dark titanium surface: rgba(6, 11, 24, 0.96) with backdrop-blur-xl, 1px accent-tinted border, and glowing status beacon",
+      "content": "Rich telemetry grid: live voltage, live amperage, yield today, inverter throttling/limit, cell temperature, and phase load matrix"
     }
   },
-  "border_and_panel_treatments": {
-    "scada_panel_frame": "border border-slate-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.6)] rounded-md",
-    "chamfer_details": "4px subtle corner radius with top 2px metallic accent hairline stroke",
-    "recessed_grooves": "border border-slate-800/80 bg-slate-950/70 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]"
-  },
-  "component_recipes": {
-    "cards_and_panels": {
-      "glass_card_container": "glass card-lift group relative overflow-hidden h-full flex flex-col rounded-md border border-slate-700/40 bg-gradient-to-b from-[#141e33]/90 to-[#0a101c]/95 shadow-[0_18px_40px_-22px_rgba(0,0,0,0.85)]",
-      "card_header": "relative border-b border-slate-700/30 bg-gradient-to-b from-white/[0.04] to-transparent px-4 py-2.5 flex items-center justify-between gap-3"
-    },
-    "kpi_strip_card": {
-      "container": "relative overflow-hidden rounded-md border border-slate-700/40 bg-slate-900/80 p-3.5 backdrop-blur-md transition-all duration-200 hover:border-slate-500/50 shadow-md",
-      "label": "font-sans text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400",
-      "value_mono": "font-mono text-2xl lg:text-3xl font-bold tracking-tight text-slate-100 mt-1"
-    },
-    "section_header": "flex items-center gap-3 pt-2 pb-1 border-b border-slate-800/60 mb-3",
-    "buttons": {
-      "primary": "btn-neo inline-flex items-center justify-center gap-2 px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-slate-100 bg-gradient-to-b from-slate-700/60 to-slate-800/80 border border-slate-500/40 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_2px_8px_rgba(0,0,0,0.5)] hover:from-slate-600/70 hover:to-slate-700/90 active:translate-y-[1px] transition-all",
-      "secondary": "inline-flex items-center justify-center gap-2 px-3 py-1.5 font-mono text-xs font-medium uppercase tracking-wider text-slate-300 bg-slate-800/60 border border-slate-700/60 rounded hover:bg-slate-700/60 hover:text-white transition-all",
-      "ghost": "inline-flex items-center justify-center gap-1.5 px-2.5 py-1 font-mono text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 rounded transition-all",
-      "danger": "inline-flex items-center justify-center gap-2 px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-wider text-red-200 bg-red-950/60 border border-red-500/40 rounded shadow-[0_0_10px_rgba(239,68,68,0.2)] hover:bg-red-900/80 hover:border-red-400 transition-all"
-    },
-    "inputs_and_controls": {
-      "text_and_number_input": "glass-input w-full px-3 py-1.5 font-mono text-xs text-slate-100 bg-slate-950/80 border border-slate-700/60 rounded focus:border-cyan-500/70 focus:ring-1 focus:ring-cyan-500/30 transition-all placeholder:text-slate-600",
-      "slider_track": "h-2 w-full rounded bg-slate-950 border border-slate-800 shadow-inner",
-      "slider_thumb": "h-4 w-4 rounded-full bg-cyan-400 border border-white shadow-[0_0_8px_rgba(6,182,212,0.8)] cursor-pointer"
-    },
-    "pills_and_badges": {
-      "base_badge": "inline-flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-[9px] uppercase tracking-[0.16em] font-semibold border backdrop-blur-sm",
-      "badge_ok": "border-emerald-500/40 bg-emerald-950/40 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.2)]",
-      "badge_warning": "border-amber-500/40 bg-amber-950/40 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.2)]",
-      "badge_critical": "border-red-500/50 bg-red-950/60 text-red-300 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.35)]",
-      "badge_offline": "border-slate-700/50 bg-slate-900/50 text-slate-400"
-    },
-    "nav_tabs": {
-      "container": "flex items-center gap-1 p-1 bg-slate-950/80 border border-slate-800/80 rounded-md backdrop-blur-md",
-      "active_tab": "font-mono text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-b from-slate-700/80 to-slate-800/90 border border-slate-600/60 rounded px-3.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.5)]",
-      "inactive_tab": "font-mono text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 rounded px-3.5 py-1.5 transition-all"
-    },
-    "system_status_light": {
-      "ok": "w-3 h-3 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981,0_0_20px_#10b981aa] border border-emerald-200/50 dot-pulse",
-      "warning": "w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_10px_#f59e0b,0_0_20px_#f59e0baa] border border-amber-200/50 dot-pulse",
-      "alarm": "w-3 h-3 rounded-full bg-red-500 shadow-[0_0_12px_#ef4444,0_0_24px_#ef4444aa] border border-red-200/50 animate-ping"
-    },
-    "tables": {
-      "table_wrapper": "w-full overflow-hidden rounded-md border border-slate-800 bg-slate-950/60",
-      "header_cell": "px-3 py-2 text-left font-mono text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-900/80 border-b border-slate-800",
-      "row": "border-b border-slate-800/50 hover:bg-slate-900/40 transition-colors",
-      "data_cell": "px-3 py-2 font-mono text-xs text-slate-200"
+  "kpi_strip_spec": {
+    "grid": "grid grid-cols-2 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/[0.08]",
+    "cell_treatment": {
+      "accent_top_hairline": "2px height gradient from device accent color to transparent with glow filter",
+      "background": "linear-gradient(180deg, rgba(18, 25, 42, 0.70) 0%, rgba(10, 15, 28, 0.82) 100%)",
+      "hover_effect": "translateY(-1px) with subtle ambient glow boost and white/0.05 background wash",
+      "sparkline": "Integrated high-density sparkline with gradient fill under curve and current cursor dot"
     }
   },
-  "motion_and_microinteractions": {
-    "energy_flow_particle_lines": "SVG stroke-dasharray with keyframe 'flow-particles' moving continuously; speed varies by wattage",
-    "led_status_pulses": "dot-pulse animation (0% to 100% opacity with current-color glow shadow)",
-    "tactile_button_press": "active:translate-y-[1px] active:shadow-inner",
-    "card_hover_elevation": "card-lift effect (-4px translateY with subtle silver edge border highlight)",
-    "reduced_motion": "@media (prefers-reduced-motion: reduce) disables flow-particles and pulse keyframes"
+  "component_path_guidelines": {
+    "energy_flow": "/app/frontend/src/components/EnergyFlow.jsx",
+    "kpi_strip": "/app/frontend/src/components/KpiStrip.jsx",
+    "global_css": "/app/frontend/src/index.css",
+    "dashboard_page": "/app/frontend/src/pages/Dashboard.jsx",
+    "solar_ui_primitives": "/app/frontend/src/components/solar-ui.jsx"
   },
-  "accessibility_and_testing": {
-    "contrast_compliance": "Normal text meets 4.5:1 minimum against dark slate wells; telemetry numbers in JetBrains Mono use bright silver (#F8FAFC) or neon accents with text-shadow.",
-    "testing_attributes": "All interactive elements (buttons, sliders, inputs, nav tabs, status badges) and primary stat cards MUST include explicit data-testid attributes (e.g. data-testid='nav-tab-dashboard', data-testid='kpi-pv-power')."
+  "accessibility_and_motion": {
+    "respect_reduced_motion": "All plasma particle flows, rotating sun rays, and wave transforms must strictly pause or fall back to static dashed lines when .reduce-motion or prefers-reduced-motion is active.",
+    "contrast_compliance": "Normal text maintains at least 4.5:1 ratio against dark titanium backgrounds. Telemetry numbers use pure white #FFFFFF or high-luminance neon tints (emerald, amber, cyan).",
+    "test_attributes": "Every node card has data-testid='flow-[device]', flow paths have data-testid='flow-path-[id]', view toggle has data-testid='flow-view-toggle', inspector has data-testid='flow-inspector'."
   },
-  "instructions_to_main_agent": [
-    "1. Do NOT rewrite or remove existing components or page routes.",
-    "2. Update /app/frontend/src/index.css to enhance CSS variable declarations (--background, --card, --border) and augment .glass, .glass-strong, .glass-inset, .btn-neo with tactile silver/slate border highlights and SCADA shadows.",
-    "3. Update /app/frontend/tailwind.config.js to include SCADA slate/steel color definitions (e.g. slate-metal, graphite-muted, titanium-white, obsidian-border).",
-    "4. Refine /app/frontend/src/components/solar-ui.jsx styling for GlassCard, Badge, MetricBig, and SectionHeader to apply metallic chamfers, top accent hairlines, and SCADA control room density.",
-    "5. Ensure all key controls and status elements retain or gain kebab-case data-testid attributes for automated testing."
-  ],
   "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
-    "Never create standard centered white layouts or generic blue SaaS cards.",
-    "Maintain the dark SCADA control-room aesthetic with layered metallic surfaces, monospaced telemetry data, crisp 1px borders, and vivid neon status indicators.",
-    "Every button, input, slider, tab, and card must include explicit kebab-case data-testid attributes.",
-    "Ensure hover and active states provide high visual feedback with subtle metallic edge highlights and glows."
+    "Never replace existing mock or real data bindings; keep all API poll loops, props, and calculation logic intact.",
+    "Do not use generic SaaS flat cards. Use SCADA / control room aesthetic: machined metallic bevels, deep obsidian surface depth, crisp neon telemetry, photon plasma energy flows, and tactile chrome headers.",
+    "All interactive and key informational elements MUST include a data-testid attribute.",
+    "Do not use complete transparent background in header, overlays, or floating panels."
   ]
 }

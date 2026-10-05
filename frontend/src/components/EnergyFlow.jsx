@@ -5,7 +5,7 @@
  * DC-gekoppelt: Victron-MPPTs laden den Akku, Trucki entlädt ihn ins AC-Netz,
  * Hoymiles speist AC direkt. Energieströme als leuchtende Plasma-Bahnen mit
  * Photonen-Schwärmen – Geschwindigkeit/Dichte/Glow skalieren mit der Wattleistung. */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Activity } from "lucide-react";
 import { useMotion } from "../lib/motion";
 
@@ -132,35 +132,61 @@ function Emblem({ node, reduced }) {
 // ---------- Knoten-Karte ----------
 
 function NodeCard({ node, dim, reduced, onHover }) {
-  const { x, y, color, active, value, unit, label, sub, testid } = node;
+  const { x, y, color, active, value, unit, label, sub, testid, badge } = node;
   const left = x - NODE_W / 2;
   const top = y - NODE_H / 2;
+  const right = left + NODE_W;
+  const bottom = top + NODE_H;
   const tx = left + 62;
+  const bw = badge ? 13 + badge.length * 4.9 : 0;
+  const bx = right - 8 - bw;
   return (
     <g data-testid={testid}
        onMouseEnter={() => onHover(node.key)} onMouseLeave={() => onHover(null)} onClick={() => onHover(node.key)}
-       style={{ opacity: dim ? 0.3 : 1, transition: "opacity 0.3s cubic-bezier(0.4,0,0.2,1)", cursor: "pointer" }}>
+       style={{ opacity: dim ? 0.28 : 1, transition: "opacity 0.3s cubic-bezier(0.4,0,0.2,1)", cursor: "pointer" }}>
       {active && (
-        <rect x={left - 2} y={top - 2} width={NODE_W + 4} height={NODE_H + 4} rx="9" fill="none"
-              stroke={color} strokeWidth="1" opacity="0.45" style={{ filter: `drop-shadow(0 0 7px ${color})` }} />
+        <rect x={left - 2.5} y={top - 2.5} width={NODE_W + 5} height={NODE_H + 5} rx="10" fill="none"
+              stroke={color} strokeWidth="1" opacity="0.5" style={{ filter: `drop-shadow(0 0 9px ${color})` }} />
       )}
-      <rect x={left} y={top} width={NODE_W} height={NODE_H} rx="7" fill="rgba(13,19,33,0.85)"
-            stroke={active ? `${color}` : "rgba(255,255,255,0.10)"} strokeOpacity={active ? 0.5 : 1} strokeWidth="1" />
-      <rect x={left} y={top} width="4" height={NODE_H} rx="2" fill={color} opacity="0.85" />
+      {/* Gehäuse (maschiniertes Titan-Glas) */}
+      <rect x={left} y={top} width={NODE_W} height={NODE_H} rx="8" fill="url(#nodeFill)"
+            stroke={active ? color : "rgba(148,163,184,0.20)"} strokeOpacity={active ? 0.6 : 1} strokeWidth="1" />
+      {/* Metallische Oberkanten-Hairline */}
+      <line x1={left + 16} y1={top + 1.2} x2={right - 16} y2={top + 1.2} stroke="rgba(226,232,240,0.45)" strokeWidth="1" opacity="0.7" />
+      {/* Statusbalken links */}
+      <rect x={left} y={top} width="4" height={NODE_H} rx="2" fill={color} opacity="0.92"
+            style={active ? { filter: `drop-shadow(0 0 5px ${color})` } : undefined} />
+      {/* Taktische Eckwinkel (Aerospace-SCADA) */}
+      <path d={`M ${left + 8} ${top + 17} L ${left + 8} ${top + 8} L ${left + 17} ${top + 8}`}
+            stroke={color} strokeWidth="1.3" fill="none" opacity={active ? 0.65 : 0.28} strokeLinecap="round" />
+      <path d={`M ${right - 8} ${bottom - 17} L ${right - 8} ${bottom - 8} L ${right - 17} ${bottom - 8}`}
+            stroke={color} strokeWidth="1.3" fill="none" opacity={active ? 0.65 : 0.28} strokeLinecap="round" />
       <Emblem node={node} reduced={reduced} />
-      <text x={tx} y={top + 22} fontSize="10" fontFamily="JetBrains Mono" fontWeight="700" letterSpacing="1.4" fill="rgba(255,255,255,0.55)">
+      {/* Geräte-Badge */}
+      {badge && (
+        <g pointerEvents="none">
+          <rect x={bx} y={top + 7} width={bw} height="13.5" rx="3" fill="rgba(2,6,16,0.82)" stroke={color} strokeOpacity="0.45" strokeWidth="0.8" />
+          <text x={bx + bw / 2} y={top + 16.6} textAnchor="middle" fontSize="7" fontFamily="JetBrains Mono" fontWeight="600" letterSpacing="0.6" fill={color} opacity="0.9">{badge}</text>
+        </g>
+      )}
+      <text x={tx} y={top + 23} fontSize="10" fontFamily="Chakra Petch, JetBrains Mono" fontWeight="600" letterSpacing="1.1" fill="rgba(226,232,240,0.62)">
         {String(label).toUpperCase()}
       </text>
-      <text x={tx} y={y + 8} fontSize="23" fontFamily="JetBrains Mono" fontWeight="500" fill="#ffffff"
-            style={active ? { filter: `drop-shadow(0 0 6px ${color}99)` } : undefined}>
+      <text x={tx} y={y + 10} fontSize="24" fontFamily="JetBrains Mono" fontWeight="600" fill="#ffffff"
+            style={active ? { filter: `drop-shadow(0 0 7px ${color}aa)` } : undefined}>
         {value}
         <tspan fontSize="12" fill="rgba(255,255,255,0.45)" dx="4">{unit}</tspan>
       </text>
       {sub && (
-        <text x={tx} y={top + NODE_H - 13} fontSize="9.5" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.55)">
+        <text x={tx} y={top + NODE_H - 12} fontSize="9.5" fontFamily="JetBrains Mono" fill="rgba(203,213,225,0.58)">
           {sub}
         </text>
       )}
+      {/* Status-Beacon */}
+      <circle cx={right - 12} cy={bottom - 12} r="2.6" fill={active ? color : "rgba(148,163,184,0.4)"}
+              style={active ? { filter: `drop-shadow(0 0 5px ${color})` } : undefined}>
+        {active && !reduced && <animate attributeName="opacity" values="1;0.35;1" dur="1.6s" repeatCount="indefinite" />}
+      </circle>
     </g>
   );
 }
@@ -282,40 +308,75 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const batteryEnabled = en("trucki");
 
   const mppts = victron?.mppts || [];
-  const MPPT_POS = [{ x: 130, y: 110 }, { x: 130, y: 330 }];
 
-  const nodes = [];
-  if (victronEnabled) {
-    mppts.slice(0, 2).forEach((m, i) => {
-      const w = m.pv_power || 0;
-      nodes.push({
-        key: `mppt${i + 1}`, x: MPPT_POS[i].x, y: MPPT_POS[i].y, color: COLOR.dc, active: w > 5, emblem: "sun",
-        label: `MPPT ${i + 1}`, value: round(w), unit: "W", testid: `flow-mppt${i + 1}`,
-        sub: w > 5 ? `${f1(m.pv_voltage)} V · ${m.state || "–"}` : "inaktiv",
-      });
-    });
-  }
-  if (hoymilesEnabled) nodes.push({ key: "hoymiles", x: 720, y: 105, color: COLOR.pv, active: pvAcActive, emblem: "sun",
-    label: "Hoymiles", value: round(pvAc), unit: "W", testid: "flow-hoymiles",
-    sub: pvAcActive ? `HM1500 · ${ahoy?.limit_percent ?? 100}%` : pvNightSub });
-  if (batteryEnabled) nodes.push({ key: "battery", x: 420, y: 225, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
-    label: "Akku", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
-  nodes.push({ key: "house", x: 720, y: 300, color: COLOR.house, active: houseActive, emblem: "house",
-    label: "Haus", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
-  if (gridEnabled) nodes.push({ key: "grid", x: 960, y: 300, color: gridColor, active: importActive || exportActive, emblem: "grid",
-    label: "Netz", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
+  // Kompakt/Detail-Ansicht (Auto: Handy=Kompakt, Desktop=Detail), in localStorage gemerkt.
+  const [viewPref, setViewPref] = useState(() => {
+    try { return localStorage.getItem("solar.flowView") || "auto"; } catch { return "auto"; }
+  });
+  const [narrow, setNarrow] = useState(() => (typeof window !== "undefined" ? window.innerWidth < 1024 : false));
+  useEffect(() => {
+    const h = () => setNarrow(window.innerWidth < 1024);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+  const setView = (v) => { setViewPref(v); try { localStorage.setItem("solar.flowView", v); } catch { /* ignore */ } };
+  const mode = viewPref === "auto" ? (narrow ? "compact" : "detail") : viewPref;
+  const compact = mode === "compact";
 
   const m1w = mppts[0]?.pv_power || 0;
   const m2w = mppts[1]?.pv_power || 0;
 
+  // --- Knoten + Flüsse je Ansicht ---
+  const nodes = [];
+  let allFlows = [];
+  if (compact) {
+    const pvEnabled = victronEnabled || hoymilesEnabled;
+    if (pvEnabled) nodes.push({ key: "pv", x: 530, y: 95, color: COLOR.pv, active: pvProducing, emblem: "sun",
+      label: "PV-Block", badge: "AC+DC", value: round(pv), unit: "W", testid: "flow-pv",
+      sub: pvProducing ? `AC ${round(pvAc)} · DC ${round(pvDc)} W` : pvNightSub });
+    if (gridEnabled) nodes.push({ key: "grid", x: 200, y: 230, color: gridColor, active: importActive || exportActive, emblem: "grid",
+      label: "Netz", badge: "PRO 3EM", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
+    if (batteryEnabled) nodes.push({ key: "battery", x: 860, y: 230, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
+      label: "Akku", badge: "TRUCKI", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
+    nodes.push({ key: "house", x: 530, y: 300, color: COLOR.house, active: houseActive, emblem: "house",
+      label: "Haus", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
+    allFlows = [
+      { id: "pv-house", from: "pv", to: "house", d: "M 530 136 L 530 259", color: COLOR.pv, active: pvAcActive, watts: pvAc, reverse: false },
+      { id: "pv-battery", from: "pv", to: "battery", d: "M 621 110 L 769 215", color: COLOR.dc, active: chargeActive, watts: charge, reverse: false },
+      { id: "grid-house", from: "grid", to: "house", d: "M 291 240 L 439 292", color: gridColor, active: importActive || exportActive, watts: Math.abs(grid), reverse: exportActive },
+      { id: "battery-house", from: "battery", to: "house", d: "M 769 240 L 621 292", color: COLOR.battery, active: dischargeActive, watts: discharge, reverse: false },
+    ];
+  } else {
+    const MPPT_POS = [{ x: 135, y: 105 }, { x: 135, y: 325 }];
+    if (victronEnabled) {
+      mppts.slice(0, 2).forEach((m, i) => {
+        const w = m.pv_power || 0;
+        nodes.push({
+          key: `mppt${i + 1}`, x: MPPT_POS[i].x, y: MPPT_POS[i].y, color: COLOR.dc, active: w > 5, emblem: "sun",
+          label: `MPPT ${i + 1}`, badge: "1-STR·DC", value: round(w), unit: "W", testid: `flow-mppt${i + 1}`,
+          sub: w > 5 ? `${f1(m.pv_voltage)} V · ${m.state || "–"}` : "inaktiv",
+        });
+      });
+    }
+    if (hoymilesEnabled) nodes.push({ key: "hoymiles", x: 725, y: 105, color: COLOR.pv, active: pvAcActive, emblem: "sun",
+      label: "Hoymiles", badge: "AHOY-DTU", value: round(pvAc), unit: "W", testid: "flow-hoymiles",
+      sub: pvAcActive ? `HM1500 · ${ahoy?.limit_percent ?? 100}%` : pvNightSub });
+    if (batteryEnabled) nodes.push({ key: "battery", x: 420, y: 215, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
+      label: "Akku", badge: "TRUCKI", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
+    nodes.push({ key: "house", x: 725, y: 325, color: COLOR.house, active: houseActive, emblem: "house",
+      label: "Haus", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
+    if (gridEnabled) nodes.push({ key: "grid", x: 965, y: 325, color: gridColor, active: importActive || exportActive, emblem: "grid",
+      label: "Netz", badge: "PRO 3EM", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
+    allFlows = [
+      { id: "mppt1-battery", from: "mppt1", to: "battery", d: "M 226 105 L 329 215", color: COLOR.dc, active: m1w > 5, watts: m1w, reverse: false },
+      { id: "mppt2-battery", from: "mppt2", to: "battery", d: "M 226 325 L 329 215", color: COLOR.dc, active: m2w > 5, watts: m2w, reverse: false },
+      { id: "battery-house", from: "battery", to: "house", d: "M 511 215 L 634 325", color: COLOR.battery, active: dischargeActive, watts: discharge, reverse: false },
+      { id: "hoymiles-house", from: "hoymiles", to: "house", d: "M 725 146 L 725 284", color: COLOR.pv, active: pvAcActive, watts: pvAc, reverse: false },
+      { id: "grid-house", from: "grid", to: "house", d: "M 874 325 L 816 325", color: gridColor, active: importActive || exportActive, watts: Math.abs(grid), reverse: exportActive },
+    ];
+  }
+
   const present = new Set(nodes.map((n) => n.key));
-  const allFlows = [
-    { id: "mppt1-battery", from: "mppt1", to: "battery", d: "M 221 110 L 329 225", color: COLOR.dc, active: m1w > 5, watts: m1w, reverse: false },
-    { id: "mppt2-battery", from: "mppt2", to: "battery", d: "M 221 330 L 329 225", color: COLOR.dc, active: m2w > 5, watts: m2w, reverse: false },
-    { id: "battery-house", from: "battery", to: "house", d: "M 511 225 L 629 300", color: COLOR.battery, active: dischargeActive, watts: discharge, reverse: false },
-    { id: "hoymiles-house", from: "hoymiles", to: "house", d: "M 720 146 L 720 259", color: COLOR.pv, active: pvAcActive, watts: pvAc, reverse: false },
-    { id: "grid-house", from: "grid", to: "house", d: "M 869 300 L 811 300", color: gridColor, active: importActive || exportActive, watts: Math.abs(grid), reverse: exportActive },
-  ];
   const flows = allFlows.filter((f) => present.has(f.from) && present.has(f.to));
 
   const nodeKeys = {};
@@ -331,20 +392,34 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const ahoyCh = ahoy?.channels || [];
   const acV = avg(ahoyCh.map((c) => c.voltage));
   const acI = sumA(ahoyCh.map((c) => c.current));
+  const dcV = avg(mppts.map((m) => m.pv_voltage));
   const phasesArr = shelly?.phases || [];
 
   const buildDetail = (key) => {
+    if (key === "pv") {
+      const rows = [{ l: "Gesamt", v: `${round(pv)} W` }, { l: "AC · Hoymiles", v: `${round(pvAc)} W` }];
+      if (acV != null) rows.push({ l: "· Ø Spannung", v: `${f1(acV)} V` });
+      rows.push({ l: "DC · Victron", v: `${round(pvDc)} W` });
+      if (dcV != null) rows.push({ l: "· Ø PV-Spannung", v: `${f1(dcV)} V` });
+      if (!pvProducing && isNight) rows.push({ l: "Sonnenaufgang", v: `in ${sunriseStr}` });
+      return { title: "PV-Block", badge: "AC+DC", color: COLOR.pv, rows };
+    }
     if (key.startsWith("mppt")) {
       const idx = key === "mppt1" ? 0 : 1;
       const m = mppts[idx] || {};
+      const p = m.pv_power || 0;
+      const u = m.pv_voltage || 0;
+      const cur = u > 0 ? p / u : 0;
       const rows = [
-        { l: "Leistung", v: `${round(m.pv_power)} W` },
-        { l: "PV-Spannung", v: `${f1(m.pv_voltage)} V` },
+        { l: "PV-Leistung", v: `${round(p)} W` },
+        { l: "PV-Spannung", v: `${f1(u)} V` },
+        { l: "PV-Strom", v: `${f1(cur)} A` },
         { l: "Batterie", v: `${f1(m.battery_voltage)} V` },
         { l: "Status", v: m.state || "–" },
         { l: "Ertrag heute", v: `${f1(m.yield_today)} kWh` },
+        { l: "Modulfeld", v: "4 Panels · 1 String" },
       ];
-      return { title: m.name || key.toUpperCase(), color: COLOR.dc, rows };
+      return { title: m.name || key.toUpperCase(), badge: "VENUS-OS", color: COLOR.dc, rows };
     }
     if (key === "hoymiles") {
       const rows = [
@@ -355,12 +430,12 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       if (acV != null) rows.push({ l: "Ø Spannung", v: `${f1(acV)} V` });
       if (acI != null) rows.push({ l: "Σ Strom", v: `${f1(acI)} A` });
       if (!pvAcActive && isNight) rows.push({ l: "Sonnenaufgang", v: `in ${sunriseStr}` });
-      return { title: "Hoymiles HM1500", color: COLOR.pv, rows };
+      return { title: "Hoymiles HM1500", badge: "AHOY-DTU", color: COLOR.pv, rows };
     }
     if (key === "grid") {
       const rows = [{ l: "Σ Leistung", v: `${round(Math.abs(grid))} W` }, { l: "Status", v: gridLabel }];
       phasesArr.forEach((p) => rows.push({ l: p.phase, v: `${f1(p.voltage)} V · ${f1(p.current)} A` }));
-      return { title: "Netz · Shelly 3EM", color: gridColor, rows };
+      return { title: "Netz · Shelly 3EM", badge: "PRO 3EM", color: gridColor, rows };
     }
     if (key === "battery") {
       const kind = charge > discharge ? "Laden" : discharge > 0 ? "Entladen" : "Leerlauf";
@@ -370,7 +445,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       rows.push({ l: "DC-Ladung", v: `${round(charge)} W` });
       if (trucki?.temperature != null) rows.push({ l: "Temperatur", v: `${round(trucki.temperature)} °C` });
       rows.push({ l: "ZEPC", v: trucki?.zepc ? "EIN" : "AUS" });
-      return { title: "Akku · Trucki/SUN", color: COLOR.battery, rows };
+      return { title: "Akku · Trucki/SUN", badge: "TRUCKI", color: COLOR.battery, rows };
     }
     const rows = [
       { l: "Verbrauch", v: `${round(house)} W` },
@@ -378,31 +453,45 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       { l: "aus Akku", v: `${round(discharge)} W` },
       { l: "aus Netz", v: `${round(Math.max(0, grid))} W` },
     ];
-    return { title: "Haus", color: COLOR.house, rows };
+    return { title: "Haus", badge: "AC-LAST", color: COLOR.house, rows };
   };
   const detail = isNodeHover ? buildDetail(hover) : null;
 
+  const VIEW_OPTS = [{ v: "auto", l: "Auto" }, { v: "compact", l: "Kompakt" }, { v: "detail", l: "Detail" }];
+
   return (
     <div className="glass-strong h-full flex flex-col">
-      <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between">
-        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2">
+      <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3">
+        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2 shrink-0">
           <Activity size={12} className="text-cyan-400 neon-cyan" />
-          Energiefluss · Live
+          <span className="hidden sm:inline">Energiefluss · Live</span>
+          <span className="sm:hidden">Fluss</span>
         </div>
-        <div className="flex items-center gap-3 font-mono text-[10px] text-white/55">
-          <span className="hidden sm:inline text-white/40">Knoten/Pfad überfahren für Werte</span>
-          <span className="inline-flex items-center gap-1.5 text-white/70">
+        <div className="flex items-center gap-3">
+          <div className="inline-flex rounded-md overflow-hidden border border-white/12" data-testid="flow-view-toggle" role="group" aria-label="Ansicht">
+            {VIEW_OPTS.map((o) => (
+              <button key={o.v} type="button" onClick={() => setView(o.v)} aria-pressed={viewPref === o.v}
+                data-testid={`flow-view-${o.v}`}
+                className={`px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${viewPref === o.v ? "bg-cyan-400/20 text-cyan-200" : "text-white/50 hover:text-white hover:bg-white/5"}`}>
+                {o.l}
+              </button>
+            ))}
+          </div>
+          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-white/70">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse text-emerald-400" /> AKTIV
           </span>
         </div>
       </div>
       <div className="p-4 flex-1 flex items-center relative">
         {detail && (
-          <div className="absolute top-3 right-3 z-10 w-[214px] pointer-events-none" data-testid="flow-inspector">
-            <div className="glass-strong rounded-md border px-3 py-2.5" style={{ borderColor: `${detail.color}66`, boxShadow: `0 0 16px ${detail.color}22` }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 rounded-full" style={{ background: detail.color, boxShadow: `0 0 6px ${detail.color}` }} />
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/80" data-testid="flow-inspector-title">{detail.title}</span>
+          <div className="absolute top-3 right-3 z-10 w-[216px] pointer-events-none" data-testid="flow-inspector">
+            <div className="rounded-md border px-3 py-2.5" style={{ background: "rgba(6,11,24,0.96)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderColor: `${detail.color}66`, boxShadow: `0 0 18px ${detail.color}26, 0 12px 28px -14px rgba(0,0,0,0.9)` }}>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: detail.color, boxShadow: `0 0 7px ${detail.color}` }} />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/85 truncate" data-testid="flow-inspector-title">{detail.title}</span>
+                </div>
+                {detail.badge && <span className="font-mono text-[7.5px] uppercase tracking-[0.14em] px-1.5 py-0.5 rounded shrink-0" style={{ color: detail.color, border: `0.8px solid ${detail.color}66` }}>{detail.badge}</span>}
               </div>
               <dl className="space-y-1">
                 {detail.rows.map((r, i) => (
@@ -424,9 +513,19 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
               <stop offset="0%" stopColor="rgba(6,182,212,0.05)" />
               <stop offset="100%" stopColor="rgba(0,0,0,0)" />
             </radialGradient>
+            <linearGradient id="nodeFill" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="rgba(17,24,39,0.94)" />
+              <stop offset="100%" stopColor="rgba(7,12,24,0.97)" />
+            </linearGradient>
           </defs>
           <rect x="0" y="0" width="1060" height="420" fill="url(#bggrid)" />
           <rect x="0" y="0" width="1060" height="420" fill="url(#efcenter)" />
+          {[[180, 70], [900, 70], [180, 360], [900, 360], [530, 215]].map(([cx, cy], i) => (
+            <g key={i} stroke="rgba(148,163,184,0.16)" strokeWidth="0.8" pointerEvents="none">
+              <line x1={cx - 6} y1={cy} x2={cx + 6} y2={cy} />
+              <line x1={cx} y1={cy - 6} x2={cx} y2={cy + 6} />
+            </g>
+          ))}
 
           {flows.map((f) => <Flow key={f.id} flow={f} hover={hover} reduced={reduced} onHover={setHover} />)}
           {nodes.map((n) => (
