@@ -174,7 +174,10 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Dämmerungsphasen im Sonnenbogen (blaue/goldene Stunde)** – FERTIG 05.10.2026 (`sun.event_times` für −6°/+6°; Payload `civil_dawn/dusk`, `golden_morning_end/evening_start`; SunTimeline markiert blaue Tails unter Horizont + goldene Segmente knapp darüber, inkl. Legende). Zeiten geprüft, visuell verifiziert.
 - [x] **Astronomische Dämmerung (−18°) im Sonnenbogen** – FERTIG 05.10.2026 (`event_times(-18°)`; Payload `astro_dawn/astro_dusk`; SunTimeline zeigt dritte, dunkle Indigo-Zone unter der blauen Stunde; Tails visuell begrenzt; Legende mit 3 Phasen). Visuell verifiziert.
 - [x] **Phasen-Zeiten als Hover-Tooltip** – FERTIG 05.10.2026 (SunTimeline: Hit-Flächen pro Dämmerungszone + Tooltip mit Phasenname & genauem Zeitbereich, z. B. „Blaue Stunde · 16:48–17:21"). Testing-Agent 100% (iteration_18).
-- [ ] **Phase 3: Feinschliff** – offen: Animations-Politur, Performance-Optimierung, Mobile-Responsive-Check (Firmware-Hinweise bereits erledigt)
+- [x] **Phase 3: Feinschliff** – FERTIG 06.06.2026
+  - Animations-Politur: weicheres Easing (cubic-bezier) für Energiefluss-Hover/Dimming; gestaffelte Seiten-/Karten-Einblendung (`.page-reveal` in index.css, auf allen 6 Seiten-Wurzeln)
+  - **Reduced-Motion als Nutzer-Option** (`lib/motion.jsx` MotionProvider): Tri-State Automatisch/Immer an/Reduziert, in localStorage (`solar.motionPref`) persistiert, Segmented-Control auf Geräte-Seite (`motion-toggle`). Setzt `.reduce-motion` / `.motion-force-on` auf <html>; EnergyFlow & SunTimeline überspringen SMIL-Photonen/`flow-particles` im reduzierten Modus
+  - Mobile/Tablet/Desktop-Responsive-Check: testing_agent iteration_19 – 0 horizontaler Overflow an 390/768/1024 auf allen 6 Routen, Reveals verdecken keine Inhalte; Nav schmalseitig scrollbar gemacht (`min-w-0 flex-1`, Untertitel `hidden sm:block`)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
 - [ ] Energiekosten (€/kWh) für Bezug/Einspeisung

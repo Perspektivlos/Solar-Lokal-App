@@ -25,10 +25,10 @@ export default function Layout() {
             </div>
             <div>
               <div className="font-semibold tracking-tight text-sm leading-none text-white">HauckLab · Solar'Projekt</div>
-              <div className="font-mono text-[10px] text-white/55 uppercase tracking-[0.2em] mt-1">zur Zeit nur eine kleine App</div>
+              <div className="hidden sm:block font-mono text-[10px] text-white/55 uppercase tracking-[0.2em] mt-1">zur Zeit nur eine kleine App</div>
             </div>
           </div>
-          <nav className="flex items-stretch h-full overflow-x-auto" data-testid="nav-menu">
+          <nav className="flex items-stretch h-full min-w-0 flex-1 lg:justify-end overflow-x-auto whitespace-nowrap" data-testid="nav-menu">
             <div className="flex items-center pr-3 mr-1 border-r border-white/10">
               <SystemStatusLight />
             </div>
