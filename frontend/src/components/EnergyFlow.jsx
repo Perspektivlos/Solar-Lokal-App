@@ -221,7 +221,7 @@ const avg = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) / a.length : 
 const sumA = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) : null);
 const f1 = (x) => (x == null || isNaN(x) ? "n/a" : Math.round(x * 10) / 10);
 
-export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp }) {
+export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp, sun }) {
   const [hover, setHover] = useState(null);
 
   const pv = summary?.pv_power || 0;
@@ -242,13 +242,21 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const houseActive = house > 5;
   const pvProducing = pv > 5;
 
-  // Tag/Nacht nach demselben Sonnenmodell wie die Mock-Daten (UTC, 05–21 Uhr).
-  // Nachts zeigt der PV-Knoten dezent die Zeit bis zum Sonnenaufgang.
-  const SUNRISE_H = 5, SUNSET_H = 21;
-  const _now = timestamp ? new Date(timestamp) : new Date();
-  const _h = _now.getUTCHours() + _now.getUTCMinutes() / 60;
-  const isNight = _h < SUNRISE_H || _h >= SUNSET_H;
-  const hoursToSunrise = _h < SUNRISE_H ? SUNRISE_H - _h : 24 - _h + SUNRISE_H;
+  // Tag/Nacht aus realen Auf-/Untergangszeiten (Standort, UTC-Instant);
+  // Fallback auf festes 05–21-Uhr-Modell, falls keine Sonnenzeiten vorliegen.
+  const _nowMs = timestamp ? new Date(timestamp).getTime() : Date.now();
+  const _srMs = sun?.sunrise ? new Date(sun.sunrise).getTime() : null;
+  const _ssMs = sun?.sunset ? new Date(sun.sunset).getTime() : null;
+  let isNight, hoursToSunrise;
+  if (_srMs != null && _ssMs != null && _ssMs > _srMs) {
+    isNight = !(_nowMs >= _srMs && _nowMs < _ssMs);
+    hoursToSunrise = _nowMs < _srMs ? (_srMs - _nowMs) / 3600000 : (_srMs + 86400000 - _nowMs) / 3600000;
+  } else {
+    const _now = timestamp ? new Date(timestamp) : new Date();
+    const _h = _now.getUTCHours() + _now.getUTCMinutes() / 60;
+    isNight = _h < 5 || _h >= 21;
+    hoursToSunrise = _h < 5 ? 5 - _h : 24 - _h + 5;
+  }
   const sunriseStr = `${hoursToSunrise.toFixed(1).replace(".", ",")} h`;
   const pvNightSub = isNight ? `Sonnenaufgang in ${sunriseStr}` : "inaktiv";
 

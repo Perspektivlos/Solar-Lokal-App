@@ -1,48 +1,58 @@
 /* Tagesverlauf als Sonnen-Bogen: die Sonne wandert entlang eines Halbbogens
  * von Aufgang (links) bis Untergang (rechts); zentral die Rest-Sonnenstunden.
- * Nutzt dasselbe UTC-Sonnenmodell (05–21 Uhr) wie der Energiefluss. */
+ * Auf-/Untergang kommen als reale UTC-Zeiten (Standort-abhängig) aus dem Live-
+ * Payload; Anzeige in lokaler Zeit. */
 import { Sun } from "lucide-react";
 
-const SUNRISE = 5;
-const SUNSET = 21;
-const DAY_LEN = SUNSET - SUNRISE;
-
-// Bogen-Geometrie (Ellipsenbogen)
 const RX = 250;
 const RY = 120;
 const CX = 300;
 const BASE = 150;
+const H = 3600000;
+
 const arcPoint = (t) => {
   const th = Math.PI * (1 - t);
   return { x: CX + RX * Math.cos(th), y: BASE - RY * Math.sin(th) };
 };
-
 const comma = (n) => n.toFixed(1).replace(".", ",");
+const hhmm = (ms) => new Date(ms).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-export default function SunTimeline({ timestamp }) {
-  const now = timestamp ? new Date(timestamp) : new Date();
-  const h = now.getUTCHours() + now.getUTCMinutes() / 60;
-  const isDay = h >= SUNRISE && h < SUNSET;
+export default function SunTimeline({ timestamp, sun }) {
+  const nowMs = timestamp ? new Date(timestamp).getTime() : Date.now();
+  const srMs = sun?.sunrise ? new Date(sun.sunrise).getTime() : null;
+  const ssMs = sun?.sunset ? new Date(sun.sunset).getTime() : null;
+  const hasSun = srMs != null && ssMs != null && ssMs > srMs;
 
-  const dayT = Math.max(0, Math.min(1, (h - SUNRISE) / DAY_LEN));
-  const markerT = isDay ? dayT : h < SUNRISE ? 0 : 1;
+  const isDay = hasSun && nowMs >= srMs && nowMs < ssMs;
+  const dayT = hasSun ? Math.max(0, Math.min(1, (nowMs - srMs) / (ssMs - srMs))) : 0;
+  const markerT = isDay ? dayT : hasSun && nowMs < srMs ? 0 : 1;
   const m = arcPoint(markerT);
 
-  // Rest-Sonnenstunden heute
-  let restHours;
-  if (isDay) restHours = SUNSET - h;
-  else if (h < SUNRISE) restHours = DAY_LEN;
-  else restHours = 0;
-
-  const toRise = h < SUNRISE ? SUNRISE - h : 24 - h + SUNRISE;
-  const status = isDay ? `Rest-Sonne ${comma(restHours)} h` : `Sonnenaufgang in ${comma(toRise)} h`;
+  let restHours = 0;
+  if (hasSun) {
+    if (isDay) restHours = (ssMs - nowMs) / H;
+    else if (nowMs < srMs) restHours = (ssMs - srMs) / H;
+  }
+  const toRise = hasSun ? (nowMs < srMs ? (srMs - nowMs) / H : (srMs + 86400000 - nowMs) / H) : 0;
+  const status = !hasSun ? "Sonnenzeiten n/v" : isDay ? `Rest-Sonne ${comma(restHours)} h` : `Sonnenaufgang in ${comma(toRise)} h`;
 
   const hourDots = [];
-  for (let hh = SUNRISE; hh <= SUNSET; hh++) {
-    const p = arcPoint((hh - SUNRISE) / DAY_LEN);
-    const noon = hh === 12;
-    hourDots.push(<circle key={hh} cx={p.x} cy={p.y} r={noon ? 2.4 : 1.6} fill="#ffffff" opacity={noon ? 0.5 : 0.22} />);
+  if (hasSun) {
+    const noonMs = (srMs + ssMs) / 2;
+    const first = new Date(srMs);
+    first.setMinutes(0, 0, 0);
+    let t0 = first.getTime();
+    if (t0 < srMs) t0 += H;
+    for (let tMs = t0; tMs < ssMs; tMs += H) {
+      const t = (tMs - srMs) / (ssMs - srMs);
+      const p = arcPoint(t);
+      const noonish = Math.abs(tMs - noonMs) < H / 2;
+      hourDots.push(<circle key={tMs} cx={p.x} cy={p.y} r={noonish ? 2.4 : 1.6} fill="#ffffff" opacity={noonish ? 0.5 : 0.22} />);
+    }
   }
+  const srLabel = hasSun ? hhmm(srMs) : "–";
+  const ssLabel = hasSun ? hhmm(ssMs) : "–";
+  const noonLabel = hasSun ? hhmm((srMs + ssMs) / 2) : "–";
 
   return (
     <div className="glass-strong" data-testid="sun-timeline">
@@ -79,20 +89,21 @@ export default function SunTimeline({ timestamp }) {
             pathLength="100"
             strokeDasharray={`${isDay ? dayT * 100 : 0} 100`}
             style={{ filter: "drop-shadow(0 0 4px rgba(252,211,77,0.5))" }}
+            data-testid="sun-arc-progress"
           />
 
           {hourDots}
 
-          {/* Stundenmarken-Beschriftung */}
-          <text x="50" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.75)">05:00</text>
+          {/* Stundenmarken-Beschriftung (lokale Zeit) */}
+          <text x="50" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.75)" data-testid="sun-sunrise-label">{srLabel}</text>
           <text x="50" y={BASE + 32} textAnchor="middle" fontSize="8" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)" letterSpacing="1">AUFGANG</text>
-          <text x="550" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(192,132,252,0.8)">21:00</text>
+          <text x="550" y={BASE + 20} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(192,132,252,0.8)" data-testid="sun-sunset-label">{ssLabel}</text>
           <text x="550" y={BASE + 32} textAnchor="middle" fontSize="8" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)" letterSpacing="1">UNTERGANG</text>
-          <text x={CX} y="22" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)">12:00</text>
+          <text x={CX} y="22" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)">{noonLabel}</text>
 
           {/* Zentrale Anzeige: Rest-Sonnenstunden */}
           <text x={CX} y="92" textAnchor="middle" fontSize="38" fontFamily="JetBrains Mono" fontWeight="500" fill="#ffffff"
-                style={isDay ? { filter: "drop-shadow(0 0 8px rgba(252,211,77,0.4))" } : undefined}>
+                style={isDay ? { filter: "drop-shadow(0 0 8px rgba(252,211,77,0.4))" } : undefined} data-testid="sun-rest-hours">
             {comma(restHours)}
             <tspan fontSize="16" fill="rgba(255,255,255,0.5)" dx="4">h</tspan>
           </text>
@@ -100,7 +111,7 @@ export default function SunTimeline({ timestamp }) {
 
           {/* Marker: Sonne (Tag) / Mond (Nacht) */}
           {isDay ? (
-            <g>
+            <g data-testid="sun-marker-day">
               {[...Array(8)].map((_, i) => {
                 const a = (i * Math.PI) / 4;
                 return <line key={i} x1={m.x + Math.cos(a) * 9} y1={m.y + Math.sin(a) * 9} x2={m.x + Math.cos(a) * 14} y2={m.y + Math.sin(a) * 14} stroke="#fcd34d" strokeWidth="2" strokeLinecap="round" />;
@@ -111,7 +122,7 @@ export default function SunTimeline({ timestamp }) {
               <circle cx={m.x} cy={m.y} r="7" fill="#fcd34d" style={{ filter: "drop-shadow(0 0 7px #fcd34d)" }} />
             </g>
           ) : (
-            <g>
+            <g data-testid="sun-marker-night">
               <circle cx={m.x} cy={m.y} r="10" fill="#38bdf8" opacity="0.14" />
               <circle cx={m.x} cy={m.y} r="7" fill="#cbd5e1" style={{ filter: "drop-shadow(0 0 6px #38bdf8)" }} />
               <circle cx={m.x + 3} cy={m.y - 2} r="6" fill="#0d1320" />

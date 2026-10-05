@@ -153,7 +153,7 @@ export default function Dashboard() {
     );
   }
 
-  const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp } = live;
+  const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp, sun } = live;
   const alarms = Array.isArray(live.alarms) ? live.alarms : [];
   const alarmsFor = (device) => alarms.filter((a) => a.device === device);
   const prev = prevLive;
@@ -236,8 +236,8 @@ export default function Dashboard() {
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
       <div data-testid="row-overview" className="space-y-8">
         <KpiStrip today={today} summary={summary} trail={trail} />
-        <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} />
-        <SunTimeline timestamp={timestamp} />
+        <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} sun={sun} />
+        <SunTimeline timestamp={timestamp} sun={sun} />
       </div>
 
       {/* SEKTION · BATTERIE */}

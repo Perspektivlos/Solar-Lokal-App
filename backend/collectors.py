@@ -19,6 +19,7 @@ from mqtt_client import (
     fetch_victron_from_mqtt,
 )
 from mocks import mock_shelly, mock_ahoy, mock_trucki, mock_victron
+from sun import sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
 
 logger = logging.getLogger("solar")
 
@@ -115,6 +116,15 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     demo = cfg.get("demo_mode", True)
     mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
 
+    # Realistische Sonnenzeiten aus Standort (für Demo-Intensität + Payload).
+    loc = cfg.get("location") or {}
+    lat = loc.get("lat", DEFAULT_LAT)
+    lon = loc.get("lon", DEFAULT_LON)
+    now_dt = datetime.now(timezone.utc)
+    st = sun_times(lat, lon, now_dt)
+    sunrise_dt, sunset_dt = st if st else (None, None)
+    intensity = sun_intensity(now_dt, sunrise_dt, sunset_dt)
+
     async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
         if not enabled:
             return {"online": False}
@@ -149,25 +159,25 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         get_dev(
             fetch_shelly_from_mqtt,
             lambda: fetch_shelly(dcfg("shelly").get("ip", "")),
-            mock_shelly,
+            lambda: mock_shelly(intensity),
             dcfg("shelly").get("enabled", False),
         ),
         get_dev(
             fetch_ahoy_from_mqtt,
             lambda: fetch_ahoy(dcfg("ahoy").get("ip", ""), dcfg("ahoy").get("inverter_id", 0)),
-            mock_ahoy,
+            lambda: mock_ahoy(intensity),
             dcfg("ahoy").get("enabled", False),
         ),
         get_dev(
             fetch_trucki_from_mqtt,
             lambda: fetch_trucki(dcfg("trucki").get("ip", "")),
-            mock_trucki,
+            lambda: mock_trucki(intensity),
             dcfg("trucki").get("enabled", False),
         ),
         get_dev(
             lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
             lambda: fetch_victron(dcfg("victron").get("ip", "")),
-            mock_victron,
+            lambda: mock_victron(intensity),
             dcfg("victron").get("enabled", False),
         ),
     )
@@ -193,6 +203,10 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "demo_mode": demo,
+        "sun": {
+            "sunrise": sunrise_dt.isoformat() if sunrise_dt else None,
+            "sunset": sunset_dt.isoformat() if sunset_dt else None,
+        },
         "shelly": shelly,
         "ahoy": ahoy,
         "trucki": trucki,

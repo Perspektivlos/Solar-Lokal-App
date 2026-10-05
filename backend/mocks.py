@@ -5,20 +5,21 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict
 
+from sun import sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
 
-def _sun_curve(now: datetime) -> float:
-    """Returns 0..1 sun intensity based on hour of day."""
-    h = now.hour + now.minute / 60.0
-    if h < 5 or h > 21:
+
+def _sun_curve(now: datetime, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON) -> float:
+    """0..1 Sonnenintensität aus realen Auf-/Untergangszeiten (standortabhängig)."""
+    t = sun_times(lat, lon, now)
+    if not t:
         return 0.0
-    x = (h - 5) / 16.0  # 0..1 across day
-    return max(0.0, math.sin(x * math.pi))
+    return sun_intensity(now, t[0], t[1])
 
 
-def mock_shelly() -> Dict[str, Any]:
+def mock_shelly(intensity=None) -> Dict[str, Any]:
     """Shelly Pro 3EM 3-phase. Positive total_act_power = consumption from grid."""
     now = datetime.now(timezone.utc)
-    sun = _sun_curve(now)
+    sun = _sun_curve(now) if intensity is None else intensity
     # House base load oscillates
     base = 350 + 200 * math.sin(time.time() / 60.0)
     pv = sun * 1450 + random.uniform(-30, 30)
@@ -44,9 +45,9 @@ def mock_shelly() -> Dict[str, Any]:
     }
 
 
-def mock_ahoy() -> Dict[str, Any]:
+def mock_ahoy(intensity=None) -> Dict[str, Any]:
     now = datetime.now(timezone.utc)
-    sun = _sun_curve(now)
+    sun = _sun_curve(now) if intensity is None else intensity
     channels = []
     total = 0.0
     for ch in range(1, 5):
@@ -67,9 +68,9 @@ def mock_ahoy() -> Dict[str, Any]:
     }
 
 
-def mock_trucki() -> Dict[str, Any]:
+def mock_trucki(intensity=None) -> Dict[str, Any]:
     # SoC slowly drifts depending on solar
-    sun = _sun_curve(datetime.now(timezone.utc))
+    sun = _sun_curve(datetime.now(timezone.utc)) if intensity is None else intensity
     soc = 35 + 50 * sun + 8 * math.sin(time.time() / 300.0)
     soc = max(5, min(98, soc))
     # Trucki/SUN entlädt den Akku ins AC-Netz (DC-gekoppelt: nur Entladung,
@@ -94,9 +95,9 @@ def mock_trucki() -> Dict[str, Any]:
     }
 
 
-def mock_victron() -> Dict[str, Any]:
+def mock_victron(intensity=None) -> Dict[str, Any]:
     now = datetime.now(timezone.utc)
-    sun = _sun_curve(now)
+    sun = _sun_curve(now) if intensity is None else intensity
     mppts = []
     for idx in range(1, 3):
         pv = sun * (700 + random.uniform(-25, 25))

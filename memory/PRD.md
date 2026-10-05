@@ -169,6 +169,8 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Doku-Vergleich (Änderungserkennung)** – FERTIG 04.10.2026 (discovery.py `annotate_changes` + routes `_save_device_info` `changed_count`/`prev_detected_at`; DeviceDocPanel zeigt „N geändert"-Chip, Feld-Badge „geändert" + „vorher: X", sonst „unverändert seit letztem Scan"). Tests in test_discovery.py.
 - [x] **PV-Knoten nachts: „Sonnenaufgang in X h"** – FERTIG 04.10.2026 (EnergyFlow.jsx, UTC-Sonnenmodell 05–21 Uhr; Knoten-Sub + PV-Inspector-Zeile). Visuell verifiziert.
 - [x] **Tagesverlauf-Sonnenbogen** – FERTIG 04.10.2026 (SunTimeline.jsx: Halbbogen Aufgang→Untergang mit Stundenpunkten, zentrale Rest-Sonnenstunden, Sonne/Mond-Marker; unter dem Energiefluss). Visuell verifiziert.
+- [x] **Saisonale Sonnenzeiten (Standort)** – FERTIG 05.10.2026 (`sun.py` NOAA-Sonnenaufgangsgleichung; Config `location` {lat,lon,name}; `/api/live` liefert `sun.sunrise/sunset` (UTC); Geräte-Seite Standort-Eingabe). Unit-Tests `test_sun.py` (4) grün; curl-Round-trip (DE/Tromsø/Madrid) verifiziert. Demo-PV-Kurve nutzt jetzt dieselben realen Zeiten.
+- [x] **Sonnenbogen-Füllung tagsüber** – FERTIG 05.10.2026 (SunTimeline amber `stroke-dasharray`-Fortschritt von Aufgang→aktueller Position; Zeiten lokal, Marker Sonne/Mond). Live verifiziert (Tag: gefüllter Bogen + aktiver PV-Block).
 - [ ] **Phase 3: Feinschliff** (Animations-Politur, weitere Mobile-Optimierung)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
 - [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen

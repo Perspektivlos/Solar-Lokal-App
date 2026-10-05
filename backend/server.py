@@ -41,6 +41,7 @@ from mocks import (
     mock_trucki,
     mock_victron,
 )
+from sun import DEFAULT_LAT, DEFAULT_LON
 from influx_points import (
     _instant_ratios,
     _pt_solar,
@@ -142,6 +143,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "battery_soc": {"under": 15.0, "under_crit": 8.0},
     },
     "grafana_url": "http://192.168.0.202:3000",
+    "location": {"lat": DEFAULT_LAT, "lon": DEFAULT_LON, "name": "Deutschland (Mitte)"},
 }
 
 
@@ -175,6 +177,7 @@ class ConfigUpdate(BaseModel):
     retention: Optional[Dict[str, Any]] = None
     alarms: Optional[Dict[str, Any]] = None
     grafana_url: Optional[str] = None
+    location: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):

@@ -64,10 +64,12 @@ export default function Devices() {
     setCfg({ ...cfg, devices: { ...cfg.devices, [key]: { ...cfg.devices[key], ...patch } } });
   };
 
+  const updateLocation = (patch) => setCfg({ ...cfg, location: { ...(cfg.location || {}), ...patch } });
+
   const save = async () => {
     setSaving(true);
     try {
-      const updated = await putConfig({ demo_mode: cfg.demo_mode, devices: cfg.devices });
+      const updated = await putConfig({ demo_mode: cfg.demo_mode, devices: cfg.devices, location: cfg.location });
       setCfg(updated);
       toast.success("Konfiguration gespeichert");
     } catch (e) {
@@ -147,6 +149,29 @@ export default function Devices() {
           </div>
         </div>
         <Switch checked={cfg.demo_mode} onCheckedChange={(v) => setCfg({ ...cfg, demo_mode: v })} data-testid="switch-demo" />
+      </div>
+
+      {/* Standort für Sonnenzeiten */}
+      <div className="glass p-4" style={{ borderLeft: "3px solid #FACC15" }} data-testid="location-row">
+        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-yellow-300/80">Standort · Sonnenzeiten</div>
+        <div className="text-sm mt-1 text-white/70">Auf- &amp; Untergang werden aus Datum &amp; Standort berechnet (Tagesverlauf &amp; „Sonnenaufgang in X h&ldquo;).</div>
+        <div className="flex flex-wrap gap-4 mt-3">
+          <div>
+            <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Breitengrad</label>
+            <input type="number" step="0.0001" value={cfg.location?.lat ?? ""} onChange={(e) => updateLocation({ lat: Number(e.target.value) })}
+                   className="glass-input w-36 px-3 py-2 font-mono text-sm mt-1 block" data-testid="input-lat" />
+          </div>
+          <div>
+            <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Längengrad</label>
+            <input type="number" step="0.0001" value={cfg.location?.lon ?? ""} onChange={(e) => updateLocation({ lon: Number(e.target.value) })}
+                   className="glass-input w-36 px-3 py-2 font-mono text-sm mt-1 block" data-testid="input-lon" />
+          </div>
+          <div className="flex-1 min-w-[160px]">
+            <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Bezeichnung</label>
+            <input type="text" value={cfg.location?.name ?? ""} onChange={(e) => updateLocation({ name: e.target.value })}
+                   className="glass-input w-full px-3 py-2 font-mono text-sm mt-1 block" data-testid="input-loc-name" />
+          </div>
+        </div>
       </div>
 
       {/* Devices grid */}
