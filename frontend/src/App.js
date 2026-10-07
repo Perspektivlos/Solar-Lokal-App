@@ -10,6 +10,7 @@ import Devices from "./pages/Devices";
 import Diagnose from "./pages/Diagnose";
 import Integrations from "./pages/Integrations";
 import KpiPreview from "./pages/KpiPreview";
+import ScadavisPreview from "./pages/ScadavisPreview";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="integrationen" element={<Integrations />} />
           </Route>
           <Route path="/kpi-preview" element={<KpiPreview />} />
+          <Route path="/scadavis-preview" element={<ScadavisPreview />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors theme="dark" />
