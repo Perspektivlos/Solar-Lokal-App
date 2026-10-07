@@ -12,7 +12,7 @@ import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
 import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
-import { Cable, AlertTriangle, Activity, Sun, BatteryCharging } from "lucide-react";
+import { Cable, AlertTriangle, Activity, Sun, BatteryCharging, Star } from "lucide-react";
 
 const INTRO_SECTIONS = [
   {
@@ -67,6 +67,10 @@ export default function Dashboard() {
       putConfig({ favorites: next }).catch(() => {});
       return next;
     });
+  };
+  const reorderFavorites = (next) => {
+    setFavorites(next);
+    putConfig({ favorites: next }).catch(() => {});
   };
   // Direktlink zur Geräte-Weboberfläche (LAN-IP), sofern konfiguriert.
   const devUrl = (name) => {
@@ -248,7 +252,7 @@ export default function Dashboard() {
       </div>
 
       {/* FAVORITEN · angepinnte Geräte-KPIs */}
-      <FavoritesStrip favorites={favorites} live={live} onToggle={toggleFavorite} />
+      <FavoritesStrip favorites={favorites} live={live} onToggle={toggleFavorite} onReorder={reorderFavorites} />
 
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
       <div data-testid="row-overview" className="space-y-8">
@@ -305,7 +309,7 @@ export default function Dashboard() {
           <div className="lg:col-span-7">
             <VictronCard victron={victron} />
           </div>
-          <div className="lg:col-span-5"><MpptCompare mppts={victron.mppts} /></div>
+          <div className="lg:col-span-5"><MpptCompare mppts={victron.mppts} favorites={favorites} onToggleFav={toggleFavorite} /></div>
         </div>
       </div>
 
@@ -367,7 +371,21 @@ export default function Dashboard() {
                     <div key={p.phase} className="glass-inset p-3" data-testid={`shelly-${p.phase}`}>
                       <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70 flex items-center justify-between">
                         <span>Phase {p.phase}</span>
-                        <Cable size={12} className={isImport ? "text-red-300" : "text-emerald-300"} />
+                        <span className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(`phase:${p.phase}`)}
+                            title={favorites.includes(`phase:${p.phase}`) ? "Favorit entfernen" : "Phase anpinnen"}
+                            aria-pressed={favorites.includes(`phase:${p.phase}`)}
+                            data-testid={`shelly-${p.phase}-pin`}
+                            className="transition-opacity"
+                          >
+                            <Star size={12}
+                              style={{ color: favorites.includes(`phase:${p.phase}`) ? COLOR.pv : "rgba(255,255,255,0.35)" }}
+                              fill={favorites.includes(`phase:${p.phase}`) ? COLOR.pv : "none"} />
+                          </button>
+                          <Cable size={12} className={isImport ? "text-red-300" : "text-emerald-300"} />
+                        </span>
                       </div>
                       <div className={`font-mono text-2xl font-semibold tracking-tight mt-1.5 ${isImport ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`}>
                         <span className="opacity-70">{isImport ? "+" : "−"}</span>{formatNum(Math.abs(p.power), 1)}<span className="text-sm ml-1 text-white/45 font-normal">W</span>

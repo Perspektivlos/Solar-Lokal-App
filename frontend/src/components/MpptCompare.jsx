@@ -1,5 +1,5 @@
 import { GlassCard, Badge, formatNum } from "./solar-ui";
-import { Sun } from "lucide-react";
+import { Sun, Star } from "lucide-react";
 import { MPPT_ARRAY, mpptPeakKwp } from "../lib/mppt";
 
 const BAR_COLOR = ["#FACC15", "#34D399"];
@@ -7,7 +7,7 @@ const BAR_COLOR = ["#FACC15", "#34D399"];
 // String-Ertragsvergleich MPPT #1 vs #2: Tages-Ertrag (kWh) im Fokus,
 // zusätzlich spezifischer Ertrag (kWh/kWp) für fairen Vergleich unterschiedlich
 // großer Strings, plus aktuelle Leistung und Differenz.
-export default function MpptCompare({ mppts }) {
+export default function MpptCompare({ mppts, favorites = [], onToggleFav }) {
   const list = (mppts || []).slice(0, 2);
   const yields = list.map((m) => m.yield_today || 0);
   const maxYield = Math.max(0.001, ...yields);
@@ -36,8 +36,22 @@ export default function MpptCompare({ mppts }) {
                   {m.name || `MPPT #${i + 1}`}
                   {leader === i && <span className="text-emerald-300 text-[9px] uppercase tracking-wider border border-emerald-400/40 px-1 rounded">Top</span>}
                 </span>
-                <span className="text-white/55 text-[9px] uppercase tracking-wider border border-white/15 px-1.5 rounded">
-                  {cfg.panels}× {cfg.wp} Wp · {formatNum(kwp, 2)} kWp
+                <span className="flex items-center gap-2">
+                  <span className="text-white/55 text-[9px] uppercase tracking-wider border border-white/15 px-1.5 rounded">
+                    {cfg.panels}× {cfg.wp} Wp · {formatNum(kwp, 2)} kWp
+                  </span>
+                  {onToggleFav && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleFav(`mppt:${i}`)}
+                      title={favorites.includes(`mppt:${i}`) ? "Favorit entfernen" : "MPPT-String anpinnen"}
+                      aria-pressed={favorites.includes(`mppt:${i}`)}
+                      data-testid={`mppt-pin-${i}`}
+                      className="transition-opacity"
+                    >
+                      <Star size={12} style={{ color: favorites.includes(`mppt:${i}`) ? col : "rgba(255,255,255,0.35)" }} fill={favorites.includes(`mppt:${i}`) ? col : "none"} />
+                    </button>
+                  )}
                 </span>
               </div>
               {/* Primär: Tages-Ertrag (kWh) */}

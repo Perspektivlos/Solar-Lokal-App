@@ -16,8 +16,8 @@ const H = 3600000;
 // Balken-Geometrie
 const BX0 = 60;
 const BX1 = 540;
-const BY = 92;
-const BH = 42;
+const BY = 96;
+const BH = 18;
 
 const arcPoint = (t) => {
   const th = Math.PI * (1 - t);
@@ -263,9 +263,9 @@ export default function SunTimeline({ timestamp, sun }) {
                                onMouseEnter={() => setHover(z.key)} onMouseLeave={() => setHover(null)} data-testid={`hit-${z.key}`} />;
                 })}
 
-                {/* Marker (Sonne/Mond) + Linie */}
-                <line x1={xMarker} y1={BY - 8} x2={xMarker} y2={BY + BH + 8} stroke="rgba(255,255,255,0.5)" strokeWidth="1" strokeDasharray="2 3" />
-                {isDay ? <g data-testid="sun-marker-day">{sunGlyph(xMarker, BY - 16, 6)}</g> : <g data-testid="sun-marker-night">{moonGlyph(xMarker, BY - 16, 6)}</g>}
+                {/* Marker (Sonne/Mond) sitzt mittig auf dem schmalen Balken */}
+                <line x1={xMarker} y1={BY - 5} x2={xMarker} y2={BY + BH + 5} stroke="rgba(255,255,255,0.4)" strokeWidth="1" strokeDasharray="2 3" />
+                {isDay ? <g data-testid="sun-marker-day">{sunGlyph(xMarker, BY + BH / 2, 9)}</g> : <g data-testid="sun-marker-night">{moonGlyph(xMarker, BY + BH / 2, 8)}</g>}
 
                 {/* Zeit-Labels */}
                 <text x={xOf(0)} y={BY + BH + 18} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.85)" data-testid="sun-sunrise-label">↑{srLabel}</text>
