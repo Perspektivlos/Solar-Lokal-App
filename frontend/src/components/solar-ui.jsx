@@ -1,7 +1,7 @@
 /* Einheitliche UI-Primitive für das Solar-Dashboard:
    GlassCard, Status-Badges, dominante Live-Metriken, Sparkline, Delta. */
 import { useState } from "react";
-import { Wifi, WifiOff, Radio, TriangleAlert, ArrowDownToLine, ArrowUpFromLine, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
+import { Wifi, WifiOff, Radio, TriangleAlert, ArrowDownToLine, ArrowUpFromLine, ExternalLink, ChevronDown, BookOpen, Star } from "lucide-react";
 
 export const COLOR = {
   pv: "#FACC15",
@@ -162,7 +162,7 @@ export function Stat({ label, value, unit, color, testid }) {
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
 // Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
 // Info-Panel (gleiches Prinzip wie die IntroCard oben), gefiltert auf das Rubrik-Gerät.
-export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, alarms, testid }) {
+export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, alarms, testid, pinned, onPin }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Array.isArray(details) && details.length > 0;
   const alarmList = Array.isArray(alarms) ? alarms : [];
@@ -173,6 +173,22 @@ export function SectionHeader({ label, color = "#64748b", icon: Icon, href, deta
         <span className="w-1 h-5 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
         {Icon && <Icon size={16} strokeWidth={2.4} style={{ color }} />}
         <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/80">{label}</span>
+        {onPin && (
+          <button
+            type="button"
+            onClick={onPin}
+            title={pinned ? "Favorit entfernen" : "Als Favorit anpinnen (KPIs oben)"}
+            aria-pressed={!!pinned}
+            data-testid={testid ? `${testid}-pin` : undefined}
+            className="inline-flex items-center justify-center rounded-full border w-6 h-6 transition-colors"
+            style={{
+              borderColor: pinned ? `${color}88` : "rgba(255,255,255,0.12)",
+              background: pinned ? `${color}1f` : "rgba(255,255,255,0.03)",
+            }}
+          >
+            <Star size={12} strokeWidth={2.2} style={{ color: pinned ? color : "rgba(255,255,255,0.45)" }} fill={pinned ? color : "none"} />
+          </button>
+        )}
         {alarmList.length > 0 && (
           <Badge
             kind={hasCritical ? "KRITISCH" : "WARN"}

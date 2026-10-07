@@ -193,6 +193,25 @@ def pareto(title, x, y, w, h, specs, unit="kwatth"):
     }
 
 
+def scadavis(title, x, y, w, h, specs, svg_url=""):
+    # Plugin: SCADAvis Synoptic Panel (scadavis-synoptic-panel, React 2.x).
+    # Bindet die Datenreihen (in Reihenfolge) an die SVG-Tags @1,@2,… bzw.
+    # TAG1,TAG2,… des hochgeladenen Synoptik-SVGs. Ohne svg_url zeigt das Plugin
+    # seine eingebaute Demo-Synoptik; eigenes SVG per Panel-Optionen „svgUrl"
+    # (bzw. Upload) in Grafana setzen. Query-Reihenfolge: PV, Haus, Netz, Akku.
+    return {
+        "type": "scadavis-synoptic-panel", "title": title, "datasource": DS,
+        "gridPos": {"h": h, "w": w, "x": x, "y": y},
+        "fieldConfig": {"defaults": {"unit": "watt"}, "overrides": []},
+        "options": {
+            "svgUrl": svg_url, "zoomLevel": 0, "moveByX": 0, "moveByY": 0,
+            "autoResize": True, "showZoomPan": False,
+            "enableMousePan": False, "enableMouseWheelZoom": False,
+        },
+        "targets": targets(specs),
+    }
+
+
 panels = []
 y = 0
 
@@ -216,6 +235,11 @@ panels.append(stat("Haus", 12, y, 4, 4, [("solar", "house_power", {"last": True}
 panels.append(stat("Autarkie", 16, y, 4, 4, [("solar", "autarky_pct", {"last": True})], unit="percent", color=C["ok"]))
 panels.append(stat("Eigenverbrauch", 20, y, 4, 4, [("solar", "self_consumption_pct", {"last": True})], unit="percent", color=C["cyan"]))
 y += 4
+# Zweites Leistungsfluss-Panel als Synoptik-Mimik (SCADAvis), analog zur App.
+panels.append(scadavis("Leistungsfluss · Synoptik (SCADAvis)", 0, y, 24, 9, [
+    ("solar", "pv_power", {"last": True}), ("solar", "house_power", {"last": True}),
+    ("solar", "grid_power", {"last": True}), ("solar", "battery_power", {"last": True})]))
+y += 9
 
 # ── Reihe 2 · Effizienz & Bilanz ──────────────────────────────────────────
 panels.append(row("Effizienz & Netzbilanz", y)); y += 1

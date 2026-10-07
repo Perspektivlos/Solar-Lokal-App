@@ -16,7 +16,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from pydantic import BaseModel
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional
 from contextlib import asynccontextmanager
 
 from mqtt_client import (
@@ -144,6 +144,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "grafana_url": "http://192.168.0.202:3000",
     "location": {"lat": DEFAULT_LAT, "lon": DEFAULT_LON, "name": "Deutschland (Mitte)"},
+    "favorites": [],
 }
 
 
@@ -178,6 +179,7 @@ class ConfigUpdate(BaseModel):
     alarms: Optional[Dict[str, Any]] = None
     grafana_url: Optional[str] = None
     location: Optional[Dict[str, Any]] = None
+    favorites: Optional[List[str]] = None
 
 
 class HoymilesControl(BaseModel):

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getLive, getToday, getHistory, getConfig } from "../lib/api";
+import { getLive, getToday, getHistory, getConfig, putConfig } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import SunTimeline from "../components/SunTimeline";
 import IntroCard from "../components/IntroCard";
@@ -7,6 +7,7 @@ import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
 import MpptCompare from "../components/MpptCompare";
 import KpiStrip from "../components/KpiStrip";
+import { FavoritesStrip } from "../components/FavoritesStrip";
 import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
@@ -59,6 +60,14 @@ export default function Dashboard() {
   const liveRef = useRef(null);
   const [now, setNow] = useState(() => Date.now());
   const [devices, setDevices] = useState({});
+  const [favorites, setFavorites] = useState([]);
+  const toggleFavorite = (key) => {
+    setFavorites((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      putConfig({ favorites: next }).catch(() => {});
+      return next;
+    });
+  };
   // Direktlink zur Geräte-Weboberfläche (LAN-IP), sofern konfiguriert.
   const devUrl = (name) => {
     const ip = devices?.[name]?.ip;
@@ -83,7 +92,7 @@ export default function Dashboard() {
   useEffect(() => {
     let alive = true;
     getConfig()
-      .then((c) => { if (alive) setDevices(c?.devices || {}); })
+      .then((c) => { if (alive) { setDevices(c?.devices || {}); setFavorites(c?.favorites || []); } })
       .catch(() => {});
     return () => { alive = false; };
   }, []);
@@ -238,6 +247,9 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* FAVORITEN · angepinnte Geräte-KPIs */}
+      <FavoritesStrip favorites={favorites} live={live} onToggle={toggleFavorite} />
+
       {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
       <div data-testid="row-overview" className="space-y-8">
         <KpiStrip today={today} summary={summary} trail={trail} />
@@ -247,7 +259,7 @@ export default function Dashboard() {
 
       {/* SEKTION · BATTERIE */}
       <div className="space-y-4">
-        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={batteryDetails} alarms={alarmsFor("trucki")} testid="section-battery" />
+        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={batteryDetails} alarms={alarmsFor("trucki")} testid="section-battery" pinned={favorites.includes("trucki")} onPin={() => toggleFavorite("trucki")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
             <TruckiCard trucki={trucki} />
@@ -288,7 +300,7 @@ export default function Dashboard() {
 
       {/* SEKTION · VICTRON */}
       <div className="space-y-4">
-        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} details={victronDetails} alarms={alarmsFor("victron")} testid="section-victron" />
+        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} details={victronDetails} alarms={alarmsFor("victron")} testid="section-victron" pinned={favorites.includes("victron")} onPin={() => toggleFavorite("victron")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
             <VictronCard victron={victron} />
@@ -299,7 +311,7 @@ export default function Dashboard() {
 
       {/* SEKTION · PV & NETZ */}
       <div className="space-y-4">
-        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} details={pvGridDetails} alarms={alarmsFor("ahoy")} testid="section-pv-grid" />
+        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} details={pvGridDetails} alarms={alarmsFor("ahoy")} testid="section-pv-grid" pinned={favorites.includes("ahoy")} onPin={() => toggleFavorite("ahoy")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
             <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
@@ -338,7 +350,7 @@ export default function Dashboard() {
 
       {/* SEKTION · SHELLY */}
       <div className="space-y-4">
-        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} details={shellyDetails} alarms={alarmsFor("shelly")} testid="section-shelly" />
+        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} details={shellyDetails} alarms={alarmsFor("shelly")} testid="section-shelly" pinned={favorites.includes("shelly")} onPin={() => toggleFavorite("shelly")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
           <div className="lg:col-span-8">
             <GlassCard

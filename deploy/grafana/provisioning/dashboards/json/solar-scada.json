@@ -629,6 +629,70 @@
       ]
     },
     {
+      "type": "scadavis-synoptic-panel",
+      "title": "Leistungsfluss · Synoptik (SCADAvis)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-solar"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "options": {
+        "svgUrl": "",
+        "zoomLevel": 0,
+        "moveByX": 0,
+        "moveByY": 0,
+        "autoResize": true,
+        "showZoomPan": false,
+        "enableMousePan": false,
+        "enableMouseWheelZoom": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-solar"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"pv_power\" and r.mode == \"${mode}\")\n  |> last()\n"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-solar"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"house_power\" and r.mode == \"${mode}\")\n  |> last()\n"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-solar"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"grid_power\" and r.mode == \"${mode}\")\n  |> last()\n"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-solar"
+          },
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"solar\" and r._field == \"battery_power\" and r.mode == \"${mode}\")\n  |> last()\n"
+        }
+      ]
+    },
+    {
       "type": "row",
       "title": "Effizienz & Netzbilanz",
       "collapsed": false,
@@ -637,7 +701,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 23
       }
     },
     {
@@ -651,7 +715,7 @@
         "h": 8,
         "w": 6,
         "x": 0,
-        "y": 15
+        "y": 24
       },
       "fieldConfig": {
         "defaults": {
@@ -702,7 +766,7 @@
         "h": 8,
         "w": 6,
         "x": 6,
-        "y": 15
+        "y": 24
       },
       "fieldConfig": {
         "defaults": {
@@ -753,7 +817,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 15
+        "y": 24
       },
       "fieldConfig": {
         "defaults": {
@@ -856,7 +920,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 23
+        "y": 32
       },
       "fieldConfig": {
         "defaults": {
@@ -963,7 +1027,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 23
+        "y": 32
       },
       "fieldConfig": {
         "defaults": {
@@ -1111,7 +1175,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 30
+        "y": 39
       }
     },
     {
@@ -1125,7 +1189,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 40
       },
       "fieldConfig": {
         "defaults": {
@@ -1239,7 +1303,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 40
       },
       "fieldConfig": {
         "defaults": {
@@ -1353,7 +1417,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 48
       },
       "fieldConfig": {
         "defaults": {
@@ -1467,7 +1531,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 48
       },
       "fieldConfig": {
         "defaults": {
@@ -1579,7 +1643,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 55
       }
     },
     {
@@ -1593,7 +1657,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 47
+        "y": 56
       },
       "fieldConfig": {
         "defaults": {
@@ -1726,7 +1790,7 @@
         "h": 8,
         "w": 8,
         "x": 12,
-        "y": 47
+        "y": 56
       },
       "fieldConfig": {
         "defaults": {
@@ -1781,7 +1845,7 @@
         "h": 8,
         "w": 4,
         "x": 20,
-        "y": 47
+        "y": 56
       },
       "fieldConfig": {
         "defaults": {
@@ -1832,7 +1896,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 55
+        "y": 64
       },
       "fieldConfig": {
         "defaults": {
@@ -1965,7 +2029,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 55
+        "y": 64
       },
       "fieldConfig": {
         "defaults": {
@@ -2039,7 +2103,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 71
       }
     },
     {
@@ -2053,7 +2117,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 63
+        "y": 72
       },
       "fieldConfig": {
         "defaults": {
@@ -2125,7 +2189,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 63
+        "y": 72
       },
       "fieldConfig": {
         "defaults": {
@@ -2181,7 +2245,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 71
+        "y": 80
       },
       "fieldConfig": {
         "defaults": {
@@ -2236,7 +2300,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 71
+        "y": 80
       },
       "fieldConfig": {
         "defaults": {
@@ -2272,7 +2336,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 71
+        "y": 80
       },
       "fieldConfig": {
         "defaults": {
@@ -2326,7 +2390,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 87
       }
     },
     {
@@ -2340,7 +2404,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 79
+        "y": 88
       },
       "fieldConfig": {
         "defaults": {
@@ -2451,7 +2515,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 79
+        "y": 88
       },
       "fieldConfig": {
         "defaults": {
@@ -2635,7 +2699,7 @@
         "h": 4,
         "w": 8,
         "x": 0,
-        "y": 87
+        "y": 96
       },
       "fieldConfig": {
         "defaults": {
@@ -2693,7 +2757,7 @@
         "h": 4,
         "w": 8,
         "x": 8,
-        "y": 87
+        "y": 96
       },
       "fieldConfig": {
         "defaults": {
@@ -2751,7 +2815,7 @@
         "h": 4,
         "w": 8,
         "x": 16,
-        "y": 87
+        "y": 96
       },
       "fieldConfig": {
         "defaults": {
@@ -2814,7 +2878,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 91
+        "y": 100
       }
     },
     {
@@ -2828,7 +2892,7 @@
         "h": 7,
         "w": 16,
         "x": 0,
-        "y": 92
+        "y": 101
       },
       "fieldConfig": {
         "defaults": {
@@ -2913,7 +2977,7 @@
         "h": 7,
         "w": 4,
         "x": 16,
-        "y": 92
+        "y": 101
       },
       "fieldConfig": {
         "defaults": {
@@ -2974,7 +3038,7 @@
         "h": 7,
         "w": 4,
         "x": 20,
-        "y": 92
+        "y": 101
       },
       "fieldConfig": {
         "defaults": {
