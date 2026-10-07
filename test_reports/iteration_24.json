@@ -1,0 +1,26 @@
+{
+  "summary": "Verified granular favorites (mppt:<i>, phase:<L>), favorites order follows config array, native drag-and-drop reorder (mouse-based) with server persistence, and SunTimeline bar/arc toggle. All 4 target features pass end-to-end.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Reset favorites to [] via PUT /api/config after testing.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Granular favorite keys ('mppt:<idx>', 'phase:<L1|L2|L3>') and whole-device keys ('shelly','ahoy','trucki','victron') all persist as literal strings in config.favorites. Pin testids: mppt-pin-<i>, shelly-<L>-pin, section-<x>-pin. Favorite tile testids use colon->hyphen (favorite-tile-mppt-0, favorite-tile-phase-L1). Tiles render in the EXACT order of config.favorites (verified with two different orders). Native HTML5 DnD on the tile body works via Playwright page.mouse down/move/up (not drag_to): reorder is persisted to /api/config and survives reload. SunTimeline: bar view (sun-timeline-bar) has sun-marker-day visible; sun-marker-night only present at night. Toggle sun-view-bogen->sun-timeline-svg and sun-view-balken->sun-timeline-bar works, persisted via localStorage 'suntimeline-view'.",
+  "test_results_detail": {
+    "pin_mppt_0": "tile appears + unpin button present",
+    "pin_phase_L1": "tile appears",
+    "persist_after_reload": "server favorites=['mppt:0','phase:L1'], tiles present after reload",
+    "unpin_via_tile": "mppt-0 tile removed after clicking favorite-unpin-mppt-0",
+    "unpin_via_section_pin": "phase-L1 tile removed after re-clicking shelly-L1-pin",
+    "order_follows_array_1": "PUT ['victron','phase:L1','mppt:0','trucki'] -> tiles rendered in that exact order",
+    "order_follows_array_2": "PUT ['mppt:0','trucki','victron','phase:L1'] -> tiles rendered in that exact order",
+    "dnd_mouse": "Dragged tile body with mouse down/move/up -> order changed to ['trucki','victron','mppt:0','phase:L1'], persisted server-side, survived reload",
+    "suntimeline_toggle": "balken->bogen->balken works, sun-marker-day present on bar"
+  },
+  "rca of the issue": "N/A - no issues found"
+}
