@@ -1,0 +1,59 @@
+/* Kennzahlen-Zeile unter dem Energiefluss: vier Zusammenfassungs-Kacheln.
+ * Solar Ertrag Heute · Batterie Kapazität · Netzbezug Heute · Autarkiegrad. */
+import { Sun, BatteryCharging, Cable, Gauge } from "lucide-react";
+import { COLOR, formatNum } from "./solar-ui";
+
+// Angenommene nutzbare Akkukapazität (später in den Einstellungen änderbar).
+const USABLE_KWH = 9.6;
+
+function Tile({ accent, icon: Icon, label, value, unit, sub, testid }) {
+  return (
+    <div
+      className="relative rounded-xl overflow-hidden px-4 py-3.5"
+      data-testid={testid}
+      style={{
+        background: "linear-gradient(150deg, #0c1526 0%, #070c18 100%)",
+        border: `1px solid ${accent}33`,
+        boxShadow: `inset 0 1px 0 rgba(226,232,240,0.05), 0 16px 38px -28px #000, 0 0 20px -12px ${accent}`,
+      }}
+    >
+      <span className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none"
+        style={{ background: `linear-gradient(90deg, ${accent}, transparent 85%)`, boxShadow: `0 0 10px ${accent}` }} />
+      <div className="flex items-center gap-2 mb-2">
+        <Icon size={13} color={accent} />
+        <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{label}</span>
+      </div>
+      <div className="flex items-baseline gap-1.5">
+        <span className="font-dseg text-[1.7rem] leading-none" style={{ color: accent, textShadow: `0 0 10px ${accent}88` }} data-testid={`${testid}-value`}>
+          {value}
+        </span>
+        <span className="font-mono text-[11px] text-white/40">{unit}</span>
+      </div>
+      <div className="font-mono text-[10px] text-white/45 mt-1.5">{sub}</div>
+    </div>
+  );
+}
+
+export default function FlowSummary({ live, today }) {
+  const s = live?.summary || {};
+  const grid = s.grid_power ?? 0;
+  const house = s.house_power ?? 0;
+  const soc = s.battery_soc ?? 0;
+  const importing = grid >= 0;
+  const battKwh = (soc / 100) * USABLE_KWH;
+  // Momentane Eigenabdeckung des Hausverbrauchs aus eigener Erzeugung.
+  const instantCover = house <= 0 ? 100 : Math.max(0, Math.min(100, ((house - Math.max(0, grid)) / house) * 100));
+
+  const tiles = [
+    { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solar Ertrag Heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", sub: `Aktuell: ${formatNum(s.pv_power, 0)} W` },
+    { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Batterie Kapazität", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC (${formatNum(USABLE_KWH, 1)} kWh)` },
+    { testid: "summary-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, label: "Netzbezug Heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", sub: `Aktuell: ${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W` },
+    { testid: "summary-autarky", accent: COLOR.grid_exp, icon: Gauge, label: "Autarkiegrad", value: formatNum(today?.autarky_pct, 1), unit: "%", sub: `${formatNum(instantCover, 0)} % Eigenabdeckung` },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-testid="flow-summary">
+      {tiles.map((t) => <Tile key={t.testid} {...t} />)}
+    </div>
+  );
+}

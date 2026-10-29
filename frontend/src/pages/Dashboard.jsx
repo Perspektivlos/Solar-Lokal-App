@@ -6,7 +6,8 @@ import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
 import MpptCompare from "../components/MpptCompare";
-import KpiStrip from "../components/KpiStrip";
+import DeviceCards from "../components/DeviceCards";
+import FlowSummary from "../components/FlowSummary";
 import { FavoritesStrip } from "../components/FavoritesStrip";
 import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
@@ -254,10 +255,11 @@ export default function Dashboard() {
       {/* FAVORITEN · angepinnte Geräte-KPIs */}
       <FavoritesStrip favorites={favorites} live={live} onToggle={toggleFavorite} onReorder={reorderFavorites} />
 
-      {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
+      {/* ÜBERSICHT · Geräte-Karten + Energiefluss + Kennzahlen */}
       <div data-testid="row-overview" className="space-y-8">
-        <KpiStrip today={today} summary={summary} trail={trail} />
+        <DeviceCards live={live} today={today} />
         <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} sun={sun} />
+        <FlowSummary live={live} today={today} />
         <SunTimeline timestamp={timestamp} sun={sun} />
       </div>
 
