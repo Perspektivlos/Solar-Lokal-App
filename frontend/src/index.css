@@ -195,6 +195,7 @@ body::before {
     .neon-red    { filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.55)); }
     .neon-cyan   { filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.55)); }
     .neon-text-yellow { text-shadow: 0 0 8px rgba(250, 204, 21, 0.45); }
+    .neon-text-orange { text-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
     .neon-text-green  { text-shadow: 0 0 8px rgba(16, 185, 129, 0.45); }
     .neon-text-red    { text-shadow: 0 0 8px rgba(239, 68, 68, 0.45); }
     .neon-text-cyan   { text-shadow: 0 0 8px rgba(6, 182, 212, 0.45); }

@@ -2,7 +2,7 @@
 
 Diese Anleitung verbindet das **Solar Lokal-Dashboard** mit **InfluxDB 2.x** (Time-Series-Speicher)
 und visualisiert die Langzeit-Daten in deiner **bestehenden Grafana-Instanz** (LXC 102,
-`http://192.168.0.91:3000`).
+`http://192.168.0.202:3000`).
 
 ```
    Solar-Dashboard ──(schreibt alle 15s)──▶  InfluxDB 2.x  ◀──(liest, Flux)──  Grafana
@@ -35,7 +35,7 @@ Org = `Solar Lokal` · Bucket = `solar`
 | InfluxDB-URL   | `http://192.168.0.203:8086` |
 | Organisation   | `Solar Lokal` *(mit Leerzeichen!)* |
 | Bucket         | `solar` |
-| Grafana-URL    | `http://192.168.0.91:3000` |
+| Grafana-URL    | `http://192.168.0.202:3000` |
 
 > **WICHTIG – reiche Daten erst nach Backend-Update:** Erscheinen im InfluxDB
 > *Data Explorer* nur die 5 alten Felder (`pv_power`, `grid_power`,
@@ -118,7 +118,7 @@ Ab jetzt schreibt das Backend alle 15 Sekunden einen Datenpunkt.
 
 ## Schritt 3 — Datenquelle in Grafana anlegen
 
-In deiner bestehenden Grafana (`http://192.168.0.91:3000`):
+In deiner bestehenden Grafana (`http://192.168.0.202:3000`):
 
 **Variante A — über die Oberfläche (empfohlen):**
 

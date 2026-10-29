@@ -1,5 +1,5 @@
 import { COLOR, formatNum, Spark } from "./solar-ui";
-import { exportNowW, isExporting } from "../lib/power";
+import { Sun } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 // Ziffern durch 8 ersetzen → „Geister-Segmente" hinter dem LCD-Wert.
@@ -16,17 +16,11 @@ function sparkStats(values) {
 
 // Obere KPI-Leiste: 6 Kacheln (Gesamt-kWh + Live-W) mit Sparkline-Trend.
 export default function KpiStrip({ today, summary, trail }) {
-  const exportNow = exportNowW(summary);
-  const exporting = isExporting(summary);
-  // Aktuellen Grid je nach aktivem Status anzeigen: Netz-Bezug (rot) vs. Netz-Einspeisung (grün).
-  const gridNow = exporting
-    ? { label: "Netz Einspeisung (Aktuell)", value: formatNum(exportNow, 0), color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp }
-    : { label: "Netz Bezug (Aktuell)", value: formatNum(Math.max(0, summary?.grid_power || 0), 0), color: "text-red-300 neon-text-red", accent: COLOR.grid_imp };
   const cells = [
-    { label: "PV Gesamt", value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "kpi-pv-total" },
-    { label: "PV Aktuell", value: formatNum(summary.pv_power, 0), unit: "W", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "kpi-pv-now" },
-    { label: "Netz Bezug (Gesamt)", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300 neon-text-red", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "kpi-grid-import" },
-    { label: gridNow.label, value: gridNow.value, unit: "W", color: gridNow.color, accent: gridNow.accent, spark: trail.grid, sparkColor: gridNow.accent, testid: "kpi-grid-now" },
+    { label: "Solar Ertrag Heute", icon: Sun, value: formatNum(today?.pv_kwh, 2), unit: "kWh", color: "text-orange-400 neon-text-orange", accent: "#F59E0B", spark: trail.pv, sparkColor: "#F59E0B", testid: "kpi-pv-total" },
+    { label: "Solar Erzeugung", value: formatNum(summary.pv_power, 0), unit: "W", color: "text-yellow-300 neon-text-yellow", accent: COLOR.pv, spark: trail.pv, sparkColor: COLOR.pv, testid: "kpi-pv-now" },
+    { label: "Netzbezug Heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", color: "text-red-300 neon-text-red", accent: COLOR.grid_imp, spark: trail.grid, sparkColor: COLOR.grid_imp, testid: "kpi-grid-import" },
+    { label: "Hauslast", value: formatNum(summary?.house_power, 0), unit: "W", color: "text-white", accent: COLOR.house, spark: trail.house, sparkColor: COLOR.house, testid: "kpi-house-load" },
     { label: "Verbrauch (Gesamt)", value: formatNum(today?.consumption_kwh, 2), unit: "kWh", color: "text-white", accent: COLOR.house, spark: trail.house, sparkColor: COLOR.house, testid: "kpi-consumption" },
     { label: "Einspeisung (Gesamt)", value: formatNum(today?.grid_export_kwh, 2), unit: "kWh", color: "text-emerald-300 neon-text-green", accent: COLOR.grid_exp, spark: trail.grid, sparkColor: COLOR.grid_exp, testid: "kpi-grid-export-total" },
   ];
@@ -35,7 +29,10 @@ export default function KpiStrip({ today, summary, trail }) {
     <div className="kpi-cell relative p-5 h-full cursor-default" data-testid={m.testid}>
       <span className="absolute top-0 left-0 right-0 h-[2px] opacity-90 pointer-events-none" style={{ background: `linear-gradient(90deg, ${m.accent}, transparent 88%)`, boxShadow: `0 0 12px ${m.accent}, 0 1px 6px ${m.accent}aa` }} />
       <span className="absolute top-[2px] left-0 right-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, rgba(226,232,240,0.28), transparent 68%)" }} />
-      <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{m.label}</div>
+      <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60 flex items-center gap-1.5">
+        <span>{m.label}</span>
+        {m.icon && <m.icon size={11} strokeWidth={2.4} style={{ color: m.accent }} />}
+      </div>
       <div className="relative mt-2 rounded-md px-2.5 py-2 overflow-hidden" style={{ background: "rgba(2,6,14,0.72)", border: "1px solid rgba(148,163,184,0.09)", boxShadow: "inset 0 2px 12px rgba(0,0,0,0.75)" }}>
         <div className="relative leading-none" style={{ height: "1.95rem" }}>
           <span className="font-dseg absolute inset-0 text-[1.9rem] leading-none select-none" style={{ color: m.accent, opacity: 0.06 }} aria-hidden>{ghostDigits(m.value)}</span>
