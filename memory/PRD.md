@@ -222,6 +222,8 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
     - **Link „Projektbericht"** nur auf der Doku-Seite (`docs-report-link` → `/bericht`).
     - Seed + Preview-Roadmap: neue erledigte Punkte `report-page`, `changelog-auto` (vorher geplant), `report-print`. Version → **1.6.0**.
     - Verifiziert per Screenshot (Desktop 1920, Mobil 390, Print-Emulation hell + dunkel, 0 Overflow im Bericht).
+  - **Zeitachse automatisch aus der Roadmap** 29.10.2026 (`Report.jsx`, `MiniMock.jsx` Variante `auto`): die 6 kuratierten Meilensteine bleiben (je `ids` = abgedeckte Roadmap-Punkte, `sort` = ISO-Datum). Alle übrigen erledigten Roadmap-Punkte (mit ID) werden **je Datum zu einem Eintrag gruppiert** und chronologisch eingereiht (**älteste oben**, gleiche Daten: kuratiert zuerst; Nicht-Datumswerte ans Ende). Auto-Eintrag: Datum + Badge „automatisch", Titel „N neue Funktionen", **Standard-Vorschaubild** (grüne Checklisten-Kachel, „Aus der Roadmap") + Punktliste. Grüner Zeitachsen-Punkt statt Cyan. KPI „Ausbaustufen" = Länge der gesamten Zeitachse. Testids `report-timeline-auto-<datum>`, `report-timeline-auto-item`; `report-mock-pair-{0..5}` unverändert. Druck-CSS (hell) ergänzt. Verifiziert per Screenshot (Desktop 1920, Mobil 390 ohne Overflow, Druck hell) inkl. temporärem Test-Punkt „11/2026" → eigener Eintrag am Ende (danach wieder entfernt).
+
 
 - [x] **Energiefluss: 6 getrennte Geräte-Knoten** – FERTIG 06.06.2026
   - Statt aggregiertem „PV-Block" nun einzelne Knoten: MPPT 1, MPPT 2 (Victron DC), Hoymiles HM1500 (AC), Akku (Trucki/SUN), Netz (Shelly 3EM), Haus

@@ -213,6 +213,21 @@ function scene(variant) {
       );
     }
 
+    case "auto":
+      return (
+        <>
+          {[20, 34, 48].map((y, i) => (
+            <g key={i}>
+              <rect x="12" y={y} width="96" height="10" rx="2" fill="#ffffff06" stroke={C.line} />
+              <circle cx="19" cy={y + 5} r="2.6" fill="none" stroke={COLOR.grid_exp} strokeWidth="1.1" />
+              <path d={`M17.6 ${y + 5} l1 1 l2 -2.2`} fill="none" stroke={COLOR.grid_exp} strokeWidth="1" />
+              <rect x="26" y={y + 3.5} width={[52, 40, 60][i]} height="3" rx="1.5" fill="#ffffff1c" />
+            </g>
+          ))}
+          <rect x="12" y="63" width="22" height="4" rx="2" fill={COLOR.grid_exp} opacity="0.55" />
+        </>
+      );
+
     default:
       return null;
   }

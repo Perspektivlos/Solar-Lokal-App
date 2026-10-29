@@ -65,14 +65,49 @@ const REMOVED = [
   { title: "CSV-Datenexport", why: "Nicht gewünscht – Auswertung erfolgt über Grafana/InfluxDB." },
 ];
 
+// Kuratierte Meilensteine; `ids` = abgedeckte Roadmap-Punkte, alle übrigen erledigten Punkte
+// erscheinen automatisch als Einträge je Datum (`sort` = ISO-Datum für die Einsortierung).
 const TIMELINE = [
-  { date: "06/2026", title: "Grundlagen & SCADA-Design", desc: "Live-Dashboard, Energiefluss, DSEG7-LCD-Look, Steuerung, Alarme, Diagnose, MQTT & InfluxDB, lokaler Start.", before: { v: "blank", label: "Leerer Start" }, after: { v: "dashboard", label: "Live-Dashboard" } },
-  { date: "10/2026", title: "Grafana-Ausbau & Fixes", desc: "42/43-Panel-Dashboard, feste Datenquellen-UID, SCADAvis-Synoptik-Vorschau und -Panel.", before: { v: "grafana-error", label: "Quelle fehlt" }, after: { v: "grafana-grid", label: "43 Panels" } },
-  { date: "07.10.2026", title: "Favoriten & Tagesverlauf", desc: "Favoriten (Geräte, MPPT-Strings, Phasen) per Drag-&-Drop; Sonnen-Tagesverlauf Balken/Bogen.", before: { v: "dash-nofav", label: "Ohne Favoriten" }, after: { v: "dash-fav", label: "Favoriten + Sonne" } },
-  { date: "29.10.2026", title: "Dashboard-Redesign", desc: "Vier Geräte-Karten, Energiefluss Kompakt/Detail/Auto, Fluss-/Tempo-Regler, Kennzahlen-Zeile, Mobil-Hochformat.", before: { v: "six-tiles", label: "6 LCD-Kacheln" }, after: { v: "four-cards", label: "4 Geräte-Karten" } },
-  { date: "29.10.2026", title: "Einstellungen & Doku (v1.4.0)", desc: "Konfigurierbare Kapazität & Beschriftungen, Versions-Fußleiste, Doku-Seite mit Roadmap & Anleitung.", before: { v: "popup", label: "Popup-Dialog" }, after: { v: "footer-docs", label: "Fußleiste + Doku" } },
-  { date: "29.10.2026", title: "Editierbare Roadmap (v1.5.0)", desc: "Roadmap in der App bearbeiten & speichern, „Was ist neu?\"-Fenster beim Versionssprung.", before: { v: "roadmap-static", label: "Statisch" }, after: { v: "roadmap-edit", label: "Editierbar" } },
+  { sort: "2026-06", date: "06/2026", title: "Grundlagen & SCADA-Design", desc: "Live-Dashboard, Energiefluss, DSEG7-LCD-Look, Steuerung, Alarme, Diagnose, MQTT & InfluxDB, lokaler Start.", before: { v: "blank", label: "Leerer Start" }, after: { v: "dashboard", label: "Live-Dashboard" },
+    ids: ["live-dashboard", "scada-design", "device-control", "alarms", "diagnose", "discovery", "integrations", "local-start"] },
+  { sort: "2026-10", date: "10/2026", title: "Grafana-Ausbau & Fixes", desc: "42/43-Panel-Dashboard, feste Datenquellen-UID, SCADAvis-Synoptik-Vorschau und -Panel.", before: { v: "grafana-error", label: "Quelle fehlt" }, after: { v: "grafana-grid", label: "43 Panels" },
+    ids: ["grafana", "scadavis"] },
+  { sort: "2026-10-07", date: "07.10.2026", title: "Favoriten & Tagesverlauf", desc: "Favoriten (Geräte, MPPT-Strings, Phasen) per Drag-&-Drop; Sonnen-Tagesverlauf Balken/Bogen.", before: { v: "dash-nofav", label: "Ohne Favoriten" }, after: { v: "dash-fav", label: "Favoriten + Sonne" },
+    ids: ["suntimeline", "favorites", "favorites-dnd"] },
+  { sort: "2026-10-29", date: "29.10.2026", title: "Dashboard-Redesign", desc: "Vier Geräte-Karten, Energiefluss Kompakt/Detail/Auto, Fluss-/Tempo-Regler, Kennzahlen-Zeile, Mobil-Hochformat.", before: { v: "six-tiles", label: "6 LCD-Kacheln" }, after: { v: "four-cards", label: "4 Geräte-Karten" },
+    ids: ["device-cards", "flow-rework", "flow-controls", "flow-mobile"] },
+  { sort: "2026-10-29", date: "29.10.2026", title: "Einstellungen & Doku (v1.4.0)", desc: "Konfigurierbare Kapazität & Beschriftungen, Versions-Fußleiste, Doku-Seite mit Roadmap & Anleitung.", before: { v: "popup", label: "Popup-Dialog" }, after: { v: "footer-docs", label: "Fußleiste + Doku" },
+    ids: ["display-settings", "docs-footer"] },
+  { sort: "2026-10-29", date: "29.10.2026", title: "Editierbare Roadmap (v1.5.0)", desc: "Roadmap in der App bearbeiten & speichern, „Was ist neu?\"-Fenster beim Versionssprung.", before: { v: "roadmap-static", label: "Statisch" }, after: { v: "roadmap-edit", label: "Editierbar" },
+    ids: ["roadmap-edit"] },
 ];
+const COVERED = new Set(TIMELINE.flatMap((m) => m.ids));
+const sortKey = (d) => (/^\d{4}-\d{2}/.test(d || "") ? d : "9999");
+
+const TimelineAuto = ({ m }) => (
+  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] p-4" data-testid={`report-timeline-auto-${m.sort}`}>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-cyan-300/80">{m.date}</span>
+      <span className="px-1.5 py-0.5 rounded font-mono text-[9.5px] uppercase tracking-[0.1em] border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">automatisch</span>
+    </div>
+    <div className="text-white font-medium mt-1">{m.items.length === 1 ? "Neue Funktion" : `${m.items.length} neue Funktionen`}</div>
+    <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-start">
+      <figure className="w-[132px] shrink-0">
+        <MiniMock variant="auto" accent={`${COLOR.grid_exp}55`} className="w-full h-auto rounded-md" />
+        <figcaption className="mt-1.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.1em] text-emerald-300/80">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Aus der Roadmap
+        </figcaption>
+      </figure>
+      <ul className="space-y-1.5 min-w-0">
+        {m.items.map((r) => (
+          <li key={r.id} data-testid="report-timeline-auto-item" className="flex items-start gap-2 text-[13px] text-white/70 leading-snug">
+            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-300" /> {r.title}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+);
 
 const WORKFLOW = [
   { title: "Erst fragen, dann bauen", desc: "Vor jeder größeren Aufgabe Rückfragen und ausdrückliche Freigabe des Plans – keine ungefragten neuen Funktionen." },
@@ -168,6 +203,14 @@ export default function Report() {
     .map((r, i) => ({ ...r, i }))
     .filter((r) => r.status === "done")
     .sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.i - b.i);
+  const groups = {};
+  roadmap.filter((r) => r.status === "done" && r.id && !COVERED.has(r.id)).forEach((r) => {
+    (groups[r.date] ||= []).push(r);
+  });
+  const timeline = [
+    ...TIMELINE.map((m, idx) => ({ ...m, idx })),
+    ...Object.entries(groups).map(([d, items]) => ({ auto: true, sort: d, date: fmtDate(d), items })),
+  ].sort((a, b) => sortKey(a.sort).localeCompare(sortKey(b.sort)));
   const counts = {
     done: added.length,
     wip: roadmap.filter((r) => r.status === "wip").length,
@@ -178,7 +221,7 @@ export default function Report() {
     { label: "In Arbeit", value: counts.wip, color: COLOR.battery },
     { label: "Geplant", value: counts.planned, color: "#8C92AC" },
     { label: "Gerätetypen angebunden", value: DEVICES.length, color: COLOR.pv },
-    { label: "Ausbaustufen", value: TIMELINE.length, color: COLOR.victron },
+    { label: "Ausbaustufen", value: timeline.length, color: COLOR.victron },
   ];
 
   return (
@@ -315,16 +358,17 @@ export default function Report() {
           <div className="relative pl-7 sm:pl-8" data-reveal>
             <div className="absolute left-[9px] sm:left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-emerald-400/50 via-cyan-400/30 to-white/10" />
             <div className="space-y-6">
-              {TIMELINE.map((m, i) => (
-                <div key={i} className="relative">
-                  <span className="absolute -left-7 sm:-left-8 top-1 grid place-items-center w-[19px] h-[19px] sm:w-[23px] sm:h-[23px] rounded-full border-2 border-cyan-400/60 bg-[#04060c]">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400" style={{ boxShadow: "0 0 8px #06B6D4" }} />
+              {timeline.map((m) => (
+                <div key={m.auto ? `auto-${m.sort}` : m.idx} className="relative">
+                  <span className={`absolute -left-7 sm:-left-8 top-1 grid place-items-center w-[19px] h-[19px] sm:w-[23px] sm:h-[23px] rounded-full border-2 bg-[#04060c] ${m.auto ? "border-emerald-400/60" : "border-cyan-400/60"}`}>
+                    <span className={`w-2 h-2 rounded-full ${m.auto ? "bg-emerald-400" : "bg-cyan-400"}`} style={{ boxShadow: `0 0 8px ${m.auto ? "#34D399" : "#06B6D4"}` }} />
                   </span>
+                  {m.auto ? <TimelineAuto m={m} /> : (
                   <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
                     <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-cyan-300/80">{m.date}</div>
                     <div className="text-white font-medium mt-1">{m.title}</div>
                     <div className="text-white/50 text-[13px] mt-1 leading-relaxed">{m.desc}</div>
-                    <div className="mt-3.5 flex items-center gap-2.5" data-testid={`report-mock-pair-${i}`}>
+                    <div className="mt-3.5 flex items-center gap-2.5" data-testid={`report-mock-pair-${m.idx}`}>
                       <figure className="flex-1 min-w-0 max-w-[132px]">
                         <MiniMock variant={m.before.v} className="w-full h-auto rounded-md" />
                         <figcaption className="mt-1.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.1em] text-white/35">
@@ -340,6 +384,7 @@ export default function Report() {
                       </figure>
                     </div>
                   </div>
+                  )}
                 </div>
               ))}
             </div>

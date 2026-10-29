@@ -308,6 +308,8 @@ body::after {
     html[data-print="light"] .report-print-root .bg-\[\#04060c\] { background-color: #fff !important; }
     html[data-print="light"] .report-print-root :is(.text-cyan-200, .text-cyan-300, .text-cyan-300\/80, .text-cyan-300\/70) { color: #0e7490 !important; }
     html[data-print="light"] .report-print-root .text-emerald-300 { color: #047857 !important; }
+    html[data-print="light"] .report-print-root .text-white\/70 { color: #334155 !important; }
+    html[data-print="light"] .report-print-root .text-emerald-300\/80 { color: #047857 !important; }
     html[data-print="light"] .report-print-root :is(.text-amber-200\/90, .text-amber-300) { color: #b45309 !important; }
     html[data-print="light"] .report-print-root :is(.text-red-300, .text-red-400) { color: #b91c1c !important; }
 }
