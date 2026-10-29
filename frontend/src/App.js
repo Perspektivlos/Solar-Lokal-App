@@ -12,6 +12,7 @@ import Integrations from "./pages/Integrations";
 import KpiPreview from "./pages/KpiPreview";
 import ScadavisPreview from "./pages/ScadavisPreview";
 import Docs from "./pages/Docs";
+import Report from "./pages/Report";
 
 function App() {
   return (
@@ -30,6 +31,8 @@ function App() {
           </Route>
           <Route path="/kpi-preview" element={<KpiPreview />} />
           <Route path="/scadavis-preview" element={<ScadavisPreview />} />
+          <Route path="/report-preview" element={<Report />} />
+          <Route path="/bericht" element={<Report />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors theme="dark" />

@@ -1,91 +1,65 @@
-# Roadmap bearbeiten & „Was ist neu?"
+# Projektbericht-Seite – „Was wir erreicht haben"
 
-Die vorhandene Roadmap wird direkt in der App bearbeitbar und dauerhaft gespeichert.
-Beim Versionssprung zeigt ein kurzes Fenster automatisch, was neu fertig geworden ist.
+Eine eigene, scrollbare Bericht-Seite, die den gesamten Projektverlauf erzählt: welche Funktionen entstanden sind, was was abgelöst hat, was bewusst entfernt wurde – plus Arbeitsweise, Erkenntnisse, Zeitachse und Technik auf einen Blick.
+Erreichbar nur über eine eigene Vorschau-Adresse (nicht im Menü), im bestehenden SCADA-Dark-Look.
 
 ## Für wen
-
-Für den Betreiber der eigenen Solaranlage, der die Roadmap selbst pflegen will – Punkte
-hinzufügen, abhaken und zwischen „Erledigt / In Arbeit / Geplant" verschieben – und beim
-Öffnen einer neuen App-Version sofort sehen möchte, was dazugekommen ist. Lokal, deutsch,
-im bestehenden SCADA-Look.
+- Den Betreiber der Anlage selbst, als Rückblick und Nachschlagewerk über den Stand des Projekts.
+- Personen, denen man das Projekt zeigen möchte (z. B. im Heimnetz), ohne durch die ganze App klicken zu müssen.
 
 ## Kernfunktionen & Erlebnis
+Eine einzelne, von oben nach unten lesbare Seite mit folgenden Abschnitten:
 
-**1. Roadmap bearbeiten (gleicher Aufbau wie bisher)**
-- Die Ansicht behält ihre drei Spalten **Erledigt / In Arbeit / Geplant** mit Farbcodes.
-- Ein **Bearbeiten-Schalter**: Im Ansichtsmodus sieht alles aus wie heute; eingeschaltet
-  erscheinen die Bearbeitungs-Elemente.
-- Möglich sind: **Punkt hinzufügen** (Titel + Status + Datum/Phase), **Titel ändern**,
-  **löschen** (mit kurzer Rückfrage), **Status ändern** (= „abhaken" / in andere Spalte) und
-  **Reihenfolge ändern**.
-- **Verschieben per Ziehen:** Ein Punkt in eine andere Spalte gezogen ändert seinen Status;
-  innerhalb einer Spalte ändert Ziehen die Reihenfolge.
-- Alle Änderungen werden **dauerhaft gespeichert** (bleiben nach Neuladen erhalten und gelten
-  für jedes Gerät, das dieselbe lokale Installation nutzt).
+1. **Kopf / Titel** – Projektname, aktuelle Version und Stand-Datum, ein Satz zum Zweck der App, dazu ein paar Kennzahlen-Kacheln (z. B. Anzahl Funktionen erledigt / in Arbeit / geplant, Anzahl angebundener Gerätetypen, Anzahl Ausbaustufen).
 
-**2. Startinhalt: alle Bau-Phasen vollständig vorbefüllt**
-- Die Roadmap wird einmalig mit dem **kompletten, tatsächlichen Stand** gefüllt: alle bisher
-  umgesetzten Bau-Phasen als „Erledigt", laufende als „In Arbeit" und alle bekannten offenen
-  Punkte als „Geplant". Danach ist alles frei editierbar.
+2. **Funktions-Changelog: hinzugefügt / abgelöst / entfernt** – das Herzstück. Drei klar getrennte, farbcodierte Bereiche:
+   - **Hinzugefügt**: alle gebauten Funktionen (Live-Dashboard, animierter Energiefluss, Geräte-Karten, Favoriten inkl. MPPT-Strings & Phasen, Sonnen-Tagesverlauf, Steuerung Hoymiles/Trucki, Diagnose/Selbsttest, Grafana/InfluxDB-Anbindung, Versions-Fußleiste, Doku & Anleitung, editierbare Roadmap, „Was ist neu?"-Fenster, konfigurierbare Akkukapazität & Gerätebeschriftungen u. a.).
+   - **Abgelöst / ersetzt**: was durch Neueres verdrängt wurde, jeweils als „vorher → nachher" (z. B. sechs LCD-Kacheln → vier große Geräte-Karten; aggregierter PV-Block → einzelne Geräte-Knoten im Energiefluss; alter Footer-Roadmap-Dialog → fixe Versions-Fußleiste + Doku-Seite; statische Roadmap → dauerhaft editierbare Roadmap).
+   - **Komplett entfernt / abgelehnt**: bewusst nicht umgesetzte Dinge mit kurzer Begründung (48-Stunden-PV-Prognose, Watt-Beschriftungen auf den Energiefluss-Linien, CSV-Export).
 
-**3. „Was ist neu?"-Fenster beim Versionssprung**
-- Erscheint **automatisch**, wenn die App-Version seit dem letzten Besuch gewechselt hat.
-- Zeigt **automatisch alle Punkte, die seit dem letzten Besuch neu auf „Erledigt" stehen** –
-  ohne manuelles Zuordnen.
-- Ist **wegklickbar**; die Version gilt danach als „gesehen". Lässt sich jederzeit erneut
-  über die Versionsnummer in der Fußleiste öffnen.
-- Erscheint nicht, wenn seit dem letzten Besuch nichts fertig wurde.
+3. **Zeitachse / Meilensteine** – chronologische Liste der Ausbaustufen mit Datum, als senkrechter Verlauf, von den Grundlagen bis zur aktuellen Version.
+
+4. **Arbeitsweise & Verhalten bei Aufgaben** – in verständlicher Sprache, wie im Projekt gearbeitet wurde: erst Rückfragen und Freigabe, dann Umsetzung, dann Prüfung (eigene Tests bzw. Testdurchläufe) und saubere Abnahme; Demo-Modus als Standard, damit nichts Echtes ungewollt angesprochen wird; keine ungefragten neuen Funktionen.
+
+5. **Erlernte Fähigkeiten / Erkenntnisse** – konkrete Stolpersteine und wie sie gelöst wurden (z. B. Grafana fand die Datenquelle nicht → feste Kennung vergeben; Firmware-Angabe war ein Objekt statt Text → richtig ausgelesen; Energiefluss-Darstellung auf dem Handy als echtes Hochformat; deutsche Zahlenformate mit Komma).
+
+6. **Technik-Überblick** – kompakte Übersicht: Art der App (lokales Dashboard), angebundene Geräte (Shelly Pro 3EM, Hoymiles HM-1500/AhoyDTU, Trucki2Shelly/SUN-2000, 2× Victron SmartSolar MPPT, LiFePO4-Speicher), genutzte Bausteine (MQTT-Broker, Zeitreihen-Datenbank, Grafana) und der Hinweis, dass alles lokal läuft.
+
+Zusätzlich: eine dezente Kopfzeile mit Sprungmarken zu den Abschnitten und ein „Zurück nach oben"-Knopf. Die Seite ist reiner Lesestoff – keine Bearbeitung, keine Steuerung von Geräten.
 
 ## Nutzerfluss
-
-1. Neue App-Version öffnen → „Was ist neu?" erscheint mit den frisch erledigten Punkten → wegklicken.
-2. Über die Versionsnummer in der Fußleiste die Ansicht „Doku & Roadmap" öffnen.
-3. Im Tab **Roadmap** den **Bearbeiten-Schalter** aktivieren.
-4. Punkte hinzufügen, umbenennen, abhaken, zwischen den Spalten ziehen oder löschen.
-5. Bearbeiten ausschalten → die Ansicht ist wieder aufgeräumt; Änderungen bleiben gespeichert.
-6. Die Anleitung (zweiter Tab) bleibt unverändert zum Ansehen.
+1. Die Person öffnet die eigene Bericht-Adresse direkt im Browser.
+2. Oben erscheinen Titel, Version und die Kennzahlen-Kacheln.
+3. Beim Scrollen folgen nacheinander: Changelog (hinzugefügt / abgelöst / entfernt), Zeitachse, Arbeitsweise, Erkenntnisse, Technik.
+4. Über die Sprungmarken oben springt man direkt zu einem Abschnitt; der „Zurück nach oben"-Knopf bringt wieder an den Anfang.
+5. Auf dem Handy liegen alle Inhalte in einer gut lesbaren Spalte untereinander.
 
 ## UI/UX-Gefühl
-
-Gleiche SCADA-Control-Room-Sprache: dunkler Hintergrund, Neon-Akzente, feine Rahmen,
-Mono-/LCD-Typografie. Drei Status-Spalten mit klaren Farben (grün = erledigt, cyan = in Arbeit,
-grau = geplant). Bearbeitungs-Elemente dezent und erst im Bearbeiten-Modus sichtbar.
-Das „Was ist neu?"-Fenster ist ein schlankes, wegklickbares Overlay. Responsiv (Desktop wie
-Mobil), deutsch.
+- Gleicher dunkler Industrial-/Control-Room-Look wie die übrige App, mit Neon-Akzenten und der bekannten Schrift.
+- Farbcodierung im Changelog: Grün für Hinzugefügt, Blau/Gelb für Abgelöst, Rot/Grau für Entfernt – damit der Unterschied sofort erkennbar ist.
+- Ruhiges, großzügiges Layout mit viel Abstand, Karten und Trennlinien; sanfte Einblend-Animation beim Scrollen.
+- Vollständig auf Deutsch.
 
 ## Umsetzungsphasen
 
-**Phase 1 – MVP (wird jetzt gebaut):** Dauerhaft gespeicherte, bearbeitbare Roadmap im
-bestehenden 3-Spalten-Aufbau (hinzufügen, umbenennen, löschen, Status/Abhaken, verschieben per
-Ziehen), vollständig mit allen bisherigen Bau-Phasen vorbefüllt. Automatisches
-„Was ist neu?"-Fenster beim Versionssprung mit den seit dem letzten Besuch neu erledigten
-Punkten, wegklickbar und über die Versionsnummer erneut aufrufbar.
+**Phase 1 (wird jetzt gebaut – MVP):**
+- Eigene Vorschau-Seite unter einer eigenen Adresse (nicht im Menü).
+- Alle sechs Abschnitte mit fest kuratiertem Inhalt: Kopf/Kennzahlen, Changelog (hinzugefügt/abgelöst/entfernt), Zeitachse, Arbeitsweise, Erkenntnisse, Technik.
+- Sprungmarken oben, „Zurück nach oben"-Knopf, SCADA-Look, voll auf Desktop und Handy nutzbar.
 
-**Phase 2 – später:** Zusätzliche Felder je Punkt (Notiz, Link, geplantes Datum), Kategorien/Tags,
-Suche/Filter sowie Vorlagen für häufige Einträge.
+**Phase 2 (später, nur auf Wunsch):**
+- Druck-/PDF-freundliche Ansicht des Berichts zum Teilen oder Archivieren.
+- Optionaler Einstieg aus der Doku-Seite oder der Fußleiste heraus.
 
-**Phase 3 – später:** „Erledigt"-Historie zusätzlich automatisch aus der Versionshistorie
-ableiten; Roadmap/Änderungsliste als Druck-/PDF-Ansicht exportieren.
+**Phase 3 (später, nur auf Wunsch):**
+- Teile des Changelogs automatisch aus den gespeicherten Roadmap-Daten speisen, damit sich der Bericht mitpflegt.
+- Kleine Vorher/Nachher-Vorschaubilder oder Screenshots je Meilenstein.
 
 ## Annahmen
-
-- Die Roadmap wird **auf der lokalen Installation gespeichert** (nicht pro Browser): Änderungen
-  gelten für alle, die dieselbe lokale App nutzen, und bleiben nach Neuladen erhalten.
-- Es gibt **keinen Login**; wer Zugriff auf die lokale App hat, darf die Roadmap bearbeiten
-  (lokaler Einzelbetrieb).
-- **„Abhaken"** bedeutet: Status auf „Erledigt" setzen. **„Verschieben"** bedeutet: per Ziehen
-  zwischen den Spalten (ändert den Status) bzw. innerhalb einer Spalte (ändert die Reihenfolge).
-- Der **Aufbau bleibt wie bei der bestehenden Roadmap** (drei Status-Spalten mit Farbcodes);
-  neu ist nur der editierbare, dauerhaft gespeicherte Inhalt und das Bearbeiten.
-- Die **App-Versionsnummer** wird weiterhin bei der Auslieferung gesetzt und löst das
-  „Was ist neu?"-Fenster aus. Das Fenster listet die **seit dem letzten Besuch neu erledigten**
-  Punkte – unabhängig davon, welche Version sie erhalten haben.
-- Das **Löschen** eines Punktes verlangt eine kurze Bestätigung, um versehentlichen Verlust zu
-  vermeiden.
-- Der **Startinhalt** wird aus dem tatsächlichen Projektstand zusammengestellt; danach zählt
-  ausschließlich der in der App gepflegte Stand.
-- Bearbeiten findet **in der vorhandenen Roadmap-Ansicht** statt (per Schalter); die Ansicht ist
-  standardmäßig nur zum Lesen.
-- Alles auf **Deutsch**, im bestehenden SCADA-Look. Entfernte Funktionen (Watt-Labels auf den
-  Flusslinien, 48-h-Prognose, CSV-Export) bleiben entfernt. **Keine neuen externen Integrationen.**
+- Die Seite liegt unter einer eigenen Vorschau-Adresse (sinngemäß `/bericht` bzw. `/report-preview`) und wird nicht ins Hauptmenü aufgenommen.
+- Inhalte sind fest kuratiert und spiegeln den Stand bis zur aktuellen Version (1.5.0, Stand 29.10.2026) wider; sie aktualisieren sich nicht automatisch.
+- Der Bericht ist rein lesend – keine Bearbeitung, kein Export, keine Gerätesteuerung in Phase 1.
+- Keine neuen externen Integrationen; die Seite nutzt nur bereits vorhandene Projektdaten.
+- Kein Login – wie in der übrigen lokalen App.
+- Sprache durchgehend Deutsch; bestehende Seiten, Roadmap und Anleitung bleiben unverändert.
+- Die bereits entfernten Funktionen (48-Stunden-Prognose, Watt-Labels am Energiefluss, CSV-Export) werden nicht wieder eingeführt, sondern nur im Bericht als „bewusst entfernt" erwähnt.
