@@ -4,7 +4,7 @@
  * Anleitung spiegelt aktuelle Werte (Kapazität, Labels, Modus, erkannte Geräte). */
 import { useEffect, useRef, useState } from "react";
 import { Link, useOutletContext } from "react-router-dom";
-import { ArrowLeft, Map, BookOpen, ChevronDown, Monitor, Cpu, Workflow, Server, CircleCheck, Clock, CircleDashed, Plus, Trash2, GripVertical, Pencil, Sparkles } from "lucide-react";
+import { ArrowLeft, Map, BookOpen, ChevronDown, Monitor, Cpu, Workflow, Server, CircleCheck, Clock, CircleDashed, Plus, Trash2, GripVertical, Pencil, Sparkles, FileText } from "lucide-react";
 import { getConfig, getDeviceInfo, getRoadmap, putRoadmap } from "../lib/api";
 import { APP_NAME, APP_VERSION, APP_LAST_UPDATED, ROADMAP as FALLBACK_ROADMAP, ROADMAP_GROUPS } from "../lib/appmeta";
 
@@ -252,6 +252,10 @@ export default function Docs() {
           <p className="text-white/55 text-sm mt-1.5">{APP_NAME} · v{APP_VERSION} · Stand {APP_LAST_UPDATED}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Link to="/bericht" data-testid="docs-report-link"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-cyan-400/30 bg-cyan-400/10 font-mono text-[11px] uppercase tracking-[0.12em] text-cyan-200 hover:bg-cyan-400/20 transition-colors">
+            <FileText size={13} /> Projektbericht
+          </Link>
           <button type="button" onClick={() => outlet?.openWhatsNew?.()} data-testid="docs-whatsnew"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-white/12 font-mono text-[11px] uppercase tracking-[0.12em] text-white/60 hover:text-white hover:bg-white/5 transition-colors">
             <Sparkles size={13} /> Was ist neu?

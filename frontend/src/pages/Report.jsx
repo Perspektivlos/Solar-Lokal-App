@@ -4,13 +4,16 @@ import {
   ArrowLeft, ArrowUp, Plus, Replace, Ban, CheckCircle2, Clock, CalendarClock,
   Workflow, Lightbulb, Cpu, LayoutGrid, Activity, Sun, BatteryCharging, Home,
   Plug, Gauge, Database, Radio, LineChart, ShieldCheck, Server, ArrowRight,
+  FileText, Printer, Bell, Palette, Search, Wrench,
 } from "lucide-react";
 import { COLOR } from "../components/solar-ui";
 import { MiniMock } from "../components/MiniMock";
+import { ReportPrintButton } from "../components/ReportPrint";
+import { getRoadmap } from "../lib/api";
 import { APP_NAME, APP_VERSION, APP_LAST_UPDATED, ROADMAP } from "../lib/appmeta";
 
-/* Reiner Lese-Bericht „Was wir erreicht haben" – eigene Vorschau-Adresse (/report-preview),
- * nicht im Menü. Fest kuratierter Inhalt, Stand v1.5.0. SCADA-Dark-Look wie die übrige App. */
+/* Lese-Bericht „Was wir erreicht haben" (/report-preview, /bericht), nicht im Menü.
+ * „Hinzugefügt" + Kennzahlen kommen live aus der gespeicherten Roadmap; Rest kuratiert. */
 
 const SECTIONS = [
   { id: "kopf", label: "Überblick" },
@@ -21,18 +24,32 @@ const SECTIONS = [
   { id: "technik", label: "Technik" },
 ];
 
-const ADDED = [
-  { icon: Activity, title: "Live-Dashboard mit animiertem Energiefluss", desc: "Herzstück: Echtzeit-Übersicht aller Leistungsflüsse mit Plasma-Animation zwischen Erzeugern, Speicher, Haus und Netz." },
-  { icon: LayoutGrid, title: "Vier große Geräte-Karten", desc: "Solar PV, Batterie 48 V, Hausverbrauch und Stromnetz – je mit LCD-Wert, Tagesenergie und Statusbadge." },
-  { icon: Sun, title: "Sonnen-Tagesverlauf (Balken & Bogen)", desc: "Aufgang bis Untergang mit Dämmerungsphasen, Jetzt-Marker und umschaltbarer Ansicht." },
-  { icon: Gauge, title: "Favoriten anpinnen (inkl. MPPT-Strings & Phasen)", desc: "Wichtigste Werte als KPI-Leiste ganz oben, per Drag-&-Drop sortierbar, serverseitig gespeichert." },
-  { icon: Plug, title: "Steuerung: Hoymiles-Limit & Trucki/SUN", desc: "Wirkleistungsgrenze und Entlade-Regler direkt aus der App bedienbar." },
-  { icon: ShieldCheck, title: "Diagnose & Geräte-Selbsttest", desc: "Geräte-Erkennung, Firmware-Vergleich und geführter Selbsttest zur Fehlersuche." },
-  { icon: Database, title: "Grafana & InfluxDB angebunden", desc: "Auto-Provisioning mit fester Datenquelle und einem 43-Panel-Dashboard im SCADA-Look." },
-  { icon: CalendarClock, title: "Versions-Fußleiste, Doku & Anleitung", desc: "Fixe Leiste mit Version, Modus und Stand; eigene Doku-Seite mit Roadmap und Anlagen-Anleitung." },
-  { icon: Workflow, title: "Editierbare Roadmap & „Was ist neu?\"", desc: "Roadmap dauerhaft in der App bearbeiten (Drag-&-Drop); Hinweis-Fenster bei neuen erledigten Punkten." },
-  { icon: LineChart, title: "Konfigurierbare Akkukapazität & Beschriftungen", desc: "Nutzbare kWh und Gerätetexte in den Einstellungen anpassbar – fließt in Karten und Kennzahlen ein." },
-];
+// Optionale Anreicherung je Roadmap-ID; neue Punkte erscheinen auch ohne Eintrag hier.
+const ADDED_INFO = {
+  "live-dashboard": { icon: Activity, desc: "Herzstück: Echtzeit-Übersicht aller Leistungsflüsse mit Plasma-Animation zwischen Erzeugern, Speicher, Haus und Netz." },
+  "scada-design": { icon: Palette, desc: "Leitstand-Optik mit 7-Segment-LCD-Werten, Neon-Akzenten und durchgehend dunklem Design." },
+  "device-control": { icon: Plug, desc: "Wirkleistungsgrenze und Entlade-Regler direkt aus der App bedienbar." },
+  alarms: { icon: Bell, desc: "Statusmeldungen mit einstellbaren Grenzwerten für kritische Zustände." },
+  diagnose: { icon: ShieldCheck, desc: "Geführter Selbsttest zur Fehlersuche an allen angebundenen Geräten." },
+  discovery: { icon: Search, desc: "Geräte werden erkannt, Firmware-Stände mit der neuesten Version verglichen." },
+  integrations: { icon: Radio, desc: "Live-Werte über den lokalen MQTT-Broker, Langzeitspeicherung in InfluxDB." },
+  grafana: { icon: Database, desc: "Auto-Provisioning mit fester Datenquelle und einem 43-Panel-Dashboard im SCADA-Look." },
+  suntimeline: { icon: Sun, desc: "Aufgang bis Untergang mit Dämmerungsphasen, Jetzt-Marker und umschaltbarer Ansicht." },
+  favorites: { icon: Gauge, desc: "Wichtigste Werte als KPI-Leiste ganz oben, serverseitig gespeichert." },
+  "device-cards": { icon: LayoutGrid, desc: "Solar PV, Batterie 48 V, Hausverbrauch und Stromnetz – je mit LCD-Wert, Tagesenergie und Statusbadge." },
+  "display-settings": { icon: LineChart, desc: "Nutzbare kWh und Gerätetexte in den Einstellungen anpassbar – fließt in Karten und Kennzahlen ein." },
+  "docs-footer": { icon: CalendarClock, desc: "Fixe Leiste mit Version, Modus und Stand; eigene Doku-Seite mit Roadmap und Anlagen-Anleitung." },
+  "roadmap-edit": { icon: Workflow, desc: "Roadmap dauerhaft in der App bearbeiten (Drag-&-Drop); Hinweis-Fenster bei neuen erledigten Punkten." },
+  "report-page": { icon: FileText, desc: "Dieser Bericht: Changelog, Zeitachse mit Vorher/Nachher-Vorschau, Arbeitsweise und Technik." },
+  "changelog-auto": { icon: Wrench, desc: "Diese Liste pflegt sich selbst – jeder auf „Erledigt\" gesetzte Roadmap-Punkt erscheint hier." },
+  "report-print": { icon: Printer, desc: "Bericht drucken oder als PDF speichern – hell und druckerfreundlich oder im dunklen Leitstand-Design." },
+};
+
+const fmtDate = (d) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d || "")) { const [y, m, t] = d.split("-"); return `${t}.${m}.${y}`; }
+  if (/^\d{4}-\d{2}$/.test(d || "")) { const [y, m] = d.split("-"); return `${m}/${y}`; }
+  return d || "—";
+};
 
 const REPLACED = [
   { before: "Sechs kleine LCD-Kacheln", after: "Vier große Geräte-Karten", why: "Bessere Lesbarkeit und mehr Kontext (Tageswerte, Status) pro Gerät." },
@@ -119,6 +136,14 @@ export default function Report() {
   const containerRef = useReveal();
   const [showTop, setShowTop] = useState(false);
   const [active, setActive] = useState("kopf");
+  const [roadmap, setRoadmap] = useState(ROADMAP);
+  const [liveRoadmap, setLiveRoadmap] = useState(false);
+
+  useEffect(() => {
+    getRoadmap().then((d) => {
+      if (d?.items?.length) { setRoadmap(d.items); setLiveRoadmap(true); }
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -139,10 +164,14 @@ export default function Report() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  const added = roadmap
+    .map((r, i) => ({ ...r, i }))
+    .filter((r) => r.status === "done")
+    .sort((a, b) => (b.date || "").localeCompare(a.date || "") || a.i - b.i);
   const counts = {
-    done: ROADMAP.filter((r) => r.status === "done").length,
-    wip: ROADMAP.filter((r) => r.status === "wip").length,
-    planned: ROADMAP.filter((r) => r.status === "planned").length,
+    done: added.length,
+    wip: roadmap.filter((r) => r.status === "wip").length,
+    planned: roadmap.filter((r) => r.status === "planned").length,
   };
   const kpis = [
     { label: "Funktionen erledigt", value: counts.done, color: COLOR.grid_exp },
@@ -153,9 +182,9 @@ export default function Report() {
   ];
 
   return (
-    <div ref={containerRef} className="min-h-screen text-white" data-testid="report-page">
+    <div ref={containerRef} className="report-print-root min-h-screen text-white" data-testid="report-page">
       {/* Sticky Sprungmarken-Leiste */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#04060c]/80 border-b border-white/10">
+      <header className="print-hide sticky top-0 z-30 backdrop-blur-xl bg-[#04060c]/80 border-b border-white/10">
         <div className="max-w-5xl mx-auto px-5 sm:px-8 h-14 flex items-center gap-3 sm:gap-5 overflow-x-auto no-scrollbar">
           <Link to="/" data-testid="report-back" className="shrink-0 inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-cyan-300 hover:text-cyan-200 transition-colors">
             <ArrowLeft size={14} /> Dashboard
@@ -176,6 +205,7 @@ export default function Report() {
               </button>
             ))}
           </nav>
+          <ReportPrintButton />
         </div>
       </header>
 
@@ -216,19 +246,29 @@ export default function Report() {
 
           {/* Hinzugefügt */}
           <div className="mb-10" data-reveal>
-            <div className="flex items-center gap-2 mb-4 text-[#10B981]">
+            <div className="flex flex-wrap items-center gap-2 mb-4 text-[#10B981]">
               <Plus size={16} /><h3 className="font-mono text-[12px] uppercase tracking-[0.16em]">Hinzugefügt</h3>
+              <span className="font-mono text-[11px] text-white/40" data-testid="report-added-count">· {added.length}</span>
+              <span data-testid="report-added-source"
+                className={`ml-1 px-2 py-0.5 rounded font-mono text-[10px] uppercase tracking-[0.1em] border ${liveRoadmap ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-white/12 text-white/40"}`}>
+                {liveRoadmap ? "Automatisch aus der Roadmap" : "Gespeicherter Stand"}
+              </span>
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
-              {ADDED.map((f) => (
-                <div key={f.title} className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 flex gap-3">
-                  <span className="grid place-items-center w-9 h-9 shrink-0 rounded-lg bg-emerald-500/10 text-emerald-300"><f.icon size={17} /></span>
-                  <div>
-                    <div className="text-white font-medium text-sm">{f.title}</div>
-                    <div className="text-white/50 text-[13px] mt-1 leading-relaxed">{f.desc}</div>
+              {added.map((r) => {
+                const info = ADDED_INFO[r.id] || {};
+                const Icon = info.icon || CheckCircle2;
+                return (
+                  <div key={r.id || r.title} data-testid="report-added-item" className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 flex gap-3">
+                    <span className="grid place-items-center w-9 h-9 shrink-0 rounded-lg bg-emerald-500/10 text-emerald-300"><Icon size={17} /></span>
+                    <div className="min-w-0">
+                      <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">{fmtDate(r.date)}</div>
+                      <div className="text-white font-medium text-sm mt-0.5">{r.title}</div>
+                      {info.desc && <div className="text-white/50 text-[13px] mt-1 leading-relaxed">{info.desc}</div>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -378,7 +418,7 @@ export default function Report() {
 
         <div className="mt-16 pt-8 border-t border-white/10 text-center" data-reveal>
           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-white/35">{APP_NAME} · {APP_VERSION} · Stand {APP_LAST_UPDATED}</div>
-          <div className="text-white/30 text-[12px] mt-2">Reiner Lesebericht · keine Bearbeitung · keine Gerätesteuerung</div>
+          <div className="text-white/30 text-[12px] mt-2">Reiner Lesebericht · „Hinzugefügt" folgt automatisch der Roadmap · keine Gerätesteuerung</div>
         </div>
       </main>
 
@@ -387,7 +427,7 @@ export default function Report() {
         type="button"
         data-testid="report-back-to-top"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={`fixed bottom-6 right-6 z-40 grid place-items-center w-11 h-11 rounded-full border border-cyan-400/40 bg-cyan-400/15 text-cyan-200 backdrop-blur-md transition-all duration-300 hover:bg-cyan-400/25 ${
+        className={`print-hide fixed bottom-6 right-6 z-40 grid place-items-center w-11 h-11 rounded-full border border-cyan-400/40 bg-cyan-400/15 text-cyan-200 backdrop-blur-md transition-all duration-300 hover:bg-cyan-400/25 ${
           showTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3 pointer-events-none"
         }`}
         aria-label="Zurück nach oben"
