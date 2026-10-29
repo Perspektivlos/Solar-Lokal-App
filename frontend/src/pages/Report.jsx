@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowUp, Plus, Replace, Ban, CheckCircle2, Clock, CalendarClock,
   Workflow, Lightbulb, Cpu, LayoutGrid, Activity, Sun, BatteryCharging, Home,
-  Plug, Gauge, Database, Radio, LineChart, ShieldCheck, Server,
+  Plug, Gauge, Database, Radio, LineChart, ShieldCheck, Server, ArrowRight,
 } from "lucide-react";
 import { COLOR } from "../components/solar-ui";
+import { MiniMock } from "../components/MiniMock";
 import { APP_NAME, APP_VERSION, APP_LAST_UPDATED, ROADMAP } from "../lib/appmeta";
 
 /* Reiner Lese-Bericht „Was wir erreicht haben" – eigene Vorschau-Adresse (/report-preview),
@@ -48,12 +49,12 @@ const REMOVED = [
 ];
 
 const TIMELINE = [
-  { date: "06/2026", title: "Grundlagen & SCADA-Design", desc: "Live-Dashboard, Energiefluss, DSEG7-LCD-Look, Steuerung, Alarme, Diagnose, MQTT & InfluxDB, lokaler Start." },
-  { date: "10/2026", title: "Grafana-Ausbau & Fixes", desc: "42/43-Panel-Dashboard, feste Datenquellen-UID, SCADAvis-Synoptik-Vorschau und -Panel." },
-  { date: "07.10.2026", title: "Favoriten & Tagesverlauf", desc: "Favoriten (Geräte, MPPT-Strings, Phasen) per Drag-&-Drop; Sonnen-Tagesverlauf Balken/Bogen." },
-  { date: "29.10.2026", title: "Dashboard-Redesign", desc: "Vier Geräte-Karten, Energiefluss Kompakt/Detail/Auto, Fluss-/Tempo-Regler, Kennzahlen-Zeile, Mobil-Hochformat." },
-  { date: "29.10.2026", title: "Einstellungen & Doku (v1.4.0)", desc: "Konfigurierbare Kapazität & Beschriftungen, Versions-Fußleiste, Doku-Seite mit Roadmap & Anleitung." },
-  { date: "29.10.2026", title: "Editierbare Roadmap (v1.5.0)", desc: "Roadmap in der App bearbeiten & speichern, „Was ist neu?\"-Fenster beim Versionssprung." },
+  { date: "06/2026", title: "Grundlagen & SCADA-Design", desc: "Live-Dashboard, Energiefluss, DSEG7-LCD-Look, Steuerung, Alarme, Diagnose, MQTT & InfluxDB, lokaler Start.", before: { v: "blank", label: "Leerer Start" }, after: { v: "dashboard", label: "Live-Dashboard" } },
+  { date: "10/2026", title: "Grafana-Ausbau & Fixes", desc: "42/43-Panel-Dashboard, feste Datenquellen-UID, SCADAvis-Synoptik-Vorschau und -Panel.", before: { v: "grafana-error", label: "Quelle fehlt" }, after: { v: "grafana-grid", label: "43 Panels" } },
+  { date: "07.10.2026", title: "Favoriten & Tagesverlauf", desc: "Favoriten (Geräte, MPPT-Strings, Phasen) per Drag-&-Drop; Sonnen-Tagesverlauf Balken/Bogen.", before: { v: "dash-nofav", label: "Ohne Favoriten" }, after: { v: "dash-fav", label: "Favoriten + Sonne" } },
+  { date: "29.10.2026", title: "Dashboard-Redesign", desc: "Vier Geräte-Karten, Energiefluss Kompakt/Detail/Auto, Fluss-/Tempo-Regler, Kennzahlen-Zeile, Mobil-Hochformat.", before: { v: "six-tiles", label: "6 LCD-Kacheln" }, after: { v: "four-cards", label: "4 Geräte-Karten" } },
+  { date: "29.10.2026", title: "Einstellungen & Doku (v1.4.0)", desc: "Konfigurierbare Kapazität & Beschriftungen, Versions-Fußleiste, Doku-Seite mit Roadmap & Anleitung.", before: { v: "popup", label: "Popup-Dialog" }, after: { v: "footer-docs", label: "Fußleiste + Doku" } },
+  { date: "29.10.2026", title: "Editierbare Roadmap (v1.5.0)", desc: "Roadmap in der App bearbeiten & speichern, „Was ist neu?\"-Fenster beim Versionssprung.", before: { v: "roadmap-static", label: "Statisch" }, after: { v: "roadmap-edit", label: "Editierbar" } },
 ];
 
 const WORKFLOW = [
@@ -283,6 +284,21 @@ export default function Report() {
                     <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-cyan-300/80">{m.date}</div>
                     <div className="text-white font-medium mt-1">{m.title}</div>
                     <div className="text-white/50 text-[13px] mt-1 leading-relaxed">{m.desc}</div>
+                    <div className="mt-3.5 flex items-center gap-2.5" data-testid={`report-mock-pair-${i}`}>
+                      <figure className="flex-1 min-w-0 max-w-[132px]">
+                        <MiniMock variant={m.before.v} className="w-full h-auto rounded-md" />
+                        <figcaption className="mt-1.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.1em] text-white/35">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/25" /> Vorher · {m.before.label}
+                        </figcaption>
+                      </figure>
+                      <ArrowRight size={16} className="shrink-0 text-cyan-300/70" />
+                      <figure className="flex-1 min-w-0 max-w-[132px]">
+                        <MiniMock variant={m.after.v} accent={`${COLOR.battery}55`} className="w-full h-auto rounded-md" />
+                        <figcaption className="mt-1.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.1em] text-cyan-300/70">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" /> Nachher · {m.after.label}
+                        </figcaption>
+                      </figure>
+                    </div>
                   </div>
                 </div>
               ))}
