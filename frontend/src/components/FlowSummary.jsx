@@ -3,8 +3,8 @@
 import { Sun, BatteryCharging, Cable, Gauge } from "lucide-react";
 import { COLOR, formatNum } from "./solar-ui";
 
-// Angenommene nutzbare Akkukapazität (später in den Einstellungen änderbar).
-const USABLE_KWH = 9.6;
+// Fallback-Kapazität, falls keine Einstellung gesetzt ist.
+const DEFAULT_USABLE_KWH = 9.6;
 
 function Tile({ accent, icon: Icon, label, value, unit, sub, testid }) {
   return (
@@ -34,19 +34,20 @@ function Tile({ accent, icon: Icon, label, value, unit, sub, testid }) {
   );
 }
 
-export default function FlowSummary({ live, today }) {
+export default function FlowSummary({ live, today, usableKwh }) {
   const s = live?.summary || {};
+  const cap = usableKwh > 0 ? usableKwh : DEFAULT_USABLE_KWH;
   const grid = s.grid_power ?? 0;
   const house = s.house_power ?? 0;
   const soc = s.battery_soc ?? 0;
   const importing = grid >= 0;
-  const battKwh = (soc / 100) * USABLE_KWH;
+  const battKwh = (soc / 100) * cap;
   // Momentane Eigenabdeckung des Hausverbrauchs aus eigener Erzeugung.
   const instantCover = house <= 0 ? 100 : Math.max(0, Math.min(100, ((house - Math.max(0, grid)) / house) * 100));
 
   const tiles = [
     { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solar Ertrag Heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", sub: `Aktuell: ${formatNum(s.pv_power, 0)} W` },
-    { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Batterie Kapazität", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC (${formatNum(USABLE_KWH, 1)} kWh)` },
+    { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Batterie Kapazität", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC (${formatNum(cap, 1)} kWh)` },
     { testid: "summary-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, label: "Netzbezug Heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", sub: `Aktuell: ${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W` },
     { testid: "summary-autarky", accent: COLOR.grid_exp, icon: Gauge, label: "Autarkiegrad", value: formatNum(today?.autarky_pct, 1), unit: "%", sub: `${formatNum(instantCover, 0)} % Eigenabdeckung` },
   ];

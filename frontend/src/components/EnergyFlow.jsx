@@ -388,6 +388,10 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const toggleFlow = () => setFlowOn((v) => { const n = !v; try { localStorage.setItem("solar.flowOn", n ? "1" : "0"); } catch { /* ignore */ } return n; });
   const setTempoPersist = (t) => { setTempo(t); try { localStorage.setItem("solar.flowTempo", String(t)); } catch { /* ignore */ } };
   const flowAnim = flowOn && !reduced;
+  // Mobil (schmal) + Kompakt → echte Hochkant-Anordnung (zwei Spalten, gestapelt).
+  const portrait = narrow && compact;
+  const VBW = portrait ? 480 : 1060;
+  const VBH = portrait ? 840 : 420;
 
   // --- Knoten + Flüsse je Ansicht ---
   // Kompakt = 5 Knoten (Solar PV gebündelt), Detail = 6 Knoten (PV in Hoymiles AC
@@ -398,18 +402,23 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   let flowDefs = [];
   const sun2000Sub = dischargeActive ? `Regler · Lim ${round(trucki?.max_power_w || 0)}W` : "Standby";
   if (compact) {
+    // Landscape: 2 Zeilen (oben PV/Akku, unten Netz/Sun-2000, Haus zentral).
+    // Portrait (Mobil): 2 Spalten gestapelt – links PV→Haus→Netz, rechts Akku→Sun-2000.
+    const P = portrait
+      ? { pv: [140, 110], battery: [340, 250], sun2000: [340, 560], house: [140, 420], grid: [140, 730] }
+      : { pv: [175, 110], battery: [885, 110], sun2000: [885, 320], house: [530, 215], grid: [175, 320] };
     const pvEnabled = victronEnabled || hoymilesEnabled;
-    if (pvEnabled) nodeList.push({ key: "pv", x: 175, y: 110, color: COLOR.pv, active: pvProducing, emblem: "sun",
+    if (pvEnabled) nodeList.push({ key: "pv", x: P.pv[0], y: P.pv[1], color: COLOR.pv, active: pvProducing, emblem: "sun",
       label: "Solar PV", badge: "AC+DC", value: round(pv), unit: "W", testid: "flow-pv",
       sub: pvProducing ? `AC ${round(pvAc)} · DC ${round(pvDc)} W` : pvNightSub });
-    if (gridEnabled) nodeList.push({ key: "grid", x: 175, y: 320, color: gridColor, active: importActive || exportActive, emblem: "grid",
+    if (gridEnabled) nodeList.push({ key: "grid", x: P.grid[0], y: P.grid[1], color: gridColor, active: importActive || exportActive, emblem: "grid",
       label: "Stromnetz", badge: "PRO 3EM", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
-    nodeList.push({ key: "house", x: 530, y: 215, color: COLOR.house, active: houseActive, emblem: "house",
+    nodeList.push({ key: "house", x: P.house[0], y: P.house[1], color: COLOR.house, active: houseActive, emblem: "house",
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
     if (batteryEnabled) {
-      nodeList.push({ key: "battery", x: 885, y: 110, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
+      nodeList.push({ key: "battery", x: P.battery[0], y: P.battery[1], color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
         label: "Batterie 48V", badge: "48V", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
-      nodeList.push({ key: "sun2000", x: 885, y: 320, color: COLOR.dc, active: dischargeActive, emblem: "bolt",
+      nodeList.push({ key: "sun2000", x: P.sun2000[0], y: P.sun2000[1], color: COLOR.dc, active: dischargeActive, emblem: "bolt",
         label: "Sun-2000", badge: "TRUCKI", value: round(discharge), unit: "W", sub: sun2000Sub, testid: "flow-sun2000" });
     }
     flowDefs = [
@@ -622,7 +631,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
           </div>
         )}
         <div className="w-full overflow-x-auto">
-        <svg viewBox="0 0 1060 420" className="w-full" data-testid="energy-flow-svg" style={{ minWidth: 560, maxHeight: 540 }}>
+        <svg viewBox={`0 0 ${VBW} ${VBH}`} className="w-full" data-testid="energy-flow-svg" style={portrait ? { maxHeight: "74vh" } : { minWidth: 560, maxHeight: 540 }}>
           <defs>
             <pattern id="bggrid" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
@@ -636,9 +645,9 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
               <stop offset="100%" stopColor="rgba(7,12,24,0.97)" />
             </linearGradient>
           </defs>
-          <rect x="0" y="0" width="1060" height="420" fill="url(#bggrid)" />
-          <rect x="0" y="0" width="1060" height="420" fill="url(#efcenter)" onClick={() => setHover(null)} style={{ cursor: "default" }} />
-          {[[180, 70], [900, 70], [180, 360], [900, 360], [530, 215]].map(([cx, cy], i) => (
+          <rect x="0" y="0" width={VBW} height={VBH} fill="url(#bggrid)" />
+          <rect x="0" y="0" width={VBW} height={VBH} fill="url(#efcenter)" onClick={() => setHover(null)} style={{ cursor: "default" }} />
+          {!portrait && [[180, 70], [900, 70], [180, 360], [900, 360], [530, 215]].map(([cx, cy], i) => (
             <g key={i} stroke="rgba(148,163,184,0.16)" strokeWidth="0.8" pointerEvents="none">
               <line x1={cx - 6} y1={cy} x2={cx + 6} y2={cy} />
               <line x1={cx} y1={cy - 6} x2={cx} y2={cy + 6} />

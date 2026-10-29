@@ -145,6 +145,15 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "grafana_url": "http://192.168.0.202:3000",
     "location": {"lat": DEFAULT_LAT, "lon": DEFAULT_LON, "name": "Deutschland (Mitte)"},
     "favorites": [],
+    "display": {
+        "usable_kwh": 9.6,
+        "labels": {
+            "solar": "Hoymiles + 2× MPPT",
+            "battery": "6× Power Queen 100 Ah",
+            "house": "AC-Lastbilanz",
+            "grid": "Shelly Pro 3EM (L1/L2/L3)",
+        },
+    },
 }
 
 
@@ -180,6 +189,7 @@ class ConfigUpdate(BaseModel):
     grafana_url: Optional[str] = None
     location: Optional[Dict[str, Any]] = None
     favorites: Optional[List[str]] = None
+    display: Optional[Dict[str, Any]] = None
 
 
 class HoymilesControl(BaseModel):

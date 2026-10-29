@@ -62,6 +62,7 @@ export default function Dashboard() {
   const [now, setNow] = useState(() => Date.now());
   const [devices, setDevices] = useState({});
   const [favorites, setFavorites] = useState([]);
+  const [display, setDisplay] = useState(null);
   const toggleFavorite = (key) => {
     setFavorites((prev) => {
       const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
@@ -97,7 +98,7 @@ export default function Dashboard() {
   useEffect(() => {
     let alive = true;
     getConfig()
-      .then((c) => { if (alive) { setDevices(c?.devices || {}); setFavorites(c?.favorites || []); } })
+      .then((c) => { if (alive) { setDevices(c?.devices || {}); setFavorites(c?.favorites || []); setDisplay(c?.display || null); } })
       .catch(() => {});
     return () => { alive = false; };
   }, []);
@@ -257,9 +258,9 @@ export default function Dashboard() {
 
       {/* ÜBERSICHT · Geräte-Karten + Energiefluss + Kennzahlen */}
       <div data-testid="row-overview" className="space-y-8">
-        <DeviceCards live={live} today={today} />
+        <DeviceCards live={live} today={today} display={display} />
         <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} sun={sun} />
-        <FlowSummary live={live} today={today} />
+        <FlowSummary live={live} today={today} usableKwh={display?.usable_kwh} />
         <SunTimeline timestamp={timestamp} sun={sun} />
       </div>
 

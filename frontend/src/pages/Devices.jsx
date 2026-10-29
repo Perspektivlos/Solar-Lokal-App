@@ -73,11 +73,13 @@ export default function Devices() {
   };
 
   const updateLocation = (patch) => setCfg({ ...cfg, location: { ...(cfg.location || {}), ...patch } });
+  const updateDisplay = (patch) => setCfg({ ...cfg, display: { ...(cfg.display || {}), ...patch } });
+  const updateLabel = (key, val) => setCfg({ ...cfg, display: { ...(cfg.display || {}), labels: { ...((cfg.display || {}).labels || {}), [key]: val } } });
 
   const save = async () => {
     setSaving(true);
     try {
-      const updated = await putConfig({ demo_mode: cfg.demo_mode, devices: cfg.devices, location: cfg.location });
+      const updated = await putConfig({ demo_mode: cfg.demo_mode, devices: cfg.devices, location: cfg.location, display: cfg.display });
       setCfg(updated);
       toast.success("Konfiguration gespeichert");
     } catch (e) {
@@ -202,6 +204,33 @@ export default function Devices() {
             <input type="text" value={cfg.location?.name ?? ""} onChange={(e) => updateLocation({ name: e.target.value })}
                    className="glass-input w-full px-3 py-2 font-mono text-sm mt-1 block" data-testid="input-loc-name" />
           </div>
+        </div>
+      </div>
+
+      {/* Anlage & Anzeige · Akkukapazität + Geräte-Beschriftungen */}
+      <div className="glass p-4" style={{ borderLeft: "3px solid #38bdf8" }} data-testid="display-settings-row">
+        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-sky-300/80">Anlage &amp; Anzeige</div>
+        <div className="text-sm mt-1 text-white/70">Nutzbare Akkukapazität (für „Batterie Kapazität&ldquo;) &amp; die beschreibenden Texte der vier Dashboard-Karten. Keine Live-Werte — reine Beschriftung.</div>
+        <div className="mt-3">
+          <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Nutzbare Akkukapazität (kWh)</label>
+          <input type="number" step="0.1" min="0" value={cfg.display?.usable_kwh ?? ""}
+                 onChange={(e) => updateDisplay({ usable_kwh: Number(e.target.value) })}
+                 className="glass-input w-36 px-3 py-2 font-mono text-sm mt-1 block" data-testid="input-usable-kwh" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+          {[
+            { k: "solar", l: "Solar PV" },
+            { k: "battery", l: "Batterie 48V" },
+            { k: "house", l: "Hausverbrauch" },
+            { k: "grid", l: "Stromnetz" },
+          ].map((f) => (
+            <div key={f.k}>
+              <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">{f.l} · Beschriftung</label>
+              <input type="text" value={cfg.display?.labels?.[f.k] ?? ""}
+                     onChange={(e) => updateLabel(f.k, e.target.value)}
+                     className="glass-input w-full px-3 py-2 font-mono text-sm mt-1 block" data-testid={`input-label-${f.k}`} />
+            </div>
+          ))}
         </div>
       </div>
 

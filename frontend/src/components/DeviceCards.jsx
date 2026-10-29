@@ -6,6 +6,13 @@ import { COLOR, formatNum } from "./solar-ui";
 
 const HOUSE_ACCENT = "#38bdf8";
 
+const DEFAULT_LABELS = {
+  solar: "Hoymiles + 2× MPPT",
+  battery: "6× Power Queen 100 Ah",
+  house: "AC-Lastbilanz",
+  grid: "Shelly Pro 3EM (L1/L2/L3)",
+};
+
 function Badge({ label, color }) {
   return (
     <span
@@ -72,8 +79,9 @@ function DeviceCard({ accent, icon: Icon, title, desc, badge, bigValue, bigUnit,
   );
 }
 
-export default function DeviceCards({ live, today }) {
+export default function DeviceCards({ live, today, display }) {
   const { shelly, ahoy, trucki, victron, summary } = live;
+  const labels = { ...DEFAULT_LABELS, ...(display?.labels || {}) };
   const mppts = victron?.mppts || [];
   const phases = shelly?.phases || [];
   const grid = summary?.grid_power ?? 0;
@@ -86,7 +94,7 @@ export default function DeviceCards({ live, today }) {
 
   const cards = [
     {
-      testid: "device-card-solar", accent: COLOR.pv, icon: Sun, title: "Solar PV", desc: "Hoymiles + 2× MPPT",
+      testid: "device-card-solar", accent: COLOR.pv, icon: Sun, title: "Solar PV", desc: labels.solar,
       badge: { label: pvActive ? "Aktiv" : "Inaktiv", color: pvActive ? COLOR.pv : "#64748b" },
       bigValue: formatNum(summary?.pv_power, 0), bigUnit: "W", bigNote: `Tagesertrag ${formatNum(today?.pv_kwh, 2)} kWh`,
       rows: [
@@ -96,7 +104,7 @@ export default function DeviceCards({ live, today }) {
       ],
     },
     {
-      testid: "device-card-battery", accent: COLOR.battery, icon: BatteryCharging, title: "Batterie 48V", desc: "6× Power Queen 100 Ah",
+      testid: "device-card-battery", accent: COLOR.battery, icon: BatteryCharging, title: "Batterie 48V", desc: labels.battery,
       badge: { label: `${formatNum(trucki?.soc, 0)} % SoC`, color: COLOR.battery },
       bigValue: formatNum(Math.abs(battery), 0), bigUnit: "W", bigNote: battState,
       rows: [
@@ -106,7 +114,7 @@ export default function DeviceCards({ live, today }) {
       ],
     },
     {
-      testid: "device-card-house", accent: HOUSE_ACCENT, icon: Home, title: "Hausverbrauch", desc: "AC-Lastbilanz",
+      testid: "device-card-house", accent: HOUSE_ACCENT, icon: Home, title: "Hausverbrauch", desc: labels.house,
       badge: { label: "Live", color: HOUSE_ACCENT },
       bigValue: formatNum(summary?.house_power, 0), bigUnit: "W", bigNote: `Tagesbedarf ${formatNum(today?.consumption_kwh, 2)} kWh`,
       rows: [
@@ -116,7 +124,7 @@ export default function DeviceCards({ live, today }) {
       ],
     },
     {
-      testid: "device-card-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, title: "Stromnetz", desc: "Shelly Pro 3EM (L1/L2/L3)",
+      testid: "device-card-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, title: "Stromnetz", desc: labels.grid,
       badge: { label: importing ? "Bezug" : "Einspeisung", color: importing ? COLOR.grid_imp : COLOR.grid_exp },
       bigValue: formatNum(Math.abs(grid), 0), bigUnit: "W", bigNote: `Bezug ${formatNum(today?.grid_import_kwh, 2)} · Export ${formatNum(today?.grid_export_kwh, 2)} kWh`,
       rows: phases.map((p) => ({
