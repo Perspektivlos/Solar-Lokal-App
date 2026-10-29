@@ -1,0 +1,41 @@
+{
+  "summary": "Frontend-only test of Dashboard overview redesign (DeviceCards, EnergyFlow compact/detail/auto + Fluss toggle + Tempo, FlowSummary, regression). Desktop 1920x1080 + mobile 390x844 + resize. All requested functional checks PASS: 4 device cards render numeric values and update across 3s poll; KOMPAKT = exactly pv/grid/house/battery/sun2000; DETAIL = hoymiles/victron/grid/house/battery/sun2000 (no pv); AUTO = detail on desktop, compact on mobile, switches live on resize; view/flowOn/tempo all persist in localStorage across reload; Fluss aus removes all animateMotion particles and .flow-particles class (6->0), SVG stays; Tempo 1x/1.5x/2x toggles aria-pressed and scales animateMotion dur (2.24s -> 1.49s -> 1.12s); inspector works for battery/sun2000/victron/hoymiles/grid/house/pv with correct titles (rendered uppercase via CSS); summary tiles numeric; order DeviceCards -> EnergyFlow -> FlowSummary -> SunTimeline; sections battery/victron/pv-grid/shelly present; 0 console errors; 0 horizontal overflow on mobile. Only design/readability issues found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "EnergyFlow inspector (mobile)", "issue": "On 390px, tapping a node opens the 216px absolute inspector which overflows below the flow card and covers the FlowSummary tiles; title truncated ('AKKU · TRUCKI/…'). It also stays open after tap (no mouseleave on touch, tapping empty SVG area doesn't clear hover).", "selector": "[data-testid='flow-inspector']", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "EnergyFlow node cards (desktop)", "issues": [
+        "Node label text collides with the device badge: 'VICTRON MPPT' overlaps 'VENUS-OS', 'HAUSVERBRAUCH' overlaps 'AC-LAST', 'STROMNETZ' touches 'PRO 3EM'.",
+        "Sub-text 'Sonnenaufgang in 1,0 h' runs past the right edge into the status beacon on Hoymiles/Victron/Solar PV nodes (NODE_W=182 too narrow for label+badge / long sub)."
+      ]},
+      {"screen": "EnergyFlow (mobile 390px)", "issues": [
+        "SVG viewBox 1060x420 scales to ~340px wide, so node text is ~3px tall and unreadable even in KOMPAKT mode; compact mode needs a portrait/vertical layout or larger node scale on mobile."
+      ]},
+      {"screen": "Inspector / DeviceCards", "issues": [
+        "Inspector numbers use '.' decimal (51.5 V, 93.3 V) while DeviceCards/Summary use German ',' (51,5 V) - inconsistent locale formatting (f1 helper).",
+        "Battery card shows negative current '-5,3 A' alongside 'Entladung' and positive big value; consider showing |A| for consistency."
+      ]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix label/badge overlap and sub-text overflow inside EnergyFlow NodeCard (widen NODE_W, shorten/clip label, or move badge).",
+    "Make EnergyFlow readable on mobile (vertical compact layout or different viewBox for narrow screens).",
+    "On mobile, constrain/position the flow-inspector inside the card (or render below the SVG) and allow dismiss on tap outside.",
+    "Use German decimal formatting (formatNum) in EnergyFlow f1 for inspector values."
+  ],
+  "critical_code_review_comments": [
+    "EnergyFlow: tempo restored via parseFloat(localStorage) - a stale/invalid value (e.g. '3') leaves no tempo button pressed; whitelist [1,1.5,2].",
+    "DeviceCards battery badge uses trucki.soc while FlowSummary/EnergyFlow use summary.battery_soc - pick one source.",
+    "DeviceCards 'Hoymiles (direkt)' uses ahoy.total_power while EnergyFlow uses summary.pv_ac_power - could diverge."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "100% functional; design issues outstanding"},
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Night-time demo: PV=0, battery discharging ~260W via Sun-2000, grid import ~150W, so active flows are grid-house, battery-sun2000, sun2000-house. localStorage keys solar.flowView/flowOn/flowTempo. Inspector titles are CSS-uppercased; compare case-insensitively."
+}

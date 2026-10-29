@@ -19,7 +19,7 @@ const COLOR = {
   house: "#cbd5e1",
 };
 
-const NODE_W = 182;
+const NODE_W = 205;
 const NODE_H = 82;
 
 const round = (w) => Math.round(w || 0);
@@ -200,7 +200,7 @@ function NodeCard({ node, dim, reduced, onHover }) {
           <text x={bx + bw / 2} y={top + 16.6} textAnchor="middle" fontSize="7" fontFamily="JetBrains Mono" fontWeight="600" letterSpacing="0.6" fill={color} opacity="0.9">{badge}</text>
         </g>
       )}
-      <text x={tx} y={top + 23} fontSize="10" fontFamily="Chakra Petch, JetBrains Mono" fontWeight="600" letterSpacing="1.1" fill="rgba(226,232,240,0.62)">
+      <text x={tx} y={top + 23} fontSize="9" fontFamily="Chakra Petch, JetBrains Mono" fontWeight="600" letterSpacing="0.5" fill="rgba(226,232,240,0.62)">
         {String(label).toUpperCase()}
       </text>
       <text x={tx} y={y + 10} fontSize="24" fontFamily="JetBrains Mono" fontWeight="600" fill="#ffffff"
@@ -304,7 +304,7 @@ function ValuePill({ x, y, text, color }) {
 
 const avg = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) / a.length : null);
 const sumA = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) : null);
-const f1 = (x) => (x == null || isNaN(x) ? "n/a" : Math.round(x * 10) / 10);
+const f1 = (x) => (x == null || isNaN(x) ? "n/a" : (Math.round(x * 10) / 10).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 
 export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp, sun }) {
   const [hover, setHover] = useState(null);
@@ -349,7 +349,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     hoursToSunrise = _h < 5 ? 5 - _h : 24 - _h + 5;
   }
   const sunriseStr = `${hoursToSunrise.toFixed(1).replace(".", ",")} h`;
-  const pvNightSub = isNight ? `Sonnenaufgang in ${sunriseStr}` : "inaktiv";
+  const pvNightSub = isNight ? `Aufgang in ${sunriseStr}` : "inaktiv";
 
   const gridColor = grid >= 0 ? COLOR.grid_import : COLOR.grid_export;
   let gridLabel = "ausgeglichen";
@@ -384,7 +384,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
 
   // Steuerleiste: Partikelfluss an/aus + Tempo (1× / 1.5× / 2×), in localStorage gemerkt.
   const [flowOn, setFlowOn] = useState(() => { try { return localStorage.getItem("solar.flowOn") !== "0"; } catch { return true; } });
-  const [tempo, setTempo] = useState(() => { try { return parseFloat(localStorage.getItem("solar.flowTempo")) || 1; } catch { return 1; } });
+  const [tempo, setTempo] = useState(() => { try { const t = parseFloat(localStorage.getItem("solar.flowTempo")); return [1, 1.5, 2].includes(t) ? t : 1; } catch { return 1; } });
   const toggleFlow = () => setFlowOn((v) => { const n = !v; try { localStorage.setItem("solar.flowOn", n ? "1" : "0"); } catch { /* ignore */ } return n; });
   const setTempoPersist = (t) => { setTempo(t); try { localStorage.setItem("solar.flowTempo", String(t)); } catch { /* ignore */ } };
   const flowAnim = flowOn && !reduced;
@@ -601,7 +601,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       </div>
       <div className="p-4 flex-1 flex items-center relative">
         {detail && (
-          <div className="absolute top-3 right-3 z-10 w-[216px] pointer-events-none" data-testid="flow-inspector">
+          <div className="absolute top-2 right-2 z-10 w-[200px] max-w-[62vw] pointer-events-none" data-testid="flow-inspector">
             <div className="rounded-md border px-3 py-2.5" style={{ background: "rgba(6,11,24,0.96)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderColor: `${detail.color}66`, boxShadow: `0 0 18px ${detail.color}26, 0 12px 28px -14px rgba(0,0,0,0.9)` }}>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -621,7 +621,8 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
             </div>
           </div>
         )}
-        <svg viewBox="0 0 1060 420" className="w-full" data-testid="energy-flow-svg" style={{ maxHeight: 540 }}>
+        <div className="w-full overflow-x-auto">
+        <svg viewBox="0 0 1060 420" className="w-full" data-testid="energy-flow-svg" style={{ minWidth: 560, maxHeight: 540 }}>
           <defs>
             <pattern id="bggrid" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
@@ -636,7 +637,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
             </linearGradient>
           </defs>
           <rect x="0" y="0" width="1060" height="420" fill="url(#bggrid)" />
-          <rect x="0" y="0" width="1060" height="420" fill="url(#efcenter)" />
+          <rect x="0" y="0" width="1060" height="420" fill="url(#efcenter)" onClick={() => setHover(null)} style={{ cursor: "default" }} />
           {[[180, 70], [900, 70], [180, 360], [900, 360], [530, 215]].map(([cx, cy], i) => (
             <g key={i} stroke="rgba(148,163,184,0.16)" strokeWidth="0.8" pointerEvents="none">
               <line x1={cx - 6} y1={cy} x2={cx + 6} y2={cy} />
@@ -653,6 +654,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
             return <ValuePill key={f.id} x={m.x} y={m.y} text={`${round(f.watts)} W`} color={f.color} />;
           })}
         </svg>
+        </div>
       </div>
     </div>
   );
