@@ -1,43 +1,108 @@
 /* Doku & Roadmap – erreichbar über die Versionsnummer in der Fußleiste.
- * Zwei Ansichten: Roadmap (selbst-aktuell aus lib/appmeta) und Anleitung
- * (App-Bedienung, Anlage, Energiemodell, lokales Setup) mit eingeblendeten
- * aktuellen Werten (Kapazität, Beschriftungen, Modus, erkannte Geräte). */
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Map, BookOpen, ChevronDown, Monitor, Cpu, Workflow, Server, CircleCheck, Clock, CircleDashed } from "lucide-react";
-import { getConfig, getDeviceInfo } from "../lib/api";
-import { APP_NAME, APP_VERSION, APP_LAST_UPDATED, ROADMAP, ROADMAP_GROUPS } from "../lib/appmeta";
+ * Roadmap ist editierbar (hinzufügen, umbenennen, löschen, Status/Abhaken,
+ * Verschieben per Ziehen) und wird lokal (Backend) dauerhaft gespeichert.
+ * Anleitung spiegelt aktuelle Werte (Kapazität, Labels, Modus, erkannte Geräte). */
+import { useEffect, useRef, useState } from "react";
+import { Link, useOutletContext } from "react-router-dom";
+import { ArrowLeft, Map, BookOpen, ChevronDown, Monitor, Cpu, Workflow, Server, CircleCheck, Clock, CircleDashed, Plus, Trash2, GripVertical, Pencil, Sparkles } from "lucide-react";
+import { getConfig, getDeviceInfo, getRoadmap, putRoadmap } from "../lib/api";
+import { APP_NAME, APP_VERSION, APP_LAST_UPDATED, ROADMAP as FALLBACK_ROADMAP, ROADMAP_GROUPS } from "../lib/appmeta";
 
 const STATUS_ICON = { done: CircleCheck, wip: Clock, planned: CircleDashed };
+const newId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
-function RoadmapView() {
+function RoadmapView({ items, editing, onChange }) {
+  const [dragId, setDragId] = useState(null);
+  const [overKey, setOverKey] = useState(null);
+
+  const move = (dragItemId, targetStatus, beforeId) => {
+    const arr = [...items];
+    const di = arr.findIndex((i) => i.id === dragItemId);
+    if (di < 0) return;
+    const [it] = arr.splice(di, 1);
+    it.status = targetStatus;
+    if (beforeId && beforeId !== dragItemId) {
+      const ti = arr.findIndex((i) => i.id === beforeId);
+      arr.splice(ti < 0 ? arr.length : ti, 0, it);
+    } else {
+      let last = -1;
+      arr.forEach((x, idx) => { if (x.status === targetStatus) last = idx; });
+      arr.splice(last + 1, 0, it);
+    }
+    onChange(arr);
+  };
+
+  const rename = (id, title) => onChange(items.map((i) => (i.id === id ? { ...i, title } : i)));
+  const setStatus = (id, status) => onChange(items.map((i) => (i.id === id ? { ...i, status } : i)));
+  const remove = (id, title) => { if (window.confirm(`Punkt „${title}" löschen?`)) onChange(items.filter((i) => i.id !== id)); };
+  const add = (status) => onChange([...items, { id: newId(), title: "Neuer Punkt", status, date: APP_LAST_UPDATED.slice(0, 7) }]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5" data-testid="roadmap-view">
       {ROADMAP_GROUPS.map((g) => {
-        const items = ROADMAP.filter((r) => r.status === g.key);
+        const colItems = items.filter((r) => r.status === g.key);
         const Icon = STATUS_ICON[g.key];
         return (
           <div key={g.key} data-testid={`roadmap-col-${g.key}`}
-            className="rounded-xl p-4"
-            style={{ background: "linear-gradient(150deg, #0c1526 0%, #070c18 100%)", border: `1px solid ${g.color}33`, boxShadow: `0 0 22px -14px ${g.color}` }}>
+            onDragOver={(e) => { if (dragId) { e.preventDefault(); setOverKey(g.key); } }}
+            onDrop={() => { if (dragId) { move(dragId, g.key, null); setDragId(null); setOverKey(null); } }}
+            className="rounded-xl p-4 transition-colors"
+            style={{ background: "linear-gradient(150deg, #0c1526 0%, #070c18 100%)", border: `1px solid ${overKey === g.key && dragId ? g.color : `${g.color}33`}`, boxShadow: `0 0 22px -14px ${g.color}` }}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em]" style={{ color: g.color }}>
                 <Icon size={14} /> {g.title}
               </div>
-              <span className="font-mono text-[10px] text-white/40">{items.length}</span>
+              <span className="font-mono text-[10px] text-white/40">{colItems.length}</span>
             </div>
             <ul className="space-y-2.5">
-              {items.length === 0 && <li className="font-mono text-[11px] text-white/30">—</li>}
-              {items.map((it) => (
-                <li key={it.title} className="flex items-start gap-2.5" data-testid="roadmap-item">
-                  <span className="mt-[6px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: g.color, boxShadow: `0 0 6px ${g.color}` }} />
-                  <div className="min-w-0">
-                    <div className="text-[13px] text-white/85 leading-snug">{it.title}</div>
-                    <div className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-white/35 mt-0.5">{it.date}</div>
+              {colItems.length === 0 && <li className="font-mono text-[11px] text-white/30">—</li>}
+              {colItems.map((it) => (
+                <li key={it.id} data-testid="roadmap-item"
+                  draggable={editing}
+                  onDragStart={() => editing && setDragId(it.id)}
+                  onDragEnd={() => { setDragId(null); setOverKey(null); }}
+                  onDragOver={(e) => { if (dragId) e.preventDefault(); }}
+                  onDrop={(e) => { if (dragId) { e.stopPropagation(); move(dragId, g.key, it.id); setDragId(null); setOverKey(null); } }}
+                  className={`flex items-start gap-2 ${editing ? "rounded-md p-1.5 -mx-1 cursor-grab active:cursor-grabbing hover:bg-white/[0.04]" : ""}`}
+                  style={{ opacity: dragId === it.id ? 0.4 : 1, border: editing ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                  {editing && <GripVertical size={13} className="text-white/25 mt-1 shrink-0" />}
+                  {!editing && <span className="mt-[6px] w-1.5 h-1.5 rounded-full shrink-0" style={{ background: g.color, boxShadow: `0 0 6px ${g.color}` }} />}
+                  <div className="min-w-0 flex-1">
+                    {editing ? (
+                      <input value={it.title} onChange={(e) => rename(it.id, e.target.value)}
+                        data-testid={`roadmap-title-${it.id}`}
+                        className="glass-input w-full px-2 py-1 font-sans text-[13px] text-white/90" />
+                    ) : (
+                      <div className="text-[13px] text-white/85 leading-snug">{it.title}</div>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-white/35">{it.date}</span>
+                      {editing && (
+                        <>
+                          <select value={it.status} onChange={(e) => setStatus(it.id, e.target.value)}
+                            data-testid={`roadmap-status-${it.id}`}
+                            className="glass-input px-1.5 py-0.5 font-mono text-[10px] text-white/70 bg-transparent">
+                            <option value="done">Erledigt</option>
+                            <option value="wip">In Arbeit</option>
+                            <option value="planned">Geplant</option>
+                          </select>
+                          <button type="button" onClick={() => remove(it.id, it.title)} data-testid={`roadmap-delete-${it.id}`}
+                            className="text-white/35 hover:text-red-400 transition-colors ml-auto" title="Löschen">
+                            <Trash2 size={13} />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </li>
               ))}
             </ul>
+            {editing && (
+              <button type="button" onClick={() => add(g.key)} data-testid={`roadmap-add-${g.key}`}
+                className="mt-3 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] px-2.5 py-1.5 rounded border border-white/12 text-white/55 hover:text-white hover:bg-white/5 transition-colors">
+                <Plus size={12} /> Punkt
+              </button>
+            )}
           </div>
         );
       })}
@@ -81,10 +146,9 @@ function GuideView({ config, devInfo }) {
   const demo = config?.demo_mode;
   const dev = (key) => devInfo?.[key];
   const fw = (key) => {
-    const d = dev(key);
-    const f = d?.firmware;
+    const f = dev(key)?.firmware;
     if (f && typeof f === "object") return f.current || f.latest || f.version || "–";
-    return f || (d?.status === "demo" ? "Demo" : "–");
+    return f || (dev(key)?.status === "demo" ? "Demo" : "–");
   };
   const det = (key) => { const d = dev(key); return d?.detected_at ? new Date(d.detected_at).toLocaleString("de-DE") : "noch nicht erkannt"; };
 
@@ -144,12 +208,17 @@ function GuideView({ config, devInfo }) {
 }
 
 export default function Docs() {
+  const outlet = useOutletContext();
   const [tab, setTab] = useState("roadmap");
   const [config, setConfig] = useState(null);
   const [devInfo, setDevInfo] = useState(null);
+  const [items, setItems] = useState(FALLBACK_ROADMAP);
+  const [editing, setEditing] = useState(false);
+  const saveTimer = useRef(null);
 
   useEffect(() => {
     try { localStorage.setItem("solar.seenVersion", APP_VERSION); } catch { /* ignore */ }
+    getRoadmap().then((d) => setItems(d?.items || FALLBACK_ROADMAP)).catch(() => {});
     getConfig().then(setConfig).catch(() => {});
     getDeviceInfo().then((d) => {
       const map = {};
@@ -157,6 +226,12 @@ export default function Docs() {
       setDevInfo(map);
     }).catch(() => {});
   }, []);
+
+  const updateItems = (next) => {
+    setItems(next);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => { putRoadmap(next).catch(() => {}); }, 400);
+  };
 
   const TABS = [
     { v: "roadmap", label: "Roadmap", icon: Map },
@@ -176,21 +251,40 @@ export default function Docs() {
           </h1>
           <p className="text-white/55 text-sm mt-1.5">{APP_NAME} · v{APP_VERSION} · Stand {APP_LAST_UPDATED}</p>
         </div>
-        <div className="inline-flex rounded-md overflow-hidden border border-white/12" data-testid="docs-tabs" role="group">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button key={t.v} type="button" onClick={() => setTab(t.v)} aria-pressed={tab === t.v}
-                data-testid={`docs-tab-${t.v}`}
-                className={`inline-flex items-center gap-2 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${tab === t.v ? "bg-cyan-400/20 text-cyan-200" : "text-white/55 hover:text-white hover:bg-white/5"}`}>
-                <Icon size={13} /> {t.label}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button type="button" onClick={() => outlet?.openWhatsNew?.()} data-testid="docs-whatsnew"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-white/12 font-mono text-[11px] uppercase tracking-[0.12em] text-white/60 hover:text-white hover:bg-white/5 transition-colors">
+            <Sparkles size={13} /> Was ist neu?
+          </button>
+          <div className="inline-flex rounded-md overflow-hidden border border-white/12" data-testid="docs-tabs" role="group">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button key={t.v} type="button" onClick={() => setTab(t.v)} aria-pressed={tab === t.v}
+                  data-testid={`docs-tab-${t.v}`}
+                  className={`inline-flex items-center gap-2 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${tab === t.v ? "bg-cyan-400/20 text-cyan-200" : "text-white/55 hover:text-white hover:bg-white/5"}`}>
+                  <Icon size={13} /> {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {tab === "roadmap" ? <RoadmapView /> : <GuideView config={config} devInfo={devInfo} />}
+      {tab === "roadmap" ? (
+        <>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <span className="font-mono text-[11px] text-white/45">
+              {editing ? "Bearbeiten: hinzufügen, umbenennen, Status wählen, ziehen zum Verschieben/Sortieren." : "Nur-Lese-Ansicht."}
+            </span>
+            <button type="button" onClick={() => setEditing((e) => !e)} aria-pressed={editing} data-testid="roadmap-edit-toggle"
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md border font-mono text-[11px] uppercase tracking-[0.12em] transition-colors ${editing ? "border-cyan-400/40 bg-cyan-400/15 text-cyan-200" : "border-white/12 text-white/60 hover:text-white hover:bg-white/5"}`}>
+              <Pencil size={13} /> {editing ? "Fertig" : "Bearbeiten"}
+            </button>
+          </div>
+          <RoadmapView items={items} editing={editing} onChange={updateItems} />
+        </>
+      ) : <GuideView config={config} devInfo={devInfo} />}
     </div>
   );
 }

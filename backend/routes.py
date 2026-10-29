@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from server import (
     get_config,
@@ -150,6 +151,71 @@ async def cfg_put(update: ConfigUpdate) -> Dict[str, Any]:
     if integration_keys & set(payload.keys()):
         await restart_integrations()
     return current
+
+
+# ---------- Roadmap (editierbar, lokal persistiert) ----------
+
+# Startinhalt: vollständiger tatsächlicher Projektstand. Wird beim ersten Abruf
+# in db.roadmap gespeichert; danach zählt ausschließlich der gespeicherte Stand.
+DEFAULT_ROADMAP = [
+    {"id": "live-dashboard", "status": "done", "date": "2026-06", "title": "Live-Dashboard mit animiertem Energiefluss"},
+    {"id": "scada-design", "status": "done", "date": "2026-06", "title": "SCADA-Control-Room-Design (DSEG7-LCD, Sora, Neon-Akzente)"},
+    {"id": "device-control", "status": "done", "date": "2026-06", "title": "Geräte-Steuerung: Hoymiles-Limit & Trucki/SUN"},
+    {"id": "alarms", "status": "done", "date": "2026-06", "title": "Status-Alarme + konfigurierbare Schwellwerte"},
+    {"id": "diagnose", "status": "done", "date": "2026-06", "title": "Diagnose / Geräte-Selbsttest"},
+    {"id": "discovery", "status": "done", "date": "2026-06", "title": "Geräte-Erkennung + Firmware-Vergleich"},
+    {"id": "integrations", "status": "done", "date": "2026-06", "title": "Integrationen: Mosquitto MQTT & InfluxDB"},
+    {"id": "local-start", "status": "done", "date": "2026-06", "title": "Lokaler Start ohne MongoDB + DB-Retention"},
+    {"id": "grafana", "status": "done", "date": "2026-10", "title": "Grafana Auto-Provisioning (Datasource + 42-Panel-Dashboard)"},
+    {"id": "scadavis", "status": "done", "date": "2026-10-07", "title": "SCADAvis-Synoptik-Vorschau + Grafana-Panel"},
+    {"id": "suntimeline", "status": "done", "date": "2026-10-07", "title": "Sonnen-Tagesverlauf (Balken & Bogen umschaltbar)"},
+    {"id": "favorites", "status": "done", "date": "2026-10-07", "title": "Favoriten aufs Dashboard pinnen (inkl. MPPT-Strings & Phasen)"},
+    {"id": "favorites-dnd", "status": "done", "date": "2026-10-07", "title": "Favoriten per Drag-&-Drop sortieren"},
+    {"id": "device-cards", "status": "done", "date": "2026-10-29", "title": "Vier große Geräte-KPI-Karten"},
+    {"id": "flow-rework", "status": "done", "date": "2026-10-29", "title": "Energiefluss: Kompakt (5) / Detail (6) / Auto"},
+    {"id": "flow-controls", "status": "done", "date": "2026-10-29", "title": "Fluss an/aus + Tempo-Regler (1x / 1.5x / 2x)"},
+    {"id": "flow-mobile", "status": "done", "date": "2026-10-29", "title": "Hochkant-Energiefluss auf Mobilgeräten"},
+    {"id": "display-settings", "status": "done", "date": "2026-10-29", "title": "Einstellungen: Akkukapazität & Karten-Beschriftungen"},
+    {"id": "docs-footer", "status": "done", "date": "2026-10-29", "title": "Versions-Fußleiste, In-App-Roadmap & Anleitung"},
+    {"id": "roadmap-edit", "status": "done", "date": "2026-10-29", "title": "Roadmap bearbeiten & „Was ist neu?\"-Fenster"},
+    {"id": "sparklines", "status": "planned", "date": "Phase 2", "title": "Mini-Sparklines (15-Min-Trend) in den Geräte-Karten"},
+    {"id": "roadmap-extra", "status": "planned", "date": "Phase 2", "title": "Roadmap: Notizen, Links, Tags & Filter je Punkt"},
+    {"id": "threshold-alarms", "status": "planned", "date": "Phase 3", "title": "Schwellwert-Farbalarme je Karte / Kachel"},
+    {"id": "alarm-push", "status": "planned", "date": "Phase 3", "title": "Akustische / Push-Benachrichtigung bei kritischen Alarmen"},
+    {"id": "changelog-auto", "status": "planned", "date": "Phase 3", "title": "Erledigt-Historie aus der Versionshistorie ableiten"},
+    {"id": "docs-pdf", "status": "planned", "date": "Phase 3", "title": "Anleitung / Roadmap als Druck- / PDF-Ansicht exportieren"},
+    {"id": "more-device-texts", "status": "planned", "date": "Phase 3", "title": "Weitere Gerätetexte in den Einstellungen editierbar"},
+    {"id": "synoptic-svg", "status": "planned", "date": "Phase 3", "title": "Eigenes Synoptik-SVG final ins Grafana-Panel einhängen"},
+]
+
+
+class RoadmapUpdate(BaseModel):
+    items: List[Dict[str, Any]]
+
+
+@api_router.get("/roadmap")
+async def roadmap_get() -> Dict[str, Any]:
+    doc = await db.roadmap.find_one({"_id": "main"})
+    if not doc or not doc.get("items"):
+        await db.roadmap.update_one({"_id": "main"}, {"$set": {"items": DEFAULT_ROADMAP}}, upsert=True)
+        return {"items": DEFAULT_ROADMAP}
+    return {"items": doc["items"]}
+
+
+@api_router.put("/roadmap")
+async def roadmap_put(update: RoadmapUpdate) -> Dict[str, Any]:
+    items = [
+        {
+            "id": str(it.get("id") or ""),
+            "title": str(it.get("title") or "").strip(),
+            "status": it.get("status") if it.get("status") in ("done", "wip", "planned") else "planned",
+            "date": str(it.get("date") or ""),
+        }
+        for it in update.items
+        if str(it.get("title") or "").strip()
+    ]
+    await db.roadmap.update_one({"_id": "main"}, {"$set": {"items": items}}, upsert=True)
+    return {"items": items}
 
 
 # ---------- Geräte-Erkennung / Anlagendokumentation ----------

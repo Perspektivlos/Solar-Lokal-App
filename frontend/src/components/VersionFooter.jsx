@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { getConfig } from "../lib/api";
 import { APP_NAME, APP_VERSION, APP_LAST_UPDATED } from "../lib/appmeta";
 
-export default function VersionFooter() {
+export default function VersionFooter({ onOpenWhatsNew }) {
   const [demo, setDemo] = useState(null);
   const [isNew] = useState(() => {
     try { return localStorage.getItem("solar.seenVersion") !== APP_VERSION; } catch { return false; }
@@ -35,16 +35,19 @@ export default function VersionFooter() {
             className="inline-flex items-center gap-1.5 text-cyan-300 hover:text-cyan-200 transition-colors cursor-pointer underline decoration-dotted decoration-cyan-400/30 underline-offset-4"
           >
             v{APP_VERSION}
-            {isNew && (
-              <span
-                className="not-italic normal-case tracking-normal text-[9px] px-1.5 py-0.5 rounded-full dot-pulse"
-                style={{ color: "#0b0f1a", background: "#34d399", boxShadow: "0 0 8px #34d39988" }}
-                data-testid="footer-version-new"
-              >
-                Neu
-              </span>
-            )}
           </Link>
+          {isNew && (
+            <button
+              type="button"
+              onClick={onOpenWhatsNew}
+              data-testid="footer-version-new"
+              title="Was ist neu?"
+              className="not-italic normal-case tracking-normal text-[9px] px-1.5 py-0.5 rounded-full dot-pulse cursor-pointer"
+              style={{ color: "#0b0f1a", background: "#34d399", boxShadow: "0 0 8px #34d39988" }}
+            >
+              Neu
+            </button>
+          )}
           {modeKnown && (
             <span
               className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded border"

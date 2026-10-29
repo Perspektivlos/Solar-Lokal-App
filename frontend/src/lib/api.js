@@ -17,5 +17,7 @@ export const getAlarms = () => api.get("/alarms").then((r) => r.data);
 export const getAlarmHistory = (limit = 50) => api.get("/alarms/history", { params: { limit } }).then((r) => r.data);
 export const getEnergyBalance = (period = "day", limit = 14) => api.get("/energy/balance", { params: { period, limit } }).then((r) => r.data);
 export const getDeviceInfo = () => api.get("/devices/info").then((r) => r.data);
+export const getRoadmap = () => api.get("/roadmap").then((r) => r.data);
+export const putRoadmap = (items) => api.put("/roadmap", { items }).then((r) => r.data);
 export const discoverDevice = (key) => api.post(`/devices/${key}/discover`).then((r) => r.data);
 export const discoverAll = () => api.post("/devices/discover-all").then((r) => r.data);

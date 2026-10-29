@@ -2,7 +2,7 @@
  * neuer Funktionen gepflegt wird – Fußleiste und Doku/Roadmap-Ansicht lesen von hier.
  * Status je Punkt: "done" (Erledigt) · "wip" (In Arbeit) · "planned" (Geplant). */
 export const APP_NAME = "HauckLab · Solar'Projekt";
-export const APP_VERSION = "1.4.0";
+export const APP_VERSION = "1.5.0";
 export const APP_LAST_UPDATED = "2026-10-29";
 
 export const ROADMAP = [

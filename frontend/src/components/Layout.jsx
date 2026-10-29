@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { Zap, Activity, Sliders, Cpu, PlugZap, Stethoscope } from "lucide-react";
 import VersionFooter from "./VersionFooter";
+import WhatsNew from "./WhatsNew";
 import SystemStatusLight from "./SystemStatusLight";
+import { getRoadmap } from "../lib/api";
+import { APP_VERSION } from "../lib/appmeta";
 
 const links = [
   { to: "/", label: "Dashboard", icon: Zap, testid: "nav-dashboard", end: true },
@@ -13,6 +17,48 @@ const links = [
 ];
 
 export default function Layout() {
+  const [roadmap, setRoadmap] = useState([]);
+  const [wnOpen, setWnOpen] = useState(false);
+  const [newItems, setNewItems] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    getRoadmap().then(({ items }) => {
+      if (!alive) return;
+      const list = items || [];
+      setRoadmap(list);
+      const doneIds = list.filter((i) => i.status === "done").map((i) => i.id);
+      let seen = null;
+      try { seen = JSON.parse(localStorage.getItem("solar.seenDoneIds")); } catch { seen = null; }
+      if (!Array.isArray(seen)) {
+        // Erststart mit diesem Feature: Basislinie still setzen, kein Popup.
+        try {
+          localStorage.setItem("solar.seenDoneIds", JSON.stringify(doneIds));
+          localStorage.setItem("solar.seenVersion", APP_VERSION);
+        } catch { /* ignore */ }
+        return;
+      }
+      const fresh = list.filter((i) => i.status === "done" && !seen.includes(i.id));
+      if (fresh.length > 0) { setNewItems(fresh); setWnOpen(true); }
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const persistSeen = () => {
+    try {
+      const doneIds = roadmap.filter((i) => i.status === "done").map((i) => i.id);
+      localStorage.setItem("solar.seenDoneIds", JSON.stringify(doneIds));
+      localStorage.setItem("solar.seenVersion", APP_VERSION);
+    } catch { /* ignore */ }
+  };
+  const dismissWn = () => { setWnOpen(false); persistSeen(); };
+  const openWn = () => {
+    let seen = [];
+    try { seen = JSON.parse(localStorage.getItem("solar.seenDoneIds")) || []; } catch { seen = []; }
+    setNewItems(roadmap.filter((i) => i.status === "done" && !seen.includes(i.id)));
+    setWnOpen(true);
+  };
+
   return (
     <div className="min-h-screen text-white">
       <header className="sticky top-0 z-50 glass-strong border-0 border-b border-white/10">
@@ -69,9 +115,10 @@ export default function Layout() {
         </div>
       </header>
       <main className="max-w-[1600px] mx-auto px-6 pt-6 pb-20 relative z-10">
-        <Outlet />
+        <Outlet context={{ openWhatsNew: openWn }} />
       </main>
-      <VersionFooter />
+      <VersionFooter onOpenWhatsNew={openWn} />
+      <WhatsNew open={wnOpen} items={newItems} onClose={dismissWn} />
     </div>
   );
 }

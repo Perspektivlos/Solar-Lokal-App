@@ -1,99 +1,91 @@
-# Versions-Fußleiste, In-App-Roadmap & Anlagen-Anleitung
+# Roadmap bearbeiten & „Was ist neu?"
 
-Eine durchgehende Fußleiste zeigt überall die App-Version und ist der Einstieg zu
-zwei neuen Ansichten: einer selbst-aktuellen Roadmap und einer Anlagen-/App-Anleitung.
-Dazu wird der Einführungstext der Projekt-Beschreibung (README) auf den aktuellen Stand gebracht.
+Die vorhandene Roadmap wird direkt in der App bearbeitbar und dauerhaft gespeichert.
+Beim Versionssprung zeigt ein kurzes Fenster automatisch, was neu fertig geworden ist.
 
 ## Für wen
 
-Für den Betreiber der eigenen Solaranlage (Shelly Pro 3EM, Hoymiles HM-1500 über AhoyDTU,
-2× Victron SmartSolar MPPT über Venus OS, Trucki2Shelly mit Lumentree-SUN-Inverter,
-48 V-LiFePO4-Speicher), der jederzeit sehen will, welche App-Version läuft, was bereits
-umgesetzt bzw. geplant ist, und wie Anlage und App funktionieren – alles lokal, deutsch,
+Für den Betreiber der eigenen Solaranlage, der die Roadmap selbst pflegen will – Punkte
+hinzufügen, abhaken und zwischen „Erledigt / In Arbeit / Geplant" verschieben – und beim
+Öffnen einer neuen App-Version sofort sehen möchte, was dazugekommen ist. Lokal, deutsch,
 im bestehenden SCADA-Look.
 
 ## Kernfunktionen & Erlebnis
 
-**1. Fußleiste mit Version (überall sichtbar)**
-- Dezente, feststehende Leiste am unteren Rand aller Seiten: App-Name + Versionsnummer,
-  aktueller Modus (Demo/Live) und das Datum des letzten Stands.
-- Die Versionsnummer ist der Einstieg: ein Klick öffnet die Ansicht „Doku & Roadmap".
-- Bei einer neuen Version ist die Versionsnummer kurz hervorgehoben („Neu").
+**1. Roadmap bearbeiten (gleicher Aufbau wie bisher)**
+- Die Ansicht behält ihre drei Spalten **Erledigt / In Arbeit / Geplant** mit Farbcodes.
+- Ein **Bearbeiten-Schalter**: Im Ansichtsmodus sieht alles aus wie heute; eingeschaltet
+  erscheinen die Bearbeitungs-Elemente.
+- Möglich sind: **Punkt hinzufügen** (Titel + Status + Datum/Phase), **Titel ändern**,
+  **löschen** (mit kurzer Rückfrage), **Status ändern** (= „abhaken" / in andere Spalte) und
+  **Reihenfolge ändern**.
+- **Verschieben per Ziehen:** Ein Punkt in eine andere Spalte gezogen ändert seinen Status;
+  innerhalb einer Spalte ändert Ziehen die Reihenfolge.
+- Alle Änderungen werden **dauerhaft gespeichert** (bleiben nach Neuladen erhalten und gelten
+  für jedes Gerät, das dieselbe lokale Installation nutzt).
 
-**2. Roadmap (selbst-aktuell)**
-- Eine Ansicht, die alle Punkte mit Status zeigt: **Erledigt**, **In Arbeit**, **Geplant** –
-  gruppiert und mit Datum, farblich im SCADA-Stil.
-- Wird aus **einer einzigen zentralen Quelle** gespeist. Diese Quelle ist der einzige Ort,
-  der beim Ausliefern neuer Funktionen gepflegt wird; die Ansicht zeigt sie immer sofort aktuell.
-- Startzustand: der reale heutige Stand ist vollständig eingetragen (u. a. Geräte-Karten,
-  neuer Energiefluss mit Kompakt/Detail/Tempo, Favoriten mit Drag-&-Drop, Einstellungen für
-  Kapazität/Beschriftungen, Hochkant-Fluss auf Mobil) – Erledigtes als „Erledigt", offene
-  Punkte als „Geplant".
+**2. Startinhalt: alle Bau-Phasen vollständig vorbefüllt**
+- Die Roadmap wird einmalig mit dem **kompletten, tatsächlichen Stand** gefüllt: alle bisher
+  umgesetzten Bau-Phasen als „Erledigt", laufende als „In Arbeit" und alle bekannten offenen
+  Punkte als „Geplant". Danach ist alles frei editierbar.
 
-**3. Anlagen-Dokumentation / Anleitung (mit aktuellen Werten verknüpft)**
-Eine Ansicht mit vier Abschnitten:
-- **App-Bedienung:** Dashboard, Energiefluss (Kompakt/Detail/Auto, Fluss an/aus, Tempo),
-  Favoriten, Einstellungen, Steuerung, Diagnose, Verlauf – kurz erklärt.
-- **Anlagen-/Geräteübersicht:** die fünf Bausteine (Shelly Pro 3EM, Hoymiles HM-1500/AhoyDTU,
-  2× Victron MPPT, Trucki2Shelly/SUN, 48 V-LiFePO4) mit Beschreibung und Eckdaten.
-- **Energie- & Verkabelungsmodell:** DC/AC-Kopplung, Nulleinspeisung und die
-  Hausverbrauchs-Formel (Hoymiles-AC + SUN-Entladung + Netzfluss; Victron-DC lädt nur den Akku).
-- **Lokales Setup:** Mosquitto-MQTT, InfluxDB, Grafana sowie Demo- vs. Live-Modus.
-- Wo sinnvoll, werden **aktuelle Werte** eingeblendet: eingestellte nutzbare Akkukapazität,
-  die konfigurierten Karten-Beschriftungen, der aktuelle Demo/Live-Status und zuletzt erkannte
-  Gerätedaten. Dadurch bleibt die Anleitung automatisch korrekt. (Lesen/Ansehen; Bearbeiten der
-  Werte bleibt in den Einstellungen.)
-
-**4. README-Einführung aktualisiert**
-- Der einleitende Beschreibungstext der Projekt-Dokumentation wird durch die vom Betreiber
-  vorgegebene Fassung ersetzt: „Autarkes Energiemanagement, Nulleinspeisung & Hardware-Diagnose
-  für Hoymiles, Victron, Trucki & LiFePO4 …" (vier ausgewogene Säulen). Der übrige Inhalt bleibt.
+**3. „Was ist neu?"-Fenster beim Versionssprung**
+- Erscheint **automatisch**, wenn die App-Version seit dem letzten Besuch gewechselt hat.
+- Zeigt **automatisch alle Punkte, die seit dem letzten Besuch neu auf „Erledigt" stehen** –
+  ohne manuelles Zuordnen.
+- Ist **wegklickbar**; die Version gilt danach als „gesehen". Lässt sich jederzeit erneut
+  über die Versionsnummer in der Fußleiste öffnen.
+- Erscheint nicht, wenn seit dem letzten Besuch nichts fertig wurde.
 
 ## Nutzerfluss
 
-1. Beliebige Seite öffnen → unten die Fußleiste mit Version und Modus.
-2. Auf die Version klicken → Ansicht „Doku & Roadmap" öffnet sich.
-3. Zwischen **Roadmap** und **Anleitung** wechseln.
-4. In der Roadmap den Stand je Punkt ablesen (Erledigt/In Arbeit/Geplant).
-5. In der Anleitung einen der vier Abschnitte aufklappen; aktuelle Werte sind direkt eingeblendet.
-6. Zurück zum Dashboard; die Fußleiste bleibt überall sichtbar.
+1. Neue App-Version öffnen → „Was ist neu?" erscheint mit den frisch erledigten Punkten → wegklicken.
+2. Über die Versionsnummer in der Fußleiste die Ansicht „Doku & Roadmap" öffnen.
+3. Im Tab **Roadmap** den **Bearbeiten-Schalter** aktivieren.
+4. Punkte hinzufügen, umbenennen, abhaken, zwischen den Spalten ziehen oder löschen.
+5. Bearbeiten ausschalten → die Ansicht ist wieder aufgeräumt; Änderungen bleiben gespeichert.
+6. Die Anleitung (zweiter Tab) bleibt unverändert zum Ansehen.
 
 ## UI/UX-Gefühl
 
-Gleiche SCADA-Control-Room-Sprache wie die App: dunkler Hintergrund, Neon-Akzente,
-feine Rahmen, Mono-/LCD-Typografie. Die Fußleiste ist schlank und unaufdringlich.
-Roadmap-Status über klare Farbcodes (z. B. grün = erledigt, cyan = in Arbeit, grau = geplant).
-Anleitung in aufklappbaren Abschnitten, gut lesbar; responsiv (Desktop wie Mobil), deutsch.
+Gleiche SCADA-Control-Room-Sprache: dunkler Hintergrund, Neon-Akzente, feine Rahmen,
+Mono-/LCD-Typografie. Drei Status-Spalten mit klaren Farben (grün = erledigt, cyan = in Arbeit,
+grau = geplant). Bearbeitungs-Elemente dezent und erst im Bearbeiten-Modus sichtbar.
+Das „Was ist neu?"-Fenster ist ein schlankes, wegklickbares Overlay. Responsiv (Desktop wie
+Mobil), deutsch.
 
 ## Umsetzungsphasen
 
-**Phase 1 – MVP (wird jetzt gebaut):** Durchgehende Fußleiste mit Version + Modus auf allen
-Seiten; Klick auf die Version öffnet die Ansicht „Doku & Roadmap". Roadmap aus einer zentralen
-Quelle mit Status je Punkt, befüllt mit dem realen aktuellen Stand. Anleitung mit allen vier
-Abschnitten und eingeblendeten aktuellen Werten. README-Einführungstext aktualisiert.
+**Phase 1 – MVP (wird jetzt gebaut):** Dauerhaft gespeicherte, bearbeitbare Roadmap im
+bestehenden 3-Spalten-Aufbau (hinzufügen, umbenennen, löschen, Status/Abhaken, verschieben per
+Ziehen), vollständig mit allen bisherigen Bau-Phasen vorbefüllt. Automatisches
+„Was ist neu?"-Fenster beim Versionssprung mit den seit dem letzten Besuch neu erledigten
+Punkten, wegklickbar und über die Versionsnummer erneut aufrufbar.
 
-**Phase 2 – später:** Roadmap-Punkte direkt in der App bearbeiten (hinzufügen, abhaken,
-verschieben) mit dauerhafter Speicherung; „Was ist neu"-Hinweis beim Versionssprung.
+**Phase 2 – später:** Zusätzliche Felder je Punkt (Notiz, Link, geplantes Datum), Kategorien/Tags,
+Suche/Filter sowie Vorlagen für häufige Einträge.
 
-**Phase 3 – später:** „Erledigt"-Historie zusätzlich automatisch aus der Änderungs-/
-Versionshistorie ableiten; Anleitung als Druck-/PDF-Ansicht exportieren.
+**Phase 3 – später:** „Erledigt"-Historie zusätzlich automatisch aus der Versionshistorie
+ableiten; Roadmap/Änderungsliste als Druck-/PDF-Ansicht exportieren.
 
 ## Annahmen
 
-- Roadmap und Anleitung erscheinen **in der App** (nicht als zusätzliche Menüpunkte), erreichbar
-  über die **Versionsnummer in der Fußleiste** – so wurde die Platzierungsfrage verstanden.
-- „Selbst pflegen" bedeutet in Phase 1: **eine zentrale Datenquelle** (Version + Roadmap-Punkte +
-  Stand), die beim Ausliefern gepflegt wird und in der App sofort aktuell erscheint – keine
-  vollautomatische Generierung (das kommt teilweise erst in Phase 3).
-- Die Roadmap wird initial mit dem **tatsächlichen heutigen Stand** befüllt (Erledigtes markiert,
-  bekannte offene Punkte als „Geplant").
-- Die Anleitung ist **zum Ansehen**; Werte wie Akkukapazität und Karten-Beschriftungen werden
-  weiterhin in den Einstellungen geändert und hier nur gespiegelt.
-- Es wird eine **Versionsnummer** eingeführt und bei künftigen Lieferungen hochgezählt; der
-  Startwert wird passend zum aktuellen Stand gesetzt.
-- Die eingeblendeten „aktuellen Werte" umfassen: nutzbare Akkukapazität, Karten-Beschriftungen,
-  Demo/Live-Status und zuletzt erkannte Gerätedaten.
-- Der README-Einführungstext wird durch die vorgegebene Fassung ersetzt; der restliche
-  README-Inhalt bleibt erhalten.
-- Alles auf Deutsch, im bestehenden SCADA-Look; entfernte Funktionen (Watt-Labels auf den
-  Flusslinien, 48-h-Prognose, CSV-Export) bleiben entfernt. Keine neuen externen Integrationen.
+- Die Roadmap wird **auf der lokalen Installation gespeichert** (nicht pro Browser): Änderungen
+  gelten für alle, die dieselbe lokale App nutzen, und bleiben nach Neuladen erhalten.
+- Es gibt **keinen Login**; wer Zugriff auf die lokale App hat, darf die Roadmap bearbeiten
+  (lokaler Einzelbetrieb).
+- **„Abhaken"** bedeutet: Status auf „Erledigt" setzen. **„Verschieben"** bedeutet: per Ziehen
+  zwischen den Spalten (ändert den Status) bzw. innerhalb einer Spalte (ändert die Reihenfolge).
+- Der **Aufbau bleibt wie bei der bestehenden Roadmap** (drei Status-Spalten mit Farbcodes);
+  neu ist nur der editierbare, dauerhaft gespeicherte Inhalt und das Bearbeiten.
+- Die **App-Versionsnummer** wird weiterhin bei der Auslieferung gesetzt und löst das
+  „Was ist neu?"-Fenster aus. Das Fenster listet die **seit dem letzten Besuch neu erledigten**
+  Punkte – unabhängig davon, welche Version sie erhalten haben.
+- Das **Löschen** eines Punktes verlangt eine kurze Bestätigung, um versehentlichen Verlust zu
+  vermeiden.
+- Der **Startinhalt** wird aus dem tatsächlichen Projektstand zusammengestellt; danach zählt
+  ausschließlich der in der App gepflegte Stand.
+- Bearbeiten findet **in der vorhandenen Roadmap-Ansicht** statt (per Schalter); die Ansicht ist
+  standardmäßig nur zum Lesen.
+- Alles auf **Deutsch**, im bestehenden SCADA-Look. Entfernte Funktionen (Watt-Labels auf den
+  Flusslinien, 48-h-Prognose, CSV-Export) bleiben entfernt. **Keine neuen externen Integrationen.**
