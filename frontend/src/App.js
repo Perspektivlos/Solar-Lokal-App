@@ -11,6 +11,7 @@ import Diagnose from "./pages/Diagnose";
 import Integrations from "./pages/Integrations";
 import KpiPreview from "./pages/KpiPreview";
 import ScadavisPreview from "./pages/ScadavisPreview";
+import Docs from "./pages/Docs";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="geraete" element={<Devices />} />
             <Route path="diagnose" element={<Diagnose />} />
             <Route path="integrationen" element={<Integrations />} />
+            <Route path="doku" element={<Docs />} />
           </Route>
           <Route path="/kpi-preview" element={<KpiPreview />} />
           <Route path="/scadavis-preview" element={<ScadavisPreview />} />

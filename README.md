@@ -1,6 +1,13 @@
 # Solar-Lokal-App
 
-Die **Solar-Lokal-App** ist eine hochgradig modulare, lokale Webanwendung zur Visualisierung, Analyse und intelligenten Steuerung von Energieanlagen (Photovoltaik, Batteriespeicher, Wechselrichter und Stromzähler) im eigenen Heimnetzwerk.
+Die **Solar-Lokal-App** ist eine lokale Steuerzentrale für **autarkes Energiemanagement, Nulleinspeisung & Hardware-Diagnose** – maßgeschneidert für Hoymiles (über AhoyDTU), Victron SmartSolar (über Venus OS), Trucki2Shelly mit Lumentree-SUN-Inverter und einen 48 V-LiFePO4-Speicher.
+
+Die App ruht auf vier ausgewogenen Säulen:
+
+- **Visualisieren** – Live-Dashboard mit animiertem Energiefluss, vier Geräte-Karten und Kennzahlen.
+- **Steuern** – Nulleinspeisung, Hoymiles-Begrenzung und Trucki/SUN-Regelung.
+- **Analysieren** – InfluxDB-Zeitreihen, Grafana-Dashboards sowie Verlauf & Energiebilanz.
+- **Diagnostizieren** – Geräte-Erkennung, Firmware-Vergleich und Selbsttest.
 
 Die App arbeitet komplett **cloudfrei**, ist für den ressourcensparenden Betrieb auf Mini-PCs (z. B. via Proxmox LXC) optimiert und bietet eine moderne Steuerzentrale im **Dark Glassmorphism Sci-Fi-Stil** mit Neon-Akzenten.
 

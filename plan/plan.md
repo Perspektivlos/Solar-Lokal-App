@@ -1,98 +1,99 @@
-# Redesign: KPI-Leiste & Energiefluss (SCADA-Entwurf übernehmen)
+# Versions-Fußleiste, In-App-Roadmap & Anlagen-Anleitung
 
-Das Dashboard bekommt die Optik aus den beiden Entwürfen: oben eine KPI-Leiste aus vier
-großen Geräte-Karten, darunter ein überarbeitetes Energiefluss-Diagramm mit einer schmalen
-Kennzahlen-Zeile. Alle Werte kommen aus den vorhandenen Live-Daten (Demo-Modus als Standard).
+Eine durchgehende Fußleiste zeigt überall die App-Version und ist der Einstieg zu
+zwei neuen Ansichten: einer selbst-aktuellen Roadmap und einer Anlagen-/App-Anleitung.
+Dazu wird der Einführungstext der Projekt-Beschreibung (README) auf den aktuellen Stand gebracht.
 
 ## Für wen
 
-Für den Betreiber der eigenen Solaranlage (Shelly Pro 3EM, Hoymiles HM-1500, 2× Victron MPPT,
-Trucki/Sun-2000, 48 V-Speicher), der den Anlagenzustand auf einen Blick im Control-Room-Look
-ablesen und zwischen Kompakt- und Detailtiefe umschalten möchte.
+Für den Betreiber der eigenen Solaranlage (Shelly Pro 3EM, Hoymiles HM-1500 über AhoyDTU,
+2× Victron SmartSolar MPPT über Venus OS, Trucki2Shelly mit Lumentree-SUN-Inverter,
+48 V-LiFePO4-Speicher), der jederzeit sehen will, welche App-Version läuft, was bereits
+umgesetzt bzw. geplant ist, und wie Anlage und App funktionieren – alles lokal, deutsch,
+im bestehenden SCADA-Look.
 
 ## Kernfunktionen & Erlebnis
 
-**1. KPI-Leiste – vier große Geräte-Karten (ersetzt die bisherigen 6 LCD-Kacheln)**
+**1. Fußleiste mit Version (überall sichtbar)**
+- Dezente, feststehende Leiste am unteren Rand aller Seiten: App-Name + Versionsnummer,
+  aktueller Modus (Demo/Live) und das Datum des letzten Stands.
+- Die Versionsnummer ist der Einstieg: ein Klick öffnet die Ansicht „Doku & Roadmap".
+- Bei einer neuen Version ist die Versionsnummer kurz hervorgehoben („Neu").
 
-- **Solar PV** – Status-Badge „Aktiv/Inaktiv", große aktuelle PV-Leistung (W), Tagesertrag (kWh);
-  Unterzeilen: Hoymiles HM-1500 (W + Begrenzung %), Victron MPPT #1 (W, DC), Victron MPPT #2 (W, DC).
-- **Batterie 48 V** – Badge SoC %, große Lade-/Entladeleistung (W) mit Hinweis „Laden/Entladung";
-  Unterzeilen: Spannung / Strom (V / A), Trucki Sun-2000 Ist-Leistung (W, mit Limit), Tagesenergie (kWh).
-- **Hausverbrauch** – Badge „Live", große saldierte Wirkleistung (W), Tagesbedarf (kWh);
-  Unterzeilen: Hoymiles (direkt), Sun-2000 (aus Akku), Netz (Shelly 3EM, Bezug/Einspeisung).
-- **Stromnetz** – Badge „Bezug/Einspeisung", große Netzleistung (W), Tagesbezug / Export (kWh);
-  Unterzeilen: L1 / L2 / L3 je mit Leistung (W) und Phasenspannung (V).
+**2. Roadmap (selbst-aktuell)**
+- Eine Ansicht, die alle Punkte mit Status zeigt: **Erledigt**, **In Arbeit**, **Geplant** –
+  gruppiert und mit Datum, farblich im SCADA-Stil.
+- Wird aus **einer einzigen zentralen Quelle** gespeist. Diese Quelle ist der einzige Ort,
+  der beim Ausliefern neuer Funktionen gepflegt wird; die Ansicht zeigt sie immer sofort aktuell.
+- Startzustand: der reale heutige Stand ist vollständig eingetragen (u. a. Geräte-Karten,
+  neuer Energiefluss mit Kompakt/Detail/Tempo, Favoriten mit Drag-&-Drop, Einstellungen für
+  Kapazität/Beschriftungen, Hochkant-Fluss auf Mobil) – Erledigtes als „Erledigt", offene
+  Punkte als „Geplant".
 
-**2. Energiefluss – überarbeitetes Flussdiagramm mit zwei Detailstufen**
+**3. Anlagen-Dokumentation / Anleitung (mit aktuellen Werten verknüpft)**
+Eine Ansicht mit vier Abschnitten:
+- **App-Bedienung:** Dashboard, Energiefluss (Kompakt/Detail/Auto, Fluss an/aus, Tempo),
+  Favoriten, Einstellungen, Steuerung, Diagnose, Verlauf – kurz erklärt.
+- **Anlagen-/Geräteübersicht:** die fünf Bausteine (Shelly Pro 3EM, Hoymiles HM-1500/AhoyDTU,
+  2× Victron MPPT, Trucki2Shelly/SUN, 48 V-LiFePO4) mit Beschreibung und Eckdaten.
+- **Energie- & Verkabelungsmodell:** DC/AC-Kopplung, Nulleinspeisung und die
+  Hausverbrauchs-Formel (Hoymiles-AC + SUN-Entladung + Netzfluss; Victron-DC lädt nur den Akku).
+- **Lokales Setup:** Mosquitto-MQTT, InfluxDB, Grafana sowie Demo- vs. Live-Modus.
+- Wo sinnvoll, werden **aktuelle Werte** eingeblendet: eingestellte nutzbare Akkukapazität,
+  die konfigurierten Karten-Beschriftungen, der aktuelle Demo/Live-Status und zuletzt erkannte
+  Gerätedaten. Dadurch bleibt die Anleitung automatisch korrekt. (Lesen/Ansehen; Bearbeiten der
+  Werte bleibt in den Einstellungen.)
 
-- **Kompakt = 5 Knoten** (wie Entwurf 1): Solar PV (Hoymiles + beide MPPT zusammengefasst),
-  Batterie 48 V, Hausverbrauch (zentral), Stromnetz, Sun-2000/Trucki.
-- **Detail = 6 Knoten**: Solar PV wird in seine zwei Quellen aufgeteilt – Hoymiles HM-1500 (AC)
-  und Victron MPPT (DC); die übrigen vier Knoten bleiben. Die Aufschlüsselung je MPPT-String
-  (Panels 425 Wp / 445 Wp) bleibt wie bisher in der String-Vergleichskarte erhalten.
-- **Auto** wählt je nach Bildschirmbreite automatisch Kompakt oder Detail.
-- Jeder Knoten zeigt seine aktuelle Leistung und – in Detail – zusätzliche Innenzeilen
-  (z. B. „AC Hoymiles → direkt", „DC Victron → in Akku", Ladestand, Modus, Regelstatus).
-- Animierte Partikel auf den Verbindungen; Geschwindigkeit skaliert mit der Leistung.
-  (Keine Watt-Beschriftungen auf den Flusslinien – bleibt wie vereinbart entfernt.)
-
-**3. Steuerleiste über dem Diagramm**
-
-- **Fluss an/aus** – Partikelanimation ein-/ausschalten.
-- **Auto / Kompakt / Detail** – Detailtiefe (wie bisher, bleibt erhalten).
-- **Tempo 1× / 1.5× / 2×** – neuer Regler für die Partikelgeschwindigkeit.
-
-**4. Kennzahlen-Zeile unter dem Energiefluss (vier Kacheln)**
-
-Solar Ertrag Heute (kWh + aktuell W), Batterie Kapazität (SoC % + geschätzte kWh),
-Netzbezug Heute (kWh + aktuell W), Autarkiegrad (% + „Eigenabdeckung").
+**4. README-Einführung aktualisiert**
+- Der einleitende Beschreibungstext der Projekt-Dokumentation wird durch die vom Betreiber
+  vorgegebene Fassung ersetzt: „Autarkes Energiemanagement, Nulleinspeisung & Hardware-Diagnose
+  für Hoymiles, Victron, Trucki & LiFePO4 …" (vier ausgewogene Säulen). Der übrige Inhalt bleibt.
 
 ## Nutzerfluss
 
-1. Dashboard öffnen → oben die vier Geräte-Karten mit Live-Werten, darunter der Energiefluss,
-   darunter die vier Zusammenfassungs-Kacheln.
-2. Über der Flussgrafik Detailtiefe wählen (Auto/Kompakt/Detail), Fluss an/aus schalten,
-   Tempo einstellen.
-3. Werte aktualisieren sich automatisch im laufenden Takt; Badges und Farben ändern sich mit
-   dem Zustand (z. B. Bezug rot / Einspeisung grün, Laden/Entladen, Aktiv/Inaktiv).
-4. Bestehende Funktionen (Favoriten-Leiste, Sonnen-Tagesverlauf, Geräte-Detailbereiche,
-   Alarme) bleiben unverändert darüber/darunter erhalten.
+1. Beliebige Seite öffnen → unten die Fußleiste mit Version und Modus.
+2. Auf die Version klicken → Ansicht „Doku & Roadmap" öffnet sich.
+3. Zwischen **Roadmap** und **Anleitung** wechseln.
+4. In der Roadmap den Stand je Punkt ablesen (Erledigt/In Arbeit/Geplant).
+5. In der Anleitung einen der vier Abschnitte aufklappen; aktuelle Werte sind direkt eingeblendet.
+6. Zurück zum Dashboard; die Fußleiste bleibt überall sichtbar.
 
 ## UI/UX-Gefühl
 
-Industrieller SCADA-Control-Room-Look wie im Entwurf: dunkler Hintergrund, Neon-Akzente je
-Gerät (PV orange/gelb, Batterie cyan/grün, Netz violett/rot, Haus hell), abgesetzte Karten mit
-feinem Rahmen-Glühen, LCD-artige Großwerte, dezente Status-Badges. Responsiv: vier Karten auf
-Desktop nebeneinander, auf Mobil gestapelt; Energiefluss passt die Knotenanordnung an die Breite
-an. Keine neuen Schriftarten oder Farbwelten – es wird die vorhandene Designsprache genutzt.
+Gleiche SCADA-Control-Room-Sprache wie die App: dunkler Hintergrund, Neon-Akzente,
+feine Rahmen, Mono-/LCD-Typografie. Die Fußleiste ist schlank und unaufdringlich.
+Roadmap-Status über klare Farbcodes (z. B. grün = erledigt, cyan = in Arbeit, grau = geplant).
+Anleitung in aufklappbaren Abschnitten, gut lesbar; responsiv (Desktop wie Mobil), deutsch.
 
 ## Umsetzungsphasen
 
-**Phase 1 – MVP (wird jetzt gebaut):** Vollständiger Umbau wie oben – vier Geräte-Karten ersetzen
-die 6 LCD-Kacheln; Energiefluss mit Kompakt (5)/Detail (6)/Auto, Fluss an/aus und Tempo-Regler;
-vier Zusammenfassungs-Kacheln unter dem Diagramm. Alle Werte an die vorhandenen Live-Daten
-gebunden; Demo-Modus als Standard.
+**Phase 1 – MVP (wird jetzt gebaut):** Durchgehende Fußleiste mit Version + Modus auf allen
+Seiten; Klick auf die Version öffnet die Ansicht „Doku & Roadmap". Roadmap aus einer zentralen
+Quelle mit Status je Punkt, befüllt mit dem realen aktuellen Stand. Anleitung mit allen vier
+Abschnitten und eingeblendeten aktuellen Werten. README-Einführungstext aktualisiert.
 
-**Phase 2 – später:** Einstell-Oberfläche für die statischen Gerätebeschreibungen und die nutzbare
-Akkukapazität; kleine 15-Minuten-Trend-Sparklines in den Geräte-Karten.
+**Phase 2 – später:** Roadmap-Punkte direkt in der App bearbeiten (hinzufügen, abhaken,
+verschieben) mit dauerhafter Speicherung; „Was ist neu"-Hinweis beim Versionssprung.
 
-**Phase 3 – später:** Schwellwert-Farbalarme je Karte/Kachel; echte Netzfrequenz und
-Batterie-Zelldrift, sobald diese Messwerte real vom Gerät geliefert werden.
+**Phase 3 – später:** „Erledigt"-Historie zusätzlich automatisch aus der Änderungs-/
+Versionshistorie ableiten; Anleitung als Druck-/PDF-Ansicht exportieren.
 
 ## Annahmen
 
-- **Datenwahrheit:** Es werden nur tatsächlich vorhandene Mess-/Demo-Werte als „Live" angezeigt.
-  Zwei im Entwurf gezeigte Werte liegen aktuell nicht in den Daten vor und werden in Phase 1 **nicht**
-  erfunden: statt „Max Zellendrift" zeigt die Batterie-Karte die vorhandene **Tagesenergie (kWh)**;
-  die Netzfrequenz „50 Hz" entfällt (kommt erst in Phase 3, wenn real vorhanden).
-- **Gerätebeschriftungen** (z. B. „6× Power Queen 100 Ah", „Shelly Pro 3EM (L1/L2/L3)",
-  „RS485 Nulleinspeiser") sind feste, beschreibende Texte – keine Live-Werte.
-- **Batterie-Kapazität:** Für die Kachel „Batterie Kapazität" wird eine nutzbare Kapazität von
-  **9,6 kWh** angenommen (Wert aus dem Entwurf) und die kWh als SoC × Kapazität geschätzt; später
-  in den Einstellungen änderbar (Phase 2).
-- **Autarkiegrad** wird aus den Live-Werten berechnet (Eigenerzeugung gegenüber Hausverbrauch);
-  bei Einspeisung ~100 %.
-- Der bisherige Auto-Modus (Umschalten nach Bildschirmbreite) bleibt erhalten; „Anzeigen: Aus"
-  aus dem Entwurf wird durch die beibehaltene Kompakt/Detail-Umschaltung abgedeckt.
-- Entfernte Funktionen bleiben entfernt: keine Watt-Labels auf den Flusslinien, keine 48 h-Prognose,
-  kein CSV-Export.
+- Roadmap und Anleitung erscheinen **in der App** (nicht als zusätzliche Menüpunkte), erreichbar
+  über die **Versionsnummer in der Fußleiste** – so wurde die Platzierungsfrage verstanden.
+- „Selbst pflegen" bedeutet in Phase 1: **eine zentrale Datenquelle** (Version + Roadmap-Punkte +
+  Stand), die beim Ausliefern gepflegt wird und in der App sofort aktuell erscheint – keine
+  vollautomatische Generierung (das kommt teilweise erst in Phase 3).
+- Die Roadmap wird initial mit dem **tatsächlichen heutigen Stand** befüllt (Erledigtes markiert,
+  bekannte offene Punkte als „Geplant").
+- Die Anleitung ist **zum Ansehen**; Werte wie Akkukapazität und Karten-Beschriftungen werden
+  weiterhin in den Einstellungen geändert und hier nur gespiegelt.
+- Es wird eine **Versionsnummer** eingeführt und bei künftigen Lieferungen hochgezählt; der
+  Startwert wird passend zum aktuellen Stand gesetzt.
+- Die eingeblendeten „aktuellen Werte" umfassen: nutzbare Akkukapazität, Karten-Beschriftungen,
+  Demo/Live-Status und zuletzt erkannte Gerätedaten.
+- Der README-Einführungstext wird durch die vorgegebene Fassung ersetzt; der restliche
+  README-Inhalt bleibt erhalten.
+- Alles auf Deutsch, im bestehenden SCADA-Look; entfernte Funktionen (Watt-Labels auf den
+  Flusslinien, 48-h-Prognose, CSV-Export) bleiben entfernt. Keine neuen externen Integrationen.
