@@ -1,0 +1,19 @@
+{
+  "summary": "Requested preview chart features verified against public API and browser. Backend 18/18 tests pass. Both battery views render cyan power and dashed lime SoC curves with W/% tooltips; separate chart has left W/right % ticks. Daily grouped bars match API values and four channel colors. Two distribution bars and 19 deltas preserved. All five ranges work; original /verlauf charts remain accessible and unchanged in git diff. No main-content horizontal overflow at 1920x800 or 390x844. One minor error-state issue reproduced.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [{"flow": "Daily balance API failure", "issue": "MOCKED HTTP 503 from /api/energy/balance displays 'Noch keine Tageswerte vorhanden.' rather than a load-error state. Real public API works. Priority LOW.", "affected_selectors": ["[data-testid=vp-balance-history-empty]"]}],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_preview_chart_contracts.py", "/app/backend/tests/test_verlauf_preview.py", "/app/backend/tests/test_today_comparison.py", "/app/tests/verlauf_preview_ui_regression.py", "/app/test_reports/pytest/pytest_preview_charts.xml"],
+  "action_items": ["Distinguish daily chart fetch failures from a successful empty response; optionally offer retry."],
+  "critical_code_review_comments": ["BalanceHistoryBars.jsx catch resets rows to [] and finally clears loading; no error state distinguishes failed fetch from valid empty history.", "BalanceHistoryBars fetches only on mount, so daily totals/buckets remain static while the surrounding page polls. Consider refresh polling or a refresh control if live daily bars are intended."],
+  "updated_files": ["/app/backend/tests/test_preview_chart_contracts.py", "/app/tests/verlauf_preview_ui_regression.py", "/app/test_reports/iteration_30.json", "/app/test_reports/pytest/pytest_preview_charts.xml"],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "All requested acceptance flows passed; supplemental balance error-state check failed"},
+  "seed_data_creation": "None; no database writes. Hardware remains existing DEMO/MOCKED mode. Only supplemental unavailable-yesterday and balance-503 scenarios used temporary MOCKED browser network interception.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Previous missing-yesterday bug is fixed: aborted day_offset=1 leaves all 19 deltas 'Gestern: –'. No runtime pageerrors seen. Four daily buckets contain 13 nonzero SVG bar paths (3 PV, 3 self, 4 import, 3 export); zero-value bars correctly have no rectangle. Initial test incorrectly expected 16 paths and used empty Recharts YAxis wrappers; corrected tests read svg text and nonzero counts. Separate tooltip verified Akku -263 W / SoC 32%. Original history title uses uppercase rendered text; power and SoC verified by >=5 line paths. Both views and both viewport widths verified; mobile additionally checked actual main DOM bounds, excluding SVG/tooltips. UI regression file updated from executed checks as a reusable replay entry point (await run(page)); saved aggregate entry point not separately executed. No application source changes made.",
+  "rca of the issue": "BalanceHistoryBars.jsx lines 29-30 swallow network failure, clear rows, and finish loading. Reproduce by fulfilling /api/energy/balance with 503 then reloading /verlauf-preview; vp-balance-history-empty claims no historical values even though public API returns four buckets. Add separate error state rather than overloading an empty array. No real API outage observed."
+}

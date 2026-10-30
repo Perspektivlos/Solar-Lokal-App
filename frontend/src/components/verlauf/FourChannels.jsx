@@ -5,6 +5,8 @@ import { formatNum } from "../solar-ui";
 import { CH, CARD, TICK, GRID_STROKE, hhmm } from "./shared";
 import { ChartTooltip, EmptyChart } from "./MultiLine";
 
+const SOC_COLOR = "#A3E635";
+
 function Channel({ ch, icon: Icon, title, value, data, area, zero, testid, loading }) {
   const gid = `vp-grad-${ch.key}`;
   const axes = (
@@ -51,14 +53,44 @@ function Channel({ ch, icon: Icon, title, value, data, area, zero, testid, loadi
   );
 }
 
+function BatteryChannel({ data, live, loading }) {
+  const power = live?.summary?.battery_power;
+  const soc = live?.trucki?.soc;
+  return (
+    <div className={`${CARD} p-4`} data-testid="vp-ch-battery">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-2 text-[12.5px] font-semibold text-cyan-300 min-w-0">
+          <BatteryCharging size={14} className="shrink-0" /> <span className="truncate">Akku-Leistung &amp; LiFePO4 SoC</span>
+        </div>
+        <div className="font-mono text-[13px] font-bold text-white whitespace-nowrap" data-testid="vp-ch-battery-value">{formatNum(power, 0)} W · {formatNum(soc, 0)}%</div>
+      </div>
+      <div className="h-[130px]" data-testid="vp-ch-battery-plot">
+        {data.length === 0 ? <EmptyChart loading={loading} /> : (
+          <ResponsiveContainer>
+            <LineChart data={data} margin={{ top: 4, right: 2, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke={GRID_STROKE} vertical={false} />
+              <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={hhmm} tick={TICK} stroke="rgba(255,255,255,0.12)" minTickGap={20} />
+              <YAxis yAxisId="power" tick={TICK} stroke="rgba(255,255,255,0.12)" width={40} />
+              <YAxis yAxisId="soc" orientation="right" domain={[0, 100]} tick={TICK} stroke="rgba(163,230,53,0.22)" tickFormatter={(v) => `${v}%`} width={30} />
+              <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.2)" }} />
+              <ReferenceLine yAxisId="power" y={0} stroke="rgba(255,255,255,0.22)" />
+              <Line yAxisId="power" type="monotone" dataKey="Akku" stroke={CH.battery.color} strokeWidth={2.2} dot={false} connectNulls={false} isAnimationActive={false} />
+              <Line yAxisId="soc" type="monotone" dataKey="SoC" stroke={SOC_COLOR} strokeWidth={1.8} strokeDasharray="4 3" dot={false} connectNulls={false} isAnimationActive={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function FourChannels({ data, live, loading }) {
   const s = live?.summary || {};
-  const soc = live?.trucki?.soc;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-testid="vp-four">
       <Channel ch={CH.pv} icon={Sun} title="PV-Erzeugung (Hoymiles + Victron)" value={`${formatNum(s.pv_power, 0)} W`} data={data} area testid="vp-ch-pv" loading={loading} />
       <Channel ch={CH.house} icon={Zap} title="Hausverbrauch (Gesamtlast)" value={`${formatNum(s.house_power, 0)} W`} data={data} area testid="vp-ch-house" loading={loading} />
-      <Channel ch={CH.battery} icon={BatteryCharging} title="Akku-Nutzung & LiFePO4 SoC" value={`${formatNum(s.battery_power, 0)} W (${formatNum(soc, 0)}%)`} data={data} zero testid="vp-ch-battery" loading={loading} />
+      <BatteryChannel data={data} live={live} loading={loading} />
       <Channel ch={CH.grid} icon={Activity} title="Netzbezug / Netzeinspeisung (Shelly Pro 3EM)" value={`${formatNum(s.grid_power, 0)} W`} data={data} zero testid="vp-ch-grid" loading={loading} />
     </div>
   );

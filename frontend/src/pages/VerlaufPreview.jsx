@@ -8,6 +8,7 @@ import TitleBar from "../components/verlauf/TitleBar";
 import MultiLine from "../components/verlauf/MultiLine";
 import FourChannels from "../components/verlauf/FourChannels";
 import DayBalance from "../components/verlauf/DayBalance";
+import BatteryHistory from "../components/verlauf/BatteryHistory";
 import { RANGES, bucketize } from "../components/verlauf/shared";
 
 const stored = (k, ok, d) => { const v = localStorage.getItem(k); return ok(v) ? v : d; };
@@ -63,6 +64,7 @@ export default function VerlaufPreview() {
       {view === "multi"
         ? <MultiLine data={data} range={range} live={live} loading={loading} />
         : <FourChannels data={data} live={live} loading={loading} />}
+      {view === "multi" && <BatteryHistory data={data} live={live} loading={loading} />}
       <DayBalance live={live} today={today} yesterday={yesterday} />
       {live && <SunTimeline timestamp={live.timestamp} sun={live.sun} />}
     </div>

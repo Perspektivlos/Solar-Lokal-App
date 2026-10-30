@@ -4,7 +4,7 @@ import re
 
 
 async def run(page):
-    """Checks exercised in iteration 29; public URL comes from the environment."""
+    """Checks exercised through iteration 30; public URL comes from the environment."""
     await page.goto(os.environ['REACT_APP_BACKEND_URL'].rstrip('/') + '/verlauf-preview')
     await page.set_viewport_size({'width': 1920, 'height': 800})
     await page.get_by_test_id('vp-balance').wait_for()
@@ -26,6 +26,9 @@ async def run(page):
     assert await battery.count() == 0
     await page.get_by_test_id('vp-legend-akku').click(force=True)
     assert await battery.count() == 1
+    separate = page.get_by_test_id('vp-battery-chart')
+    await check_battery_plot(page, separate, dash='5 4', check_w_axis=True)
+    await check_daily_bars(page)
     for rng in ['1h', '3h', '6h', '12h', '24h']:
         async with page.expect_response(lambda r: '/api/history?' in r.url and 'range=' + rng in r.url) as info:
             await page.get_by_test_id('vp-range-' + rng).click(force=True)
@@ -40,10 +43,67 @@ async def run(page):
     await page.get_by_test_id('vp-view-four').click(force=True)
     await page.get_by_test_id('vp-ch-battery').wait_for()
     assert await page.get_by_test_id('vp-ch-battery').locator('path.recharts-line-curve[stroke="#22D3EE"]').count() == 1
+    await check_battery_plot(page, page.get_by_test_id('vp-ch-battery'), dash='4 3')
     await page.get_by_test_id('vp-back').click(force=True)
     await page.get_by_test_id('history-page').wait_for()
+    await page.get_by_test_id('history-page').locator('.recharts-surface').first.wait_for()
     assert await page.get_by_test_id('grafana-link').is_visible()
+    assert await page.get_by_test_id('history-page').locator('path.recharts-line-curve').count() >= 5
     print('PASS preview core UI regression')
+
+
+async def check_battery_plot(page, container, dash, check_w_axis=False):
+    """Battery curve colors, dashed SoC, axes and unit-aware hover tooltip."""
+    try:
+        await container.scroll_into_view_if_needed()
+        assert await container.locator('path.recharts-line-curve[stroke="#22D3EE"]').count() == 1
+        soc = container.locator('path.recharts-line-curve[stroke="#A3E635"]')
+        assert await soc.count() == 1
+        assert await soc.get_attribute('stroke-dasharray') == dash
+        ticks = await container.locator('svg text').all_text_contents()
+        assert any(t.endswith('%') for t in ticks)
+        if check_w_axis:
+            assert any(t.endswith('W') for t in ticks)
+        box = await container.locator('.recharts-wrapper').bounding_box()
+        await page.mouse.move(box['x'] + box['width'] * .88, box['y'] + box['height'] * .45)
+        await page.wait_for_timeout(250)
+        tooltip = await container.get_by_test_id('vp-tooltip').inner_text()
+        assert re.search(r'Akku\s+[^\n]* W', tooltip)
+        assert re.search(r'SoC\s+[^\n]* %', tooltip)
+        print('PASS battery plot', await container.get_attribute('data-testid'))
+    except Exception as exc:
+        print('FAIL battery plot', str(exc))
+        raise
+
+
+async def check_daily_bars(page):
+    """Four grouped daily kWh series match real public API values and channel colors."""
+    try:
+        chart = page.get_by_test_id('vp-balance').get_by_test_id('vp-balance-history-bars')
+        await chart.scroll_into_view_if_needed()
+        await page.wait_for_timeout(500)
+        response = await page.request.get(os.environ['REACT_APP_BACKEND_URL'].rstrip('/') + '/api/energy/balance?period=day&limit=14')
+        assert response.status == 200
+        rows = (await response.json())['buckets']
+        groups = chart.locator('.recharts-bar')
+        assert await groups.count() == 4
+        for index, (key, color) in enumerate([('pv_kwh', '#F59E0B'), ('self_kwh', '#F43F5E'), ('import_kwh', '#818CF8'), ('export_kwh', '#10B981')]):
+            shapes = groups.nth(index).locator('path.recharts-rectangle')
+            expected = sum(row[key] > 0 for row in rows)
+            assert await shapes.count() == expected
+            if expected:
+                assert await shapes.first.get_attribute('fill') == color
+        await groups.first.locator('path.recharts-rectangle').first.hover(force=True)
+        await page.wait_for_timeout(250)
+        tooltip = await chart.locator('.recharts-tooltip-wrapper').inner_text()
+        row = next(row for row in rows if row['pv_kwh'] > 0)
+        for key, label in [('pv_kwh', 'PV-Ertrag'), ('self_kwh', 'Eigenverbrauch'), ('import_kwh', 'Netzbezug'), ('export_kwh', 'Einspeisung')]:
+            assert label in tooltip
+            assert ('%.2f' % row[key]).replace('.', ',') + ' kWh' in tooltip
+        print('PASS daily grouped bars and API tooltip values')
+    except Exception as exc:
+        print('FAIL daily grouped bars', str(exc))
+        raise
 
 
 async def check_missing_yesterday(page):

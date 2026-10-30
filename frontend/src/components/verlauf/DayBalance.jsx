@@ -2,6 +2,7 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, ShieldCheck, Sun, Zap, BatteryCharging, Activity } from "lucide-react";
 import { formatNum } from "../solar-ui";
 import { CH, CARD, EXPORT_COLOR } from "./shared";
+import BalanceHistoryBars from "./BalanceHistoryBars";
 
 const kwh = (v) => `${formatNum(v, 2)} kWh`;
 const pct = (v) => `${formatNum(v, 1)}%`;
@@ -149,6 +150,7 @@ export default function DayBalance({ live, today, yesterday }) {
         <DistBar title="Deckung des Hausverbrauchs" titleColor={CH.house.color} total={house} ratioLabel={`Autarkie: ${pct(autarky)}`} ratio={autarky} previousRatio={previous.autarky} testid="vp-dist-house"
           segments={[{ label: "Solar", value: direct, color: CH.pv.color }, { label: "Akku", value: discharge, color: CH.battery.color }, { label: "Netz", value: imp, color: CH.grid.color }]} />
       </div>
+      <BalanceHistoryBars />
     </div>
   );
 }

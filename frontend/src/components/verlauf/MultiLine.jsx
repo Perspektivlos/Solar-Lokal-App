@@ -16,7 +16,7 @@ export function ChartTooltip({ active, payload, label }) {
         <div key={p.dataKey} className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
           <span className="text-white/60 w-10">{p.dataKey}</span>
-          <span className="text-white">{formatNum(p.value, 0)} W</span>
+          <span className="text-white">{formatNum(p.value, 0)} {p.dataKey === "SoC" ? "%" : "W"}</span>
         </div>
       ))}
     </div>
