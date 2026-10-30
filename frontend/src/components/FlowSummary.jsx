@@ -44,9 +44,13 @@ export default function FlowSummary({ live, today, usableKwh }) {
   const battKwh = (soc / 100) * cap;
   // Momentane Eigenabdeckung des Hausverbrauchs aus eigener Erzeugung.
   const instantCover = house <= 0 ? 100 : Math.max(0, Math.min(100, ((house - Math.max(0, grid)) / house) * 100));
+  // Tagesertrag je Quelle: Hoymiles (AC) und Summe beider Victron-MPPT (DC)
+  const ahoy = live?.ahoy || {};
+  const hoyKwh = ahoy.yield_day_kwh ?? (ahoy.channels || []).reduce((a, c) => a + (c.yield_day || 0), 0);
+  const mpptKwh = (live?.victron?.mppts || []).reduce((a, m) => a + (m.yield_today || 0), 0);
 
   const tiles = [
-    { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solar Ertrag Heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", sub: `Aktuell: ${formatNum(s.pv_power, 0)} W` },
+    { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solar Ertrag Heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", sub: `Hoymiles ${formatNum(hoyKwh, 2)} + MPPT ${formatNum(mpptKwh, 2)} kWh` },
     { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Batterie Kapazität", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC (${formatNum(cap, 1)} kWh)` },
     { testid: "summary-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, label: "Netzbezug Heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", sub: `Aktuell: ${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W` },
     { testid: "summary-autarky", accent: COLOR.grid_exp, icon: Gauge, label: "Autarkiegrad", value: formatNum(today?.autarky_pct, 1), unit: "%", sub: `${formatNum(instantCover, 0)} % Eigenabdeckung` },
