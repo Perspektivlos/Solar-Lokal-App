@@ -8,11 +8,12 @@ import { useMotion } from "../lib/motion";
 import { ScanLine, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+// cards = Texte der Dashboard-Karten, die zu diesem Gerät gehören
 const DEVICES = [
-  { key: "shelly",  label: "Shelly Pro 3EM",                     hint: "3-Phasen Energiemesser",      accent: "#F87171" },
-  { key: "ahoy",    label: "Ahoy DTU (Hoymiles HM1500)",         hint: "Wechselrichter",               accent: "#FACC15" },
-  { key: "trucki",  label: "Trucki2Shelly Gateway",              hint: "Akku-Speicher",                accent: "#06B6D4" },
-  { key: "victron", label: "Victron VenusOS Large",              hint: "2× SmartSolar MPPT 150/35",    accent: "#34D399" },
+  { key: "shelly",  label: "Shelly Pro 3EM",                     hint: "3-Phasen Energiemesser",      accent: "#F87171", cards: [{ k: "grid", l: "Stromnetz" }, { k: "house", l: "Hausverbrauch" }] },
+  { key: "ahoy",    label: "Ahoy DTU (Hoymiles HM1500)",         hint: "Wechselrichter",               accent: "#FACC15", cards: [{ k: "solar", l: "Solar PV" }] },
+  { key: "trucki",  label: "Trucki2Shelly Gateway",              hint: "Akku-Speicher",                accent: "#06B6D4", cards: [{ k: "battery", l: "Batterie 48V" }] },
+  { key: "victron", label: "Victron VenusOS Large",              hint: "2× SmartSolar MPPT 150/35",    accent: "#34D399", cards: [] },
 ];
 
 const INTRO_SECTIONS = [
@@ -207,33 +208,6 @@ export default function Devices() {
         </div>
       </div>
 
-      {/* Anlage & Anzeige · Akkukapazität + Geräte-Beschriftungen */}
-      <div className="glass p-4" style={{ borderLeft: "3px solid #38bdf8" }} data-testid="display-settings-row">
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-sky-300/80">Anlage &amp; Anzeige</div>
-        <div className="text-sm mt-1 text-white/70">Nutzbare Akkukapazität (für „Batterie Kapazität&ldquo;) &amp; die beschreibenden Texte der vier Dashboard-Karten. Keine Live-Werte — reine Beschriftung.</div>
-        <div className="mt-3">
-          <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Nutzbare Akkukapazität (kWh)</label>
-          <input type="number" step="0.1" min="0" value={cfg.display?.usable_kwh ?? ""}
-                 onChange={(e) => updateDisplay({ usable_kwh: Number(e.target.value) })}
-                 className="glass-input w-36 px-3 py-2 font-mono text-sm mt-1 block" data-testid="input-usable-kwh" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-          {[
-            { k: "solar", l: "Solar PV" },
-            { k: "battery", l: "Batterie 48V" },
-            { k: "house", l: "Hausverbrauch" },
-            { k: "grid", l: "Stromnetz" },
-          ].map((f) => (
-            <div key={f.k}>
-              <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">{f.l} · Beschriftung</label>
-              <input type="text" value={cfg.display?.labels?.[f.k] ?? ""}
-                     onChange={(e) => updateLabel(f.k, e.target.value)}
-                     className="glass-input w-full px-3 py-2 font-mono text-sm mt-1 block" data-testid={`input-label-${f.k}`} />
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Devices grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {DEVICES.map((d) => (
@@ -256,6 +230,25 @@ export default function Devices() {
                 <input type="number" value={cfg.devices.ahoy.inverter_id ?? 0}
                        onChange={(e) => updateDevice("ahoy", { inverter_id: Number(e.target.value) })}
                        className="glass-input w-32 px-3 py-2 font-mono text-sm mt-1" data-testid="input-ahoy-id" />
+              </div>
+            )}
+            {(d.cards.length > 0 || d.key === "trucki") && (
+              <div className="mt-3 pt-3 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid={`device-display-${d.key}`}>
+                {d.cards.map((c) => (
+                  <div key={c.k}>
+                    <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Karte „{c.l}" · Text</label>
+                    <input type="text" value={cfg.display?.labels?.[c.k] ?? ""} onChange={(e) => updateLabel(c.k, e.target.value)}
+                           className="glass-input w-full px-3 py-2 font-mono text-sm mt-1" data-testid={`input-label-${c.k}`} />
+                  </div>
+                ))}
+                {d.key === "trucki" && (
+                  <div>
+                    <label className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">Nutzbare Kapazität (kWh)</label>
+                    <input type="number" step="0.1" min="0" value={cfg.display?.usable_kwh ?? ""}
+                           onChange={(e) => updateDisplay({ usable_kwh: Number(e.target.value) })}
+                           className="glass-input w-full px-3 py-2 font-mono text-sm mt-1" data-testid="input-usable-kwh" />
+                  </div>
+                )}
               </div>
             )}
             <DeviceDocPanel

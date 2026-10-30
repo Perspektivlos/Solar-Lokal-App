@@ -17,6 +17,9 @@ Gesammelte Erkenntnisse für künftige Sessions (vom Nutzer ausdrücklich gewün
 - Doku (`/doku`): Roadmap (editierbar) + Anleitung + Link „Projektbericht".
 - Bericht (`/bericht`, `/report-preview`): „Hinzugefügt" + Zeitachse automatisch aus Roadmap; Druck/PDF hell & dunkel.
 
+- Geräte: Kartentexte + nutzbare Akku-kWh stehen in der jeweiligen Gerätekachel (keine eigene „Anlage & Anzeige"-Kachel mehr – vom Nutzer verworfen).
+- Akku: „6× Power Queen 100 Ah", Spannung ~51,6 V (48-V-System). Nutzbare kWh in der App = 9,6 (Platzhalter!). Echte Kapazität hängt von der Modulspannung ab – beim Nutzer nachfragen, nicht raten.
+
 ## Energiefluss-Geometrie (EnergyFlow.jsx, Landscape viewBox 1060×420, Knoten 205×82)
 - Detail: Hoymiles (130,72) + Victron (365,72) nebeneinander oben links; Netz (160,315); Haus (530,250); Batterie (900,105); Sun-2000 (900,315).
 - Kompakt: PV (130,72); restliche wie Detail.
