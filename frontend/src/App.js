@@ -1,5 +1,5 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { MotionProvider } from "./lib/motion";
 import Layout from "./components/Layout";
@@ -13,7 +13,6 @@ import KpiPreview from "./pages/KpiPreview";
 import ScadavisPreview from "./pages/ScadavisPreview";
 import Docs from "./pages/Docs";
 import Report from "./pages/Report";
-import VerlaufPreview from "./pages/VerlaufPreview";
 
 function App() {
   return (
@@ -24,7 +23,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="verlauf" element={<History />} />
-            <Route path="verlauf-preview" element={<VerlaufPreview />} />
+            <Route path="verlauf-preview" element={<Navigate to="/verlauf" replace />} />
             <Route path="steuerung" element={<Control />} />
             <Route path="geraete" element={<Devices />} />
             <Route path="diagnose" element={<Diagnose />} />

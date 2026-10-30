@@ -1,5 +1,5 @@
 /* Titelleiste der Energie-Analyse: Titel, Live-Badge, Ansichts- und Zeitumschalter. */
-import { Activity, Layers, BarChart3 } from "lucide-react";
+import { Activity, Layers, BarChart3, ExternalLink } from "lucide-react";
 import { RANGES } from "./shared";
 
 const VIEWS = [
@@ -9,7 +9,7 @@ const VIEWS = [
 
 const GROUP = "inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-[#0b0f17] p-1";
 
-export default function TitleBar({ view, onView, range, onRange }) {
+export default function TitleBar({ view, onView, range, onRange, grafanaUrl }) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6" data-testid="vp-titlebar">
       <div className="flex items-center gap-x-3 gap-y-2 flex-wrap min-w-0 lg:flex-1">
@@ -24,6 +24,12 @@ export default function TitleBar({ view, onView, range, onRange }) {
         </span>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
+        {grafanaUrl && (
+          <a href={grafanaUrl} target="_blank" rel="noopener noreferrer" title={`Grafana öffnen · ${grafanaUrl}`} data-testid="grafana-link"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-cyan-400/25 bg-cyan-400/[0.07] font-mono text-[11px] uppercase tracking-[0.12em] text-cyan-200 hover:bg-cyan-400/15 transition-colors">
+            <BarChart3 size={13} /> Grafana <ExternalLink size={11} className="opacity-60" />
+          </a>
+        )}
         <div className={GROUP} role="group" aria-label="Ansicht" data-testid="vp-view-toggle">
           {VIEWS.map((v) => (
             <button key={v.id} type="button" onClick={() => onView(v.id)} aria-pressed={view === v.id} data-testid={`vp-view-${v.id}`}

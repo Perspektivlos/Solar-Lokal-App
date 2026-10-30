@@ -24,6 +24,7 @@ export default function BalanceHistoryBars() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [chartKey, setChartKey] = useState(0);
   useEffect(() => {
     let alive = true;
     const load = (showLoading = false) => {
@@ -42,8 +43,18 @@ export default function BalanceHistoryBars() {
     return () => { alive = false; clearInterval(timer); };
   }, [retryKey]);
 
+  useEffect(() => {
+    let timer;
+    const resetTooltip = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setChartKey((key) => key + 1), 120);
+    };
+    window.addEventListener("resize", resetTooltip);
+    return () => { clearTimeout(timer); window.removeEventListener("resize", resetTooltip); };
+  }, []);
+
   return (
-    <div className="mt-5 pt-5 border-t border-white/[0.06]" data-testid="vp-balance-history-bars">
+    <div className="mt-5 pt-5 border-t border-white/[0.06] overflow-hidden" data-testid="vp-balance-history-bars">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 text-[12.5px] font-semibold text-white">
           <BarChart2 size={15} className="text-amber-300" /> Tageswerte · letzte 14 Tage
@@ -65,7 +76,7 @@ export default function BalanceHistoryBars() {
         ) : rows.length === 0 ? (
           <div className="h-full grid place-items-center font-mono text-xs text-white/40" data-testid="vp-balance-history-empty">Noch keine Tageswerte vorhanden.</div>
         ) : (
-          <ResponsiveContainer>
+          <ResponsiveContainer key={chartKey}>
             <BarChart data={rows} margin={{ top: 8, right: 4, left: -12, bottom: 0 }} barGap={1}>
               <CartesianGrid stroke={GRID_STROKE} vertical={false} />
               <XAxis dataKey="label" tick={TICK} stroke="rgba(255,255,255,0.12)" minTickGap={12} />

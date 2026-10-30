@@ -1,199 +1,83 @@
+/* Energie-Analyse: Verlauf, Akku/SoC, Tagesbilanz und Sonnen-Tagesverlauf. */
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getHistory, getConfig, getLive } from "../lib/api";
+import { getConfig, getHistory, getLive, getToday } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import SunTimeline from "../components/SunTimeline";
-import EnergyBalance from "../components/EnergyBalance";
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
-import { BarChart3, ExternalLink, Sparkles } from "lucide-react";
-
-const GRAFANA_URL_FALLBACK = "http://192.168.0.202:3000";
-
-const RANGES = ["1h", "6h", "12h", "24h"];
-
-const TICK_STYLE = { fontSize: 10, fontFamily: "JetBrains Mono", fill: "#94a3b8" };
-const Y_LABEL_W = { value: "W", angle: -90, position: "insideLeft", fontSize: 10, fill: "#94a3b8" };
-const Y_LABEL_PCT = { value: "%", angle: -90, position: "insideLeft", fontSize: 10, fill: "#94a3b8" };
-const Y_DOMAIN_SOC = [0, 100];
-const TOOLTIP_STYLE = {
-  borderRadius: 4, border: "1px solid rgba(255,255,255,0.15)",
-  fontFamily: "JetBrains Mono", fontSize: 11,
-  backgroundColor: "rgba(15,23,42,0.95)", color: "#f1f5f9",
-};
-const TOOLTIP_LABEL_STYLE = { color: "#cbd5e1" };
-const LEGEND_STYLE = { fontFamily: "Chakra Petch", fontSize: 11, color: "#cbd5e1" };
+import TitleBar from "../components/verlauf/TitleBar";
+import MultiLine from "../components/verlauf/MultiLine";
+import FourChannels from "../components/verlauf/FourChannels";
+import BatteryHistory from "../components/verlauf/BatteryHistory";
+import DayBalance from "../components/verlauf/DayBalance";
+import { RANGES, bucketize } from "../components/verlauf/shared";
 
 const INTRO_SECTIONS = [
-  {
-    label: "Zweck & Funktion",
-    body: "Zeigt den historischen Verlauf der Leistungs- und Akku-Werte aus den 15-Sekunden-Snapshots, die das Backend in MongoDB speichert. Vier Leistungs-Linien (PV / Netz / Akku / Haus) + separater SoC-Verlauf.",
-  },
-  {
-    label: "Zeitbereiche",
-    body: "1h · 6h · 12h · 24h — wählbar oben rechts. Endpoint /api/history?range=… filtert Snapshots ab now-range.",
-  },
-  {
-    label: "Datenpunkte",
-    body: "Mehr als 600 Punkte werden automatisch geglättet (gleichmäßiges Sampling im Backend). Für 24h bei 15-s-Snapshots wären das 5760 Punkte → auf ~580 reduziert.",
-  },
-  {
-    label: "Skala / Farben",
-    body: <span>Y-Achse: Watt (oben) bzw. Prozent SoC (unten). Farben: Gelb&nbsp;= PV, Rot&nbsp;= Netz (positiv = Bezug), Cyan&nbsp;= Akku, Hell&nbsp;= Hausverbrauch.</span>,
-  },
-  {
-    label: "Einschränkungen",
-    body: "Snapshots werden nur geschrieben wenn der Backend-Service läuft. Während Backend-Restarts entstehen kurze Lücken in der Kurve. Es findet keine Lücken-Interpolation statt — Recharts verbindet die nächsten gültigen Punkte.",
-  },
-  {
-    label: "Mögliche Fehler",
-    body: "‚Noch keine Snapshots im Zeitraum‘ → Backend wurde gerade erst gestartet oder DB ist leer. Lösung: warten oder /api/diagnostics/run prüfen.",
-  },
+  { label: "Zweck & Funktion", body: "Analysiert PV-Erzeugung, Hauslast, Akku und Netz synchron. Akku-Leistung und SoC besitzen getrennte Skalen; die Tagesbilanz zeigt kWh-Werte und den Vergleich zu gestern." },
+  { label: "Ansichten", body: "Multilinie bündelt alle Leistungswerte. Vier Kanäle trennt PV, Haus, Akku und Netz in eigene Diagramme. Die Auswahl bleibt auf diesem Gerät gespeichert." },
+  { label: "Zeitbereiche", body: "1h · 3h · 6h · 12h · 24h. Die Abtastrate passt sich automatisch an und echte Datenlücken werden nicht überbrückt." },
+  { label: "Tages-kWh", body: "Kennzahlen, Verteilungsbalken und gruppierte Tagesbalken zeigen Erzeugung, Eigenverbrauch, Speicherung, Netzbezug und Einspeisung." },
 ];
 
-function ChartBody({ loading, error, data }) {
-  if (loading) return <div className="font-mono text-sm text-white/55">Lade Verlauf...</div>;
-  if (error) {
-    return <div role="alert" className="font-mono text-sm text-red-300" data-testid="history-error">Verlaufsdaten konnten nicht geladen werden.</div>;
-  }
-  if (data.length === 0) {
-    return <div className="font-mono text-sm text-white/55" data-testid="history-empty">Noch keine Snapshots im Zeitraum.</div>;
-  }
-  return (
-    <ResponsiveContainer>
-      <LineChart data={data}>
-        <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.09)" />
-        <XAxis dataKey="ts" tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" />
-        <YAxis tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" label={Y_LABEL_W} />
-        <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} />
-        <Legend wrapperStyle={LEGEND_STYLE} />
-        <Line type="monotone" dataKey="PV" stroke="#FACC15" strokeWidth={3} dot={false}
-              style={{ filter: "drop-shadow(0 0 6px rgba(250,204,21,0.7))" }} />
-        <Line type="monotone" dataKey="Netz" stroke="#F87171" strokeWidth={3} dot={false}
-              style={{ filter: "drop-shadow(0 0 6px rgba(248,113,113,0.7))" }} />
-        <Line type="monotone" dataKey="Akku" stroke="#06B6D4" strokeWidth={3} dot={false}
-              style={{ filter: "drop-shadow(0 0 6px rgba(6,182,212,0.7))" }} />
-        <Line type="monotone" dataKey="Haus" stroke="#cbd5e1" strokeWidth={2.5} dot={false} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-}
+const stored = (key, valid, fallback) => {
+  const value = localStorage.getItem(key);
+  return valid(value) ? value : fallback;
+};
 
 export default function History() {
-  const [range, setRange] = useState("1h");
+  const [view, setView] = useState(() => stored("vp-view", (v) => v === "multi" || v === "four", "multi"));
+  const [range, setRange] = useState(() => stored("vp-range", (v) => RANGES.includes(v), "24h"));
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [grafanaUrl, setGrafanaUrl] = useState(GRAFANA_URL_FALLBACK);
-
   const [live, setLive] = useState(null);
+  const [today, setToday] = useState(null);
+  const [yesterday, setYesterday] = useState(null);
+  const [grafanaUrl, setGrafanaUrl] = useState("");
+
+  const pick = (setter, key) => (value) => {
+    setter(value);
+    localStorage.setItem(key, value);
+  };
 
   useEffect(() => {
-    getConfig().then((c) => { if (c?.grafana_url) setGrafanaUrl(c.grafana_url); }).catch(() => {});
-    const loadLive = () => getLive().then(setLive).catch(() => {});
-    loadLive();
-    const t = setInterval(loadLive, 60000);
-    return () => clearInterval(t);
+    let alive = true;
+    getConfig().then((config) => { if (alive) setGrafanaUrl(config?.grafana_url || ""); }).catch(() => {});
+    const load = () => {
+      getLive().then((value) => { if (alive) setLive(value); }).catch(() => {});
+      getToday().then((value) => { if (alive) setToday(value); }).catch(() => {});
+    };
+    load();
+    const timer = setInterval(load, 5000);
+    return () => { alive = false; clearInterval(timer); };
   }, []);
 
   useEffect(() => {
     let alive = true;
-    const load = async () => {
-      try {
-        const d = await getHistory(range);
-        if (!alive) return;
-        const pts = (d.points || []).map((p) => ({
-          ts: new Date(p.ts).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
-          PV: p.pv_power, Netz: p.grid_power, Akku: p.battery_power, Haus: p.house_power, SoC: p.battery_soc,
-        }));
-        setError(false);
-        setData(pts);
-      } catch {
-        if (alive) { setError(true); setData([]); }
-      } finally {
-        if (alive) setLoading(false);
-      }
-    };
+    const load = () => getToday(1).then((value) => { if (alive) setYesterday(value); }).catch(() => {});
     load();
-    return () => { alive = false; };
+    const timer = setInterval(load, 60000);
+    return () => { alive = false; clearInterval(timer); };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    const load = () => getHistory(range)
+      .then((value) => { if (alive) setData(bucketize(value.points || [], range)); })
+      .catch(() => { if (alive) setData([]); })
+      .finally(() => { if (alive) setLoading(false); });
+    load();
+    const timer = setInterval(load, 60000);
+    return () => { alive = false; clearInterval(timer); };
   }, [range]);
 
   return (
     <div className="space-y-6 page-reveal" data-testid="history-page">
-      <IntroCard title="Verlauf" subtitle="Historische Leistungs- und SoC-Kurven aus MongoDB-Snapshots" sections={INTRO_SECTIONS} accent="#06B6D4" testid="intro-history" />
-
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
-          <span className="w-1.5 h-7 rounded-sm" style={{ background: "#06B6D4", boxShadow: "0 0 10px #06B6D488" }} />
-          Verlauf
-        </h1>
-        <div className="flex items-center gap-3 flex-wrap">
-          <Link to="/verlauf-preview" data-testid="history-preview-link"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-cyan-400/30 bg-cyan-400/10 font-mono text-[11px] uppercase tracking-[0.14em] text-cyan-200 hover:bg-cyan-400/20 transition-colors">
-            <Sparkles size={13} /> Neue Ansicht (Vorschau)
-          </Link>
-          <a
-            href={grafanaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-testid="grafana-link"
-            title={`Grafana öffnen · ${grafanaUrl}`}
-            className="group inline-flex items-center gap-2 px-4 py-2 glass font-mono text-xs uppercase tracking-[0.18em] text-white/70 hover:text-cyan-300 hover:border-cyan-400/40 transition-colors"
-          >
-            <BarChart3 size={14} className="text-cyan-400" />
-            Grafana
-            <ExternalLink size={12} className="opacity-60 group-hover:opacity-100 transition-opacity" />
-          </a>
-          <div className="flex glass overflow-hidden" data-testid="range-toggle">
-            {RANGES.map((r) => (
-              <button
-                key={r}
-                onClick={() => setRange(r)}
-                data-testid={`range-${r}`}
-                aria-pressed={range === r}
-                className={`px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] border-l border-white/10 first:border-l-0 transition-colors ${
-                  range === r ? "bg-white/[0.10] text-white" : "text-white/55 hover:text-white hover:bg-white/[0.04]"
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="glass">
-        <div className="border-b border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/65">
-          Leistung · {range}
-        </div>
-        <div className="p-4" style={{ height: 380 }}>
-          <ChartBody loading={loading} error={error} data={data} />
-        </div>
-      </div>
-
-      <div className="glass">
-        <div className="border-b border-white/10 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/65">
-          Akku SoC · {range}
-        </div>
-        <div className="p-4" style={{ height: 220 }}>
-          {data.length > 0 && (
-            <ResponsiveContainer>
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="ts" tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" />
-                <YAxis domain={Y_DOMAIN_SOC} tick={TICK_STYLE} stroke="rgba(255,255,255,0.25)" label={Y_LABEL_PCT} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} />
-                <Line type="monotone" dataKey="SoC" stroke="#06B6D4" strokeWidth={2.5} dot={false}
-                      style={{ filter: "drop-shadow(0 0 5px rgba(6,182,212,0.6))" }} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
-
-      {/* Energiebilanz (kWh je Tag/Monat) */}
-      <EnergyBalance />
-
-      {/* Sonnen-Tagesverlauf (vom Dashboard hierher verschoben) */}
+      <IntroCard title="Verlauf" subtitle="Historische Leistung, Akku-SoC und Tagesenergien aus den lokalen Messdaten" sections={INTRO_SECTIONS} accent="#22D3EE" testid="intro-history" />
+      <TitleBar view={view} onView={pick(setView, "vp-view")} range={range} onRange={pick(setRange, "vp-range")} grafanaUrl={grafanaUrl} />
+      {view === "multi"
+        ? <MultiLine data={data} range={range} live={live} loading={loading} />
+        : <FourChannels data={data} live={live} loading={loading} />}
+      {view === "multi" && <BatteryHistory data={data} live={live} loading={loading} />}
+      <DayBalance live={live} today={today} yesterday={yesterday} />
       {live && <SunTimeline timestamp={live.timestamp} sun={live.sun} />}
     </div>
   );

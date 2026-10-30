@@ -4,10 +4,20 @@ import re
 
 
 async def run(page):
-    """Checks exercised through iteration 30; public URL comes from the environment."""
+    """Phase-2 regression: legacy preview redirects to the production history page."""
     await page.goto(os.environ['REACT_APP_BACKEND_URL'].rstrip('/') + '/verlauf-preview')
     await page.set_viewport_size({'width': 1920, 'height': 800})
     await page.get_by_test_id('vp-balance').wait_for()
+    assert page.url.endswith('/verlauf')
+    await page.get_by_test_id('history-page').wait_for()
+    await page.get_by_test_id('intro-history-toggle').click(force=True)
+    assert await page.get_by_test_id('intro-section-Ansichten').is_visible()
+    await page.get_by_test_id('intro-history-toggle').click(force=True)
+    config = await page.request.get(os.environ['REACT_APP_BACKEND_URL'].rstrip('/') + '/api/config')
+    link = page.get_by_test_id('grafana-link')
+    assert await link.get_attribute('href') == (await config.json())['grafana_url']
+    assert await link.get_attribute('target') == '_blank'
+    assert await page.get_by_test_id('vp-back').count() == 0
     await page.get_by_test_id('vp-view-multi').click(force=True)
     await page.get_by_test_id('vp-range-24h').click(force=True)
     await page.wait_for_timeout(1000)
@@ -44,12 +54,13 @@ async def run(page):
     await page.get_by_test_id('vp-ch-battery').wait_for()
     assert await page.get_by_test_id('vp-ch-battery').locator('path.recharts-line-curve[stroke="#22D3EE"]').count() == 1
     await check_battery_plot(page, page.get_by_test_id('vp-ch-battery'), dash='4 3')
-    await page.get_by_test_id('vp-back').click(force=True)
-    await page.get_by_test_id('history-page').wait_for()
-    await page.get_by_test_id('history-page').locator('.recharts-surface').first.wait_for()
-    assert await page.get_by_test_id('grafana-link').is_visible()
-    assert await page.get_by_test_id('history-page').locator('path.recharts-line-curve').count() >= 5
-    print('PASS preview core UI regression')
+    await page.get_by_test_id('vp-range-6h').click(force=True)
+    await page.reload()
+    await page.get_by_test_id('vp-four').wait_for()
+    assert await page.get_by_test_id('vp-range-6h').get_attribute('aria-pressed') == 'true'
+    await page.get_by_test_id('sun-timeline').scroll_into_view_if_needed()
+    assert await page.get_by_test_id('sun-timeline').is_visible()
+    print('PASS production history core UI regression')
 
 
 async def check_battery_plot(page, container, dash, check_w_axis=False):
@@ -122,3 +133,22 @@ async def check_missing_yesterday(page):
         assert all('Gestern: –' in text for text in texts), texts
     finally:
         await page.unroute('**/api/today*', unavailable)
+
+
+async def check_hover_resize_overflow(page):
+    """Regression for iteration 31: hidden daily tooltip must not widen mobile page."""
+    await page.goto(os.environ['REACT_APP_BACKEND_URL'].rstrip('/') + '/verlauf')
+    await page.set_viewport_size({'width': 1920, 'height': 800})
+    await page.get_by_test_id('vp-view-four').click(force=True)
+    chart = page.get_by_test_id('vp-balance-history-bars')
+    await chart.locator('.recharts-bar').first.wait_for()
+    await chart.scroll_into_view_if_needed()
+    await chart.locator('.recharts-bar').first.locator('path.recharts-rectangle').first.hover(force=True)
+    await page.wait_for_timeout(250)
+    await page.get_by_test_id('sun-timeline').scroll_into_view_if_needed()
+    await page.get_by_test_id('sun-view-bogen').click(force=True)
+    await page.get_by_test_id('sun-view-balken').click(force=True)
+    await page.set_viewport_size({'width': 390, 'height': 844})
+    await page.get_by_test_id('vp-view-four').click(force=True)
+    await page.wait_for_timeout(500)
+    assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth')
