@@ -12,11 +12,13 @@ const GROUP = "inline-flex items-center gap-1 rounded-xl border border-white/[0.
 export default function TitleBar({ view, onView, range, onRange }) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6" data-testid="vp-titlebar">
-      <div className="flex items-center gap-3 flex-wrap min-w-0 lg:flex-1">
-        <span className="grid place-items-center w-9 h-9 rounded-lg border border-cyan-400/30 bg-cyan-400/10 shrink-0">
-          <Activity size={17} className="text-cyan-300" />
-        </span>
-        <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white" data-testid="vp-title">Energie-Analyse &amp; Recharts Zeitverlauf</h1>
+      <div className="flex items-center gap-x-3 gap-y-2 flex-wrap min-w-0 lg:flex-1">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid place-items-center w-9 h-9 rounded-lg border border-cyan-400/30 bg-cyan-400/10 shrink-0">
+            <Activity size={17} className="text-cyan-300" />
+          </span>
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white leading-tight" data-testid="vp-title">Energie-Analyse &amp; Recharts Zeitverlauf</h1>
+        </div>
         <span className="px-2 py-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 font-mono text-[11px] text-emerald-300" data-testid="vp-live-badge">
           Live Synchron
         </span>

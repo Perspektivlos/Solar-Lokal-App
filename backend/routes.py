@@ -290,8 +290,8 @@ async def devices_discover(key: str) -> Dict[str, Any]:
 async def history(range: str = "1h") -> Dict[str, Any]:
     minutes = {"1h": 60, "3h": 180, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
-    cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(10000)
-    rows = await cur.to_list(10000)
+    cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", -1).limit(10000)
+    rows = (await cur.to_list(10000))[::-1]  # neueste behalten, dann chronologisch
     # downsample if too many points
     if len(rows) > 600:
         step = max(1, len(rows) // 600)

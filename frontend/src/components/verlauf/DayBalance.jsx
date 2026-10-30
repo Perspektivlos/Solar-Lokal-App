@@ -52,6 +52,11 @@ function DistBar({ title, titleColor, total, ratioLabel, segments, testid }) {
           </span>
         ))}
       </div>
+      {sum > total * 1.02 && (
+        <div className="mt-2 font-mono text-[10px] text-amber-300/80" data-testid={`${testid}-hint`}>
+          Hinweis: Akku-Ladung + Einspeisung ({formatNum(sum, 2)} kWh) liegen über dem Gerätezähler – Anteile beziehen sich auf diese Summe.
+        </div>
+      )}
     </div>
   );
 }

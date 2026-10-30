@@ -20,6 +20,8 @@ Gesammelte Erkenntnisse für künftige Sessions (vom Nutzer ausdrücklich gewün
 - Geräte: Kartentexte + nutzbare Akku-kWh stehen in der jeweiligen Gerätekachel (keine eigene „Anlage & Anzeige"-Kachel mehr – vom Nutzer verworfen).
 - Akku: „6× Power Queen 100 Ah", Spannung ~51,6 V (48-V-System). Nutzbare kWh in der App = 9,6 (Platzhalter!). Echte Kapazität hängt von der Modulspannung ab – beim Nutzer nachfragen, nicht raten.
 - Selbst-Test-Verlauf speichert NUR manuelle Läufe (Nutzerwunsch, kein Hintergrund-Test), max. 50 Läufe.
+- Verlauf: aktuelle Seite `/verlauf` bleibt bis zur Freigabe; neue Ansicht als Vorschau unter `/verlauf-preview` (Komponenten in `components/verlauf/`). Kanalfarben: PV #F59E0B, Haus #F43F5E, Akku #22D3EE, Netz #818CF8, Einspeisung #10B981.
+- Demo-Modus: Gerätezähler (yield_day/yield_today) und App-Integration (/api/today) stammen aus verschiedenen Quellen → Bilanzen können im Demo „nicht aufgehen" (erwartet).
 
 ## Energiefluss-Geometrie (EnergyFlow.jsx, Landscape viewBox 1060×420, Knoten 205×82)
 - Detail: Hoymiles (130,72) + Victron (365,72) nebeneinander oben links; Netz (160,315); Haus (530,250); Batterie (900,105); Sun-2000 (900,315).
