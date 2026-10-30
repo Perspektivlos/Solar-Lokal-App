@@ -406,7 +406,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     // Portrait (Mobil): 2 Spalten gestapelt – links PV→Haus→Netz, rechts Akku→Sun-2000.
     const P = portrait
       ? { pv: [140, 110], battery: [340, 250], sun2000: [340, 560], house: [140, 420], grid: [140, 730] }
-      : { pv: [175, 110], battery: [885, 110], sun2000: [885, 320], house: [530, 215], grid: [175, 320] };
+      : { pv: [130, 72], battery: [900, 105], sun2000: [900, 315], house: [530, 250], grid: [130, 348] };
     const pvEnabled = victronEnabled || hoymilesEnabled;
     if (pvEnabled) nodeList.push({ key: "pv", x: P.pv[0], y: P.pv[1], color: COLOR.pv, active: pvProducing, emblem: "sun",
       label: "Solar PV", badge: "AC+DC", value: round(pv), unit: "W", testid: "flow-pv",
@@ -440,9 +440,9 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     nodeList.push({ key: "house", x: 530, y: 250, color: COLOR.house, active: houseActive, emblem: "house",
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
     if (batteryEnabled) {
-      nodeList.push({ key: "battery", x: 930, y: 72, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
+      nodeList.push({ key: "battery", x: 900, y: 105, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
         label: "Batterie 48V", badge: "48V", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
-      nodeList.push({ key: "sun2000", x: 930, y: 348, color: COLOR.dc, active: dischargeActive, emblem: "bolt",
+      nodeList.push({ key: "sun2000", x: 900, y: 315, color: COLOR.dc, active: dischargeActive, emblem: "bolt",
         label: "Sun-2000", badge: "TRUCKI", value: round(discharge), unit: "W", sub: sun2000Sub, testid: "flow-sun2000" });
     }
     flowDefs = [
