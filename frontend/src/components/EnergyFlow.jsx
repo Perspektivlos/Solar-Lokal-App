@@ -391,7 +391,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   // Mobil (schmal) + Kompakt → echte Hochkant-Anordnung (zwei Spalten, gestapelt).
   const portrait = narrow && compact;
   const VBW = portrait ? 480 : 1060;
-  const VBH = portrait ? 840 : 420;
+  const VBH = portrait ? 640 : 420;
 
   // --- Knoten + Flüsse je Ansicht ---
   // Kompakt = 5 Knoten (Solar PV gebündelt), Detail = 6 Knoten (PV in Hoymiles AC
@@ -403,10 +403,10 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const sun2000Sub = dischargeActive ? `Regler · Lim ${round(trucki?.max_power_w || 0)}W` : "Standby";
   if (compact) {
     // Landscape: 2 Zeilen (oben PV/Akku, unten Netz/Sun-2000, Haus zentral).
-    // Portrait (Mobil): 2 Spalten gestapelt – links PV→Haus→Netz, rechts Akku→Sun-2000.
+    // Portrait (Mobil): Ecken + Mitte – oben PV/Akku, mittig Haus, unten Netz/Sun-2000.
     const P = portrait
-      ? { pv: [140, 110], battery: [340, 250], sun2000: [340, 560], house: [140, 420], grid: [140, 730] }
-      : { pv: [130, 72], battery: [900, 105], sun2000: [900, 315], house: [530, 250], grid: [130, 348] };
+      ? { pv: [118, 75], battery: [362, 75], house: [240, 320], grid: [118, 565], sun2000: [362, 565] }
+      : { pv: [130, 72], battery: [900, 105], sun2000: [900, 315], house: [530, 250], grid: [160, 315] };
     const pvEnabled = victronEnabled || hoymilesEnabled;
     if (pvEnabled) nodeList.push({ key: "pv", x: P.pv[0], y: P.pv[1], color: COLOR.pv, active: pvProducing, emblem: "sun",
       label: "Solar PV", badge: "AC+DC", value: round(pv), unit: "W", testid: "flow-pv",
@@ -435,7 +435,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     if (victronEnabled) nodeList.push({ key: "victron", x: 365, y: 72, color: COLOR.dc, active: pvDc > 5, emblem: "sun",
       label: "Victron MPPT", badge: "VENUS-OS", value: round(pvDc), unit: "W", testid: "flow-victron",
       sub: pvDc > 5 ? `DC · ${mppts.length}× String` : (isNight ? pvNightSub : "inaktiv") });
-    if (gridEnabled) nodeList.push({ key: "grid", x: 130, y: 348, color: gridColor, active: importActive || exportActive, emblem: "grid",
+    if (gridEnabled) nodeList.push({ key: "grid", x: 160, y: 315, color: gridColor, active: importActive || exportActive, emblem: "grid",
       label: "Stromnetz", badge: "PRO 3EM", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
     nodeList.push({ key: "house", x: 530, y: 250, color: COLOR.house, active: houseActive, emblem: "house",
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
