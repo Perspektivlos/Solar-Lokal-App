@@ -1,0 +1,41 @@
+{
+  "summary": "FlowSummary acceptance checks pass: PV/grid/autarky display exactly API-rounded values; battery equals captured SoC × configured 9.6 kWh; sources/labels/units and all 16 unique IDs verified. Two additional polling cycles succeed. No dashboard/summary overflow at 1920x800 or 390x844, no runtime exceptions. Backend 11/12 pass; supplemental semantic test exposes existing incorrect autarky calculation, reproduced twice.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/today",
+        "issue": "Existing autarky_pct uses (PV minus export) / household consumption, not household demand covered without grid import. Actual response: consumption 5.948 kWh, grid import 3.022 kWh, reported autarky 18.8%; household-demand definition gives 49.2%. Frontend correctly repeats the API value, but renaming it 'Autarkie heute' does not fix its meaning. Reproduced on initial test and retry.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_flow_summary.py",
+    "/app/backend/tests/test_today_comparison.py",
+    "/app/tests/flow_summary_ui_regression.py",
+    "/app/test_reports/pytest/pytest_flow_summary.xml"
+  ],
+  "action_items": [
+    "Correct or explicitly redefine daily autarky in routes.py; conventional demand-based autonomy is clamp((consumption_kwh - grid_import_kwh) / consumption_kwh × 100). Account for measured grid charging separately if that is supported; do not use PV-minus-export as household supply when DC battery charging/discharging exists.",
+    "Update the demo-mode PV & Netz details text that still says device YDay values are cumulative since midnight. This contradicts mocks.py and the newly corrected summary; code-review observation, not separately clicked in browser.",
+    "Rerun the semantic regression and exact UI/API checks after fixing daily autarky. No changes required for the verified FlowSummary PV, battery or grid display."
+  ],
+  "critical_code_review_comments": [
+    "routes.py lines 358-360 compute autarky from self_consumption_kwh = pv_kwh - grid_export_kwh. PV includes DC MPPT charging while house demand includes battery discharge, so that numerator is not household self-supply. This existing formula is inconsistent with conventional Autarkie and with the instantaneous household-coverage formula in FlowSummary lines 45-46.",
+    "Dashboard.jsx line 205 claims YDay counters accumulate since midnight even in demo mode, although mocks.py lines 61/110 generate sun-intensity-dependent instantaneous pseudo-counters."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_flow_summary.py",
+    "/app/tests/flow_summary_ui_regression.py",
+    "/app/test_reports/pytest/pytest_flow_summary.xml",
+    "/app/test_reports/iteration_32.json"
+  ],
+  "success_rate": {"backend": "91.7% (11/12; one semantic failure also fails retry)", "frontend": "100% of requested FlowSummary acceptance checks"},
+  "seed_data_creation": "None. No config/database writes; existing hardware is DEMO/MOCKED, application APIs are real. Browser used actual API responses without interception. Existing UTC method-level tests use a deterministic in-memory cursor fixture.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Requested display fix itself passes. Initial browser label assertions used inner_text and failed because CSS uppercase affects rendered text; corrected tests use text_content, then remaining checks pass. Saved browser regression is a reusable async run(page) entry; equivalent checks executed inline across two browser calls. No application source modified. Only relevant dashboard APIs tested, not unrelated control/discovery/CRUD endpoints. Core backend suite includes existing UTC today/yesterday checks. Treat the autarky finding as a pre-existing semantic backend issue, not a new FlowSummary integration regression.",
+  "rca of the issue": "GET /api/today returns 18.8% = (1.354 PV - 0.238 export) / 5.948 household kWh × 100. Grid-independent household demand yields (5.948 - 3.022) / 5.948 × 100 = 49.2%. snapshots integrate correctly under existing UTC tests, but routes.py uses the wrong numerator for household autonomy. Battery discharge and DC PV charging make PV self-consumption distinct from household self-supply. Correct the metric definition/backend formula; leave frontend API mapping unchanged."
+}

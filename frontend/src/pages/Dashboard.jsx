@@ -202,7 +202,7 @@ export default function Dashboard() {
   const pvGridDetails = [
     { label: "Zweck & Funktion", body: `Hoymiles HM1500 Mikro-Wechselrichter via Ahoy DTU. Aktuell ${formatNum(ahoy?.total_power, 0)} W AC über ${ahoy?.channels?.length || 0} Kanäle bei Limit ${formatNum(ahoy?.limit_percent, 0)} %. Netz: ${summary.grid_power >= 0 ? "Bezug" : "Einspeisung"} ${formatNum(Math.abs(summary.grid_power), 0)} W, Hausverbrauch ${formatNum(summary.house_power, 0)} W.` },
     { label: "Datenquellen", body: `Quelle aktuell: ${srcLabel(ahoy)}. MQTT bevorzugt, sonst HTTP /api; Netzwerte stammen vom Shelly.${demo_mode ? " Demo-Modus: simulierte Werte." : ""}` },
-    { label: "Aktualisierung", body: "Live alle 3 s; Tageserträge je Kanal (YDay) seit Mitternacht kumuliert." },
+    { label: "Aktualisierung", body: demo_mode ? "Live alle 3 s. Im Demo-Modus sind YDay-Gerätezähler nur simulierte Näherungswerte; der belastbare Tagesertrag wird aus dem Messverlauf integriert." : "Live alle 3 s; Tageserträge je Kanal (YDay) seit Mitternacht kumuliert. Die Dashboard-Kennzahl wird unabhängig davon aus dem Messverlauf integriert." },
     { label: "Layout-Gruppen", body: "Hoymiles-Kanaltabelle (P/U/I/YDay + Limit) · Einspeisung & Hausverbrauch." },
     { label: "Bekannte Einschränkungen", body: "Hausverbrauch wird rechnerisch aus PV, Netz und Akku ermittelt — bei Mess-Latenz kurzzeitig ungenau." },
     { label: "Mögliche Fehler", body: "Kanäle 0 W trotz Sonne → Ahoy-DTU/Wechselrichter prüfen. ‚FALLBACK' → Ahoy-IP prüfen." },

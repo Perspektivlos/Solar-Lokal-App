@@ -21,15 +21,15 @@ function Tile({ accent, icon: Icon, label, value, unit, sub, testid }) {
         style={{ background: `linear-gradient(90deg, ${accent}, transparent 85%)`, boxShadow: `0 0 10px ${accent}` }} />
       <div className="flex items-center gap-2 mb-2">
         <Icon size={13} color={accent} />
-        <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">{label}</span>
+        <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60" data-testid={`${testid}-label`}>{label}</span>
       </div>
       <div className="flex items-baseline gap-1.5">
         <span className="font-dseg text-[1.7rem] leading-none" style={{ color: accent, textShadow: `0 0 10px ${accent}88` }} data-testid={`${testid}-value`}>
           {value}
         </span>
-        <span className="font-mono text-[11px] text-white/40">{unit}</span>
+        <span className="font-mono text-[11px] text-white/40" data-testid={`${testid}-unit`}>{unit}</span>
       </div>
-      <div className="font-mono text-[10px] text-white/45 mt-1.5">{sub}</div>
+      <div className="font-mono text-[10px] text-white/45 mt-1.5" data-testid={`${testid}-source`}>{sub}</div>
     </div>
   );
 }
@@ -44,16 +44,16 @@ export default function FlowSummary({ live, today, usableKwh }) {
   const battKwh = (soc / 100) * cap;
   // Momentane Eigenabdeckung des Hausverbrauchs aus eigener Erzeugung.
   const instantCover = house <= 0 ? 100 : Math.max(0, Math.min(100, ((house - Math.max(0, grid)) / house) * 100));
-  // Tagesertrag je Quelle: Hoymiles (AC) und Summe beider Victron-MPPT (DC)
-  const ahoy = live?.ahoy || {};
-  const hoyKwh = ahoy.yield_day_kwh ?? (ahoy.channels || []).reduce((a, c) => a + (c.yield_day || 0), 0);
-  const mpptKwh = (live?.victron?.mppts || []).reduce((a, m) => a + (m.yield_today || 0), 0);
+  // Verlässlicher Tagesertrag: Integration der gespeicherten PV-Leistung seit 00:00 UTC.
+  // Die Geräte-YDay-Zähler sind im Demo-Modus Momentwerte und daher kein Tagesertrag.
+  const pvTodayKwh = today?.pv_kwh;
+  const measuredLabel = live?.demo_mode ? "Simulierter Messverlauf seit 00:00 UTC" : "Messverlauf seit 00:00 UTC";
 
   const tiles = [
-    { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solar Ertrag Heute", value: formatNum(hoyKwh + mpptKwh, 2), unit: "kWh", sub: `Hoymiles ${formatNum(hoyKwh, 2)} + MPPT ${formatNum(mpptKwh, 2)} kWh` },
-    { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Batterie Kapazität", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC (${formatNum(cap, 1)} kWh)` },
-    { testid: "summary-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, label: "Netzbezug Heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", sub: `Aktuell: ${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W` },
-    { testid: "summary-autarky", accent: COLOR.grid_exp, icon: Gauge, label: "Autarkiegrad", value: formatNum(today?.autarky_pct, 1), unit: "%", sub: `${formatNum(instantCover, 0)} % Eigenabdeckung` },
+    { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solarertrag heute", value: formatNum(pvTodayKwh, 2), unit: "kWh", sub: measuredLabel },
+    { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Akku verfügbar", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC von ${formatNum(cap, 1)} kWh nutzbar · Schätzwert` },
+    { testid: "summary-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, label: "Netzbezug heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", sub: `${measuredLabel} · aktuell ${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W` },
+    { testid: "summary-autarky", accent: COLOR.grid_exp, icon: Gauge, label: "Autarkie heute", value: formatNum(today?.autarky_pct, 1), unit: "%", sub: `Tageswert · aktuell ${formatNum(instantCover, 0)} % Eigenabdeckung` },
   ];
 
   return (
