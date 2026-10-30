@@ -21,15 +21,18 @@ const SYS_V = 51.2;
 const de = (n, d = 1) => n.toLocaleString("de-DE", { maximumFractionDigits: d });
 
 // Akku-Rechner: Module (V × Ah × Anzahl) × nutzbarer Anteil → nutzbare kWh
-function BatteryCalc({ calc, onChange }) {
+function BatteryCalc({ calc, usable, onChange }) {
   const c = { v: 0, ah: 100, count: 6, pct: 90, ...(calc || {}) };
+  const valid = (n) => n.v > 0 && n.ah > 0 && n.count > 0 && n.pct > 0;
+  const kwhOf = (n) => Math.round(((n.v * n.ah * n.count) / 1000) * (n.pct / 100) * 10) / 10;
   const set = (patch) => {
     const n = { ...c, ...patch };
-    const ok = n.v > 0 && n.ah > 0 && n.count > 0 && n.pct > 0;
-    onChange(n, ok ? Math.round(((n.v * n.ah * n.count) / 1000) * (n.pct / 100) * 10) / 10 : null);
+    onChange(n, valid(n) ? kwhOf(n) : null);
   };
-  const ok = c.v > 0 && c.ah > 0 && c.count > 0 && c.pct > 0;
+  const num = (e) => (e.target.value === "" ? "" : Number(e.target.value));
+  const ok = valid(c);
   const nominal = ok ? (c.v * c.ah * c.count) / 1000 : 0;
+  const overridden = ok && typeof usable === "number" && Math.abs(usable - kwhOf(c)) > 0.05;
   const s = c.v > 0 ? Math.max(1, Math.round(SYS_V / c.v)) : 1;
   const fits = c.count % s === 0;
   const lbl = "font-mono text-[10px] uppercase tracking-[0.22em] text-white/55";
@@ -48,19 +51,19 @@ function BatteryCalc({ calc, onChange }) {
         </div>
         <div>
           <label className={lbl}>Ah je Modul</label>
-          <input type="number" min="1" value={c.ah} onChange={(e) => set({ ah: Number(e.target.value) })} className={inp} data-testid="calc-module-ah" />
+          <input type="number" min="1" value={c.ah} onChange={(e) => set({ ah: num(e) })} className={inp} data-testid="calc-module-ah" />
         </div>
         <div>
           <label className={lbl}>Anzahl</label>
-          <input type="number" min="1" value={c.count} onChange={(e) => set({ count: Number(e.target.value) })} className={inp} data-testid="calc-module-count" />
+          <input type="number" min="1" value={c.count} onChange={(e) => set({ count: num(e) })} className={inp} data-testid="calc-module-count" />
         </div>
         <div>
           <label className={lbl}>Nutzbar (%)</label>
-          <input type="number" min="1" max="100" value={c.pct} onChange={(e) => set({ pct: Number(e.target.value) })} className={inp} data-testid="calc-usable-pct" />
+          <input type="number" min="1" max="100" value={c.pct} onChange={(e) => set({ pct: num(e) })} className={inp} data-testid="calc-usable-pct" />
         </div>
       </div>
       <div className="mt-3 font-mono text-[11px] text-white/60" data-testid="calc-result">
-        {!ok ? "Modulspannung wählen – die nutzbaren kWh werden automatisch übernommen." : (
+        {!ok ? (c.v > 0 ? "Bitte Ah, Anzahl und Nutzbar (%) ausfüllen." : "Modulspannung wählen – die nutzbaren kWh werden automatisch übernommen.") : (
           <>
             {fits
               ? <span>Schaltung {s}S{c.count / s}P · {de(s * c.v)} V · {de(c.ah * (c.count / s), 0)} Ah</span>
@@ -70,6 +73,11 @@ function BatteryCalc({ calc, onChange }) {
           </>
         )}
       </div>
+      {overridden && (
+        <div className="mt-1.5 font-mono text-[10px] text-amber-300/90" data-testid="calc-override-hint">
+          Feld „Nutzbare Kapazität" manuell auf {de(usable)} kWh gesetzt – der Rechner-Wert wird bei der nächsten Änderung übernommen.
+        </div>
+      )}
     </div>
   );
 }
@@ -308,7 +316,7 @@ export default function Devices() {
                   </div>
                 )}
                 {d.key === "trucki" && (
-                  <BatteryCalc calc={cfg.display?.battery_calc}
+                  <BatteryCalc calc={cfg.display?.battery_calc} usable={cfg.display?.usable_kwh}
                     onChange={(calc, kwh) => updateDisplay({ battery_calc: calc, ...(kwh != null ? { usable_kwh: kwh } : {}) })} />
                 )}
               </div>

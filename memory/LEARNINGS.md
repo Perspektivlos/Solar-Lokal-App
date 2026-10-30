@@ -7,7 +7,7 @@ Gesammelte Erkenntnisse für künftige Sessions (vom Nutzer ausdrücklich gewün
 - Visuelle Edits oft mehrdeutig („verschiebe es …", „fehl platziert") → kurz per Rückfrage klären (2–3 Optionen), dann direkt umsetzen.
 - Nutzer mag ausgewogene, symmetrische Layouts: gleiche Randabstände, nichts „in die Ecke gepresst", gleiche Abstände zwischen Reihen.
 - Stilrichtung zuletzt: „schlicht und reduziert" – weniger Glow, mehr Luft, ruhige Typografie, Fokus auf das Wesentliche.
-- Abgelehnt (NIE wieder vorschlagen): 48h-PV-Prognose, Watt-Labels auf Energiefluss-Linien, CSV-Export.
+- Abgelehnt (NIE wieder vorschlagen): 48h-PV-Prognose, Watt-Labels auf Energiefluss-Linien, CSV-Export, **Alarm-Ton / akustische Alarm-Hinweise** (30.10.2026 ausdrücklich: „Kein Alarm-Ton Hinweis!").
 - Kein Login (lokales Heimnetz). Demo-Modus Standard.
 
 ## Seitenaufbau (Stand 30.10.2026)
@@ -38,6 +38,5 @@ Gesammelte Erkenntnisse für künftige Sessions (vom Nutzer ausdrücklich gewün
 ## Ideen für später
 - Erledigt-Datum beim Abhaken automatisch setzen (Zeitachse wird genauer).
 - Notizen/Beschreibung je Roadmap-Punkt → fließt in Bericht.
-- Doku/Anleitung ebenfalls druckbar.
-- Alarm-Ton bei kritischen Alarmen.
 - Selbst-Test-Verlauf speichern.
+- (Erledigt 30.10.: Doku/Anleitung druckbar, Akku-Rechner, System-Zeile in der Fußleiste.)
