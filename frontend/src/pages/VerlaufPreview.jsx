@@ -19,17 +19,27 @@ export default function VerlaufPreview() {
   const [loading, setLoading] = useState(true);
   const [live, setLive] = useState(null);
   const [today, setToday] = useState(null);
+  const [yesterday, setYesterday] = useState(null);
 
   const pick = (setter, key) => (v) => { setter(v); localStorage.setItem(key, v); };
 
   useEffect(() => {
+    let alive = true;
     const load = () => {
-      getLive().then(setLive).catch(() => {});
-      getToday().then(setToday).catch(() => {});
+      getLive().then((d) => { if (alive) setLive(d); }).catch(() => {});
+      getToday().then((d) => { if (alive) setToday(d); }).catch(() => {});
     };
     load();
     const t = setInterval(load, 5000);
-    return () => clearInterval(t);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    const load = () => getToday(1).then((d) => { if (alive) setYesterday(d); }).catch(() => {});
+    load();
+    const t = setInterval(load, 60000);
+    return () => { alive = false; clearInterval(t); };
   }, []);
 
   useEffect(() => {
@@ -53,7 +63,7 @@ export default function VerlaufPreview() {
       {view === "multi"
         ? <MultiLine data={data} range={range} live={live} loading={loading} />
         : <FourChannels data={data} live={live} loading={loading} />}
-      <DayBalance live={live} today={today} />
+      <DayBalance live={live} today={today} yesterday={yesterday} />
       {live && <SunTimeline timestamp={live.timestamp} sun={live.sun} />}
     </div>
   );

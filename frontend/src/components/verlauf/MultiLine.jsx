@@ -72,8 +72,8 @@ export default function MultiLine({ data, range, live, loading }) {
               <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.2)" }} />
               <ReferenceLine y={0} stroke="rgba(255,255,255,0.28)" strokeDasharray="3 4" />
               {SERIES.map((ch) => (
-                <Line key={ch.key} type="monotone" dataKey={ch.key} stroke={ch.color} strokeWidth={2} dot={false} hide={!!hidden[ch.key]}
-                  strokeDasharray={ch.key === "Akku" ? "3 3" : undefined} isAnimationActive={false} />
+                <Line key={ch.key} type="monotone" dataKey={ch.key} stroke={ch.color} strokeWidth={ch.key === "Akku" ? 2.4 : 2}
+                  dot={false} hide={!!hidden[ch.key]} connectNulls={false} isAnimationActive={false} />
               ))}
             </LineChart>
           </ResponsiveContainer>

@@ -300,11 +300,17 @@ async def history(range: str = "1h") -> Dict[str, Any]:
 
 
 @api_router.get("/today")
-async def today() -> Dict[str, Any]:
-    """Trapez-integration of power values from UTC midnight."""
+async def today(day_offset: int = 0) -> Dict[str, Any]:
+    """Trapez-integration for one UTC day; day_offset=1 returns yesterday."""
+    day_offset = max(0, min(int(day_offset), 3650))
     now = datetime.now(timezone.utc)
-    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    cur = db.snapshots.find({"ts": {"$gte": midnight.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(20000)
+    today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_start = today_midnight - timedelta(days=day_offset)
+    day_end = min(now, day_start + timedelta(days=1)) if day_offset == 0 else day_start + timedelta(days=1)
+    cur = db.snapshots.find(
+        {"ts": {"$gte": day_start.isoformat(), "$lt": day_end.isoformat()}},
+        {"_id": 0},
+    ).sort("ts", 1).limit(20000)
     rows = await cur.to_list(20000)
     if not rows:
         return {
