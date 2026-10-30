@@ -432,7 +432,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     if (hoymilesEnabled) nodeList.push({ key: "hoymiles", x: 155, y: 80, color: COLOR.pv, active: pvAcActive, emblem: "sun",
       label: "Hoymiles", badge: "AHOY-DTU", value: round(pvAc), unit: "W", testid: "flow-hoymiles",
       sub: pvAcActive ? `HM1500 · ${ahoy?.limit_percent ?? 100}%` : pvNightSub });
-    if (victronEnabled) nodeList.push({ key: "victron", x: 155, y: 210, color: COLOR.dc, active: pvDc > 5, emblem: "sun",
+    if (victronEnabled) nodeList.push({ key: "victron", x: 530, y: 80, color: COLOR.dc, active: pvDc > 5, emblem: "sun",
       label: "Victron MPPT", badge: "VENUS-OS", value: round(pvDc), unit: "W", testid: "flow-victron",
       sub: pvDc > 5 ? `DC · ${mppts.length}× String` : (isNight ? pvNightSub : "inaktiv") });
     if (gridEnabled) nodeList.push({ key: "grid", x: 155, y: 340, color: gridColor, active: importActive || exportActive, emblem: "grid",

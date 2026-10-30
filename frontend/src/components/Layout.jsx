@@ -103,7 +103,7 @@ export default function Layout() {
                       <Icon size={14} strokeWidth={2} className="relative z-10" />
                       <span className="hidden lg:inline relative z-10">{l.label}</span>
                       {isActive && (
-                        <span className="absolute bottom-[9px] left-3 right-3 h-[2px] z-10"
+                        <span className="absolute bottom-[9px] left-[calc(25%+6px)] right-[calc(25%+6px)] h-[2px] z-10"
                               style={{ background: "linear-gradient(90deg, transparent, #06B6D4, transparent)", boxShadow: "0 0 8px #06B6D4aa" }} />
                       )}
                     </>

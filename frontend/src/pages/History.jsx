@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { getHistory, getConfig } from "../lib/api";
+import { getHistory, getConfig, getLive } from "../lib/api";
 import IntroCard from "../components/IntroCard";
+import SunTimeline from "../components/SunTimeline";
 import AlarmHistory from "../components/AlarmHistory";
 import EnergyBalance from "../components/EnergyBalance";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
@@ -84,8 +85,14 @@ export default function History() {
   const [error, setError] = useState(false);
   const [grafanaUrl, setGrafanaUrl] = useState(GRAFANA_URL_FALLBACK);
 
+  const [live, setLive] = useState(null);
+
   useEffect(() => {
     getConfig().then((c) => { if (c?.grafana_url) setGrafanaUrl(c.grafana_url); }).catch(() => {});
+    const loadLive = () => getLive().then(setLive).catch(() => {});
+    loadLive();
+    const t = setInterval(loadLive, 60000);
+    return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
@@ -184,6 +191,9 @@ export default function History() {
 
       {/* Kompakte Alarm-Historie */}
       <AlarmHistory limit={8} compact />
+
+      {/* Sonnen-Tagesverlauf (vom Dashboard hierher verschoben) */}
+      {live && <SunTimeline timestamp={live.timestamp} sun={live.sun} />}
     </div>
   );
 }

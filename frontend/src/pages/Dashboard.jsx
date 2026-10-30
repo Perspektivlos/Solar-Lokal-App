@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getLive, getToday, getHistory, getConfig, putConfig } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
-import SunTimeline from "../components/SunTimeline";
 import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
@@ -261,7 +260,6 @@ export default function Dashboard() {
         <DeviceCards live={live} today={today} display={display} />
         <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} sun={sun} />
         <FlowSummary live={live} today={today} usableKwh={display?.usable_kwh} />
-        <SunTimeline timestamp={timestamp} sun={sun} />
       </div>
 
       {/* SEKTION · BATTERIE */}
