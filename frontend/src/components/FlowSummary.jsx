@@ -50,7 +50,7 @@ export default function FlowSummary({ live, today, usableKwh }) {
   const mpptKwh = (live?.victron?.mppts || []).reduce((a, m) => a + (m.yield_today || 0), 0);
 
   const tiles = [
-    { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solar Ertrag Heute", value: formatNum(today?.pv_kwh, 2), unit: "kWh", sub: `Hoymiles ${formatNum(hoyKwh, 2)} + MPPT ${formatNum(mpptKwh, 2)} kWh` },
+    { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solar Ertrag Heute", value: formatNum(hoyKwh + mpptKwh, 2), unit: "kWh", sub: `Hoymiles ${formatNum(hoyKwh, 2)} + MPPT ${formatNum(mpptKwh, 2)} kWh` },
     { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Batterie Kapazität", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC (${formatNum(cap, 1)} kWh)` },
     { testid: "summary-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, label: "Netzbezug Heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", sub: `Aktuell: ${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W` },
     { testid: "summary-autarky", accent: COLOR.grid_exp, icon: Gauge, label: "Autarkiegrad", value: formatNum(today?.autarky_pct, 1), unit: "%", sub: `${formatNum(instantCover, 0)} % Eigenabdeckung` },

@@ -27,23 +27,26 @@ export function relativeTime(iso, nowMs) {
   return dt.toLocaleTimeString("de-DE");
 }
 
-const CARD_SHADOW = "0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -20px rgba(140,146,172,0.35)";
-const CARD_SHADOW_DANGER = "inset 0 0 0 1px rgba(239,68,68,0.45), 0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -18px rgba(239,68,68,0.30)";
+// Einheitliche Detailkarte im Stil der Geräte-Karten: dunkler Verlauf, Akzent-Rahmen + Oberkante, Icon-Box.
+const cardShadow = (c) => `inset 0 1px 0 rgba(226,232,240,0.05), 0 18px 44px -26px #000, 0 0 26px -14px ${c}`;
 
-// Einheitliche Detailkarte: Header (Titel + Badge) · Akzentbalken · Glow · Body.
 export function GlassCard({ title, accent = "#8C92AC", icon: Icon, badge, testid, children, danger, className = "" }) {
+  const edge = danger ? "#EF4444" : accent;
   return (
     <div
-      className={`glass card-lift group relative overflow-hidden h-full flex flex-col ${className}`}
+      className={`card-lift relative rounded-xl overflow-hidden h-full flex flex-col ${className}`}
       data-testid={testid}
-      style={{ boxShadow: danger ? CARD_SHADOW_DANGER : CARD_SHADOW }}
+      style={{ background: "linear-gradient(150deg, #0d1626 0%, #070c18 100%)", border: `1px solid ${edge}${danger ? "88" : "3a"}`, boxShadow: cardShadow(edge) }}
     >
-      <span className="absolute top-0 left-0 right-0 h-[3px] opacity-90 pointer-events-none z-10" style={{ background: `linear-gradient(90deg, ${accent}, transparent 88%)`, boxShadow: `0 0 14px ${accent}, 0 1px 8px ${accent}aa` }} />
-      <div className="absolute -top-14 -right-14 w-36 h-36 rounded-full opacity-[0.18] blur-3xl pointer-events-none transition-opacity duration-300 group-hover:opacity-30" style={{ background: accent }} />
-      <div className="relative border-b border-[#8C92AC]/12 bg-gradient-to-b from-white/[0.035] to-transparent px-5 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          {Icon && <Icon size={13} strokeWidth={2.4} className="shrink-0 transition-colors duration-300" style={{ color: accent }} />}
-          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8C92AC] group-hover:text-silver transition-colors duration-300 truncate">{title}</span>
+      <span className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none z-10" style={{ background: `linear-gradient(90deg, ${accent}, transparent 85%)`, boxShadow: `0 0 12px ${accent}` }} />
+      <div className="relative border-b border-white/[0.06] px-5 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {Icon && (
+            <span className="grid place-items-center rounded-md shrink-0" style={{ width: 26, height: 26, background: `${accent}1f`, border: `1px solid ${accent}55` }}>
+              <Icon size={14} color={accent} />
+            </span>
+          )}
+          <span className="font-sans text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-white/85 truncate">{title}</span>
         </div>
         {badge}
       </div>
