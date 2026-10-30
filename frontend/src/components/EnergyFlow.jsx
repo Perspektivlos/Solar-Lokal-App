@@ -429,20 +429,20 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       { id: "grid-house", from: "grid", to: "house", color: gridColor, active: importActive || exportActive, watts: Math.abs(grid), reverse: exportActive },
     ];
   } else {
-    if (hoymilesEnabled) nodeList.push({ key: "hoymiles", x: 155, y: 80, color: COLOR.pv, active: pvAcActive, emblem: "sun",
+    if (hoymilesEnabled) nodeList.push({ key: "hoymiles", x: 130, y: 72, color: COLOR.pv, active: pvAcActive, emblem: "sun",
       label: "Hoymiles", badge: "AHOY-DTU", value: round(pvAc), unit: "W", testid: "flow-hoymiles",
       sub: pvAcActive ? `HM1500 · ${ahoy?.limit_percent ?? 100}%` : pvNightSub });
-    if (victronEnabled) nodeList.push({ key: "victron", x: 530, y: 80, color: COLOR.dc, active: pvDc > 5, emblem: "sun",
+    if (victronEnabled) nodeList.push({ key: "victron", x: 365, y: 72, color: COLOR.dc, active: pvDc > 5, emblem: "sun",
       label: "Victron MPPT", badge: "VENUS-OS", value: round(pvDc), unit: "W", testid: "flow-victron",
       sub: pvDc > 5 ? `DC · ${mppts.length}× String` : (isNight ? pvNightSub : "inaktiv") });
-    if (gridEnabled) nodeList.push({ key: "grid", x: 155, y: 340, color: gridColor, active: importActive || exportActive, emblem: "grid",
+    if (gridEnabled) nodeList.push({ key: "grid", x: 130, y: 348, color: gridColor, active: importActive || exportActive, emblem: "grid",
       label: "Stromnetz", badge: "PRO 3EM", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
-    nodeList.push({ key: "house", x: 530, y: 210, color: COLOR.house, active: houseActive, emblem: "house",
+    nodeList.push({ key: "house", x: 530, y: 250, color: COLOR.house, active: houseActive, emblem: "house",
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
     if (batteryEnabled) {
-      nodeList.push({ key: "battery", x: 905, y: 120, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
+      nodeList.push({ key: "battery", x: 930, y: 72, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
         label: "Batterie 48V", badge: "48V", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
-      nodeList.push({ key: "sun2000", x: 905, y: 300, color: COLOR.dc, active: dischargeActive, emblem: "bolt",
+      nodeList.push({ key: "sun2000", x: 930, y: 348, color: COLOR.dc, active: dischargeActive, emblem: "bolt",
         label: "Sun-2000", badge: "TRUCKI", value: round(discharge), unit: "W", sub: sun2000Sub, testid: "flow-sun2000" });
     }
     flowDefs = [
