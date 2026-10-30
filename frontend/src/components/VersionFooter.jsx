@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getConfig } from "../lib/api";
-import { APP_NAME, APP_VERSION, APP_LAST_UPDATED } from "../lib/appmeta";
+import { APP_SYSTEM, APP_VERSION, APP_LAST_UPDATED } from "../lib/appmeta";
 
 export default function VersionFooter({ onOpenWhatsNew }) {
   const [demo, setDemo] = useState(null);
@@ -22,12 +22,20 @@ export default function VersionFooter({ onOpenWhatsNew }) {
 
   return (
     <footer
-      className="fixed bottom-0 inset-x-0 z-40 glass-strong border-0 border-t border-white/10"
+      className="fixed bottom-0 inset-x-0 z-40 glass-strong border-0 border-t border-white/10 print:hidden"
       data-testid="version-footer"
     >
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-10 flex items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#8C92AC]/70">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="hidden md:inline text-white/55 truncate">{APP_NAME}</span>
+          <span className="hidden md:inline-flex items-center gap-2 min-w-0 truncate normal-case tracking-[0.14em] text-white/50" data-testid="footer-system">
+            {APP_SYSTEM.map((part, i) => (
+              <span key={part} className="inline-flex items-center gap-2 whitespace-nowrap">
+                {i > 0 && <span className="w-1 h-1 rounded-full bg-cyan-400/50" />}
+                {part}
+              </span>
+            ))}
+          </span>
+          <span className="hidden md:inline-block w-px h-3 bg-white/10" />
           <Link
             to="/doku"
             data-testid="footer-version"

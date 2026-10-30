@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { COLOR } from "../components/solar-ui";
 import { MiniMock } from "../components/MiniMock";
-import { ReportPrintButton } from "../components/ReportPrint";
+import { PrintButton } from "../components/ReportPrint";
 import { getRoadmap } from "../lib/api";
 import { APP_NAME, APP_VERSION, APP_LAST_UPDATED, ROADMAP } from "../lib/appmeta";
 
@@ -248,7 +248,7 @@ export default function Report() {
               </button>
             ))}
           </nav>
-          <ReportPrintButton />
+          <PrintButton className="ml-auto" />
         </div>
       </header>
 

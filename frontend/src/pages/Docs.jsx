@@ -7,6 +7,7 @@ import { Link, useOutletContext } from "react-router-dom";
 import { ArrowLeft, Map, BookOpen, ChevronDown, Monitor, Cpu, Workflow, Server, CircleCheck, Clock, CircleDashed, Plus, Trash2, GripVertical, Pencil, Sparkles, FileText } from "lucide-react";
 import { getConfig, getDeviceInfo, getRoadmap, putRoadmap } from "../lib/api";
 import { APP_NAME, APP_VERSION, APP_LAST_UPDATED, ROADMAP as FALLBACK_ROADMAP, ROADMAP_GROUPS } from "../lib/appmeta";
+import { PrintButton } from "../components/ReportPrint";
 
 const STATUS_ICON = { done: CircleCheck, wip: Clock, planned: CircleDashed };
 const newId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -46,7 +47,7 @@ function RoadmapView({ items, editing, onChange }) {
           <div key={g.key} data-testid={`roadmap-col-${g.key}`}
             onDragOver={(e) => { if (dragId) { e.preventDefault(); setOverKey(g.key); } }}
             onDrop={() => { if (dragId) { move(dragId, g.key, null); setDragId(null); setOverKey(null); } }}
-            className="rounded-xl p-4 transition-colors"
+            className="print-card rounded-xl p-4 transition-colors"
             style={{ background: "linear-gradient(150deg, #0c1526 0%, #070c18 100%)", border: `1px solid ${overKey === g.key && dragId ? g.color : `${g.color}33`}`, boxShadow: `0 0 22px -14px ${g.color}` }}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em]" style={{ color: g.color }}>
@@ -121,7 +122,7 @@ function Row({ k, v, accent }) {
 
 function Section({ icon: Icon, title, accent, open, onToggle, children, testid }) {
   return (
-    <div className="rounded-xl overflow-hidden" data-testid={testid}
+    <div className="print-card rounded-xl overflow-hidden" data-testid={testid}
       style={{ background: "linear-gradient(150deg, #0c1526 0%, #070c18 100%)", border: `1px solid ${accent}2e` }}>
       <button type="button" onClick={onToggle} data-testid={`${testid}-toggle`}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors">
@@ -138,11 +139,13 @@ function Section({ icon: Icon, title, accent, open, onToggle, children, testid }
   );
 }
 
-function GuideView({ config, devInfo }) {
+function GuideView({ config, devInfo, allOpen }) {
   const [open, setOpen] = useState({ app: true });
   const toggle = (k) => setOpen((o) => ({ ...o, [k]: !o[k] }));
+  const isOpen = (k) => allOpen || !!open[k];
   const labels = config?.display?.labels || {};
   const usable = config?.display?.usable_kwh;
+  const calc = config?.display?.battery_calc;
   const demo = config?.demo_mode;
   const dev = (key) => devInfo?.[key];
   const fw = (key) => {
@@ -154,7 +157,7 @@ function GuideView({ config, devInfo }) {
 
   return (
     <div className="space-y-4 max-w-3xl" data-testid="guide-view">
-      <Section testid="guide-app" icon={Monitor} title="App-Bedienung" accent="#06B6D4" open={!!open.app} onToggle={() => toggle("app")}>
+      <Section testid="guide-app" icon={Monitor} title="App-Bedienung" accent="#06B6D4" open={isOpen("app")} onToggle={() => toggle("app")}>
         <p><b className="text-white/90">Dashboard:</b> Oben vier Geräte-Karten (Solar PV, Batterie 48 V, Hausverbrauch, Stromnetz) mit Live-Werten, darunter der Energiefluss und eine Kennzahlen-Zeile.</p>
         <p><b className="text-white/90">Energiefluss:</b> Ansicht <span className="text-cyan-300">Auto / Kompakt / Detail</span> (Kompakt = 5 Knoten, Detail = 6), <span className="text-cyan-300">Fluss an/aus</span> schaltet die Partikelanimation, <span className="text-cyan-300">Tempo 1× / 1.5× / 2×</span> regelt die Geschwindigkeit. Knoten anklicken zeigt Details.</p>
         <p><b className="text-white/90">Favoriten:</b> Geräte, MPPT-Strings oder Phasen über den Stern anpinnen – sie erscheinen oben und lassen sich per Ziehen sortieren.</p>
@@ -162,7 +165,7 @@ function GuideView({ config, devInfo }) {
         <p><b className="text-white/90">Steuerung:</b> Hoymiles-Begrenzung & Trucki/SUN. <b className="text-white/90">Diagnose:</b> Geräte-Selbsttest. <b className="text-white/90">Verlauf:</b> historische Kurven & Energiebilanz.</p>
       </Section>
 
-      <Section testid="guide-devices" icon={Cpu} title="Anlage & Geräte" accent="#34D399" open={!!open.devices} onToggle={() => toggle("devices")}>
+      <Section testid="guide-devices" icon={Cpu} title="Anlage & Geräte" accent="#34D399" open={isOpen("devices")} onToggle={() => toggle("devices")}>
         <div className="rounded-lg border border-white/8 p-3">
           <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-yellow-300/80">Shelly Pro 3EM <span className="text-white/40">· {labels.grid || "Netzzähler"}</span></div>
           <p className="mt-1">3-phasiger Energiezähler am Netzanschlusspunkt (L1/L2/L3). Liefert Bezug/Einspeisung in Echtzeit.</p>
@@ -186,11 +189,12 @@ function GuideView({ config, devInfo }) {
         <div className="rounded-lg border border-white/8 p-3">
           <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-cyan-300/80">48 V-LiFePO4-Speicher <span className="text-white/40">· {labels.battery || "Akku"}</span></div>
           <p className="mt-1">Zentraler Gleichstromspeicher. Nutzbare Kapazität (für die Kennzahl „Batterie Kapazität"):</p>
+          {calc?.v > 0 && <Row k="Module" v={`${calc.count}× ${String(calc.v).replace(".", ",")} V · ${calc.ah} Ah · ${calc.pct} % nutzbar`} />}
           <Row k="Nutzbare Kapazität" v={`${usable ?? "9,6"} kWh`} accent="#06B6D4" />
         </div>
       </Section>
 
-      <Section testid="guide-model" icon={Workflow} title="Energie- & Verkabelungsmodell" accent="#FACC15" open={!!open.model} onToggle={() => toggle("model")}>
+      <Section testid="guide-model" icon={Workflow} title="Energie- & Verkabelungsmodell" accent="#FACC15" open={isOpen("model")} onToggle={() => toggle("model")}>
         <p>Das System ist <b className="text-white/90">DC-gekoppelt</b>: Die Victron-MPPT laden die Batterie auf der DC-Seite, der Hoymiles speist PV direkt als AC ins Haus, und der Trucki/SUN entlädt die Batterie geregelt auf die AC-Seite (<b className="text-white/90">Nulleinspeisung</b>).</p>
         <div className="rounded-lg border border-white/8 p-3 font-mono text-[12px] text-cyan-200">
           Hausverbrauch = Hoymiles-AC + SUN-Entladung + Netzfluss (Shelly)
@@ -198,7 +202,7 @@ function GuideView({ config, devInfo }) {
         <p className="text-white/55 text-[12px]">Hinweis: Die DC-Ladeleistung der Victron-MPPT lädt nur den Akku und zählt <b>nicht</b> direkt als Hauslast – so werden Doppelzählungen vermieden.</p>
       </Section>
 
-      <Section testid="guide-setup" icon={Server} title="Lokales Setup" accent="#8C92AC" open={!!open.setup} onToggle={() => toggle("setup")}>
+      <Section testid="guide-setup" icon={Server} title="Lokales Setup" accent="#8C92AC" open={isOpen("setup")} onToggle={() => toggle("setup")}>
         <p><b className="text-white/90">Mosquitto MQTT</b> liefert die Live-Werte (Victron/Venus OS, Shelly, AhoyDTU, Trucki). <b className="text-white/90">InfluxDB</b> speichert Zeitreihen, <b className="text-white/90">Grafana</b> visualisiert sie (Auto-Provisioning).</p>
         <Row k="Aktueller Modus" v={demo === undefined ? "–" : demo ? "Demo (simuliert)" : "Live (lokales Netz)"} accent={demo ? "#FACC15" : "#34D399"} />
         <p className="text-white/55 text-[12px]">Im <b>Demo-Modus</b> werden realistische Werte simuliert (kein Netzwerkzugriff). Für den Echtbetrieb in den Geräte-Einstellungen auf <b>Live</b> umschalten.</p>
@@ -214,6 +218,7 @@ export default function Docs() {
   const [devInfo, setDevInfo] = useState(null);
   const [items, setItems] = useState(FALLBACK_ROADMAP);
   const [editing, setEditing] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const saveTimer = useRef(null);
 
   useEffect(() => {
@@ -238,9 +243,11 @@ export default function Docs() {
     { v: "guide", label: "Anleitung", icon: BookOpen },
   ];
 
+  const printTitle = "hidden print:block font-mono text-[12px] uppercase tracking-[0.18em] text-cyan-300 mb-3 mt-6";
+
   return (
-    <div data-testid="docs-page">
-      <Link to="/" className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-cyan-300 hover:text-cyan-200 transition-colors" data-testid="docs-back">
+    <div className="report-print-root" data-testid="docs-page">
+      <Link to="/" className="print:hidden inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-cyan-300 hover:text-cyan-200 transition-colors" data-testid="docs-back">
         <ArrowLeft size={13} /> Zurück zum Dashboard
       </Link>
       <div className="flex items-end justify-between gap-4 flex-wrap mt-3 mb-5">
@@ -251,7 +258,9 @@ export default function Docs() {
           </h1>
           <p className="text-white/55 text-sm mt-1.5">{APP_NAME} · v{APP_VERSION} · Stand {APP_LAST_UPDATED}</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap print:hidden">
+          <PrintButton prefix="docs-print" className="py-2"
+            onBefore={() => { setEditing(false); setPrinting(true); }} onAfter={() => setPrinting(false)} />
           <Link to="/bericht" data-testid="docs-report-link"
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-cyan-400/30 bg-cyan-400/10 font-mono text-[11px] uppercase tracking-[0.12em] text-cyan-200 hover:bg-cyan-400/20 transition-colors">
             <FileText size={13} /> Projektbericht
@@ -275,9 +284,10 @@ export default function Docs() {
         </div>
       </div>
 
-      {tab === "roadmap" ? (
+      {(printing || tab === "roadmap") && (
         <>
-          <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className={printTitle}>Roadmap</h2>
+          <div className="flex items-center justify-between gap-3 mb-4 print:hidden">
             <span className="font-mono text-[11px] text-white/45">
               {editing ? "Bearbeiten: hinzufügen, umbenennen, Status wählen, ziehen zum Verschieben/Sortieren." : "Nur-Lese-Ansicht."}
             </span>
@@ -288,7 +298,13 @@ export default function Docs() {
           </div>
           <RoadmapView items={items} editing={editing} onChange={updateItems} />
         </>
-      ) : <GuideView config={config} devInfo={devInfo} />}
+      )}
+      {(printing || tab === "guide") && (
+        <>
+          <h2 className={printTitle} style={{ breakBefore: "page" }}>Anleitung</h2>
+          <GuideView config={config} devInfo={devInfo} allOpen={printing} />
+        </>
+      )}
     </div>
   );
 }

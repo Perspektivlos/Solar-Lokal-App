@@ -16,6 +16,64 @@ const DEVICES = [
   { key: "victron", label: "Victron VenusOS Large",              hint: "2× SmartSolar MPPT 150/35",    accent: "#34D399", cards: [] },
 ];
 
+const MODULE_V = [12.8, 25.6, 51.2];
+const SYS_V = 51.2;
+const de = (n, d = 1) => n.toLocaleString("de-DE", { maximumFractionDigits: d });
+
+// Akku-Rechner: Module (V × Ah × Anzahl) × nutzbarer Anteil → nutzbare kWh
+function BatteryCalc({ calc, onChange }) {
+  const c = { v: 0, ah: 100, count: 6, pct: 90, ...(calc || {}) };
+  const set = (patch) => {
+    const n = { ...c, ...patch };
+    const ok = n.v > 0 && n.ah > 0 && n.count > 0 && n.pct > 0;
+    onChange(n, ok ? Math.round(((n.v * n.ah * n.count) / 1000) * (n.pct / 100) * 10) / 10 : null);
+  };
+  const ok = c.v > 0 && c.ah > 0 && c.count > 0 && c.pct > 0;
+  const nominal = ok ? (c.v * c.ah * c.count) / 1000 : 0;
+  const s = c.v > 0 ? Math.max(1, Math.round(SYS_V / c.v)) : 1;
+  const fits = c.count % s === 0;
+  const lbl = "font-mono text-[10px] uppercase tracking-[0.22em] text-white/55";
+  const inp = "glass-input w-full px-3 py-2 font-mono text-sm mt-1";
+
+  return (
+    <div className="sm:col-span-2 rounded-lg border border-cyan-400/15 bg-cyan-400/[0.03] p-3" data-testid="battery-calc">
+      <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-300/80">Akku-Rechner</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
+        <div>
+          <label className={lbl}>Modul (V)</label>
+          <select value={c.v || ""} onChange={(e) => set({ v: Number(e.target.value) })} className={`${inp} bg-transparent`} data-testid="calc-module-v">
+            <option value="">wählen</option>
+            {MODULE_V.map((v) => <option key={v} value={v}>{de(v)} V</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={lbl}>Ah je Modul</label>
+          <input type="number" min="1" value={c.ah} onChange={(e) => set({ ah: Number(e.target.value) })} className={inp} data-testid="calc-module-ah" />
+        </div>
+        <div>
+          <label className={lbl}>Anzahl</label>
+          <input type="number" min="1" value={c.count} onChange={(e) => set({ count: Number(e.target.value) })} className={inp} data-testid="calc-module-count" />
+        </div>
+        <div>
+          <label className={lbl}>Nutzbar (%)</label>
+          <input type="number" min="1" max="100" value={c.pct} onChange={(e) => set({ pct: Number(e.target.value) })} className={inp} data-testid="calc-usable-pct" />
+        </div>
+      </div>
+      <div className="mt-3 font-mono text-[11px] text-white/60" data-testid="calc-result">
+        {!ok ? "Modulspannung wählen – die nutzbaren kWh werden automatisch übernommen." : (
+          <>
+            {fits
+              ? <span>Schaltung {s}S{c.count / s}P · {de(s * c.v)} V · {de(c.ah * (c.count / s), 0)} Ah</span>
+              : <span className="text-amber-300">Anzahl passt nicht zu 48 V (Vielfaches von {s} nötig)</span>}
+            <span className="text-white/30"> · </span>
+            {de(nominal, 2)} kWh nominal → <span className="text-cyan-300">{de(nominal * (c.pct / 100))} kWh nutzbar</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const INTRO_SECTIONS = [
   {
     label: "Zweck & Funktion",
@@ -248,6 +306,10 @@ export default function Devices() {
                            onChange={(e) => updateDisplay({ usable_kwh: Number(e.target.value) })}
                            className="glass-input w-full px-3 py-2 font-mono text-sm mt-1" data-testid="input-usable-kwh" />
                   </div>
+                )}
+                {d.key === "trucki" && (
+                  <BatteryCalc calc={cfg.display?.battery_calc}
+                    onChange={(calc, kwh) => updateDisplay({ battery_calc: calc, ...(kwh != null ? { usable_kwh: kwh } : {}) })} />
                 )}
               </div>
             )}

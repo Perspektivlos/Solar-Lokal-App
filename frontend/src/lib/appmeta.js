@@ -2,6 +2,7 @@
  * neuer Funktionen gepflegt wird – Fußleiste und Doku/Roadmap-Ansicht lesen von hier.
  * Status je Punkt: "done" (Erledigt) · "wip" (In Arbeit) · "planned" (Geplant). */
 export const APP_NAME = "HauckLab · Solar'Projekt";
+export const APP_SYSTEM = ["Hoymiles HM-1500 + 2x Victron MPPT", "48V LiFePO4", "Shelly Pro 3EM"];
 export const APP_VERSION = "1.6.0";
 export const APP_LAST_UPDATED = "2026-10-29";
 

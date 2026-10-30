@@ -294,7 +294,7 @@ body::after {
     html[data-print] * { -webkit-print-color-adjust: exact; print-color-adjust: exact; animation: none !important; }
 
     html[data-print="dark"], html[data-print="dark"] body { background: #04060c !important; }
-    html[data-print="dark"] .report-print-root main { padding: 12mm 14mm !important; }
+    html[data-print="dark"] main { padding: 12mm 14mm !important; }
 
     html[data-print="light"] * { text-shadow: none !important; box-shadow: none !important; }
     html[data-print="light"] .report-print-root { color: #0f172a !important; }
@@ -309,6 +309,11 @@ body::after {
     html[data-print="light"] .report-print-root :is(.text-cyan-200, .text-cyan-300, .text-cyan-300\/80, .text-cyan-300\/70) { color: #0e7490 !important; }
     html[data-print="light"] .report-print-root .text-emerald-300 { color: #047857 !important; }
     html[data-print="light"] .report-print-root .text-white\/70 { color: #334155 !important; }
+    html[data-print="light"] .report-print-root :is(.text-white\/90, .text-white\/85, .text-white\/75) { color: #1e293b !important; }
+    html[data-print="light"] .report-print-root :is(.text-yellow-300\/80) { color: #a16207 !important; }
+    html[data-print="light"] .report-print-root :is(.text-emerald-300\/80) { color: #047857 !important; }
+    html[data-print="light"] .report-print-root .border-white\/8 { border-color: #e2e8f0 !important; }
+    html[data-print="light"] .report-print-root .print-card { background: #f8fafc !important; border-color: #e2e8f0 !important; }
     html[data-print="light"] .report-print-root .text-emerald-300\/80 { color: #047857 !important; }
     html[data-print="light"] .report-print-root :is(.text-amber-200\/90, .text-amber-300) { color: #b45309 !important; }
     html[data-print="light"] .report-print-root :is(.text-red-300, .text-red-400) { color: #b91c1c !important; }

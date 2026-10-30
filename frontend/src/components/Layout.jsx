@@ -61,7 +61,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen text-white">
-      <header className="sticky top-0 z-50 glass-strong border-0 border-b border-white/10">
+      <header className="sticky top-0 z-50 glass-strong border-0 border-b border-white/10 print:hidden">
         <div className="max-w-[1600px] mx-auto px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-3" data-testid="brand">
             <div className="relative w-9 h-9 rounded-md flex items-center justify-center"
@@ -71,7 +71,6 @@ export default function Layout() {
             </div>
             <div>
               <div className="font-semibold tracking-tight text-sm leading-none text-white">HauckLab · Solar'Projekt</div>
-              <div className="hidden sm:block font-mono text-[10px] text-white/55 uppercase tracking-[0.2em] mt-1 whitespace-nowrap">Hoymiles HM-1500 + 2x Victron MPPT • 48V LiFePO4 • Shelly Pro 3EM</div>
             </div>
           </div>
           <nav className="flex items-stretch h-full min-w-0 flex-1 lg:justify-end overflow-x-auto whitespace-nowrap" data-testid="nav-menu">
