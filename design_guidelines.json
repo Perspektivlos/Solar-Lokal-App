@@ -1,131 +1,90 @@
 {
-  "project_name": "Solar SCADA Control-Room Elevation",
+  "project_name": "Solar SCADA Dashboard - Tagesverlauf Redesign",
   "app_type": "dashboard",
   "theme": "dark",
-  "archetype": "ARCHETYPE 2: THE PERFORMANCE PRO & INDUSTRIAL SCADA (Deep Obsidian + Tactical Chamfer + Neon Glows)",
+  "archetype": "ARCHETYPE 2: THE PERFORMANCE PRO & INDUSTRIAL SCADA (Schlicht & Reduziert Direction)",
   "instructions_to_main_agent": [
-    "Retain all existing functionality, routes, and data flows. Do NOT redesign from scratch and do NOT remove features.",
-    "Elevate the visual experience to an Awwwards/industrial level HMI control room aesthetic: machined metallic bevels, deep obsidian surface depth, crisp neon telemetry, photon plasma energy flows, tactile chrome headers, and micro-grid textures.",
-    "Implement the Compact/Detail view toggle for the EnergyFlow component as requested by the user.",
-    "Ensure the MPPT nodes clearly reflect the user physical topology: each MPPT (Victron SmartSolar) has exactly 1 PV input string running to Akku.",
-    "Every key interactive element and telemetry cell must keep or have robust data-testid attributes for automated testing.",
-    "Never use completely transparent backgrounds for overlays, floating inspector panels, tooltips, or dropdowns. Always use high-contrast solid/crystal-glass with backdrops."
+    "Restyle ONLY the SunTimeline component (/app/frontend/src/components/SunTimeline.jsx) following the user's explicit choice 'Schlicht und reduziert' (calmer, lots of air, only the bar with the sun in focus).",
+    "Retain all existing state, props, persisted localStorage key ('suntimeline-view'), time calculation logic, and data flows.",
+    "Preserve EVERY single data-testid attribute required for automated tests: sun-timeline, sun-timeline-status, sun-view-toggle, sun-view-balken, sun-view-bogen, sun-timeline-bar, sun-timeline-svg, bar-<zone>, hit-<zone>, sun-marker-day, sun-marker-night, sun-sunrise-label, sun-sunset-label, sun-rest-hours, phase-tooltip, phase-tooltip-text, sun-legend.",
+    "Do NOT use transparent backgrounds for tooltips or overlays; use solid dark titanium (#090d16) with subtle 1px border (#ffffff20).",
+    "Ensure 100% responsiveness on mobile (390px) viewports using fluid SVG viewBox scaling and flex wrapping."
   ],
-  "typography": {
-    "font_family_heading": "Chakra Petch, ui-sans-serif, system-ui, sans-serif",
-    "font_family_body": "IBM Plex Sans, -apple-system, BlinkMacSystemFont, sans-serif",
-    "font_family_telemetry_mono": "JetBrains Mono, ui-monospace, monospace",
-    "hierarchy": {
-      "h1": "text-2xl sm:text-3xl font-semibold tracking-tight uppercase",
-      "h2": "text-xl sm:text-2xl font-semibold tracking-tight uppercase",
-      "h3": "text-lg sm:text-xl font-medium tracking-normal",
-      "h4": "text-sm sm:text-base font-medium tracking-wide uppercase",
-      "telemetry_hero": "text-2xl sm:text-3xl lg:text-4xl font-mono font-semibold tracking-tight",
-      "telemetry_compact": "text-xl sm:text-2xl font-mono font-semibold tracking-tight",
-      "labels_scada": "text-[10px] sm:text-[11px] font-sans font-semibold uppercase tracking-[0.18em] text-white/60",
-      "mono_subtext": "text-[10px] sm:text-[11px] font-mono text-white/50"
+  "sun_timeline_spec": {
+    "design_direction": "Schlicht und reduziert (Reduced SCADA Minimalist)",
+    "container_and_spacing": {
+      "card_class": "glass-strong rounded-xl border border-white/10 bg-[#070c18]/90 overflow-hidden",
+      "padding": "px-5 py-4 sm:px-6 sm:py-5 space-y-4",
+      "header_layout": "flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] pb-3"
+    },
+    "typography": {
+      "card_title": "font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70 flex items-center gap-2",
+      "status_text": "font-mono text-[11px] text-cyan-300/80 tracking-wide font-normal",
+      "rest_hours_number": "font-mono text-3xl sm:text-4xl font-light text-white tracking-tight",
+      "rest_hours_label": "font-mono text-[9px] uppercase tracking-[0.22em] text-white/40",
+      "time_labels": "font-mono text-[10px] font-medium tracking-tight",
+      "legend_labels": "font-mono text-[9px] uppercase tracking-[0.15em] text-white/50"
+    },
+    "colors_and_tones": {
+      "card_bg": "#070c18",
+      "bar_track_bg": "#0b1222",
+      "bar_track_border": "rgba(255, 255, 255, 0.10)",
+      "day_progress_fill": "linear-gradient(90deg, #f59e0b 0%, #facc15 50%, #f59e0b 100%)",
+      "past_day_overlay": "rgba(255, 255, 255, 0.12)",
+      "twilight_zones": {
+        "astro": "#4338ca",
+        "blue": "#3b82f6",
+        "golden": "#f59e0b"
+      },
+      "glows": "Toned down dramatically: remove thick heavy drop-shadow glows (drop-shadow-10px); use ultra-soft filter drop-shadow(0 0 3px color) or clean solid fills to avoid muddy visual noise."
+    },
+    "view_toggle_style": {
+      "container": "inline-flex rounded-lg p-0.5 bg-black/40 border border-white/10",
+      "button_active": "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-md px-2 py-1 transition-all shadow-none",
+      "button_inactive": "text-white/40 hover:text-white/80 hover:bg-white/5 rounded-md px-2 py-1 transition-colors"
+    },
+    "bar_view_geometry": {
+      "svg_viewbox": "0 0 600 135",
+      "bar_x_start": 50,
+      "bar_x_end": 550,
+      "bar_y": 70,
+      "bar_height": 10,
+      "bar_radius": 5,
+      "rest_hours_position": "Top centered above bar at y=32 with clean 'REST-SONNE' subtext at y=46",
+      "marker_style": {
+        "sun_day": "Precision circle r=6 with solid #FDE047 fill and delicate 1px outer ring (r=9, opacity 0.25). Toned down pulse animation.",
+        "moon_night": "Precision circle r=6 with #7DD3FC fill and clean crescent overlay #070c18."
+      },
+      "ticks": "Subtle 1px vertical tick lines on hour marks inside bar height",
+      "time_labels_position": "y=102 centered underneath respective timestamps (Sunrise ↑, Noon, Sunset ↓)"
+    },
+    "arc_view_geometry": {
+      "svg_viewbox": "0 0 600 185",
+      "center_x": 300,
+      "base_y": 140,
+      "radius_x": 230,
+      "radius_y": 100,
+      "arc_stroke_width": 2.5,
+      "rest_hours_position": "Centered under arc curve at y=82 with subtext at y=98"
+    },
+    "legend_treatment": {
+      "layout": "flex items-center justify-center gap-6 pt-3 border-t border-white/[0.05]",
+      "indicator": "w-2 h-2 rounded-full",
+      "label": "font-mono text-[9px] uppercase tracking-[0.15em] text-white/50"
+    },
+    "tooltip_treatment": {
+      "container": "fill-[#090d16] stroke-white/20 stroke-1 rx-6",
+      "text": "font-mono text-[10px] fill-white text-center"
+    },
+    "mobile_behaviour_390px": {
+      "responsive_svg": "w-full h-auto max-h-[220px]",
+      "header_stacking": "flex-wrap gap-2 for status text and view toggle on screen widths < 390px",
+      "hit_area": "Invisible hit rects with minimum height 24px and touch target accuracy for mobile fingers"
     }
-  },
-  "colors": {
-    "background_base": "#030712",
-    "background_canvas_gradient": "linear-gradient(165deg, #030712 0%, #060d1f 45%, #02040a 100%)",
-    "surfaces": {
-      "panel_bg": "linear-gradient(180deg, rgba(17, 24, 39, 0.88), rgba(8, 13, 24, 0.94))",
-      "panel_header_bg": "linear-gradient(180deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.85))",
-      "inset_well": "rgba(3, 7, 18, 0.78)",
-      "card_node_bg": "linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(9, 14, 26, 0.96) 100%)",
-      "inspector_card": "rgba(6, 11, 24, 0.96)"
-    },
-    "borders": {
-      "panel_border": "rgba(148, 163, 184, 0.16)",
-      "panel_active_glow": "rgba(6, 182, 212, 0.45)",
-      "hairline_top": "linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.45) 50%, transparent)",
-      "chamfer_accent": "rgba(255, 255, 255, 0.08)"
-    },
-    "telemetry_accents": {
-      "solar_ac_hoymiles": "#FACC15",
-      "solar_dc_mppt": "#F59E0B",
-      "battery_trucki": "#06B6D4",
-      "grid_import": "#F87171",
-      "grid_export": "#10B981",
-      "house_load": "#94A3B8",
-      "status_ok": "#10B981",
-      "status_warn": "#F59E0B",
-      "status_crit": "#EF4444"
-    },
-    "glow_recipes": {
-      "cyan_beam": "0 0 14px rgba(6, 182, 212, 0.40), inset 0 0 8px rgba(6, 182, 212, 0.18)",
-      "amber_beam": "0 0 14px rgba(245, 158, 11, 0.40), inset 0 0 8px rgba(245, 158, 11, 0.18)",
-      "yellow_beam": "0 0 14px rgba(250, 204, 21, 0.40), inset 0 0 8px rgba(250, 204, 21, 0.18)",
-      "emerald_beam": "0 0 14px rgba(16, 185, 129, 0.40), inset 0 0 8px rgba(16, 185, 129, 0.18)",
-      "red_beam": "0 0 14px rgba(239, 68, 68, 0.40), inset 0 0 8px rgba(239, 68, 68, 0.18)",
-      "panel_elevation_shadow": "0 24px 48px -18px rgba(0, 0, 0, 0.95), 0 0 32px -16px rgba(14, 165, 233, 0.15)"
-    }
-  },
-  "visual_enhancers": {
-    "chamfered_corners": "clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%) or tactical corner notches",
-    "scada_screws": "Four corner micro-rivets: radial-gradient(circle, #64748B 30%, #0F172A 70%) with 1px border for industrial rack-mount look",
-    "scanline_texture": "repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04) 1px, transparent 1px, transparent 3px)",
-    "laser_guide_crosshairs": "Delicate SVG reticle marks (+) at coordinate intersections in the SVG EnergyFlow canvas",
-    "pulse_beacons": "Animated CSS status pills with soft outer halo for active inverter and MPPT relays"
-  },
-  "energy_flow_diagram_spec": {
-    "svg_viewbox": "0 0 1060 420",
-    "layout_modes": {
-      "detail_mode": "Shows 6 full device nodes with secondary metrics (V, A, Limit, State, Channel breakdown) and animated telemetry pills along flow lines",
-      "compact_mode": "Streamlined control room view with condensed node footprints (NODE_W 154, NODE_H 64), primary wattage and active spark halos for high density monitoring"
-    },
-    "node_coordinates": {
-      "mppt1": { "x": 135, "y": 105, "label": "MPPT 1", "sub": "Victron 1-String DC", "color": "#F59E0B" },
-      "mppt2": { "x": 135, "y": 325, "label": "MPPT 2", "sub": "Victron 1-String DC", "color": "#F59E0B" },
-      "battery": { "x": 420, "y": 215, "label": "Akku", "sub": "Trucki / SUN LiFePO4", "color": "#06B6D4" },
-      "hoymiles": { "x": 725, "y": 105, "label": "Hoymiles", "sub": "HM1500 (Ahoy AC)", "color": "#FACC15" },
-      "house": { "x": 725, "y": 325, "label": "Haus", "sub": "AC Gesamtlast", "color": "#94A3B8" },
-      "grid": { "x": 965, "y": 325, "label": "Netz", "sub": "Shelly Pro 3EM", "color_import": "#F87171", "color_export": "#10B981" }
-    },
-    "node_card_visual_elevation": {
-      "bevel_top": "1px metallic silver highlight line with 45% center glow",
-      "left_indicator_bar": "4px wide rounded status bar colored by active telemetry state with drop-shadow glow",
-      "corner_accents": "Tactical bracket borders (2px top-left and bottom-right L-shaped markers) to give an aerospace SCADA display feel",
-      "badge_pill": "Device interface tag (e.g., '1-STRING DC', 'VENUS-OS', 'AHOY-DTU', 'PRO 3EM') in JetBrains Mono 8px uppercase tracking-[0.2em]"
-    },
-    "flow_plasma_pipeline": {
-      "base_glow_track": "stroke-width: 8px to 14px, opacity 0.12 - 0.28, matching color with blur effect",
-      "core_wire": "stroke-width: 2px, stroke: rgba(255,255,255,0.18), continuous reference track",
-      "plasma_stream": "stroke-width: 3.5px, stroke-dasharray: 2 12, animated with dynamic speed flowDurSec (0.5s for 3000W down to 2.2s for idle)",
-      "photon_particles": "Glowing photon orbs moving along path using SVG animateMotion with staggered delays and drop-shadow halo",
-      "flow_pills": "Interactive wattage badges floating on flow segment midpoints on hover or in detail mode"
-    },
-    "inspector_panel": {
-      "position": "Absolute top-3 right-3 floating overlay",
-      "visual_style": "Machined dark titanium surface: rgba(6, 11, 24, 0.96) with backdrop-blur-xl, 1px accent-tinted border, and glowing status beacon",
-      "content": "Rich telemetry grid: live voltage, live amperage, yield today, inverter throttling/limit, cell temperature, and phase load matrix"
-    }
-  },
-  "kpi_strip_spec": {
-    "grid": "grid grid-cols-2 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/[0.08]",
-    "cell_treatment": {
-      "accent_top_hairline": "2px height gradient from device accent color to transparent with glow filter",
-      "background": "linear-gradient(180deg, rgba(18, 25, 42, 0.70) 0%, rgba(10, 15, 28, 0.82) 100%)",
-      "hover_effect": "translateY(-1px) with subtle ambient glow boost and white/0.05 background wash",
-      "sparkline": "Integrated high-density sparkline with gradient fill under curve and current cursor dot"
-    }
-  },
-  "component_path_guidelines": {
-    "energy_flow": "/app/frontend/src/components/EnergyFlow.jsx",
-    "kpi_strip": "/app/frontend/src/components/KpiStrip.jsx",
-    "global_css": "/app/frontend/src/index.css",
-    "dashboard_page": "/app/frontend/src/pages/Dashboard.jsx",
-    "solar_ui_primitives": "/app/frontend/src/components/solar-ui.jsx"
-  },
-  "accessibility_and_motion": {
-    "respect_reduced_motion": "All plasma particle flows, rotating sun rays, and wave transforms must strictly pause or fall back to static dashed lines when .reduce-motion or prefers-reduced-motion is active.",
-    "contrast_compliance": "Normal text maintains at least 4.5:1 ratio against dark titanium backgrounds. Telemetry numbers use pure white #FFFFFF or high-luminance neon tints (emerald, amber, cyan).",
-    "test_attributes": "Every node card has data-testid='flow-[device]', flow paths have data-testid='flow-path-[id]', view toggle has data-testid='flow-view-toggle', inspector has data-testid='flow-inspector'."
   },
   "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
     "Never replace existing mock or real data bindings; keep all API poll loops, props, and calculation logic intact.",
-    "Do not use generic SaaS flat cards. Use SCADA / control room aesthetic: machined metallic bevels, deep obsidian surface depth, crisp neon telemetry, photon plasma energy flows, and tactile chrome headers.",
+    "Do not use generic SaaS flat cards. Use SCADA / control room aesthetic: machined metallic bevels, deep obsidian surface depth, crisp telemetry.",
     "All interactive and key informational elements MUST include a data-testid attribute.",
     "Do not use complete transparent background in header, overlays, or floating panels."
   ]

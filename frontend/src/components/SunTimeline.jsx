@@ -4,20 +4,14 @@
  * Payload; Anzeige in lokaler Zeit. Dämmerungsphasen (golden/blau/astronomisch)
  * werden in beiden Ansichten farbig dargestellt. */
 import { useState } from "react";
-import { Sun, LineChart, AlignHorizontalJustifyStart } from "lucide-react";
+import { Sun, LineChart, AlignHorizontalJustifyStart, ArrowUp, ArrowDown } from "lucide-react";
 import { useMotion } from "../lib/motion";
 
-const RX = 250;
-const RY = 120;
+const RX = 230;
+const RY = 100;
 const CX = 300;
-const BASE = 150;
+const BASE = 140;
 const H = 3600000;
-
-// Balken-Geometrie
-const BX0 = 60;
-const BX1 = 540;
-const BY = 96;
-const BH = 18;
 
 const arcPoint = (t) => {
   const th = Math.PI * (1 - t);
@@ -92,55 +86,49 @@ export default function SunTimeline({ timestamp, sun }) {
   const tcands = [astroDawnT, civilDawnT, 0, 1, civilDuskT, astroDuskT].filter((v) => v != null);
   const TMIN = hasSun ? Math.min(...tcands, 0) : 0;
   const TMAX = hasSun ? Math.max(...tcands, 1) : 1;
-  const xOf = (t) => BX0 + ((Math.max(TMIN, Math.min(TMAX, t)) - TMIN) / (TMAX - TMIN || 1)) * (BX1 - BX0);
-  const xMarker = xOf(markerT);
 
-  const sunGlyph = (cx, cy, r) => (
+  const sunGlyph = (cx, cy) => (
     <g>
-      {[...Array(8)].map((_, i) => {
-        const a = (i * Math.PI) / 4;
-        return <line key={i} x1={cx + Math.cos(a) * (r + 1)} y1={cy + Math.sin(a) * (r + 1)} x2={cx + Math.cos(a) * (r + 5)} y2={cy + Math.sin(a) * (r + 5)} stroke="#fcd34d" strokeWidth="2" strokeLinecap="round" />;
-      })}
-      <circle cx={cx} cy={cy} r={r + 5} fill="#fcd34d" opacity="0.18">
-        {!reduced && <animate attributeName="r" values={`${r + 3};${r + 7};${r + 3}`} dur="3s" repeatCount="indefinite" />}
+      <circle cx={cx} cy={cy} r={9} fill="none" stroke="#FDE047" strokeWidth="1" opacity="0.25">
+        {!reduced && <animate attributeName="opacity" values="0.15;0.4;0.15" dur="4s" repeatCount="indefinite" />}
       </circle>
-      <circle cx={cx} cy={cy} r={r} fill="#fcd34d" style={{ filter: "drop-shadow(0 0 7px #fcd34d)" }} />
+      <circle cx={cx} cy={cy} r={6} fill="#FDE047" />
     </g>
   );
-  const moonGlyph = (cx, cy, r) => (
+  const moonGlyph = (cx, cy) => (
     <g>
-      <circle cx={cx} cy={cy} r={r + 3} fill="#38bdf8" opacity="0.14" />
-      <circle cx={cx} cy={cy} r={r} fill="#cbd5e1" style={{ filter: "drop-shadow(0 0 6px #38bdf8)" }} />
-      <circle cx={cx + 3} cy={cy - 2} r={r - 1} fill="#0d1320" />
+      <circle cx={cx} cy={cy} r={9} fill="none" stroke="#7DD3FC" strokeWidth="1" opacity="0.25" />
+      <circle cx={cx} cy={cy} r={6} fill="#7DD3FC" />
+      <circle cx={cx + 2.5} cy={cy - 1.5} r={5} fill="#070c18" />
     </g>
   );
+  const toggleBtn = (active) =>
+    `px-2 py-1 rounded-md transition-colors ${active ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" : "text-white/40 border border-transparent hover:text-white/80 hover:bg-white/5"}`;
 
   return (
-    <div className="glass-strong" data-testid="sun-timeline">
-      <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
-        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2">
-          <Sun size={12} className="text-yellow-300 neon-yellow" /> Tagesverlauf
+    <div className="glass-strong rounded-xl overflow-hidden px-5 py-4 sm:px-6 sm:py-5 space-y-4" data-testid="sun-timeline">
+      <div className="border-b border-white/[0.08] pb-3 flex items-center justify-between gap-2 sm:gap-3 flex-wrap">
+        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70 flex items-center gap-2">
+          <Sun size={12} className="text-yellow-300" /> Tagesverlauf
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[10px] text-white/60" data-testid="sun-timeline-status">{status}</span>
-          <div className="inline-flex rounded-md overflow-hidden border border-white/12" role="group" aria-label="Ansicht" data-testid="sun-view-toggle">
+          <span className="font-mono text-[11px] text-cyan-300/80 tracking-wide" data-testid="sun-timeline-status">{status}</span>
+          <div className="inline-flex gap-0.5 rounded-lg p-0.5 bg-black/40 border border-white/10" role="group" aria-label="Ansicht" data-testid="sun-view-toggle">
             <button type="button" onClick={() => setViewPersist("balken")} aria-pressed={view === "balken"} data-testid="sun-view-balken"
-              title="Balken-Ansicht"
-              className={`px-2 py-1 transition-colors ${view === "balken" ? "bg-cyan-400/20 text-cyan-200" : "text-white/50 hover:text-white hover:bg-white/5"}`}>
+              title="Balken-Ansicht" className={toggleBtn(view === "balken")}>
               <AlignHorizontalJustifyStart size={13} />
             </button>
             <button type="button" onClick={() => setViewPersist("bogen")} aria-pressed={view === "bogen"} data-testid="sun-view-bogen"
-              title="Bogen-Ansicht"
-              className={`px-2 py-1 transition-colors ${view === "bogen" ? "bg-cyan-400/20 text-cyan-200" : "text-white/50 hover:text-white hover:bg-white/5"}`}>
+              title="Bogen-Ansicht" className={toggleBtn(view === "bogen")}>
               <LineChart size={13} />
             </button>
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-3">
+      <div>
         {view === "bogen" ? (
-          <svg viewBox="0 0 600 205" className="w-full" style={{ maxHeight: 250 }} data-testid="sun-timeline-svg">
+          <svg viewBox="0 0 600 185" className="w-full h-auto" style={{ maxHeight: 220 }} data-testid="sun-timeline-svg">
             <defs>
               <linearGradient id="sunarc" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#e8a13a" />
@@ -149,24 +137,23 @@ export default function SunTimeline({ timestamp, sun }) {
               </linearGradient>
             </defs>
 
-            <line x1="40" y1={BASE} x2="560" y2={BASE} stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
-            <line x1="40" y1={BASE} x2="560" y2={BASE} stroke="rgba(255,255,255,0.14)" strokeWidth="1" strokeDasharray="2 6" />
-            <path d={`M 50 ${BASE} A ${RX} ${RY} 0 0 1 550 ${BASE}`} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
+            <line x1="50" y1={BASE} x2="550" y2={BASE} stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="2 6" />
+            <path d={`M ${CX - RX} ${BASE} A ${RX} ${RY} 0 0 1 ${CX + RX} ${BASE}`} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5" />
 
-            {astroDawnT != null && <path d={arcSub(astroDawnT, civilDawnT ?? -0.06)} fill="none" stroke="#4338ca" strokeWidth="3" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #4338ca)" }} data-testid="astro-dawn" />}
-            {astroDuskT != null && <path d={arcSub(civilDuskT ?? 1.06, astroDuskT)} fill="none" stroke="#4338ca" strokeWidth="3" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #4338ca)" }} data-testid="astro-dusk" />}
-            {civilDawnT != null && <path d={arcSub(civilDawnT, 0)} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" opacity="0.85" style={{ filter: "drop-shadow(0 0 4px #3b82f6)" }} data-testid="blue-dawn" />}
-            {civilDuskT != null && <path d={arcSub(1, civilDuskT)} fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" opacity="0.85" style={{ filter: "drop-shadow(0 0 4px #3b82f6)" }} data-testid="blue-dusk" />}
-            {tGM != null && <path d={arcSub(0, Math.min(1, tGM), 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #f59e0b)" }} data-testid="golden-morning" />}
-            {tGE != null && <path d={arcSub(Math.max(0, tGE), 1, 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" style={{ filter: "drop-shadow(0 0 4px #f59e0b)" }} data-testid="golden-evening" />}
+            {astroDawnT != null && <path d={arcSub(astroDawnT, civilDawnT ?? -0.06)} fill="none" stroke="#4338ca" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" data-testid="astro-dawn" />}
+            {astroDuskT != null && <path d={arcSub(civilDuskT ?? 1.06, astroDuskT)} fill="none" stroke="#4338ca" strokeWidth="2.5" strokeLinecap="round" opacity="0.9" data-testid="astro-dusk" />}
+            {civilDawnT != null && <path d={arcSub(civilDawnT, 0)} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" opacity="0.85" data-testid="blue-dawn" />}
+            {civilDuskT != null && <path d={arcSub(1, civilDuskT)} fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" opacity="0.85" data-testid="blue-dusk" />}
+            {tGM != null && <path d={arcSub(0, Math.min(1, tGM), 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" opacity="0.85" data-testid="golden-morning" />}
+            {tGE != null && <path d={arcSub(Math.max(0, tGE), 1, 6, 6)} fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" opacity="0.85" data-testid="golden-evening" />}
 
             {zones.map((z) => (
               <path key={`hit-${z.key}`} d={arcSub(z.t0, z.t1, z.ex, z.ex)} fill="none" stroke="transparent" strokeWidth="14"
                     style={{ cursor: "pointer" }} onMouseEnter={() => setHover(z.key)} onMouseLeave={() => setHover(null)} data-testid={`hit-${z.key}`} />
             ))}
 
-            <path d={`M 50 ${BASE} A ${RX} ${RY} 0 0 1 550 ${BASE}`} fill="none" stroke="url(#sunarc)" strokeWidth="3.5" strokeLinecap="round"
-                  pathLength="100" strokeDasharray={`${isDay ? dayT * 100 : 0} 100`} style={{ filter: "drop-shadow(0 0 4px rgba(252,211,77,0.5))" }} data-testid="sun-arc-progress" />
+            <path d={`M ${CX - RX} ${BASE} A ${RX} ${RY} 0 0 1 ${CX + RX} ${BASE}`} fill="none" stroke="url(#sunarc)" strokeWidth="2.5" strokeLinecap="round"
+                  pathLength="100" strokeDasharray={`${isDay ? dayT * 100 : 0} 100`} data-testid="sun-arc-progress" />
 
             {hasSun && (() => {
               const noonMs = (srMs + ssMs) / 2;
@@ -176,23 +163,22 @@ export default function SunTimeline({ timestamp, sun }) {
               for (let tMs = t0; tMs < ssMs; tMs += H) {
                 const t = (tMs - srMs) / (ssMs - srMs); const p = arcPoint(t);
                 const noonish = Math.abs(tMs - noonMs) < H / 2;
-                dots.push(<circle key={tMs} cx={p.x} cy={p.y} r={noonish ? 2.4 : 1.6} fill="#ffffff" opacity={noonish ? 0.5 : 0.22} />);
+                dots.push(<circle key={tMs} cx={p.x} cy={p.y} r={noonish ? 2 : 1.3} fill="#ffffff" opacity={noonish ? 0.4 : 0.18} />);
               }
               return dots;
             })()}
 
-            <text x="44" y="142" textAnchor="end" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.8)" data-testid="sun-sunrise-label">↑{srLabel}</text>
-            <text x="556" y="142" textAnchor="start" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(192,132,252,0.85)" data-testid="sun-sunset-label">{ssLabel}↓</text>
-            <text x={CX} y="22" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)">{noonLabel}</text>
+            <text x={CX - RX - 8} y={BASE - 2} textAnchor="end" fontSize="10" fontFamily="JetBrains Mono" fontWeight="500" fill="rgba(250,204,21,0.75)" data-testid="sun-sunrise-label">{`↑ ${srLabel}`}</text>
+            <text x={CX + RX + 8} y={BASE - 2} textAnchor="start" fontSize="10" fontFamily="JetBrains Mono" fontWeight="500" fill="rgba(192,132,252,0.8)" data-testid="sun-sunset-label">{`${ssLabel} ↓`}</text>
+            <text x={CX} y={BASE - RY - 12} textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.35)">{noonLabel}</text>
 
-            <text x={CX} y="92" textAnchor="middle" fontSize="38" fontFamily="JetBrains Mono" fontWeight="500" fill="#ffffff"
-                  style={isDay ? { filter: "drop-shadow(0 0 8px rgba(252,211,77,0.4))" } : undefined} data-testid="sun-rest-hours">
+            <text x={CX} y="82" textAnchor="middle" fontSize="34" fontFamily="JetBrains Mono" fontWeight="300" fill="#ffffff" data-testid="sun-rest-hours">
               {comma(restHours)}
-              <tspan fontSize="16" fill="rgba(255,255,255,0.5)" dx="4">h</tspan>
+              <tspan fontSize="14" fill="rgba(255,255,255,0.4)" dx="4">h</tspan>
             </text>
-            <text x={CX} y="112" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.45)" letterSpacing="2">REST-SONNE HEUTE</text>
+            <text x={CX} y="98" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.4)" letterSpacing="2.2">REST-SONNE HEUTE</text>
 
-            {isDay ? <g data-testid="sun-marker-day">{sunGlyph(m.x, m.y, 7)}</g> : <g data-testid="sun-marker-night">{moonGlyph(m.x, m.y, 7)}</g>}
+            {isDay ? <g data-testid="sun-marker-day">{sunGlyph(m.x, m.y)}</g> : <g data-testid="sun-marker-night">{moonGlyph(m.x, m.y)}</g>}
 
             {hz && (
               <g data-testid="phase-tooltip" style={{ pointerEvents: "none" }}>
@@ -201,8 +187,8 @@ export default function SunTimeline({ timestamp, sun }) {
                   const w = 26 + txt.length * 6.0;
                   return (
                     <>
-                      <rect x={CX - w / 2} y={42} width={w} height={21} rx={5} fill="rgba(2,6,16,0.96)" stroke={hz.color} strokeWidth="1" style={{ filter: `drop-shadow(0 0 6px ${hz.color}66)` }} />
-                      <text x={CX} y={56} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="#ffffff" data-testid="phase-tooltip-text">{txt}</text>
+                      <rect x={CX - w / 2} y={44} width={w} height={21} rx={6} fill="#090d16" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+                      <text x={CX} y={58} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="#ffffff" data-testid="phase-tooltip-text">{txt}</text>
                     </>
                   );
                 })()}
@@ -210,95 +196,86 @@ export default function SunTimeline({ timestamp, sun }) {
             )}
           </svg>
         ) : (
-          <svg viewBox="0 0 600 170" className="w-full" style={{ maxHeight: 210 }} data-testid="sun-timeline-bar">
-            <defs>
-              <linearGradient id="barday" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#f59e0b" />
-                <stop offset="50%" stopColor="#fde047" />
-                <stop offset="100%" stopColor="#f59e0b" />
-              </linearGradient>
-            </defs>
+          <SunBar hasSun={hasSun} isDay={isDay} srMs={srMs} ssMs={ssMs} markerT={markerT} tMin={TMIN} tMax={TMAX}
+            zones={zones} hz={hz} hover={hover} setHover={setHover} reduced={reduced}
+            restHours={restHours} srLabel={srLabel} ssLabel={ssLabel} noonLabel={noonLabel} />
+        )}
+      </div>
 
-            {/* Rest-Sonne (zentral oben) */}
-            <text x={CX} y="34" textAnchor="middle" fontSize="30" fontFamily="JetBrains Mono" fontWeight="500" fill="#ffffff"
-                  style={isDay ? { filter: "drop-shadow(0 0 8px rgba(252,211,77,0.4))" } : undefined} data-testid="sun-rest-hours">
-              {comma(restHours)}
-              <tspan fontSize="14" fill="rgba(255,255,255,0.5)" dx="4">h</tspan>
-            </text>
-            <text x={CX} y="52" textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.45)" letterSpacing="2">REST-SONNE HEUTE</text>
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-3 border-t border-white/[0.05]" data-testid="sun-legend">
+        {[["#4338ca", "Astronom. Nacht"], ["#3b82f6", "Blaue Stunde"], ["#f59e0b", "Goldene Stunde"]].map(([c, l]) => (
+          <span key={l} className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.15em] text-white/50">
+            <span className="w-2 h-2 rounded-full" style={{ background: c }} /> {l}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
-            {/* Basis-Balken (Nacht) */}
-            <rect x={BX0} y={BY} width={BX1 - BX0} height={BH} rx={8} fill="#0a0f1c" stroke="rgba(255,255,255,0.10)" strokeWidth="1" />
+// Balken-Ansicht als HTML (bleibt auf dem Handy gut lesbar, Positionen in %)
+function SunBar({ hasSun, isDay, srMs, ssMs, markerT, tMin, tMax, zones, hz, hover, setHover, reduced, restHours, srLabel, ssLabel, noonLabel }) {
+  const pct = (t) => ((Math.max(tMin, Math.min(tMax, t)) - tMin) / (tMax - tMin || 1)) * 100;
+  const at = (t) => ({ left: `${pct(t)}%` });
+  const span = (a, b) => {
+    const l = pct(Math.min(a, b));
+    return { left: `${l}%`, width: `${Math.max(0, pct(Math.max(a, b)) - l)}%` };
+  };
+  const ticks = [];
+  if (hasSun) {
+    const first = new Date(srMs); first.setMinutes(0, 0, 0);
+    let t0 = first.getTime(); if (t0 < srMs) t0 += H;
+    for (let tMs = t0; tMs < ssMs; tMs += H) ticks.push((tMs - srMs) / (ssMs - srMs));
+  }
+  const label = "absolute top-full mt-3 -translate-x-1/2 inline-flex items-center gap-0.5 font-mono whitespace-nowrap";
 
-            {hasSun && (
-              <>
-                {/* Tagband */}
-                <rect x={xOf(0)} y={BY} width={Math.max(0, xOf(1) - xOf(0))} height={BH} fill="url(#barday)" opacity="0.55" />
-                {/* Dämmerungs-Segmente */}
-                {zones.map((z) => {
-                  const xa = xOf(Math.min(z.t0, z.t1)); const xb = xOf(Math.max(z.t0, z.t1));
-                  return <rect key={`seg-${z.key}`} x={xa} y={BY} width={Math.max(0, xb - xa)} height={BH} fill={z.color} opacity="0.8" style={{ filter: `drop-shadow(0 0 4px ${z.color}88)` }} data-testid={`bar-${z.key}`} />;
-                })}
-                {/* vergangener Tagesanteil */}
-                {isDay && <rect x={xOf(0)} y={BY} width={Math.max(0, xMarker - xOf(0))} height={BH} fill="rgba(255,255,255,0.16)" />}
-                {/* Rahmen über alles */}
-                <rect x={BX0} y={BY} width={BX1 - BX0} height={BH} rx={8} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
+  return (
+    <div data-testid="sun-timeline-bar" className="py-1">
+      <div className="text-center">
+        <div className="font-mono text-3xl sm:text-4xl font-light text-white tracking-tight leading-none" data-testid="sun-rest-hours">
+          {comma(restHours)}<span className="text-sm sm:text-base text-white/40 ml-1">h</span>
+        </div>
+        <div className="font-mono text-[9px] uppercase tracking-[0.22em] text-white/40 mt-2">Rest-Sonne heute</div>
+      </div>
 
-                {/* Stunden-Ticks */}
-                {(() => {
-                  const first = new Date(srMs); first.setMinutes(0, 0, 0);
-                  let t0 = first.getTime(); if (t0 < srMs) t0 += H;
-                  const ticks = [];
-                  for (let tMs = t0; tMs < ssMs; tMs += H) {
-                    const t = (tMs - srMs) / (ssMs - srMs); const x = xOf(t);
-                    ticks.push(<line key={tMs} x1={x} y1={BY + BH - 6} x2={x} y2={BY + BH} stroke="rgba(0,0,0,0.35)" strokeWidth="1" />);
-                  }
-                  return ticks;
-                })()}
-
-                {/* Hover-Flächen für Zonen */}
-                {zones.map((z) => {
-                  const xa = xOf(Math.min(z.t0, z.t1)); const xb = xOf(Math.max(z.t0, z.t1));
-                  return <rect key={`hit-${z.key}`} x={xa} y={BY - 4} width={Math.max(2, xb - xa)} height={BH + 8} fill="transparent" style={{ cursor: "pointer" }}
-                               onMouseEnter={() => setHover(z.key)} onMouseLeave={() => setHover(null)} data-testid={`hit-${z.key}`} />;
-                })}
-
-                {/* Marker (Sonne/Mond) sitzt mittig auf dem schmalen Balken */}
-                <line x1={xMarker} y1={BY - 5} x2={xMarker} y2={BY + BH + 5} stroke="rgba(255,255,255,0.4)" strokeWidth="1" strokeDasharray="2 3" />
-                {isDay ? <g data-testid="sun-marker-day">{sunGlyph(xMarker, BY + BH / 2, 9)}</g> : <g data-testid="sun-marker-night">{moonGlyph(xMarker, BY + BH / 2, 8)}</g>}
-
-                {/* Zeit-Labels */}
-                <text x={xOf(0)} y={BY + BH + 18} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(250,204,21,0.85)" data-testid="sun-sunrise-label">↑{srLabel}</text>
-                <text x={xOf(0.5)} y={BY + BH + 18} textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fill="rgba(255,255,255,0.45)">{noonLabel}</text>
-                <text x={xOf(1)} y={BY + BH + 18} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="rgba(192,132,252,0.9)" data-testid="sun-sunset-label">{ssLabel}↓</text>
-              </>
-            )}
-
-            {hz && (() => {
-              const cxh = Math.max(90, Math.min(510, (xOf(hz.t0) + xOf(hz.t1)) / 2));
-              const txt = `${hz.label} · ${hhmm(new Date(hz.from).getTime())}–${hhmm(new Date(hz.to).getTime())}`;
-              const w = 26 + txt.length * 6.0;
-              return (
-                <g data-testid="phase-tooltip" style={{ pointerEvents: "none" }}>
-                  <rect x={cxh - w / 2} y={BY - 40} width={w} height={21} rx={5} fill="rgba(2,6,16,0.96)" stroke={hz.color} strokeWidth="1" style={{ filter: `drop-shadow(0 0 6px ${hz.color}66)` }} />
-                  <text x={cxh} y={BY - 26} textAnchor="middle" fontSize="10" fontFamily="JetBrains Mono" fill="#ffffff" data-testid="phase-tooltip-text">{txt}</text>
-                </g>
-              );
-            })()}
-          </svg>
+      <div className="relative mx-2 sm:mx-10 mt-9 mb-10">
+        {hz && (
+          <div data-testid="phase-tooltip" className="absolute bottom-full mb-4 -translate-x-1/2 z-10 pointer-events-none whitespace-nowrap rounded-md border border-white/20 bg-[#090d16] px-2.5 py-1 font-mono text-[10px] text-white"
+            style={{ left: `${Math.max(18, Math.min(82, (pct(hz.t0) + pct(hz.t1)) / 2))}%` }}>
+            <span data-testid="phase-tooltip-text">{hz.label} · {hhmm(new Date(hz.from).getTime())}–{hhmm(new Date(hz.to).getTime())}</span>
+          </div>
         )}
 
-        <div className="flex items-center justify-center gap-5 pb-2 -mt-1" data-testid="sun-legend">
-          <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-white/55">
-            <span className="w-2 h-2 rounded-full" style={{ background: "#4338ca", boxShadow: "0 0 5px #4338ca" }} /> Astronom. Nacht
-          </span>
-          <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-white/55">
-            <span className="w-2 h-2 rounded-full" style={{ background: "#3b82f6", boxShadow: "0 0 5px #3b82f6" }} /> Blaue Stunde
-          </span>
-          <span className="inline-flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.12em] text-white/55">
-            <span className="w-2 h-2 rounded-full" style={{ background: "#f59e0b", boxShadow: "0 0 5px #f59e0b" }} /> Goldene Stunde
-          </span>
+        <div className="relative h-2.5 rounded-full overflow-hidden bg-[#0b1222] ring-1 ring-inset ring-white/10">
+          {hasSun && (
+            <>
+              <div className="absolute inset-y-0 opacity-55" style={{ ...span(0, 1), background: "linear-gradient(90deg, #f59e0b, #facc15, #f59e0b)" }} />
+              {zones.map((z) => <div key={z.key} data-testid={`bar-${z.key}`} className="absolute inset-y-0 opacity-80" style={{ ...span(z.t0, z.t1), background: z.color }} />)}
+              {isDay && <div className="absolute inset-y-0 bg-white/[0.12]" style={span(0, markerT)} />}
+              {ticks.map((t) => <div key={t} className="absolute top-[2px] bottom-[2px] w-px bg-black/30" style={at(t)} />)}
+            </>
+          )}
         </div>
+
+        {hasSun && (
+          <>
+            {zones.map((z) => (
+              <div key={`hit-${z.key}`} data-testid={`hit-${z.key}`} className="absolute -top-2 -bottom-2 cursor-pointer" style={{ ...span(z.t0, z.t1), minWidth: 6 }}
+                onMouseEnter={() => setHover(z.key)} onMouseLeave={() => setHover(null)} onClick={() => setHover(hover === z.key ? null : z.key)} />
+            ))}
+            <div className="absolute -top-3 -bottom-3 border-l border-dashed border-white/25 pointer-events-none" style={at(markerT)} />
+            <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={at(markerT)} data-testid={isDay ? "sun-marker-day" : "sun-marker-night"}>
+              <span className={`absolute -inset-[5px] rounded-full border ${isDay ? "border-[#FDE047]/30" : "border-[#7DD3FC]/30"} ${isDay && !reduced ? "animate-pulse" : ""}`} />
+              <span className={`relative block w-3 h-3 rounded-full overflow-hidden ${isDay ? "bg-[#FDE047]" : "bg-[#7DD3FC]"}`}>
+                {!isDay && <span className="absolute w-[9px] h-[9px] rounded-full bg-[#070c18] -top-[2px] -right-[3px]" />}
+              </span>
+            </div>
+
+            <div className={`${label} text-[10px] font-medium text-yellow-400/75`} style={at(0)} data-testid="sun-sunrise-label"><ArrowUp size={10} />{srLabel}</div>
+            <div className={`${label} text-[9px] text-white/35`} style={at(0.5)}>{noonLabel}</div>
+            <div className={`${label} text-[10px] font-medium text-purple-400/80`} style={at(1)} data-testid="sun-sunset-label">{ssLabel}<ArrowDown size={10} /></div>
+          </>
+        )}
       </div>
     </div>
   );

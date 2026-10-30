@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { getHistory, getConfig, getLive } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import SunTimeline from "../components/SunTimeline";
-import AlarmHistory from "../components/AlarmHistory";
 import EnergyBalance from "../components/EnergyBalance";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import { BarChart3, ExternalLink } from "lucide-react";
@@ -188,9 +187,6 @@ export default function History() {
 
       {/* Energiebilanz (kWh je Tag/Monat) */}
       <EnergyBalance />
-
-      {/* Kompakte Alarm-Historie */}
-      <AlarmHistory limit={8} compact />
 
       {/* Sonnen-Tagesverlauf (vom Dashboard hierher verschoben) */}
       {live && <SunTimeline timestamp={live.timestamp} sun={live.sun} />}
