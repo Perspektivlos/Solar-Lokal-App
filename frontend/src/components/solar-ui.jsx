@@ -172,10 +172,15 @@ export function SectionHeader({ label, color = "#64748b", icon: Icon, href, deta
   const hasCritical = alarmList.some((a) => a.severity === "critical");
   return (
     <div data-testid={testid}>
-      <div className="flex items-center gap-3 pt-1">
-        <span className="w-1 h-5 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
-        {Icon && <Icon size={16} strokeWidth={2.4} style={{ color }} />}
-        <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/80">{label}</span>
+      <div className="relative rounded-xl overflow-hidden flex flex-wrap items-center gap-3 px-4 py-2.5"
+        style={{ background: "linear-gradient(150deg, #0d1626 0%, #070c18 100%)", border: `1px solid ${color}3a`, boxShadow: `inset 0 1px 0 rgba(226,232,240,0.05), 0 14px 34px -24px #000, 0 0 22px -14px ${color}` }}>
+        <span className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none" style={{ background: `linear-gradient(90deg, ${color}, transparent 70%)`, boxShadow: `0 0 10px ${color}` }} />
+        {Icon && (
+          <span className="grid place-items-center rounded-md shrink-0" style={{ width: 26, height: 26, background: `${color}1f`, border: `1px solid ${color}55` }}>
+            <Icon size={14} strokeWidth={2.4} color={color} />
+          </span>
+        )}
+        <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/85">{label}</span>
         {onPin && (
           <button
             type="button"
@@ -229,7 +234,8 @@ export function SectionHeader({ label, color = "#64748b", icon: Icon, href, deta
       </div>
       {hasDetails && open && (
         <div
-          className="glass-strong mt-3 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"
+          className="mt-3 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 rounded-xl"
+          style={{ background: "linear-gradient(150deg, #0d1626 0%, #070c18 100%)", border: `1px solid ${color}2a` }}
           data-testid={testid ? `${testid}-details` : undefined}
         >
           {details.map((s) => (

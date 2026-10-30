@@ -3,10 +3,12 @@ import { api, getAlarms } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import StatusBanner from "../components/StatusBanner";
 import AlarmHistory from "../components/AlarmHistory";
+import SelftestHistory from "../components/SelftestHistory";
 import { Check, X, Minus, PlayCircle, RefreshCw, ChevronRight } from "lucide-react";
 
 const runTests = () => api.post("/diagnostics/run", {}).then((r) => r.data);
 const getRaw = () => api.get("/diagnostics/raw").then((r) => r.data);
+const getHistory = () => api.get("/diagnostics/history").then((r) => r.data);
 
 const INTRO_SECTIONS = [
   {
@@ -108,20 +110,23 @@ export default function Diagnose() {
   const [result, setResult] = useState(null);
   const [raw, setRaw] = useState(null);
   const [alarms, setAlarms] = useState([]);
+  const [history, setHistory] = useState(null);
 
   const reloadRaw = useCallback(() => { getRaw().then(setRaw).catch(() => {}); }, []);
   const reloadAlarms = useCallback(() => { getAlarms().then((a) => setAlarms(a.alarms || [])).catch(() => {}); }, []);
+  const reloadHistory = useCallback(() => { getHistory().then(setHistory).catch(() => {}); }, []);
 
   useEffect(() => {
     reloadRaw();
     reloadAlarms();
+    reloadHistory();
     const id = setInterval(() => { reloadRaw(); reloadAlarms(); }, 5000);
     return () => clearInterval(id);
-  }, [reloadRaw, reloadAlarms]);
+  }, [reloadRaw, reloadAlarms, reloadHistory]);
 
   const run = async () => {
     setRunning(true);
-    try { setResult(await runTests()); reloadRaw(); }
+    try { setResult(await runTests()); reloadRaw(); reloadHistory(); }
     finally { setRunning(false); }
   };
 
@@ -175,6 +180,8 @@ export default function Diagnose() {
           {result?.tests?.map((t, i) => <ResultRow key={i} {...t} />)}
         </div>
       </div>
+
+      <SelftestHistory history={history} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DeviceBlock title="Shelly Pro 3EM" accent="#F87171" ts={raw?.shelly?._ts}>

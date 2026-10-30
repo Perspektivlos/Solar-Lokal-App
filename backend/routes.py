@@ -608,11 +608,44 @@ async def diagnostics_run() -> Dict[str, Any]:
     n_pass = sum(1 for r in results if r["ok"] is True)
     n_fail = sum(1 for r in results if r["ok"] is False)
     n_skip = sum(1 for r in results if r["ok"] is None)
-    return {
+    run = {
         "timestamp": now_dt.isoformat(),
         "duration_ms": int((time.time() - started) * 1000),
         "summary": {"pass": n_pass, "fail": n_fail, "skip": n_skip, "total": len(results)},
         "tests": results,
+    }
+    # Verlauf: nur manuelle Läufe, die letzten SELFTEST_KEEP behalten
+    await db.selftest_runs.insert_one(dict(run))
+    old = await db.selftest_runs.find({}, {"_id": 1}).sort("timestamp", -1).skip(SELFTEST_KEEP).to_list(None)
+    if old:
+        await db.selftest_runs.delete_many({"_id": {"$in": [o["_id"] for o in old]}})
+    return run
+
+
+SELFTEST_KEEP = 50
+
+
+@api_router.get("/diagnostics/history")
+async def diagnostics_history() -> Dict[str, Any]:
+    """Letzte Selbst-Test-Läufe + je Prüfung: letzter Status, zuletzt OK, zuletzt ausgefallen."""
+    runs = await db.selftest_runs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(SELFTEST_KEEP)
+    checks: Dict[str, Dict[str, Any]] = {}
+    for r in runs:  # neueste zuerst
+        for t in r.get("tests", []):
+            c = checks.setdefault(t["name"], {"name": t["name"], "last_status": t.get("ok"), "last_ok": None,
+                                              "last_fail": None, "last_fail_detail": None, "fails": 0, "runs": 0})
+            c["runs"] += 1
+            if t.get("ok") is True and not c["last_ok"]:
+                c["last_ok"] = r["timestamp"]
+            if t.get("ok") is False:
+                c["fails"] += 1
+                if not c["last_fail"]:
+                    c["last_fail"] = r["timestamp"]
+                    c["last_fail_detail"] = t.get("detail")
+    return {
+        "runs": [{"timestamp": r["timestamp"], "duration_ms": r.get("duration_ms"), "summary": r.get("summary")} for r in runs],
+        "checks": list(checks.values()),
+        "keep": SELFTEST_KEEP,
     }
 
 
