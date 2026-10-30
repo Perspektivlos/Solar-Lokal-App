@@ -575,7 +575,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
         <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2 shrink-0">
           <Activity size={12} className="text-cyan-400 neon-cyan" />
-          <span className="hidden sm:inline">Energiefluss · Live</span>
+          <span className="hidden sm:inline">Echtzeit-Flussvektoren</span>
           <span className="sm:hidden">Fluss</span>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -610,7 +610,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       </div>
       <div className="p-4 flex-1 flex items-center relative">
         {detail && (
-          <div className="absolute top-2 right-2 z-10 w-[200px] max-w-[62vw] pointer-events-none" data-testid="flow-inspector">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-[200px] max-w-[62vw] pointer-events-none" data-testid="flow-inspector">
             <div className="rounded-md border px-3 py-2.5" style={{ background: "rgba(6,11,24,0.96)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderColor: `${detail.color}66`, boxShadow: `0 0 18px ${detail.color}26, 0 12px 28px -14px rgba(0,0,0,0.9)` }}>
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2 min-w-0">
