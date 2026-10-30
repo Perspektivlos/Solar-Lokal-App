@@ -1,65 +1,110 @@
-# Projektbericht-Seite – „Was wir erreicht haben"
+# Verlauf-Vorschau: Energie-Analyse mit Multilinie, 4 Kanälen und erweiterter Tagesbilanz
 
-Eine eigene, scrollbare Bericht-Seite, die den gesamten Projektverlauf erzählt: welche Funktionen entstanden sind, was was abgelöst hat, was bewusst entfernt wurde – plus Arbeitsweise, Erkenntnisse, Zeitachse und Technik auf einen Blick.
-Erreichbar nur über eine eigene Vorschau-Adresse (nicht im Menü), im bestehenden SCADA-Dark-Look.
+Eine eigene Vorschau-Seite zeigt die neu gestaltete Verlauf-Seite genau nach den vorgegebenen Bildern: eine neue Titelleiste mit Ansichts- und Zeitumschaltern, ein überarbeitetes Leistungsdiagramm mit ausblendbaren Kurven, vier Einzeldiagramme und eine stark erweiterte Tages-Energiebilanz in kWh.
+Die jetzige Verlauf-Seite bleibt unverändert, bis die Vorschau freigegeben ist.
 
 ## Für wen
-- Den Betreiber der Anlage selbst, als Rückblick und Nachschlagewerk über den Stand des Projekts.
-- Personen, denen man das Projekt zeigen möchte (z. B. im Heimnetz), ohne durch die ganze App klicken zu müssen.
+Für den Anlagenbetreiber (HauckLab · Solar'Projekt). Er will den Leistungsverlauf von PV, Haus, Akku und Netz auf einen Blick vergleichen, Kurven gezielt ein- und ausblenden und die Tagesbilanz vollständig nachvollziehen – am Desktop und am Handy.
 
-## Kernfunktionen & Erlebnis
-Eine einzelne, von oben nach unten lesbare Seite mit folgenden Abschnitten:
+## Kernfunktionen und Erlebnis
 
-1. **Kopf / Titel** – Projektname, aktuelle Version und Stand-Datum, ein Satz zum Zweck der App, dazu ein paar Kennzahlen-Kacheln (z. B. Anzahl Funktionen erledigt / in Arbeit / geplant, Anzahl angebundener Gerätetypen, Anzahl Ausbaustufen).
+### 1. Titelleiste
+- Titel **„Energie-Analyse & Recharts Zeitverlauf"** mit grünem Badge **„Live Synchron"**.
+- Umschalter für die Ansicht: **„Multilinie (Option 1)"** | **„4 Kanäle (Option 2)"**.
+- Zeitauswahl: **1H · 3H · 6H · 12H · 24H** (Standard 24H).
+- Gewählte Ansicht und Zeitspanne bleiben beim nächsten Besuch erhalten.
 
-2. **Funktions-Changelog: hinzugefügt / abgelöst / entfernt** – das Herzstück. Drei klar getrennte, farbcodierte Bereiche:
-   - **Hinzugefügt**: alle gebauten Funktionen (Live-Dashboard, animierter Energiefluss, Geräte-Karten, Favoriten inkl. MPPT-Strings & Phasen, Sonnen-Tagesverlauf, Steuerung Hoymiles/Trucki, Diagnose/Selbsttest, Grafana/InfluxDB-Anbindung, Versions-Fußleiste, Doku & Anleitung, editierbare Roadmap, „Was ist neu?"-Fenster, konfigurierbare Akkukapazität & Gerätebeschriftungen u. a.).
-   - **Abgelöst / ersetzt**: was durch Neueres verdrängt wurde, jeweils als „vorher → nachher" (z. B. sechs LCD-Kacheln → vier große Geräte-Karten; aggregierter PV-Block → einzelne Geräte-Knoten im Energiefluss; alter Footer-Roadmap-Dialog → fixe Versions-Fußleiste + Doku-Seite; statische Roadmap → dauerhaft editierbare Roadmap).
-   - **Komplett entfernt / abgelehnt**: bewusst nicht umgesetzte Dinge mit kurzer Begründung (48-Stunden-PV-Prognose, Watt-Beschriftungen auf den Energiefluss-Linien, CSV-Export).
+### 2. Ansicht „Multilinie (Option 1)": synchroner Leistungsverlauf
+- Kopf: **„Synchroner Leistungsverlauf • 24H Zeitfenster"** (Zeitspanne passt sich der Auswahl an), darunter der Hinweis „Klicke auf die Legenden-Kacheln, um einzelne Kurven ein- oder auszublenden".
+- Rechts vier Legenden-Kacheln mit Live-Wert: **PV x W** (Bernstein), **Haus x W** (Rosa-Rot), **Akku x W** (Cyan), **Netz x W** (Indigo-Violett).
+- Ein Klick auf eine Kachel blendet die Kurve aus oder wieder ein; ausgeblendete Kacheln wirken gedimmt.
+- Ein Diagramm mit allen vier Kurven als weiche Linien; die Akku-Kurve ist gestrichelt.
+- Eine Nulllinie trennt Laden und Entladen bzw. Bezug und Einspeisung.
+  - Akku: positiv = Laden, negativ = Entladen.
+  - Netz: positiv = Bezug, negativ = Einspeisung.
+- Fußzeile links: „Nulldurchgang (0W): Trennlinie für Laden/Entladen & Bezug/Einspeisung".
+- Fußzeile rechts: grüner Punkt, „Abtastrate: Alle 15 Min • Zeitbasis UTC+x" mit der tatsächlichen Abtastrate und Zeitzone.
+- Hover oder Antippen zeigt zum Zeitpunkt die Werte aller sichtbaren Kurven.
 
-3. **Zeitachse / Meilensteine** – chronologische Liste der Ausbaustufen mit Datum, als senkrechter Verlauf, von den Grundlagen bis zur aktuellen Version.
+### 3. Ansicht „4 Kanäle (Option 2)": vier Einzeldiagramme (2 × 2)
+- **PV-Erzeugung (Hoymiles + Victron)**: Bernstein-Fläche mit Verlauf, aktueller Wert oben rechts.
+- **Hausverbrauch (Gesamtlast)**: Rosa-Rot-Fläche mit Verlauf, aktueller Wert.
+- **Akku-Nutzung & LiFePO4 SoC**: Cyan-Linie mit Nulllinie, oben rechts „x W (y %)" mit Ladestand.
+- **Netzbezug / Netzeinspeisung (Shelly Pro 3EM)**: Indigo-Linie mit Nulllinie, aktueller Wert.
+- Jedes Diagramm hat ein eigenes Symbol und eine eigene Farbe wie im Bild sowie eine eigene Skala.
 
-4. **Arbeitsweise & Verhalten bei Aufgaben** – in verständlicher Sprache, wie im Projekt gearbeitet wurde: erst Rückfragen und Freigabe, dann Umsetzung, dann Prüfung (eigene Tests bzw. Testdurchläufe) und saubere Abnahme; Demo-Modus als Standard, damit nichts Echtes ungewollt angesprochen wird; keine ungefragten neuen Funktionen.
+### 4. Erweiterte Tages-Energiebilanz (kWh)
+- Kopf: **„Tages-Energiebilanz in Kilowattstunden (kWh)"** mit dem Untertitel „Vollständige Bilanzierung des Energieflusses: Erzeugung, Speicherung, Netzbezug und Verbrauch".
+- Rechts das Badge **„Autarkie Heute: x %"**.
+- Vier Karten:
+  - **PV-Ertrag Heute** (Badge „Erzeugung"): Direktverbrauch · In Akku geladen · Netzeinspeisung.
+  - **Hausverbrauch Gesamt** (Badge „Bedarf"): Aus Solar direkt · Aus Batteriespeicher · Aus öffentlichem Netz.
+  - **Speicherumsatz (48V)** (Badge „LiFePO4"), Hauptwert „x kWh entl.": Ladung kumuliert · Entladung (Sun-2000) · Round-Trip Wirkungsgrad.
+  - **Netzübertritt (Shelly)** (Badge „Saldierend"), Hauptwert „x kWh Bezug": Netzbezug Heute (+) · Netzeinspeisung (−) · Netto-Netzsaldo.
+- Zwei Verteilungsbalken:
+  - **Verteilung des Solarertrags (x kWh = 100 %)** mit „Eigenverbrauch x %"; Segmente Direkt (Bernstein) · Akku (Cyan) · Netz (Grün).
+  - **Deckung des Hausverbrauchs (x kWh = 100 %)** mit „Autarkie x %"; Segmente Solar (Bernstein) · Akku (Cyan) · Netz (Violett).
+  - Jeder Balken hat eine Prozent-Legende darunter.
 
-5. **Erlernte Fähigkeiten / Erkenntnisse** – konkrete Stolpersteine und wie sie gelöst wurden (z. B. Grafana fand die Datenquelle nicht → feste Kennung vergeben; Firmware-Angabe war ein Objekt statt Text → richtig ausgelesen; Energiefluss-Darstellung auf dem Handy als echtes Hochformat; deutsche Zahlenformate mit Komma).
+### 5. Rest der Seite
+- Der Sonnen-Tagesverlauf bleibt unverändert am Ende der Seite.
 
-6. **Technik-Überblick** – kompakte Übersicht: Art der App (lokales Dashboard), angebundene Geräte (Shelly Pro 3EM, Hoymiles HM-1500/AhoyDTU, Trucki2Shelly/SUN-2000, 2× Victron SmartSolar MPPT, LiFePO4-Speicher), genutzte Bausteine (MQTT-Broker, Zeitreihen-Datenbank, Grafana) und der Hinweis, dass alles lokal läuft.
+## Ablauf für den Nutzer
+1. Auf der jetzigen Verlauf-Seite oben auf den kleinen Link „Neue Ansicht (Vorschau)" tippen. Alternativ ist die Vorschau direkt über `/verlauf-preview` erreichbar.
+2. Die Vorschau öffnet sich mit Multilinie und 24H.
+3. Die Zeitspanne wechseln (1H–24H) und mit Klicks auf die Legenden-Kacheln einzelne Kurven ausblenden.
+4. Auf „4 Kanäle (Option 2)" umschalten und die vier Einzeldiagramme vergleichen.
+5. Nach unten scrollen zur Tagesbilanz und zum Sonnen-Tagesverlauf.
+6. Rückmeldung geben. Erst nach Freigabe ersetzt die Vorschau die echte Verlauf-Seite (Phase 2).
 
-Zusätzlich: eine dezente Kopfzeile mit Sprungmarken zu den Abschnitten und ein „Zurück nach oben"-Knopf. Die Seite ist reiner Lesestoff – keine Bearbeitung, keine Steuerung von Geräten.
-
-## Nutzerfluss
-1. Die Person öffnet die eigene Bericht-Adresse direkt im Browser.
-2. Oben erscheinen Titel, Version und die Kennzahlen-Kacheln.
-3. Beim Scrollen folgen nacheinander: Changelog (hinzugefügt / abgelöst / entfernt), Zeitachse, Arbeitsweise, Erkenntnisse, Technik.
-4. Über die Sprungmarken oben springt man direkt zu einem Abschnitt; der „Zurück nach oben"-Knopf bringt wieder an den Anfang.
-5. Auf dem Handy liegen alle Inhalte in einer gut lesbaren Spalte untereinander.
-
-## UI/UX-Gefühl
-- Gleicher dunkler Industrial-/Control-Room-Look wie die übrige App, mit Neon-Akzenten und der bekannten Schrift.
-- Farbcodierung im Changelog: Grün für Hinzugefügt, Blau/Gelb für Abgelöst, Rot/Grau für Entfernt – damit der Unterschied sofort erkennbar ist.
-- Ruhiges, großzügiges Layout mit viel Abstand, Karten und Trennlinien; sanfte Einblend-Animation beim Scrollen.
-- Vollständig auf Deutsch.
+## Gestaltung (UI/UX)
+- Dunkler Leitstand-Look wie in den Bildern:
+  - fast schwarze Kacheln mit feinem Rahmen und abgerundeten Ecken
+  - kleine Großbuchstaben-Titel mit farbigem Symbol
+  - Werte in Monospace-Schrift
+  - farbige Badges mit dezentem Rahmen
+- Feste Kanalfarben überall gleich: PV Bernstein, Haus Rosa-Rot, Akku Cyan, Netz Indigo/Violett, Einspeisung Grün.
+- Ruhige, weiche Kurven, feine Rasterlinien, gut lesbare Achsen (W bzw. Uhrzeit).
+- Handy: Titelleiste bricht um, Umschalter bleiben voll bedienbar, Legenden-Kacheln rutschen unter den Titel. Die vier Diagramme, die Bilanzkarten und die Balken stehen untereinander. Nichts ragt über den Rand.
+- Sanfte Übergänge beim Umschalten und Ein-/Ausblenden.
 
 ## Umsetzungsphasen
 
-**Phase 1 (wird jetzt gebaut – MVP):**
-- Eigene Vorschau-Seite unter einer eigenen Adresse (nicht im Menü).
-- Alle sechs Abschnitte mit fest kuratiertem Inhalt: Kopf/Kennzahlen, Changelog (hinzugefügt/abgelöst/entfernt), Zeitachse, Arbeitsweise, Erkenntnisse, Technik.
-- Sprungmarken oben, „Zurück nach oben"-Knopf, SCADA-Look, voll auf Desktop und Handy nutzbar.
+### Phase 1 – MVP (wird jetzt gebaut)
+- Neue Vorschau-Seite `/verlauf-preview`, nicht im Menü, mit Link oben auf der jetzigen Verlauf-Seite.
+- Titelleiste mit Titel, Badge „Live Synchron", Ansichts-Umschalter (Option 1/2) und Zeitauswahl 1H/3H/6H/12H/24H.
+- Multilinie-Diagramm mit Legenden-Kacheln (Live-Werte, Klick zum Aus-/Einblenden), Nulllinie und Fußzeile mit Abtastrate und Zeitzone.
+- Vier Einzeldiagramme in der Ansicht „4 Kanäle".
+- Erweiterte Tages-Energiebilanz: vier Karten, zwei Verteilungsbalken, Autarkie-Badge.
+- Sonnen-Tagesverlauf am Seitenende.
+- Die jetzige Verlauf-Seite bleibt bis auf den Vorschau-Link unverändert.
 
-**Phase 2 (später, nur auf Wunsch):**
-- Druck-/PDF-freundliche Ansicht des Berichts zum Teilen oder Archivieren.
-- Optionaler Einstieg aus der Doku-Seite oder der Fußleiste heraus.
+### Phase 2 – Übernahme
+- Nach Freigabe ersetzt die Vorschau die echte Verlauf-Seite.
+- Einführungs-Karte und Grafana-Link bekommen ihren Platz im neuen Layout.
+- Die Vorschau-Adresse leitet auf die Verlauf-Seite um, der Vorschau-Link entfällt.
 
-**Phase 3 (später, nur auf Wunsch):**
-- Teile des Changelogs automatisch aus den gespeicherten Roadmap-Daten speisen, damit sich der Bericht mitpflegt.
-- Kleine Vorher/Nachher-Vorschaubilder oder Screenshots je Meilenstein.
+### Phase 3 – Erweiterungen
+- Vergangene Tage auswählbar (Kurven und Tagesbilanz für ein gewähltes Datum).
+- Vergleich heute gegenüber gestern in der Tagesbilanz.
+- Verlauf-Seite drucken / als PDF (hell & dunkel, wie Bericht und Doku).
 
 ## Annahmen
-- Die Seite liegt unter einer eigenen Vorschau-Adresse (sinngemäß `/bericht` bzw. `/report-preview`) und wird nicht ins Hauptmenü aufgenommen.
-- Inhalte sind fest kuratiert und spiegeln den Stand bis zur aktuellen Version (1.5.0, Stand 29.10.2026) wider; sie aktualisieren sich nicht automatisch.
-- Der Bericht ist rein lesend – keine Bearbeitung, kein Export, keine Gerätesteuerung in Phase 1.
-- Keine neuen externen Integrationen; die Seite nutzt nur bereits vorhandene Projektdaten.
-- Kein Login – wie in der übrigen lokalen App.
-- Sprache durchgehend Deutsch; bestehende Seiten, Roadmap und Anleitung bleiben unverändert.
-- Die bereits entfernten Funktionen (48-Stunden-Prognose, Watt-Labels am Energiefluss, CSV-Export) werden nicht wieder eingeführt, sondern nur im Bericht als „bewusst entfernt" erwähnt.
+- Die Antworten auf die beiden Rückfragen kamen nicht an. Deshalb gelten die empfohlenen Optionen:
+  - Vorschau-Link auf der Verlauf-Seite
+  - Umschalter-Beschriftung wie im Bild „(Option 1)" / „(Option 2)"
+- Der Titel wird genau wie im Bild übernommen, inklusive des Wortes „Recharts".
+- Die Zeitauswahl bekommt laut Text zusätzlich **1H**, Standard ist 24H.
+- Die Umschalter zeigen entweder die Multilinie **oder** die vier Einzeldiagramme, nicht beides gleichzeitig.
+- Das Ein-/Ausblenden per Legenden-Kachel gilt für die Multilinie. In „4 Kanäle" sind immer alle vier Diagramme sichtbar.
+- Die Abtastrate passt sich der Zeitspanne an (ca. 1 Min bei 1H bis 15 Min bei 24H). Die Fußzeile zeigt den tatsächlichen Wert und die echte Zeitzone, Ende Oktober also UTC+1.
+- Live-Werte in den Legenden-Kacheln und Diagrammköpfen aktualisieren sich laufend. Die Kurven werden etwa jede Minute nachgeladen.
+- Vorzeichen wie im Bild: Akku positiv = Laden, negativ = Entladen; Netz positiv = Bezug, negativ = Einspeisung.
+- Zahlen werden wie in der restlichen App mit deutschem Komma angezeigt (6,84 statt 6.84).
+- Die Werte im Bild sind Beispielwerte. Die Bilanz rechnet mit echten (im Demo-Modus simulierten) Tageswerten:
+  - Die Prozentanteile der Balken ergeben immer 100 %.
+  - Der Direktverbrauch ist die Rest-Rechnung: PV-Ertrag minus In Akku geladen minus Netzeinspeisung.
+- „PV-Ertrag Heute" in der Bilanz nutzt dieselbe Grundlage wie die Dashboard-Kennzahl „Solar Ertrag Heute": die Summe der Gerätezähler Hoymiles + MPPT.
+- Eigenverbrauch = (PV-Ertrag − Einspeisung) ÷ PV-Ertrag; Autarkie = (Hausverbrauch − Netzbezug) ÷ Hausverbrauch; Round-Trip = Entladung ÷ Ladung.
+- Der Ladestand (SoC) erscheint im Kopf des Akku-Diagramms als Prozentwert, nicht als eigene Kurve.
+- Weiterhin ausgeschlossen: 48h-PV-Prognose, CSV-Export, Watt-Beschriftungen auf Fluss-Linien und Alarm-Töne.

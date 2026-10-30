@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getHistory, getConfig, getLive } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import SunTimeline from "../components/SunTimeline";
 import EnergyBalance from "../components/EnergyBalance";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
-import { BarChart3, ExternalLink } from "lucide-react";
+import { BarChart3, ExternalLink, Sparkles } from "lucide-react";
 
 const GRAFANA_URL_FALLBACK = "http://192.168.0.202:3000";
 
@@ -126,6 +127,10 @@ export default function History() {
           Verlauf
         </h1>
         <div className="flex items-center gap-3 flex-wrap">
+          <Link to="/verlauf-preview" data-testid="history-preview-link"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-cyan-400/30 bg-cyan-400/10 font-mono text-[11px] uppercase tracking-[0.14em] text-cyan-200 hover:bg-cyan-400/20 transition-colors">
+            <Sparkles size={13} /> Neue Ansicht (Vorschau)
+          </Link>
           <a
             href={grafanaUrl}
             target="_blank"
