@@ -12,12 +12,12 @@ const STATUS = {
 function RunStrip({ runs }) {
   const ordered = [...runs].reverse();
   return (
-    <div className="flex items-end gap-[3px] h-7" data-testid="selftest-run-strip">
+    <div className="w-full sm:flex-1 min-w-0 max-w-[560px] flex items-end gap-[2px] h-7" data-testid="selftest-run-strip">
       {ordered.map((r) => {
         const fail = r.summary?.fail > 0;
         return (
           <span key={r.timestamp} title={`${fmt(r.timestamp)} · ${r.summary?.pass} OK · ${r.summary?.fail} Fehler`}
-            className={`w-2 rounded-sm ${fail ? "bg-red-400/80 h-7" : "bg-emerald-400/70 h-5"}`} />
+            className={`flex-1 min-w-[2px] max-w-[8px] rounded-sm ${fail ? "bg-red-400/80 h-7" : "bg-emerald-400/70 h-5"}`} />
         );
       })}
     </div>
@@ -37,13 +37,15 @@ export default function SelftestHistory({ history }) {
           {runs.length} von max. {history?.keep ?? 50} Läufen · nur manuelle Tests
         </div>
       </div>
-      {!runs.length ? (
+      {!history ? (
+        <div className="p-4 font-mono text-sm text-white/45" data-testid="selftest-history-loading">Lade Verlauf…</div>
+      ) : !runs.length ? (
         <div className="p-4 font-mono text-sm text-white/55" data-testid="selftest-history-empty">Noch kein Verlauf – starte einen Selbst-Test.</div>
       ) : (
         <div className="p-4 space-y-4">
-          <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-4">
             <RunStrip runs={runs} />
-            <div className="font-mono text-[10px] text-white/45">letzter Lauf: <span className="text-white/75">{fmt(runs[0].timestamp)}</span></div>
+            <div className="font-mono text-[10px] text-white/45 shrink-0">letzter Lauf: <span className="text-white/75">{fmt(runs[0].timestamp)}</span></div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full font-mono text-xs min-w-[560px]" data-testid="selftest-history-table">
@@ -60,7 +62,7 @@ export default function SelftestHistory({ history }) {
                 {checks.map((c) => {
                   const st = STATUS[String(c.last_status)] || STATUS.null;
                   return (
-                    <tr key={c.name} className="border-b border-white/5 last:border-b-0" data-testid={`selftest-check-${c.name.replace(/\s+/g, "-").toLowerCase()}`}>
+                    <tr key={c.name} className="border-b border-white/5 last:border-b-0" data-testid={`selftest-check-${c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}>
                       <td className="py-2 pr-3 text-white/85">{c.name}</td>
                       <td className="py-2 pr-3"><span className={`px-1.5 py-0.5 rounded border text-[9px] tracking-[0.1em] ${st.cls}`}>{st.label}</span></td>
                       <td className="py-2 pr-3 text-white/60">{fmt(c.last_ok)}</td>
