@@ -379,3 +379,33 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Berechnete Schriftfamilie für Knoten-W, Prozentzeichen, Hover-W und Inspector: `JetBrains Mono`; keine DSEG-Vererbung auf Einheiten.
 - Detail- und mobile Auto-Ansicht inklusive Hover-Pill geprüft; klare `W`-Darstellung und kein Seiten-Overflow.
 - Production Build erfolgreich; EnergyFlow-Regressionstest an die klare Inspector-Typografie angepasst.
+
+## Neuer Umsetzungsabschnitt – Tagesbilanz fachlich und technisch validiert (01.11.2026)
+
+### Auftrag
+- Prüfen, ob sämtliche Berechnungen der Tages-kWh-Bilanz korrekt sind und fehlerfrei vom Backend an die Oberfläche übertragen werden.
+
+### Festgestellte und behobene Fehler
+- Die PV-Karte verwendete erneut Live-YDay-Gerätezähler statt des messwertintegrierten `today.pv_kwh`.
+- Hausverbrauch wurde im Frontend aus Teilwerten neu abgeleitet statt das gemessene `consumption_kwh` zu verwenden.
+- Gesamter Netzexport wurde pauschal der PV zugerechnet; gesamte Akkuentladung pauschal dem Haus. Das war bei parallelem PV-/Akkubetrieb fachlich falsch.
+- „Round-Trip Wirkungsgrad" war nur das Verhältnis Tagesentladung/Tagesladung und damit kein echter Zykluswirkungsgrad.
+- Historische Tagesbalken ordneten zeitlich getrennten Nacht-Akku-Export der Tages-PV zu und verwendeten ein festes 15-s-Raster statt realer Zeitabstände.
+- Leere oder unvollständige Tage wurden als echte Nullwerte interpretiert; ein API-Ausfall konnte zuvor einen alten Wert stehen lassen.
+
+### Umsetzung
+- Gemeinsame Backend-Berechnung `_summarize_energy_rows`: trapezförmige Integration anhand realer Zeitstempel; nicht-positive Intervalle und Lücken über 600 s werden übersprungen.
+- Neue explizite API-Felder: `pv_direct_kwh`, `battery_to_house_kwh`, `pv_export_kwh`, `battery_export_kwh`, `battery_discharge_charge_pct`.
+- AC-Export wird pro Messzeitpunkt bei gleichzeitigem PV- und Akkubetrieb proportional zur momentanen AC-Leistung aufgeteilt. Diese notwendige Zuordnung ist in der Oberfläche transparent benannt, da der gemeinsame AC-Bus keine physische Quellenmarkierung liefert.
+- Bilanzidentitäten: `PV = Direkt + Ladung + PV-Export`; `Haus = PV direkt + Akku zum Haus + Netzbezug`; `Export = PV-Export + Akku-Export`; `Entladung = Akku zum Haus + Akku-Export`.
+- `round_trip_pct` bleibt als kompatibler Alias; die Oberfläche bezeichnet den Wert korrekt als „Entlade-/Ladeverhältnis".
+- `/api/energy/balance` gruppiert nun erst nach zeitgewichteter Einzelmessungs-Integration und zeigt „PV lokal genutzt" statt der früher missverständlichen Eigenverbrauchszuordnung.
+- Verfügbarkeitsmetadaten `measurement_available`, `sample_count`, `measured_duration_s`; fehlende Messungen erscheinen als „–"/„Gestern: –". Bei `/today`-Fehlern werden keine veralteten Tageswerte weiter angezeigt.
+- Recharts-Container erhalten stabile `initialDimension`-Werte; dadurch keine `width(-1)/height(-1)`-Initialwarnungen mehr.
+
+### Verifikation
+- Testing-Agent iteration_37 deckte historische Quellenzuordnung und fehlende Messverfügbarkeit auf; beide anschließend korrigiert.
+- Final: **31/31 Backend-Bilanztests** bestanden, einschließlich reiner PV-/Akku-/Netzfälle, proportionalem Parallelbetrieb, Lücken und Offset 0/1.
+- Reale API-Residuen aller fünf Bilanzgleichungen unter 0,002 kWh; neun sichtbare Kenn-/Detailwerte stimmen gerundet exakt mit `/api/today` überein.
+- Browser: 20/20 Gestern-Werte bei fehlendem Vortag „Gestern: –", API-Ausfall ohne stale Wert, keine Recharts-Dimensionswarnung, 1920×800/390×844 ohne Overflow.
+- Production Build erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert.

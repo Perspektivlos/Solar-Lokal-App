@@ -27,7 +27,7 @@ export default function BatteryHistory({ data, live, loading }) {
       </div>
       <div className="h-[210px] sm:h-[240px] mt-4" data-testid="vp-battery-history-plot">
         {data.length === 0 ? <EmptyChart loading={loading} /> : (
-          <ResponsiveContainer>
+          <ResponsiveContainer minWidth={0} initialDimension={{ width: 1200, height: 240 }}>
             <LineChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
               <CartesianGrid stroke={GRID_STROKE} vertical={false} />
               <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={hhmm} tick={TICK} stroke="rgba(255,255,255,0.12)" minTickGap={24} />

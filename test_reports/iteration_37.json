@@ -1,0 +1,61 @@
+{
+  "summary": "DayBalance backend/frontend regression: 30/31 pytest cases and 50/51 final UI checks passed. Daily source splits, identities, UTC offsets, trapezoid durations/gaps, averages, aliases, exact displayed values/deltas, ratio threshold, chart navigation and polling passed. Historical PV attribution and empty-yesterday handling remain incorrect. No actual public API errors, runtime exceptions or document overflow at 1920x800 / 390x844.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/energy/balance",
+        "issue": "Export source shares are calculated AFTER grouping the whole day/month. Separate 1h of 1000 W PV used locally and 1h of 1000 W battery-only grid export produce self_kwh=0.5 instead of 1.0. Night battery export is falsely attributed to daytime PV. Reproduced against the actual _rows_to_balance function using deterministic totals.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "History Recharts containers",
+        "issue": "Repeated console warnings report initial chart width/height=-1 during loads/view changes. Charts subsequently render; no runtime exception or observed persistent clipping. Review initial measurement/container sizing.",
+        "selector": "[data-testid='vp-balance-history-plot']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Today versus yesterday with no measured yesterday data",
+        "issue": "The API returns an all-zero object for no snapshots (also for a single snapshot). DayBalance treats it as measured zero and renders '+9,15 kWh ggü. gestern' instead of 'Gestern: –'. Confirmed with a browser-only MOCKED empty-yesterday response matching the real route contract. HTTP-failed yesterday correctly shows 'Gestern: –'.",
+        "affected_selectors": ["[data-testid='vp-bal-pv-delta']", "[data-testid='vp-bal-house-delta']", "[data-testid='vp-autarky-delta']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_day_balance_flows.py",
+    "/app/backend/tests/test_today_comparison.py",
+    "/app/backend/tests/test_verlauf_preview.py",
+    "/app/test_reports/pytest/pytest_day_balance_37.xml",
+    "/app/tests/day_balance_ui_regression.py"
+  ],
+  "action_items": [
+    "Calculate proportional PV/battery export per snapshot or integration interval BEFORE day/month aggregation; preserve source attribution over time. Run the retained failing night-export regression.",
+    "Expose measurement availability or measured duration in /api/today, and render unavailable yesterday deltas as 'Gestern: –'. Do not equate genuine measured zero energy with missing snapshots.",
+    "Review historical fixed-15-second energy accumulation for consistency with /api/today's timestamp-weighted, gap-skipping integration.",
+    "Optional: eliminate transient Recharts negative-dimension warnings and split the 728-line routes.py into focused route modules."
+  ],
+  "critical_code_review_comments": [
+    "routes.py:99-106 sums PV, charging, discharge and export before routes.py:73-76 computes a nonlinear source fraction. Ratio-of-sums is not equivalent to sum-of-per-sample attribution. This affects both day and month buckets.",
+    "routes.py:60-65 still uses a fixed 15-second factor for historical energy, unlike today()'s actual timestamps and >600-second gap skipping. This is a source-review consistency risk; no separate irregular-sampling historical fixture was executed.",
+    "routes.py:322-332 returns no availability metadata when snapshots are absent; DayBalance.jsx:99-115 converts this valid-looking object to zeros, so Delta's finite-value guard cannot identify missing measurements.",
+    "History.jsx:44-46 silently swallows live/today errors and retains previous state after a failed refresh, without an error/freshness indicator. Initial failed today was tested and correctly displayed '–'; stale-after-success behavior was source-reviewed only."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_day_balance_flows.py",
+    "/app/tests/day_balance_ui_regression.py",
+    "/app/test_reports/iteration_37.json"
+  ],
+  "success_rate": {"backend": "96.8% (30/31)", "frontend": "98.0% (50/51 final application checks)"},
+  "seed_data_creation": "None. Existing hardware readings are DEMO/MOCKED; public APIs and DB are real. Deterministic route tests used isolated in-memory snapshots. UI empty-data, HTTP-502 and charge-threshold responses were explicitly browser-only MOCKED. No DB, config or device-control writes.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Use frontend/.env REACT_APP_BACKEND_URL and /verlauf (not /history). Run pytest with exported frontend environment against the three files listed. Retained UI runner executes via namespace={}; exec(compile(open('/app/tests/day_balance_ui_regression.py').read(), 'day_balance_ui_regression.py', 'exec'), namespace); await namespace['run'](page) in the browser tool. Preliminary inline UI harness had five false failures due to Unicode-minus parsing and Python banker rounding; final runner corrects these and all real numeric comparisons pass. A first saved-runner exec attempt lacked explicit namespace and failed before checks. No auth testing required. UI failure injection produced expected console HTTP-502 logs, not actual backend errors. Actual server logs show no route exceptions. Recharts warnings are transient but repeated. Screenshots in screenshots-balance-37. No application source changes made.",
+  "rca of the issue": "Historical attribution: daytime PV=1 kWh, PV export=0, nighttime battery discharge/export=1 kWh. Whole-day ratio computes PV share=1/(1+1), assigns 0.5 kWh night export to PV, leaving self=0.5. Fix by deriving flows before temporal aggregation. Missing yesterday: no-data response is indistinguishable from measured zero, so valuesFor creates finite zero previous values and Delta computes numerical differences. Add explicit measured-duration/sample availability and suppress unavailable comparisons."
+}

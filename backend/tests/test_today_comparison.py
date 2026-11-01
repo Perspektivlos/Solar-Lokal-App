@@ -14,7 +14,9 @@ BASE_URL = os.environ['REACT_APP_BACKEND_URL'].rstrip('/')
 FIELDS = {'pv_kwh', 'consumption_kwh', 'grid_import_kwh', 'grid_export_kwh',
           'self_consumption_kwh', 'autarky_pct', 'self_consumption_pct',
           'avg_pv_w', 'avg_house_w', 'battery_charge_kwh',
-          'battery_discharge_kwh', 'round_trip_pct'}
+          'battery_discharge_kwh', 'pv_direct_kwh', 'battery_to_house_kwh',
+          'pv_export_kwh', 'battery_export_kwh', 'battery_discharge_charge_pct',
+          'round_trip_pct', 'measurement_available', 'sample_count', 'measured_duration_s'}
 
 
 @pytest.mark.parametrize('params', [{}, {'day_offset': 0}, {'day_offset': 1}])
@@ -23,7 +25,8 @@ def test_today_public_contract(params):
     assert response.status_code == 200
     data = response.json()
     assert set(data) == FIELDS
-    assert all(isinstance(v, (int, float)) and v >= 0 for v in data.values())
+    assert isinstance(data['measurement_available'], bool)
+    assert all(isinstance(v, (int, float)) and v >= 0 for k, v in data.items() if k != 'measurement_available')
     print(params, data)
 
 
@@ -32,8 +35,9 @@ def test_today_public_default_matches_zero():
     explicit = requests.get(f'{BASE_URL}/api/today', params={'day_offset': 0}, timeout=30).json()
     assert set(default) == set(explicit) == FIELDS
     # Poller can add one snapshot between requests; allow only one sample's drift.
-    for field in FIELDS:
+    for field in FIELDS - {'measurement_available'}:
         assert abs(default[field] - explicit[field]) <= (5 if field.endswith('_w') else 1)
+    assert default['measurement_available'] == explicit['measurement_available']
 
 
 @pytest.mark.parametrize('offset', [0, 1])
@@ -73,11 +77,14 @@ def test_today_utc_boundaries_and_energy(offset):
             return self.selected
 
     tree = ast.parse((Path(__file__).parents[1] / 'routes.py').read_text())
+    helper_names = {'_safe_power', '_charge_w', '_discharge_w', '_flow_components', '_summarize_energy_rows'}
+    helpers = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in helper_names]
     route = next(n for n in tree.body if isinstance(n, ast.AsyncFunctionDef) and n.name == 'today')
     route.decorator_list = []
-    module = ast.fix_missing_locations(ast.Module(body=[route], type_ignores=[]))
+    module = ast.fix_missing_locations(ast.Module(body=helpers + [route], type_ignores=[]))
     namespace = {'datetime': FrozenDatetime, 'timezone': timezone, 'timedelta': timedelta,
-                 'Dict': Dict, 'Any': Any, 'db': SimpleNamespace(snapshots=Cursor())}
+                 'Dict': Dict, 'Any': Any, 'List': list, 'MAX_ENERGY_GAP_SECONDS': 600,
+                 'db': SimpleNamespace(snapshots=Cursor())}
     exec(compile(module, 'routes.py', 'exec'), namespace)
     actual = asyncio.run(namespace['today'](offset))
     assert set(actual) == FIELDS
@@ -85,3 +92,6 @@ def test_today_utc_boundaries_and_energy(offset):
     assert actual['consumption_kwh'] == pytest.approx(0.042, abs=0.001)
     assert actual['battery_charge_kwh'] == pytest.approx(0.010, abs=0.001)
     assert actual['battery_discharge_kwh'] == 0
+    assert actual['measurement_available'] is True
+    assert actual['sample_count'] == 2
+    assert actual['measured_duration_s'] == 300

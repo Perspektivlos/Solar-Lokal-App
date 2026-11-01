@@ -42,7 +42,7 @@ export default function History() {
     getConfig().then((config) => { if (alive) setGrafanaUrl(config?.grafana_url || ""); }).catch(() => {});
     const load = () => {
       getLive().then((value) => { if (alive) setLive(value); }).catch(() => {});
-      getToday().then((value) => { if (alive) setToday(value); }).catch(() => {});
+      getToday().then((value) => { if (alive) setToday(value); }).catch(() => { if (alive) setToday(null); });
     };
     load();
     const timer = setInterval(load, 5000);
@@ -51,7 +51,7 @@ export default function History() {
 
   useEffect(() => {
     let alive = true;
-    const load = () => getToday(1).then((value) => { if (alive) setYesterday(value); }).catch(() => {});
+    const load = () => getToday(1).then((value) => { if (alive) setYesterday(value); }).catch(() => { if (alive) setYesterday(null); });
     load();
     const timer = setInterval(load, 60000);
     return () => { alive = false; clearInterval(timer); };
@@ -77,7 +77,7 @@ export default function History() {
         ? <MultiLine data={data} range={range} live={live} loading={loading} />
         : <FourChannels data={data} live={live} loading={loading} />}
       {view === "multi" && <BatteryHistory data={data} live={live} loading={loading} />}
-      <DayBalance live={live} today={today} yesterday={yesterday} />
+      <DayBalance today={today} yesterday={yesterday} />
       {live && <SunTimeline timestamp={live.timestamp} sun={live.sun} />}
     </div>
   );

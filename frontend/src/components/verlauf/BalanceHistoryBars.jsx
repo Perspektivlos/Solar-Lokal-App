@@ -7,7 +7,7 @@ import { CH, EXPORT_COLOR, GRID_STROKE, TICK } from "./shared";
 
 const SERIES = [
   { key: "pv_kwh", name: "PV-Ertrag", color: CH.pv.color },
-  { key: "self_kwh", name: "Eigenverbrauch", color: CH.house.color },
+  { key: "self_kwh", name: "PV lokal genutzt", color: CH.house.color },
   { key: "import_kwh", name: "Netzbezug", color: CH.grid.color },
   { key: "export_kwh", name: "Einspeisung", color: EXPORT_COLOR },
 ];
@@ -61,7 +61,7 @@ export default function BalanceHistoryBars() {
         </div>
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45" data-testid="vp-balance-history-unit">kWh pro Tag</span>
       </div>
-      <div className="h-[250px] sm:h-[290px]" data-testid="vp-balance-history-plot">
+      <div className="h-[250px] sm:h-[290px] min-w-0" data-testid="vp-balance-history-plot">
         {loading ? (
           <div className="h-full grid place-items-center font-mono text-xs text-white/40" data-testid="vp-balance-history-loading">Lade Tageswerte…</div>
         ) : error ? (
@@ -76,7 +76,7 @@ export default function BalanceHistoryBars() {
         ) : rows.length === 0 ? (
           <div className="h-full grid place-items-center font-mono text-xs text-white/40" data-testid="vp-balance-history-empty">Noch keine Tageswerte vorhanden.</div>
         ) : (
-          <ResponsiveContainer key={chartKey}>
+          <ResponsiveContainer key={chartKey} minWidth={0} initialDimension={{ width: 1200, height: 290 }}>
             <BarChart data={rows} margin={{ top: 8, right: 4, left: -12, bottom: 0 }} barGap={1}>
               <CartesianGrid stroke={GRID_STROKE} vertical={false} />
               <XAxis dataKey="label" tick={TICK} stroke="rgba(255,255,255,0.12)" minTickGap={12} />

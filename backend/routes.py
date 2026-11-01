@@ -54,29 +54,112 @@ def _eval_alarms(cfg: Dict[str, Any], data: Dict[str, Any]):
 
 # ---------- Energiebilanz (kWh je Tag/Monat aus Snapshots) ----------
 
-ENERGY_SAMPLE_SECONDS = 15  # Poller-Intervall (siehe server.poller_loop)
+MAX_ENERGY_GAP_SECONDS = 600
 
 
-def _rows_to_balance(rows: List[Dict[str, Any]], sample_seconds: int = ENERGY_SAMPLE_SECONDS) -> List[Dict[str, Any]]:
-    """Wandelt gruppierte Leistungs-Summen (W je Sample) in kWh je Bucket um.
+def _safe_power(row: Dict[str, Any], key: str) -> float:
+    try:
+        return float(row.get(key, 0) or 0)
+    except (TypeError, ValueError):
+        return 0.0
 
-    Energie ≈ Σ(Leistung[W]) · Sample-Intervall[h] / 1000 → kWh. Eigenverbrauch = PV − Einspeisung.
-    """
-    factor = sample_seconds / 3600.0 / 1000.0
-    out: List[Dict[str, Any]] = []
-    for r in rows:
-        pv = round(float(r.get("pv", 0) or 0) * factor, 2)
-        imp = round(float(r.get("imp", 0) or 0) * factor, 2)
-        exp = round(float(r.get("exp", 0) or 0) * factor, 2)
-        self_kwh = round(max(0.0, pv - exp), 2)
-        out.append({
-            "period": r["_id"],
-            "pv_kwh": pv,
-            "import_kwh": imp,
-            "export_kwh": exp,
-            "self_kwh": self_kwh,
-        })
-    return out
+
+def _charge_w(row: Dict[str, Any]) -> float:
+    value = row.get("battery_charge_w")
+    return max(0.0, float(value)) if value is not None else max(0.0, _safe_power(row, "battery_power"))
+
+
+def _discharge_w(row: Dict[str, Any]) -> float:
+    value = row.get("battery_discharge_w")
+    return max(0.0, float(value)) if value is not None else max(0.0, -_safe_power(row, "battery_power"))
+
+
+def _flow_components(row: Dict[str, Any]) -> Dict[str, float]:
+    pv = max(0.0, _safe_power(row, "pv_power"))
+    charge = _charge_w(row)
+    discharge = _discharge_w(row)
+    pv_ac = max(0.0, pv - charge)
+    grid = _safe_power(row, "grid_power")
+    grid_export = max(0.0, -grid)
+    local_ac = pv_ac + discharge
+    export_share = min(1.0, grid_export / local_ac) if local_ac > 0 else 0.0
+    pv_export = pv_ac * export_share
+    battery_export = discharge * export_share
+    return {
+        "pv": pv,
+        "house": max(0.0, _safe_power(row, "house_power")),
+        "grid_import": max(0.0, grid),
+        "grid_export": grid_export,
+        "charge": charge,
+        "discharge": discharge,
+        "pv_direct": max(0.0, pv_ac - pv_export),
+        "battery_to_house": max(0.0, discharge - battery_export),
+        "pv_export": pv_export,
+        "battery_export": battery_export,
+    }
+
+
+def _summarize_energy_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    names = ("pv", "house", "grid_import", "grid_export", "charge", "discharge",
+             "pv_direct", "battery_to_house", "pv_export", "battery_export")
+    totals = {name: 0.0 for name in names}
+    measured_seconds = 0.0
+    for previous, current in zip(rows, rows[1:]):
+        try:
+            start = datetime.fromisoformat(previous["ts"])
+            end = datetime.fromisoformat(current["ts"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        seconds = (end - start).total_seconds()
+        if seconds <= 0 or seconds > MAX_ENERGY_GAP_SECONDS:
+            continue
+        measured_seconds += seconds
+        a, b = _flow_components(previous), _flow_components(current)
+        hours = seconds / 3600.0
+        for name in names:
+            totals[name] += (a[name] + b[name]) / 2.0 * hours
+
+    def kwh(name: str) -> float:
+        return totals[name] / 1000.0
+
+    pv = kwh("pv")
+    house = kwh("house")
+    grid_import = kwh("grid_import")
+    grid_export = kwh("grid_export")
+    charge = kwh("charge")
+    discharge = kwh("discharge")
+    pv_direct = kwh("pv_direct")
+    battery_to_house = kwh("battery_to_house")
+    pv_export = kwh("pv_export")
+    battery_export = kwh("battery_export")
+    self_consumption = max(0.0, min(pv, pv_direct + charge))
+    autarky = ((house - grid_import) / house * 100) if house > 0 else 0.0
+    self_percent = (self_consumption / pv * 100) if pv > 0 else 0.0
+    ratio = (discharge / charge * 100) if charge > 0.05 else 0.0
+    clamp = lambda value: max(0.0, min(100.0, value))
+    duration_h = measured_seconds / 3600.0
+    return {
+        "pv_kwh": round(pv, 3),
+        "consumption_kwh": round(house, 3),
+        "grid_import_kwh": round(grid_import, 3),
+        "grid_export_kwh": round(grid_export, 3),
+        "self_consumption_kwh": round(self_consumption, 3),
+        "autarky_pct": round(clamp(autarky), 1),
+        "self_consumption_pct": round(clamp(self_percent), 1),
+        "avg_pv_w": round(totals["pv"] / duration_h, 1) if duration_h > 0 else 0,
+        "avg_house_w": round(totals["house"] / duration_h, 1) if duration_h > 0 else 0,
+        "battery_charge_kwh": round(charge, 3),
+        "battery_discharge_kwh": round(discharge, 3),
+        "pv_direct_kwh": round(pv_direct, 3),
+        "battery_to_house_kwh": round(battery_to_house, 3),
+        "pv_export_kwh": round(pv_export, 3),
+        "battery_export_kwh": round(battery_export, 3),
+        "battery_discharge_charge_pct": round(clamp(ratio), 1),
+        "round_trip_pct": round(clamp(ratio), 1),
+        "measurement_available": measured_seconds > 0,
+        "sample_count": len(rows),
+        "measured_duration_s": round(measured_seconds, 1),
+    }
 
 
 @api_router.get("/energy/balance")
@@ -85,23 +168,31 @@ async def energy_balance(period: str = "day", limit: int = 14) -> Dict[str, Any]
     limit = max(1, min(int(limit), 60))
     if period == "day":
         start = (datetime.now(timezone.utc) - timedelta(days=limit)).isoformat()
-        bucket = {"$substr": ["$ts", 0, 10]}
     else:
         start = (datetime.now(timezone.utc) - timedelta(days=limit * 31)).isoformat()
-        bucket = {"$substr": ["$ts", 0, 7]}
-    pipeline = [
-        {"$match": {"ts": {"$gte": start}}},
-        {"$group": {
-            "_id": bucket,
-            "pv": {"$sum": "$pv_power"},
-            "imp": {"$sum": {"$cond": [{"$gt": ["$grid_power", 0]}, "$grid_power", 0]}},
-            "exp": {"$sum": {"$cond": [{"$lt": ["$grid_power", 0]}, {"$multiply": ["$grid_power", -1]}, 0]}},
-            "n": {"$sum": 1},
-        }},
-        {"$sort": {"_id": 1}},
-    ]
-    rows = await db.snapshots.aggregate(pipeline).to_list(1000)
-    buckets = _rows_to_balance(rows)[-limit:]
+    projection = {"_id": 0, "ts": 1, "pv_power": 1, "house_power": 1, "grid_power": 1,
+                  "battery_power": 1, "battery_charge_w": 1, "battery_discharge_w": 1}
+    max_rows = min(1000000, max(20000, limit * (6000 if period == "day" else 180000)))
+    cursor = db.snapshots.find({"ts": {"$gte": start}}, projection).sort("ts", -1).limit(max_rows)
+    rows = (await cursor.to_list(max_rows))[::-1]
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    length = 10 if period == "day" else 7
+    for row in rows:
+        key = str(row.get("ts") or "")[:length]
+        if key:
+            grouped.setdefault(key, []).append(row)
+    buckets = []
+    for key, period_rows in grouped.items():
+        summary = _summarize_energy_rows(period_rows)
+        if summary["measurement_available"]:
+            buckets.append({
+                "period": key,
+                "pv_kwh": round(summary["pv_kwh"], 2),
+                "import_kwh": round(summary["grid_import_kwh"], 2),
+                "export_kwh": round(summary["grid_export_kwh"], 2),
+                "self_kwh": round(summary["self_consumption_kwh"], 2),
+            })
+    buckets = buckets[-limit:]
     return {"period": period, "buckets": buckets}
 
 
@@ -312,83 +403,7 @@ async def today(day_offset: int = 0) -> Dict[str, Any]:
         {"_id": 0},
     ).sort("ts", 1).limit(20000)
     rows = await cur.to_list(20000)
-    if not rows:
-        return {
-            "pv_kwh": 0, "consumption_kwh": 0, "grid_import_kwh": 0,
-            "grid_export_kwh": 0, "self_consumption_kwh": 0,
-            "autarky_pct": 0, "self_consumption_pct": 0,
-            "avg_pv_w": 0, "avg_house_w": 0,
-            "battery_charge_kwh": 0, "battery_discharge_kwh": 0,
-            "round_trip_pct": 0,
-        }
-
-    def trapez(values_a: float, values_b: float, t_a: datetime, t_b: datetime) -> float:
-        dt_h = (t_b - t_a).total_seconds() / 3600.0
-        return (values_a + values_b) / 2.0 * dt_h
-
-    def charge_w(row: Dict[str, Any]) -> float:
-        v = row.get("battery_charge_w")
-        return v if v is not None else max(0, row.get("battery_power", 0))
-
-    def discharge_w(row: Dict[str, Any]) -> float:
-        v = row.get("battery_discharge_w")
-        return v if v is not None else max(0, -row.get("battery_power", 0))
-
-    pv_wh = grid_imp_wh = grid_exp_wh = house_wh = 0.0
-    bat_charge_wh = bat_discharge_wh = 0.0
-    for prev, cur_row in zip(rows, rows[1:]):
-        ta = datetime.fromisoformat(prev["ts"])
-        tb = datetime.fromisoformat(cur_row["ts"])
-        if (tb - ta).total_seconds() > 600:
-            continue  # large gap, skip
-        pv_a, pv_b = prev["pv_power"], cur_row["pv_power"]
-        gp_a, gp_b = prev["grid_power"], cur_row["grid_power"]
-        hp_a, hp_b = prev["house_power"], cur_row["house_power"]
-        pv_wh += trapez(pv_a, pv_b, ta, tb)
-        house_wh += trapez(hp_a, hp_b, ta, tb)
-        grid_imp_wh += trapez(max(0, gp_a), max(0, gp_b), ta, tb)
-        grid_exp_wh += trapez(max(0, -gp_a), max(0, -gp_b), ta, tb)
-        bat_charge_wh += trapez(charge_w(prev), charge_w(cur_row), ta, tb)
-        bat_discharge_wh += trapez(discharge_w(prev), discharge_w(cur_row), ta, tb)
-
-    pv_kwh = pv_wh / 1000.0
-    house_kwh = house_wh / 1000.0
-    imp_kwh = grid_imp_wh / 1000.0
-    exp_kwh = grid_exp_wh / 1000.0
-    self_consumption_kwh = max(0, pv_kwh - exp_kwh)
-    # Autarkie = Anteil des Hausbedarfs, der ohne Netzbezug gedeckt wurde.
-    # PV-Eigenverbrauch ist hier ungeeignet, weil DC-Ladung und Akku-Entladung
-    # Erzeugung und tatsächliche Hausdeckung zeitlich voneinander entkoppeln.
-    autarky = ((house_kwh - imp_kwh) / house_kwh * 100) if house_kwh > 0 else 0
-    autarky = max(0.0, min(100.0, autarky))
-    self_cons_pct = (self_consumption_kwh / pv_kwh * 100) if pv_kwh > 0 else 0
-    self_cons_pct = max(0.0, min(100.0, self_cons_pct))
-
-    duration_h = (datetime.fromisoformat(rows[-1]["ts"]) - datetime.fromisoformat(rows[0]["ts"])).total_seconds() / 3600.0
-    avg_pv = (pv_wh / duration_h) if duration_h > 0 else 0
-    avg_house = (house_wh / duration_h) if duration_h > 0 else 0
-
-    bat_charge_kwh = bat_charge_wh / 1000.0
-    bat_discharge_kwh = bat_discharge_wh / 1000.0
-    # Round-Trip-Wirkungsgrad = AC-Entladeenergie / DC-Ladeenergie.
-    # Erst ab einer Mindest-Ladeenergie aussagekräftig (Rauschen vermeiden).
-    round_trip = (bat_discharge_kwh / bat_charge_kwh * 100) if bat_charge_kwh > 0.05 else 0
-    round_trip = max(0.0, min(100.0, round_trip))
-
-    return {
-        "pv_kwh": round(pv_kwh, 3),
-        "consumption_kwh": round(house_kwh, 3),
-        "grid_import_kwh": round(imp_kwh, 3),
-        "grid_export_kwh": round(exp_kwh, 3),
-        "self_consumption_kwh": round(self_consumption_kwh, 3),
-        "autarky_pct": round(autarky, 1),
-        "self_consumption_pct": round(self_cons_pct, 1),
-        "avg_pv_w": round(avg_pv, 1),
-        "avg_house_w": round(avg_house, 1),
-        "battery_charge_kwh": round(bat_charge_kwh, 3),
-        "battery_discharge_kwh": round(bat_discharge_kwh, 3),
-        "round_trip_pct": round(round_trip, 1),
-    }
+    return _summarize_energy_rows(rows)
 
 
 @api_router.post("/control/hoymiles")

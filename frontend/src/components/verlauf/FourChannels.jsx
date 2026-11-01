@@ -28,7 +28,7 @@ function Channel({ ch, icon: Icon, title, value, data, area, zero, testid, loadi
       </div>
       <div className="h-[130px]">
         {data.length === 0 ? <EmptyChart loading={loading} /> : (
-          <ResponsiveContainer>
+          <ResponsiveContainer minWidth={0} initialDimension={{ width: 600, height: 130 }}>
             {area ? (
               <AreaChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <defs>
@@ -66,7 +66,7 @@ function BatteryChannel({ data, live, loading }) {
       </div>
       <div className="h-[130px]" data-testid="vp-ch-battery-plot">
         {data.length === 0 ? <EmptyChart loading={loading} /> : (
-          <ResponsiveContainer>
+          <ResponsiveContainer minWidth={0} initialDimension={{ width: 600, height: 130 }}>
             <LineChart data={data} margin={{ top: 4, right: 2, left: 0, bottom: 0 }}>
               <CartesianGrid stroke={GRID_STROKE} vertical={false} />
               <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={hhmm} tick={TICK} stroke="rgba(255,255,255,0.12)" minTickGap={20} />

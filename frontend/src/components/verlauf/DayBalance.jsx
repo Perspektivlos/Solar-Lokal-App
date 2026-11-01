@@ -88,36 +88,37 @@ function DistBar({ title, titleColor, total, ratioLabel, ratio, previousRatio, s
   );
 }
 
-function valuesFor(day, pvValue) {
-  if (!day) {
+function valuesFor(day) {
+  if (!day || day.measurement_available === false) {
     return {
       pv: null, charge: null, discharge: null, imp: null, exp: null, direct: null,
-      house: null, selfUse: null, autarky: null, net: null, roundTrip: null,
+      batteryToHouse: null, pvExport: null, batteryExport: null,
+      house: null, selfUse: null, autarky: null, net: null, dischargeChargeRatio: null,
     };
   }
-  const pv = finite(pvValue) ? Number(pvValue) : Number(day?.pv_kwh || 0);
+  const pv = Number(day?.pv_kwh || 0);
   const charge = Number(day?.battery_charge_kwh || 0);
   const discharge = Number(day?.battery_discharge_kwh || 0);
   const imp = Number(day?.grid_import_kwh || 0);
   const exp = Number(day?.grid_export_kwh || 0);
-  const direct = Math.max(0, pv - charge - exp);
-  const house = direct + discharge + imp;
+  const direct = finite(day?.pv_direct_kwh) ? Number(day.pv_direct_kwh) : Math.max(0, pv - charge - exp);
+  const batteryToHouse = finite(day?.battery_to_house_kwh) ? Number(day.battery_to_house_kwh) : discharge;
+  const pvExport = finite(day?.pv_export_kwh) ? Number(day.pv_export_kwh) : exp;
+  const batteryExport = finite(day?.battery_export_kwh) ? Number(day.battery_export_kwh) : Math.max(0, exp - pvExport);
+  const house = finite(day?.consumption_kwh) ? Number(day.consumption_kwh) : direct + batteryToHouse + imp;
   return {
-    pv, charge, discharge, imp, exp, direct, house,
-    selfUse: pv > 0 ? Math.max(0, ((pv - exp) / pv) * 100) : 0,
-    autarky: house > 0 ? ((house - imp) / house) * 100 : 0,
+    pv, charge, discharge, imp, exp, direct, batteryToHouse, pvExport, batteryExport, house,
+    selfUse: finite(day?.self_consumption_pct) ? Number(day.self_consumption_pct) : (pv > 0 ? Math.max(0, ((direct + charge) / pv) * 100) : 0),
+    autarky: finite(day?.autarky_pct) ? Number(day.autarky_pct) : (house > 0 ? ((house - imp) / house) * 100 : 0),
     net: imp - exp,
-    roundTrip: Number(day?.round_trip_pct || 0),
+    dischargeChargeRatio: Number(day?.battery_discharge_charge_pct ?? day?.round_trip_pct ?? 0),
   };
 }
 
-export default function DayBalance({ live, today, yesterday }) {
-  const ahoy = live?.ahoy || {};
-  const hoy = ahoy.yield_day_kwh ?? (ahoy.channels || []).reduce((a, c) => a + (c.yield_day || 0), 0);
-  const mppt = (live?.victron?.mppts || []).reduce((a, m) => a + (m.yield_today || 0), 0);
-  const current = valuesFor(today, hoy + mppt);
+export default function DayBalance({ today, yesterday }) {
+  const current = valuesFor(today);
   const previous = valuesFor(yesterday);
-  const { pv, charge, discharge, imp, exp, direct, house, selfUse, autarky, net, roundTrip } = current;
+  const { pv, charge, discharge, imp, exp, direct, batteryToHouse, pvExport, batteryExport, house, selfUse, autarky, net, dischargeChargeRatio } = current;
 
   return (
     <div className={`${CARD} p-4 sm:p-6`} data-testid="vp-balance">
@@ -126,7 +127,7 @@ export default function DayBalance({ live, today, yesterday }) {
           <div className="flex items-center gap-2 font-bold uppercase tracking-[0.04em] text-[13px] text-white">
             <BarChart3 size={15} className="text-emerald-300" /> Tages-Energiebilanz in Kilowattstunden (kWh)
           </div>
-          <div className="text-[11px] text-white/45 mt-0.5">Vollständige Bilanzierung des Energieflusses: Erzeugung, Speicherung, Netzbezug und Verbrauch</div>
+          <div className="text-[11px] text-white/45 mt-0.5" data-testid="vp-balance-method">Messwertintegriert; Export wird bei parallelem PV-/Akkubetrieb proportional zur momentanen AC-Leistung zugeordnet.</div>
         </div>
         <span className="self-start inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 font-mono text-[12px] text-emerald-300" data-testid="vp-autarky-badge">
           <ShieldCheck size={14} /> <span>Autarkie Heute: <b className="text-white">{pct(autarky)}</b><span className="block text-[9.5px]"><Delta value={autarky} previous={previous.autarky} mode="pct" testid="vp-autarky-delta" /></span></span>
@@ -135,20 +136,20 @@ export default function DayBalance({ live, today, yesterday }) {
 
       <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <BalanceCard color={CH.pv.color} icon={Sun} title="PV-Ertrag Heute" badge="Erzeugung" value={pv} previous={previous.pv} unit="kWh" testid="vp-bal-pv"
-          rows={[{ label: "Direktverbrauch:", value: kwh(direct), raw: direct, previous: previous.direct }, { label: "In Akku geladen:", value: kwh(charge), raw: charge, previous: previous.charge, color: CH.battery.color }, { label: "Netzeinspeisung:", value: kwh(exp), raw: exp, previous: previous.exp, color: EXPORT_COLOR }]} />
+          rows={[{ label: "Direkt zum Haus:", value: kwh(direct), raw: direct, previous: previous.direct }, { label: "In Akku geladen:", value: kwh(charge), raw: charge, previous: previous.charge, color: CH.battery.color }, { label: "PV-Netzeinspeisung:", value: kwh(pvExport), raw: pvExport, previous: previous.pvExport, color: EXPORT_COLOR }]} />
         <BalanceCard color={CH.house.color} icon={Zap} title="Hausverbrauch Gesamt" badge="Bedarf" value={house} previous={previous.house} unit="kWh" testid="vp-bal-house"
-          rows={[{ label: "Aus Solar direkt:", value: kwh(direct), raw: direct, previous: previous.direct, color: CH.pv.color }, { label: "Aus Batteriespeicher:", value: kwh(discharge), raw: discharge, previous: previous.discharge, color: CH.battery.color }, { label: "Aus öffentlichem Netz:", value: kwh(imp), raw: imp, previous: previous.imp, color: CH.grid.color }]} />
+          rows={[{ label: "Aus Solar direkt:", value: kwh(direct), raw: direct, previous: previous.direct, color: CH.pv.color }, { label: "Aus Batteriespeicher:", value: kwh(batteryToHouse), raw: batteryToHouse, previous: previous.batteryToHouse, color: CH.battery.color }, { label: "Aus öffentlichem Netz:", value: kwh(imp), raw: imp, previous: previous.imp, color: CH.grid.color }]} />
         <BalanceCard color={CH.battery.color} icon={BatteryCharging} title="Speicherumsatz (48V)" badge="LiFePO4" value={discharge} previous={previous.discharge} unit="kWh entl." testid="vp-bal-battery"
-          rows={[{ label: "Ladung kumuliert:", value: kwh(charge), raw: charge, previous: previous.charge }, { label: "Entladung (Sun-2000):", value: kwh(discharge), raw: discharge, previous: previous.discharge }, { label: "Round-Trip Wirkungsgrad:", value: roundTrip ? pct(roundTrip) : "–", raw: roundTrip, previous: previous.roundTrip, mode: "pct", color: EXPORT_COLOR }]} />
+          rows={[{ label: "Ladung kumuliert:", value: kwh(charge), raw: charge, previous: previous.charge }, { label: "Davon zum Haus:", value: kwh(batteryToHouse), raw: batteryToHouse, previous: previous.batteryToHouse }, { label: "Davon ins Netz:", value: kwh(batteryExport), raw: batteryExport, previous: previous.batteryExport, color: EXPORT_COLOR }, { label: "Entlade-/Ladeverhältnis:", value: charge > 0.05 ? pct(dischargeChargeRatio) : "–", raw: dischargeChargeRatio, previous: previous.dischargeChargeRatio, mode: "pct", color: EXPORT_COLOR }]} />
         <BalanceCard color={CH.grid.color} icon={Activity} title="Netzübertritt (Shelly)" badge="Saldierend" value={imp} previous={previous.imp} unit="kWh Bezug" testid="vp-bal-grid"
           rows={[{ label: "Netzbezug Heute:", value: `+${kwh(imp)}`, raw: imp, previous: previous.imp, color: CH.grid.color }, { label: "Netzeinspeisung:", value: `−${kwh(exp)}`, raw: exp, previous: previous.exp, color: EXPORT_COLOR }, { label: "Netto-Netzsaldo:", value: `${net >= 0 ? "+" : "−"}${kwh(Math.abs(net))}`, raw: net, previous: previous.net }]} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
         <DistBar title="Verteilung des Solarertrags" titleColor={CH.pv.color} total={pv} ratioLabel={`Eigenverbrauch: ${pct(selfUse)}`} ratio={selfUse} previousRatio={previous.selfUse} testid="vp-dist-pv"
-          segments={[{ label: "Direkt", value: direct, color: CH.pv.color }, { label: "Akku", value: charge, color: CH.battery.color }, { label: "Netz", value: exp, color: EXPORT_COLOR }]} />
+          segments={[{ label: "Direkt", value: direct, color: CH.pv.color }, { label: "Akku", value: charge, color: CH.battery.color }, { label: "Netz", value: pvExport, color: EXPORT_COLOR }]} />
         <DistBar title="Deckung des Hausverbrauchs" titleColor={CH.house.color} total={house} ratioLabel={`Autarkie: ${pct(autarky)}`} ratio={autarky} previousRatio={previous.autarky} testid="vp-dist-house"
-          segments={[{ label: "Solar", value: direct, color: CH.pv.color }, { label: "Akku", value: discharge, color: CH.battery.color }, { label: "Netz", value: imp, color: CH.grid.color }]} />
+          segments={[{ label: "Solar", value: direct, color: CH.pv.color }, { label: "Akku", value: batteryToHouse, color: CH.battery.color }, { label: "Netz", value: imp, color: CH.grid.color }]} />
       </div>
       <BalanceHistoryBars />
     </div>

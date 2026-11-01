@@ -64,7 +64,7 @@ export default function MultiLine({ data, range, live, loading }) {
 
       <div className="h-[280px] sm:h-[320px] mt-4" data-testid="vp-multiline-chart">
         {data.length === 0 ? <EmptyChart loading={loading} /> : (
-          <ResponsiveContainer>
+          <ResponsiveContainer minWidth={0} initialDimension={{ width: 1200, height: 300 }}>
             <LineChart data={data} margin={{ top: 8, right: 18, left: 0, bottom: 0 }}>
               <CartesianGrid stroke={GRID_STROKE} vertical={false} />
               <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} tickFormatter={hhmm} tick={TICK} stroke="rgba(255,255,255,0.12)" minTickGap={24} />
