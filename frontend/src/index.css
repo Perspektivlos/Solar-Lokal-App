@@ -201,12 +201,13 @@ body::before {
     .neon-text-cyan   { text-shadow: 0 0 8px rgba(6, 182, 212, 0.45); }
 }
 
-/* Energy flow line animation (fließende Partikel) */
+/* Energy flow line animation: kantige DSEG/SCADA-Lichtsegmente */
 @keyframes flow-particles {
-    to { stroke-dashoffset: -32; }
+    to { stroke-dashoffset: -44; }
 }
 .flow-particles {
-    stroke-dasharray: 1 15;
+    stroke-dasharray: 10 12;
+    stroke-linecap: butt;
     animation: flow-particles 1.4s linear infinite;
 }
 .flow-particles.reverse {

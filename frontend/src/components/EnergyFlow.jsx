@@ -3,8 +3,8 @@
  *   MPPT 1 + MPPT 2 (Victron, DC) -> Akku (Trucki/SUN) -> Haus;
  *   Hoymiles HM1500 (AC) -> Haus;  Netz (Shelly 3EM) <-> Haus.
  * DC-gekoppelt: Victron-MPPTs laden den Akku, Trucki entlädt ihn ins AC-Netz,
- * Hoymiles speist AC direkt. Energieströme als leuchtende Plasma-Bahnen mit
- * Photonen-Schwärmen – Geschwindigkeit/Dichte/Glow skalieren mit der Wattleistung. */
+ * Hoymiles speist AC direkt. Energieströme als segmentierte SCADA-Lichtbahnen;
+ * Geschwindigkeit und Segmentdichte skalieren mit der Wattleistung. */
 import { useState, useEffect, useRef } from "react";
 import { Activity } from "lucide-react";
 import { useMotion } from "../lib/motion";
@@ -111,7 +111,7 @@ function BatteryRing({ cx, cy, color, soc, active, anim, testid }) {
           {anim && <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="3s" repeatCount="indefinite" />}
         </g>
       )}
-      <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fontWeight="600" fill="rgba(255,255,255,0.85)" data-testid={testid}>{hasSoc ? round(soc) : "–"}</text>
+      <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9" fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" fill="rgba(255,255,255,0.85)" data-testid={testid}>{hasSoc ? round(soc) : "–"}</text>
     </g>
   );
 }
@@ -183,6 +183,7 @@ function NodeCard({ node, dim, reduced, onHover }) {
   const percentText = known(percent) ? Math.round(Number(percent)).toLocaleString("de-DE") : "–";
   const peakText = known(peakW) && Number(peakW) > 0 ? `${Math.round(Number(peakW)).toLocaleString("de-DE")} W` : "–";
   const metricTail = [percentLabel, node.direction].filter(Boolean).join(" · ");
+  const powerFontSize = hasComparison && String(value).length >= 6 ? (percentText.length >= 3 ? 14.5 : 16) : (hasComparison ? 18 : 24);
   return (
     <g data-testid={testid}
        onMouseEnter={() => onHover(node.key)} onMouseLeave={() => onHover(null)} onClick={() => onHover(node.key)}
@@ -215,12 +216,12 @@ function NodeCard({ node, dim, reduced, onHover }) {
       <text x={tx} y={top + 23} fontSize="9" fontFamily="Chakra Petch, JetBrains Mono" fontWeight="600" letterSpacing="0.5" fill="rgba(226,232,240,0.62)">
         {String(label).toUpperCase()}
       </text>
-      <text x={tx} y={y + (hasComparison ? 7 : 10)} fontSize={hasComparison ? "18" : "24"} fontFamily="JetBrains Mono" fontWeight="600" fill="#ffffff"
+      <text x={tx} y={y + (hasComparison ? 7 : 10)} fontSize={powerFontSize} fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" letterSpacing="0.25" fill="#ffffff"
             data-testid={`${testid}-power`} style={active ? { filter: `drop-shadow(0 0 7px ${color}aa)` } : undefined}>
-        {value}<tspan fontSize={hasComparison ? "10" : "12"} fill="rgba(255,255,255,0.45)" dx="3">{unit}</tspan>
+        {value}<tspan fontSize={hasComparison ? "9" : "12"} fill="rgba(255,255,255,0.45)" dx="3">{unit}</tspan>
       </text>
       {hasComparison && (
-        <text x={right - 12} y={y + 7} textAnchor="end" fontSize="18" fontFamily="JetBrains Mono" fontWeight="600" fill={color} data-testid={`${testid}-percent`}>
+        <text x={right - 12} y={y + 7} textAnchor="end" fontSize="18" fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" letterSpacing="0.25" fill={color} data-testid={`${testid}-percent`}>
           {percentText}{known(percent) && <tspan fontSize="10" fill="rgba(255,255,255,0.45)" dx="2">%</tspan>}
         </text>
       )}
@@ -265,15 +266,21 @@ function NodeCard({ node, dim, reduced, onHover }) {
   );
 }
 
-// ---------- Plasma-Fluss ----------
+// ---------- Segmentierter SCADA-Fluss ----------
 
-function Photons({ d, color, reverse, dur, n }) {
+function FlowSegments({ d, color, reverse, dur, n, id }) {
   const path = reverse ? reversePath(d) : d;
-  return [...Array(n)].map((_, i) => (
-    <circle key={i} r="2.4" fill={color} style={{ filter: `drop-shadow(0 0 4px ${color})` }}>
-      <animateMotion dur={`${dur}s`} begin={`${-(dur / n) * i}s`} repeatCount="indefinite" path={path} calcMode="linear" />
-    </circle>
-  ));
+  return (
+    <g data-testid={`flow-segments-${id}`} pointerEvents="none">
+      {[...Array(n)].map((_, i) => (
+        <g key={i} opacity={0.72 + (i % 2) * 0.2} style={{ filter: `drop-shadow(0 0 4px ${color})` }}>
+          <path d="M -7 -1.8 L -5 -3.1 L 5 -3.1 L 7 -1.8 L 5 3.1 L -5 3.1 Z" fill={color} stroke="rgba(255,255,255,0.35)" strokeWidth="0.45" />
+          <path d="M -4 -0.7 L 4 -0.7" stroke="rgba(255,255,255,0.58)" strokeWidth="0.7" />
+          <animateMotion dur={`${dur}s`} begin={`${-(dur / n) * i}s`} repeatCount="indefinite" path={path} calcMode="linear" rotate="auto" />
+        </g>
+      ))}
+    </g>
+  );
 }
 
 function Flow({ flow, hover, reduced, onHover, tempo = 1 }) {
@@ -284,7 +291,8 @@ function Flow({ flow, hover, reduced, onHover, tempo = 1 }) {
   if (!active) {
     return (
       <g style={style}>
-        <path d={d} stroke="rgba(255,255,255,0.10)" strokeWidth="1.5" fill="none" strokeDasharray="2 7" />
+        <path d={d} stroke="rgba(1,4,10,0.92)" strokeWidth="8" fill="none" strokeLinecap="square" />
+        <path d={d} stroke="rgba(148,163,184,0.13)" strokeWidth="1.5" fill="none" strokeDasharray="7 9" strokeLinecap="butt" />
         <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
               onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />
       </g>
@@ -298,24 +306,26 @@ function Flow({ flow, hover, reduced, onHover, tempo = 1 }) {
   const emph = hover && related;
   return (
     <g style={style}>
-      <path d={d} stroke={color} strokeWidth={haloW} fill="none" opacity={halo} strokeLinecap="round" />
-      <path d={d} stroke={color} strokeWidth="2" fill="none" opacity="0.22" strokeLinecap="round" />
+      <path d={d} stroke="rgba(1,4,10,0.94)" strokeWidth={haloW + 4} fill="none" strokeLinecap="square" />
+      <path d={d} stroke={color} strokeWidth={haloW} fill="none" opacity={halo} strokeLinecap="square" />
+      <path d={d} stroke="rgba(226,232,240,0.13)" strokeWidth="5" fill="none" strokeLinecap="square" />
+      <path d={d} stroke={color} strokeWidth="1.2" fill="none" opacity="0.48" strokeLinecap="butt" />
       <path d={d} stroke={color} strokeWidth={emph ? 4.5 : 3.5} fill="none"
-            className={reduced ? "" : (reverse ? "flow-particles reverse" : "flow-particles")} strokeLinecap="round"
+            className={reduced ? "" : (reverse ? "flow-particles reverse" : "flow-particles")} strokeLinecap="butt"
             style={{ animationDuration: `${dur}s`, filter: `drop-shadow(0 0 ${emph ? 6 : 4}px ${color})` }} />
-      {!reduced && <Photons d={d} color={color} reverse={reverse} dur={dur} n={n} />}
+      {!reduced && <FlowSegments d={d} color={color} reverse={reverse} dur={dur} n={n} id={id} />}
       <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
             onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />
     </g>
   );
 }
 
-function ValuePill({ x, y, text, color }) {
+function ValuePill({ x, y, text, color, id }) {
   const w = 20 + text.length * 7;
   return (
     <g style={{ pointerEvents: "none" }}>
       <rect x={x - w / 2} y={y - 11} width={w} height="22" rx="5" fill="rgba(2,6,16,0.94)" stroke={color} strokeWidth="1" />
-      <text x={x} y={y + 4.5} textAnchor="middle" fontSize="11" fontFamily="JetBrains Mono" fontWeight="600" fill="#ffffff">{text}</text>
+      <text x={x} y={y + 4.5} textAnchor="middle" fontSize="11" fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" letterSpacing="0.25" fill="#ffffff" data-testid={`flow-pill-${id}-value`}>{text}</text>
     </g>
   );
 }
@@ -605,7 +615,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const VIEW_OPTS = [{ v: "auto", l: "Auto" }, { v: "compact", l: "Kompakt" }, { v: "detail", l: "Detail" }];
 
   return (
-    <div className="glass-strong h-full flex flex-col">
+    <div className="glass-strong h-full flex flex-col" data-testid="energy-flow-panel">
       <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
         <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2 shrink-0">
           <Activity size={12} className="text-cyan-400 neon-cyan" />
@@ -642,7 +652,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
           </div>
         </div>
       </div>
-      <div className="p-4 flex-1 flex items-center relative">
+      <div className="p-4 flex-1 flex items-center relative overflow-hidden bg-[linear-gradient(180deg,rgba(2,6,15,0.55),rgba(3,8,20,0.82))]">
         {detail && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-[200px] max-w-[62vw] pointer-events-none" data-testid="flow-inspector">
             <div className="rounded-md border px-3 py-2.5" style={{ background: "rgba(6,11,24,0.96)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderColor: `${detail.color}66`, boxShadow: `0 0 18px ${detail.color}26, 0 12px 28px -14px rgba(0,0,0,0.9)` }}>
@@ -657,7 +667,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
                 {detail.rows.map((r, i) => (
                   <div key={i} className="flex items-baseline justify-between gap-3">
                     <dt className="font-mono text-[10px] text-white/45">{r.l}</dt>
-                    <dd className="font-mono text-[11px] text-white/90 text-right">{r.v}</dd>
+                    <dd className="font-dseg text-[11px] text-white/90 text-right" data-testid={`flow-inspector-value-${i}`}>{r.v}</dd>
                   </div>
                 ))}
               </dl>
@@ -670,6 +680,14 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
             <pattern id="bggrid" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
             </pattern>
+            <pattern id="scadaScan" width="8" height="8" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="7.5" x2="8" y2="7.5" stroke="rgba(125,211,252,0.045)" strokeWidth="0.5" />
+            </pattern>
+            <linearGradient id="flowPanelBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#050b17" />
+              <stop offset="52%" stopColor="#030813" />
+              <stop offset="100%" stopColor="#02050d" />
+            </linearGradient>
             <radialGradient id="efcenter" cx="50%" cy="50%" r="60%">
               <stop offset="0%" stopColor="rgba(6,182,212,0.05)" />
               <stop offset="100%" stopColor="rgba(0,0,0,0)" />
@@ -679,7 +697,9 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
               <stop offset="100%" stopColor="rgba(7,12,24,0.97)" />
             </linearGradient>
           </defs>
+          <rect x="0" y="0" width={VBW} height={VBH} fill="url(#flowPanelBg)" />
           <rect x="0" y="0" width={VBW} height={VBH} fill="url(#bggrid)" />
+          <rect x="0" y="0" width={VBW} height={VBH} fill="url(#scadaScan)" opacity="0.72" />
           <rect x="0" y="0" width={VBW} height={VBH} fill="url(#efcenter)" onClick={() => setHover(null)} style={{ cursor: "default" }} />
           {!portrait && [[180, 70], [900, 70], [180, 360], [900, 360], [530, 215]].map(([cx, cy], i) => (
             <g key={i} stroke="rgba(148,163,184,0.16)" strokeWidth="0.8" pointerEvents="none">
@@ -694,7 +714,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
           ))}
           {activePills.map((f) => {
             const m = pathMid(f.d);
-            return <ValuePill key={f.id} x={m.x} y={m.y} text={`${round(f.watts)} W`} color={f.color} />;
+            return <ValuePill key={f.id} id={f.id} x={m.x} y={m.y} text={`${round(f.watts)} W`} color={f.color} />;
           })}
         </svg>
         </div>

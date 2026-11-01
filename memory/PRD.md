@@ -264,3 +264,20 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [ ] **Gerätekennzahlen Phase 3:** Tages-/Monatsauslastung je Gerät sowie Diagnosehinweise für Über-/Unterauslastung
 - P3: CSV-Datenexport – vom Nutzer ABGELEHNT
 - P3: Watt-Label am Energiefluss-Pfeil – vom Nutzer ABGELEHNT
+
+## Neuer Umsetzungsabschnitt – SCADA-DSEG7-Leistungsfluss (30.10.2026)
+
+### Auftrag
+- Die Animation des bestehenden `EnergyFlow` in eine klarere **SCADA-Dark + DSEG7-Optik** überführen, ohne Datenlogik, Topologie, Gerätefarben oder Steuerung zu ändern.
+
+### Umsetzung
+- Runde Photonen wurden durch kantige, entlang der Flussrichtung rotierende **LED-/7-Segment-Balken** ersetzt (`flow-segments-*`). Segmentanzahl und Laufzeit bleiben watt- und tempoabhängig; Netz-Einspeisung läuft weiterhin rückwärts.
+- Leitungen besitzen jetzt einen dunklen Instrumentenkanal, eine dezente Metall-Innenbahn und eine segmentierte Farblaufspur. Der SVG-Untergrund kombiniert tiefdunklen SCADA-Verlauf, 40er-Raster und feine horizontale Scanlines.
+- Knoten-Leistung, Auslastung/SoC, Batterie-Ring, Hover-Watt-Pills und Inspector-Werte nutzen `DSEG7-Classic` mit `JetBrains Mono` als Fallback. Testids ergänzt: `energy-flow-panel`, `flow-segments-*`, `flow-pill-*-value`, `flow-inspector-value-*`.
+- Reduced Motion und „Fluss aus" entfernen weiterhin sämtliche SMIL- und CSS-Bewegungen. Auto/Kompakt/Detail, Tempo, Persistenz, Hover-Inspector und Live-Polling bleiben unverändert.
+- Extremfall +2.500 W / 100 % SoC durch reservierte DSEG-Zahlenspalten behoben; kein Überlappen in Kompakt oder Detail.
+
+### Verifikation
+- Testing-Agent iteration_35: 73/74 Prüfungen bestanden; einzig gefundener Maximalwert-Überstand anschließend korrigiert.
+- Retest: Segmentbewegung gemessen, Gegenrichtung/Toggle/DSEG bestätigt, +2.500 W und 100 % in Detail/Kompakt ohne Überschneidung, neue Testids vorhanden, 390 px ohne Seiten-Overflow.
+- Production Build und 9/9 Gerätekennzahlen-Helfertests erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert.
