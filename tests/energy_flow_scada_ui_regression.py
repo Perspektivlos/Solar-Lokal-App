@@ -39,7 +39,7 @@ async def run(page, origin):
             radius:g.querySelectorAll('animate[attributeName=r]').length,
             opacity:g.querySelectorAll('animate[attributeName=opacity]').length}))""")
         check('round glowing photons', bool(shape) and all(s['paths'] == 0 and s['circles'] == 2*s['n'] and s['radius'] == s['n'] and s['opacity'] == 2*s['n'] for s in shape), shape)
-        check('solid beams', await page.locator('.flow-light-beam').evaluate_all("els=>els.length>0&&els.every(e=>getComputedStyle(e).strokeDasharray==='none')"))
+        check('narrow solid channels', await page.locator('[data-testid^=flow-channel-]').evaluate_all("els=>els.length>0&&els.every(e=>Number(e.getAttribute('stroke-width'))<=2.6&&getComputedStyle(e).strokeDasharray==='none')"))
         check('no legacy segments', await page.locator('[data-testid^=flow-segments-]').count() == 0)
         selector = '[data-testid=flow-photons-hoymiles-house] > g'
         a = await ctm(selector)

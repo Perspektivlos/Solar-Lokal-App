@@ -304,18 +304,14 @@ function Flow({ flow, hover, reduced, onHover, tempo = 1 }) {
     );
   }
   const dur = +(flowDurSec(watts) / (tempo || 1)).toFixed(2);
-  const intensity = Math.min((watts || 0) / 3000, 1);
-  const halo = 0.07 + intensity * 0.13;
-  const haloW = 12 + intensity * 10;
   const n = watts < 150 ? 1 : watts < 600 ? 2 : watts < 1500 ? 3 : 4;
   const emph = hover && related;
   return (
     <g style={style}>
-      <path d={d} stroke="rgba(1,4,10,0.96)" strokeWidth={haloW + 5} fill="none" strokeLinecap="round" />
-      <path d={d} stroke={color} strokeWidth={haloW} fill="none" opacity={halo} strokeLinecap="round" />
-      <path d={d} stroke={color} strokeWidth={emph ? 4 : 3} fill="none" opacity={emph ? 0.48 : 0.3} strokeLinecap="round"
-            className={reduced ? "" : "flow-light-beam"} style={{ filter: `drop-shadow(0 0 ${emph ? 10 : 7}px ${color})` }} />
-      <path d={d} stroke="rgba(255,255,255,0.58)" strokeWidth="0.55" fill="none" opacity={emph ? 0.42 : 0.24} strokeLinecap="round" />
+      <path d={d} stroke="rgba(1,4,10,0.97)" strokeWidth="5.5" fill="none" strokeLinecap="round" />
+      <path d={d} stroke={color} strokeWidth={emph ? 2.6 : 2.1} fill="none" opacity={emph ? 0.58 : 0.38} strokeLinecap="round"
+            data-testid={`flow-channel-${id}`} style={{ filter: `drop-shadow(0 0 ${emph ? 4 : 2}px ${color})` }} />
+      <path d={d} stroke="rgba(255,255,255,0.5)" strokeWidth="0.35" fill="none" opacity={emph ? 0.34 : 0.18} strokeLinecap="round" />
       {!reduced && <FlowPhotons d={d} color={color} reverse={reverse} dur={dur} n={n} id={id} />}
       <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
             onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />

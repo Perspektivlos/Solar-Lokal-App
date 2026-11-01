@@ -201,13 +201,6 @@ body::before {
     .neon-text-cyan   { text-shadow: 0 0 8px rgba(6, 182, 212, 0.45); }
 }
 
-/* Energy flow: durchgehender Lichtbalken mit sanft atmender Leuchtstärke. */
-@keyframes flow-beam-pulse {
-    0%, 100% { opacity: 0.24; }
-    50% { opacity: 0.42; }
-}
-.flow-light-beam { animation: flow-beam-pulse 1.8s ease-in-out infinite; }
-
 /* Pulse dot */
 @keyframes pulse-dot {
     0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
@@ -322,13 +315,11 @@ body::after {
    Greift bei System-Pref (sofern Nutzer nicht „immer an" erzwingt) ODER
    manueller Option (.reduce-motion). */
 @media (prefers-reduced-motion: reduce) {
-    :root:not(.motion-force-on) .flow-light-beam,
     :root:not(.motion-force-on) .dot-pulse { animation: none !important; }
     :root:not(.motion-force-on) body::before { animation: none !important; }
     :root:not(.motion-force-on) .card-lift { transition: none !important; }
     :root:not(.motion-force-on) .page-reveal > * { animation: none !important; }
 }
-.reduce-motion .flow-light-beam,
 .reduce-motion .dot-pulse { animation: none !important; }
 .reduce-motion body::before { animation: none !important; }
 .reduce-motion .card-lift { transition: none !important; }

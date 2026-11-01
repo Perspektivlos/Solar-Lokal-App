@@ -313,3 +313,19 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Gemessene Deckkraft im Live-Zustand: Hintergrundbalken ca. 0,34, Photonenkern ca. 0,84; Photon bleibt damit klar dominant.
 - Bewegung, Dichte, Richtung und runde Halo-Animation unverändert aktiv.
 - Desktop 1920×800 und Mobil 390×844 visuell geprüft; kein Seiten-Overflow. Production Build erfolgreich.
+
+## Neuer Umsetzungsabschnitt – Schmaler Photon-Führungskanal (30.10.2026)
+
+### Auftrag
+- Den bisherigen Lichtbalken auf einen einfachen, schmalen Kanal reduzieren, auf dem die runden Photonen laufen.
+
+### Umsetzung
+- Breiter Leistungshalo und pulsierender Beam wurden entfernt.
+- Aktive Leitung besteht nur noch aus einem 5,5-Einheiten dunklen Unterkanal, einer 2,1-Einheiten farbigen Führungslinie und einer feinen 0,35-Einheiten Lichtkante.
+- Beim Hover wächst die Farblinie kontrolliert auf maximal 2,6 Einheiten; Photonengröße, Leuchten, Dichte, Geschwindigkeit und Richtung bleiben unverändert.
+- Neuer eindeutiger Selektor `flow-channel-*`; Reduced Motion lässt den statischen Kanal sichtbar und entfernt nur die bewegten Photonen.
+
+### Verifikation
+- Alle fünf aktiven Kanäle im Detailmodus mit 2,1 SVG-Einheiten gemessen; keine frühere `flow-light-beam`-Klasse mehr vorhanden.
+- Photonbewegung erneut gemessen, Reduced Motion geprüft, Desktop/Mobil visuell bestätigt und 390 px ohne Seiten-Overflow.
+- Production Build erfolgreich; wiederverwendbarer EnergyFlow-Regressionstest auf den schmalen Kanal aktualisiert.
