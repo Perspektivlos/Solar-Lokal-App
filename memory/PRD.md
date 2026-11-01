@@ -281,3 +281,19 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Testing-Agent iteration_35: 73/74 Prüfungen bestanden; einzig gefundener Maximalwert-Überstand anschließend korrigiert.
 - Retest: Segmentbewegung gemessen, Gegenrichtung/Toggle/DSEG bestätigt, +2.500 W und 100 % in Detail/Kompakt ohne Überschneidung, neue Testids vorhanden, 390 px ohne Seiten-Overflow.
 - Production Build und 9/9 Gerätekennzahlen-Helfertests erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert.
+
+## Neuer Umsetzungsabschnitt – Lichtbalken & runde Photonen (30.10.2026)
+
+### Auftrag
+- Leitungen im Energiefluss als durchgehenden Lichtstrahl/Lichtbalken darstellen und die Photonen wieder rund sowie sichtbar aufleuchtend ausführen.
+
+### Umsetzung
+- Aktive Flüsse bestehen aus dunklem Leitungsbett, farbigem Halo, solidem Lichtkern und feinem weißem Zentrum; keine gestrichelte Segmentstrecke mehr.
+- Bewegte Elemente sind wieder runde Photonen: farbiger Kern mit heller Kontur plus größerer Halo. Radius und Opazität pulsieren, während die Photonen watt- und tempoabhängig entlang des Pfades laufen.
+- Netzrichtung, Watt-Dichte, Tempo, Fluss-Toggle, Reduced Motion, DSEG7-Telemetrie, SCADA-Hintergrund und alle Gerätekennzahlen bleiben erhalten.
+- Reduced Motion zeigt weiterhin den statischen Lichtbalken, entfernt aber Photon-/Beam-Animationen vollständig.
+
+### Verifikation
+- Testing-Agent iteration_36: **78/78 Frontend-Prüfungen bestanden** – solide Lichtbalken, zwei Kreis-Layer je Photon, Aufleuchten, Bewegung/Gegenrichtung, Watt-Skalierung, Tempo, Persistenz, Reduced Motion und DSEG7.
+- 29/29 Gerätekennzahlen, Live-Polling und +2.500 W/100%-Randfall bestanden; keine Runtime-Fehler, Integrationsfehler, Knotenkollisionen oder Seiten-Overflows bei 1920×800 und 390×844.
+- Production Build erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert; Randfälle wurden ausschließlich browserseitig gemockt.

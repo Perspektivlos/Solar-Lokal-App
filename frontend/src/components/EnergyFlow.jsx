@@ -3,8 +3,8 @@
  *   MPPT 1 + MPPT 2 (Victron, DC) -> Akku (Trucki/SUN) -> Haus;
  *   Hoymiles HM1500 (AC) -> Haus;  Netz (Shelly 3EM) <-> Haus.
  * DC-gekoppelt: Victron-MPPTs laden den Akku, Trucki entlädt ihn ins AC-Netz,
- * Hoymiles speist AC direkt. Energieströme als segmentierte SCADA-Lichtbahnen;
- * Geschwindigkeit und Segmentdichte skalieren mit der Wattleistung. */
+ * Hoymiles speist AC direkt. Energieströme als durchgehende SCADA-Lichtbalken
+ * mit runden Photonen; Geschwindigkeit und Dichte skalieren mit der Leistung. */
 import { useState, useEffect, useRef } from "react";
 import { Activity } from "lucide-react";
 import { useMotion } from "../lib/motion";
@@ -266,16 +266,21 @@ function NodeCard({ node, dim, reduced, onHover }) {
   );
 }
 
-// ---------- Segmentierter SCADA-Fluss ----------
+// ---------- SCADA-Lichtstrahl mit runden Photonen ----------
 
-function FlowSegments({ d, color, reverse, dur, n, id }) {
+function FlowPhotons({ d, color, reverse, dur, n, id }) {
   const path = reverse ? reversePath(d) : d;
   return (
-    <g data-testid={`flow-segments-${id}`} pointerEvents="none">
+    <g data-testid={`flow-photons-${id}`} pointerEvents="none">
       {[...Array(n)].map((_, i) => (
-        <g key={i} opacity={0.72 + (i % 2) * 0.2} style={{ filter: `drop-shadow(0 0 4px ${color})` }}>
-          <path d="M -7 -1.8 L -5 -3.1 L 5 -3.1 L 7 -1.8 L 5 3.1 L -5 3.1 Z" fill={color} stroke="rgba(255,255,255,0.35)" strokeWidth="0.45" />
-          <path d="M -4 -0.7 L 4 -0.7" stroke="rgba(255,255,255,0.58)" strokeWidth="0.7" />
+        <g key={i} style={{ filter: `drop-shadow(0 0 5px ${color})` }}>
+          <circle r="6" fill={color} opacity="0.13">
+            <animate attributeName="r" values="4.5;7;4.5" dur="0.9s" begin={`${-(0.9 / n) * i}s`} repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.08;0.28;0.08" dur="0.9s" begin={`${-(0.9 / n) * i}s`} repeatCount="indefinite" />
+          </circle>
+          <circle r="2.7" fill={color} stroke="rgba(255,255,255,0.82)" strokeWidth="0.65">
+            <animate attributeName="opacity" values="0.72;1;0.72" dur="0.9s" begin={`${-(0.9 / n) * i}s`} repeatCount="indefinite" />
+          </circle>
           <animateMotion dur={`${dur}s`} begin={`${-(dur / n) * i}s`} repeatCount="indefinite" path={path} calcMode="linear" rotate="auto" />
         </g>
       ))}
@@ -291,8 +296,8 @@ function Flow({ flow, hover, reduced, onHover, tempo = 1 }) {
   if (!active) {
     return (
       <g style={style}>
-        <path d={d} stroke="rgba(1,4,10,0.92)" strokeWidth="8" fill="none" strokeLinecap="square" />
-        <path d={d} stroke="rgba(148,163,184,0.13)" strokeWidth="1.5" fill="none" strokeDasharray="7 9" strokeLinecap="butt" />
+        <path d={d} stroke="rgba(1,4,10,0.94)" strokeWidth="9" fill="none" strokeLinecap="round" />
+        <path d={d} stroke="rgba(148,163,184,0.13)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
         <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
               onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />
       </g>
@@ -306,14 +311,12 @@ function Flow({ flow, hover, reduced, onHover, tempo = 1 }) {
   const emph = hover && related;
   return (
     <g style={style}>
-      <path d={d} stroke="rgba(1,4,10,0.94)" strokeWidth={haloW + 4} fill="none" strokeLinecap="square" />
-      <path d={d} stroke={color} strokeWidth={haloW} fill="none" opacity={halo} strokeLinecap="square" />
-      <path d={d} stroke="rgba(226,232,240,0.13)" strokeWidth="5" fill="none" strokeLinecap="square" />
-      <path d={d} stroke={color} strokeWidth="1.2" fill="none" opacity="0.48" strokeLinecap="butt" />
-      <path d={d} stroke={color} strokeWidth={emph ? 4.5 : 3.5} fill="none"
-            className={reduced ? "" : (reverse ? "flow-particles reverse" : "flow-particles")} strokeLinecap="butt"
-            style={{ animationDuration: `${dur}s`, filter: `drop-shadow(0 0 ${emph ? 6 : 4}px ${color})` }} />
-      {!reduced && <FlowSegments d={d} color={color} reverse={reverse} dur={dur} n={n} id={id} />}
+      <path d={d} stroke="rgba(1,4,10,0.96)" strokeWidth={haloW + 5} fill="none" strokeLinecap="round" />
+      <path d={d} stroke={color} strokeWidth={haloW} fill="none" opacity={halo} strokeLinecap="round" />
+      <path d={d} stroke={color} strokeWidth={emph ? 5 : 4} fill="none" opacity={emph ? 0.9 : 0.72} strokeLinecap="round"
+            className={reduced ? "" : "flow-light-beam"} style={{ filter: `drop-shadow(0 0 ${emph ? 8 : 5}px ${color})` }} />
+      <path d={d} stroke="rgba(255,255,255,0.78)" strokeWidth="0.85" fill="none" opacity="0.75" strokeLinecap="round" />
+      {!reduced && <FlowPhotons d={d} color={color} reverse={reverse} dur={dur} n={n} id={id} />}
       <path d={d} stroke="transparent" strokeWidth="18" fill="none" style={{ cursor: "pointer" }}
             onMouseEnter={() => onHover(id)} onMouseLeave={() => onHover(null)} />
     </g>
