@@ -49,6 +49,14 @@ kleinsten passenden Patch an der tatsächlichen Ursache um und belegst ihn mit e
 Abgeschlossen, wenn der Patch steht und die Validierung grün ist oder ein vorbestehender bzw.
 umgebungsbedingter Fehler klar getrennt ausgewiesen ist.
 
+## Abschluss-Checkliste
+
+- Die Änderung behebt die tatsächliche Ursache, nicht nur die Anzeige.
+- Keine sachfremden Kennzahlen verändert; MPPT-Ladung weiter nicht im Hausverbrauch.
+- Batterieentladung folgt weiter `ACDISPLAY` vor `ACSETPOINT`; fehlende Felder fallen sicher zurück.
+- API-Struktur und Frontend-Verbraucher unverändert, sofern nicht beauftragt.
+- Validierung ausgeführt und mit Ergebnis dokumentiert; Unsicherheiten benannt.
+
 ## Ausgabeformat
 
 Verfasse die gesamte Antwort einschließlich Rückfragen und Handoffs auf Deutsch. Code, API-Namen,

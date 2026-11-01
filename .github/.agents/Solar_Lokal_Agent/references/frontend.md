@@ -16,6 +16,7 @@ Agenten `frontend-specialist`.
 3. Imports über den `@/`-Alias; bestehende funktionale Komponenten, Hooks, Tailwind, shadcn/Radix,
    `lucide-react` und Recharts verwenden.
 4. Deutsche UI und Dark-Glass-/Neon-Design erhalten; semantische Farben für PV, Netz und Batterie.
+   Schriften und Farben aus `design_guidelines.json`: IBM Plex Sans für Text, JetBrains Mono für Zahlenwerte.
 5. Fehlende oder verzögerte Daten verständlich darstellen statt 0 W vorzutäuschen.
 6. Große Dashboard-Komponenten nicht nur aus Stilgründen umbauen; `data-testid` stabil halten.
 7. Nach der Änderung `yarn build`; bei Verhaltensänderung mit Testabdeckung zusätzlich

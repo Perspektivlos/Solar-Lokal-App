@@ -39,7 +39,7 @@ MQTT-/HTTP-Parsing, API-Antworten oder Dashboard-Werten.
 
 ## Validierung
 
-Die Tests importieren `server.py`, das `MONGO_URL` zwingend liest:
+Die Tests importieren `server.py`, das `MONGO_URL` und `DB_NAME` beim Modulimport zwingend liest:
 
 ```bash
 cd backend
@@ -47,8 +47,10 @@ MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/ 
 MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/test_mqtt_client.py -q
 ```
 
-`tests/test_solar_dashboard.py` ist ein API-/Integrationstest gegen `REACT_APP_BACKEND_URL` und
-läuft nur, wenn der Dienst erreichbar ist. Ohne laufenden Dienst diesen Test abwählen
+Offline laufen eigenständig: `test_influx_points.py`, `test_mqtt_client.py`,
+`test_get_config_merge.py`, `test_refactor_lifespan.py`.
+`tests/test_solar_dashboard.py` ist ein API-/Integrationstest gegen `REACT_APP_BACKEND_URL`
+(Default ist eine externe Preview-URL) und läuft nur gegen einen erreichbaren lokalen Dienst. Ohne laufenden Dienst diesen Test abwählen
 (`--deselect tests/test_solar_dashboard.py`) und das im Bericht nennen.
 
 ```bash
@@ -56,6 +58,16 @@ cd frontend
 yarn build                  # craco build
 yarn test --watchAll=false  # craco test
 ```
+
+Wenn `yarn` auf dem Rechner defekt ist, direkt `./node_modules/.bin/craco build` bzw.
+`./node_modules/.bin/craco test --watchAll=false --runInBand` verwenden.
+
+Semantik prüfen, nicht nur grüne Tests:
+- MPPT-Ladung weiterhin vom Hausverbrauch ausgeschlossen?
+- Batterieentladung folgt weiterhin `ACDISPLAY` vor `ACSETPOINT`?
+- API-Ausgabe weiterhin in erwarteter Struktur (4 Hoymiles-Kanäle, 3 Shelly-Phasen)?
+- Fehlende Gerätefelder fallen weiterhin sicher zurück; Herkunftsmarker bleiben aussagekräftig?
+- Snapshot-Intervall 15 s und Frontend-Polling 3 s unverändert, sofern nicht beauftragt?
 
 - Energieberechnungen testen mit: Null, Bezug, Einspeisung, Laden, Entladen, fehlende Felder, Demo-Modus.
 - Nach der ersten substanziellen Änderung und erneut vor dem Abschluss ausführen.

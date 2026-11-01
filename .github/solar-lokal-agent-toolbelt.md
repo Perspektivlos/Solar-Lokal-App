@@ -1,7 +1,7 @@
 # Solar-Lokal-Agentenvertrag und Werkzeuggürtel
 
 Diese Datei ist die gemeinsame Quelle für `.github/.agents/Solar_Lokal_Agent/` und
-`.github/skills/Solar Lokal App Bundle/`. Die einzelnen Rollen dürfen sie nicht
+die Skills unter `.github/skills/`. Die einzelnen Rollen dürfen sie nicht
 durch eigene, widersprüchliche Regeln ersetzen.
 
 Energiemodell, API-Vertrag, MQTT-Entscheidung und gültige Testbefehle stehen in
@@ -30,7 +30,8 @@ verifizierte Erkenntnisse, niemals Secrets, Zugangsdaten oder ungeprüfte Vermut
 
 Die früheren Rollen `backend-specialist`, `frontend-specialist` und `solar-app` sind in
 `haucklab-fix` aufgegangen (`.agents/Solar_Lokal_Agent/references/backend.md` und `frontend.md`).
-Die Skills unter `skills/Solar Lokal App Bundle/` liefern Abläufe, keine eigenen Rollen.
+Das frühere `Solar Lokal App Bundle` (Expert, Diagnostics, Fix Workflow, Validation) ist entfernt;
+seine Inhalte stehen in `haucklab`, `haucklab-fix` und `solar-lokal-energy-invariants.md`.
 
 ## Handoff-Minimum
 
