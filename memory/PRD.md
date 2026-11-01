@@ -297,3 +297,19 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Testing-Agent iteration_36: **78/78 Frontend-Prüfungen bestanden** – solide Lichtbalken, zwei Kreis-Layer je Photon, Aufleuchten, Bewegung/Gegenrichtung, Watt-Skalierung, Tempo, Persistenz, Reduced Motion und DSEG7.
 - 29/29 Gerätekennzahlen, Live-Polling und +2.500 W/100%-Randfall bestanden; keine Runtime-Fehler, Integrationsfehler, Knotenkollisionen oder Seiten-Overflows bei 1920×800 und 390×844.
 - Production Build erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert; Randfälle wurden ausschließlich browserseitig gemockt.
+
+## Neuer Umsetzungsabschnitt – Lichtbalken als Photon-Hintergrund (30.10.2026)
+
+### Auftrag
+- Die Lichtbalken sollen visuell nur noch als Hintergrundlicht für die bewegten Photonen dienen.
+
+### Umsetzung
+- Der breite Farbschein wurde diffuser und breiter, gleichzeitig deutlich transparenter abgestimmt.
+- Der solide Farbkern wurde von 4–5 auf 3–4 SVG-Einheiten reduziert; sein Puls liegt nur noch zwischen 24 und 42 % Deckkraft.
+- Der weiße Mittelpunkt ist schmaler und ruhiger. Die runden Photonkerne bleiben hell und erreichen sichtbar höhere Deckkraft als der Strahl.
+- Hover verstärkt den Hintergrund weiterhin moderat, ohne die Photonen zu überstrahlen.
+
+### Verifikation
+- Gemessene Deckkraft im Live-Zustand: Hintergrundbalken ca. 0,34, Photonenkern ca. 0,84; Photon bleibt damit klar dominant.
+- Bewegung, Dichte, Richtung und runde Halo-Animation unverändert aktiv.
+- Desktop 1920×800 und Mobil 390×844 visuell geprüft; kein Seiten-Overflow. Production Build erfolgreich.

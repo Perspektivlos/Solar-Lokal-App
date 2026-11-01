@@ -203,8 +203,8 @@ body::before {
 
 /* Energy flow: durchgehender Lichtbalken mit sanft atmender Leuchtstärke. */
 @keyframes flow-beam-pulse {
-    0%, 100% { opacity: 0.66; }
-    50% { opacity: 0.92; }
+    0%, 100% { opacity: 0.24; }
+    50% { opacity: 0.42; }
 }
 .flow-light-beam { animation: flow-beam-pulse 1.8s ease-in-out infinite; }
 
