@@ -329,3 +329,19 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Alle fünf aktiven Kanäle im Detailmodus mit 2,1 SVG-Einheiten gemessen; keine frühere `flow-light-beam`-Klasse mehr vorhanden.
 - Photonbewegung erneut gemessen, Reduced Motion geprüft, Desktop/Mobil visuell bestätigt und 390 px ohne Seiten-Overflow.
 - Production Build erfolgreich; wiederverwendbarer EnergyFlow-Regressionstest auf den schmalen Kanal aktualisiert.
+
+## Neuer Umsetzungsabschnitt – Doppelte Akku-Anzeige entfernt (30.10.2026)
+
+### Auftrag
+- Die doppelte SoC-Zahl am Batterie-Knoten des Energieflusses entfernen.
+
+### Umsetzung
+- Die kleine numerische SoC-Anzeige im runden Akku-Emblem wurde durch ein eindeutiges Batteriesymbol ersetzt.
+- Der große Prozentwert rechts bleibt als einzige numerische SoC-Anzeige bestehen und behält die vereinbarte W-&-%-Hierarchie.
+- Der äußere Ring darf den Ladezustand weiterhin rein visuell andeuten; es gibt keine zweite Zahl mehr.
+- Neuer semantischer Selektor `flow-battery-emblem` ersetzt den früheren Zahlenring-Selektor.
+
+### Verifikation
+- Detail-, Kompakt- und mobile Auto-Ansicht geprüft: exakt eine numerische SoC-Anzeige je Batterie-Knoten.
+- Batteriesymbol enthält keinen Text, Prozentwert bleibt sichtbar; 390 px ohne Seiten-Overflow.
+- Production Build erfolgreich.

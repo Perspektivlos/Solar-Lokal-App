@@ -100,7 +100,7 @@ function BatteryRing({ cx, cy, color, soc, active, anim, testid }) {
   const hasSoc = known(soc);
   const filled = hasSoc ? (circ * Math.max(0, Math.min(100, Number(soc)))) / 100 : 0;
   return (
-    <g>
+    <g data-testid={testid} aria-label="Batteriesymbol">
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="3" />
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
               strokeDasharray={`${filled} ${circ}`} transform={`rotate(-90 ${cx} ${cy})`}
@@ -111,7 +111,9 @@ function BatteryRing({ cx, cy, color, soc, active, anim, testid }) {
           {anim && <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="3s" repeatCount="indefinite" />}
         </g>
       )}
-      <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9" fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" fill="rgba(255,255,255,0.85)" data-testid={testid}>{hasSoc ? round(soc) : "–"}</text>
+      <rect x={cx - 7} y={cy - 5} width="12" height="10" rx="1.5" fill="rgba(2,6,15,0.82)" stroke={color} strokeWidth="1.25" />
+      <rect x={cx + 5} y={cy - 2} width="2.5" height="4" rx="0.6" fill={color} opacity="0.85" />
+      <line x1={cx - 4} y1={cy} x2={cx + 2} y2={cy} stroke={color} strokeWidth="1.4" strokeLinecap="round" />
     </g>
   );
 }
@@ -162,7 +164,7 @@ function Emblem({ node, reduced }) {
   const ey = node.y;
   const anim = node.active && !reduced;
   if (node.emblem === "sun") return <SunEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
-  if (node.emblem === "battery") return <BatteryRing cx={ex} cy={ey} color={node.color} soc={node.soc} active={node.active} anim={anim} testid={`${node.testid}-soc-ring`} />;
+  if (node.emblem === "battery") return <BatteryRing cx={ex} cy={ey} color={node.color} soc={node.soc} active={node.active} anim={anim} testid={`${node.testid}-emblem`} />;
   if (node.emblem === "grid") return <GridWave cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} uid={node.key} />;
   if (node.emblem === "bolt") return <BoltEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
   return <HouseEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
