@@ -345,3 +345,20 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Detail-, Kompakt- und mobile Auto-Ansicht geprüft: exakt eine numerische SoC-Anzeige je Batterie-Knoten.
 - Batteriesymbol enthält keinen Text, Prozentwert bleibt sichtbar; 390 px ohne Seiten-Overflow.
 - Production Build erfolgreich.
+
+## Neuer Umsetzungsabschnitt – Energiefluss-Kachel ans App-Design angepasst (30.10.2026)
+
+### Auftrag
+- Die äußere Energiefluss-Kachel an das etablierte Design der übrigen Geräte- und Detailkarten angleichen.
+
+### Umsetzung
+- Frühere helle `glass-strong`-Hülle durch denselben tiefdunklen 150°-Kartenverlauf wie `GlassCard` ersetzt (`#0d1626` → `#070c18`).
+- Radius, Innenkante, Randtransparenz und Schatten entsprechen nun dem gemeinsamen App-Kartensystem.
+- Cyanfarbene 3-px-Akzentoberkante mit Verlauf und Glow ergänzt.
+- Titelbereich verwendet jetzt dieselbe 26×26-px-Iconbox, Typohierarchie, Header-Trennlinie und responsive Innenabstände wie die anderen App-Karten.
+- Bestehende Flusssteuerung, schmale Kanäle, Photonen, DSEG-Werte und Inspector bleiben unverändert.
+
+### Verifikation
+- Berechnete Hintergrundverläufe und 12-px-Radius von Energiefluss- und Solar-Gerätekarte stimmen exakt überein.
+- Auto/Detail und Tempo-Schalter weiter funktionsfähig; Desktop 1920×800 und Mobil 390×844 visuell geprüft.
+- Kein Seiten-Overflow; Production Build erfolgreich.

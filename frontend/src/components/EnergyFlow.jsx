@@ -614,12 +614,17 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const detail = isNodeHover ? buildDetail(hover) : null;
 
   const VIEW_OPTS = [{ v: "auto", l: "Auto" }, { v: "compact", l: "Kompakt" }, { v: "detail", l: "Detail" }];
+  const panelAccent = "#22D3EE";
 
   return (
-    <div className="glass-strong h-full flex flex-col" data-testid="energy-flow-panel">
-      <div className="border-b border-white/10 px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
-        <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75 flex items-center gap-2 shrink-0">
-          <Activity size={12} className="text-cyan-400 neon-cyan" />
+    <div className="relative rounded-xl overflow-hidden h-full flex flex-col" data-testid="energy-flow-panel"
+      style={{ background: "linear-gradient(150deg, #0d1626 0%, #070c18 100%)", border: `1px solid ${panelAccent}3a`, boxShadow: `inset 0 1px 0 rgba(226,232,240,0.05), 0 18px 44px -26px #000, 0 0 26px -14px ${panelAccent}` }}>
+      <span className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none z-20" style={{ background: `linear-gradient(90deg, ${panelAccent}, transparent 85%)`, boxShadow: `0 0 12px ${panelAccent}` }} />
+      <div className="relative border-b border-white/[0.06] px-4 sm:px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+        <div className="font-sans text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-white/85 flex items-center gap-2.5 shrink-0">
+          <span className="grid place-items-center rounded-md shrink-0 w-[26px] h-[26px] bg-cyan-400/[0.12] border border-cyan-400/30">
+            <Activity size={14} className="text-cyan-300" />
+          </span>
           <span className="hidden sm:inline">Echtzeit-Flussvektoren</span>
           <span className="sm:hidden">Fluss</span>
         </div>
@@ -653,7 +658,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
           </div>
         </div>
       </div>
-      <div className="p-4 flex-1 flex items-center relative overflow-hidden bg-[linear-gradient(180deg,rgba(2,6,15,0.55),rgba(3,8,20,0.82))]">
+      <div className="p-4 sm:p-5 flex-1 flex items-center relative overflow-hidden bg-[linear-gradient(180deg,rgba(2,6,15,0.46),rgba(3,8,20,0.76))]">
         {detail && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-[200px] max-w-[62vw] pointer-events-none" data-testid="flow-inspector">
             <div className="rounded-md border px-3 py-2.5" style={{ background: "rgba(6,11,24,0.96)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderColor: `${detail.color}66`, boxShadow: `0 0 18px ${detail.color}26, 0 12px 28px -14px rgba(0,0,0,0.9)` }}>
