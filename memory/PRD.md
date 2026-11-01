@@ -362,3 +362,20 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Berechnete Hintergrundverläufe und 12-px-Radius von Energiefluss- und Solar-Gerätekarte stimmen exakt überein.
 - Auto/Detail und Tempo-Schalter weiter funktionsfähig; Desktop 1920×800 und Mobil 390×844 visuell geprüft.
 - Kein Seiten-Overflow; Production Build erfolgreich.
+
+## Neuer Umsetzungsabschnitt – Klare Watt- und Hover-Einheiten (30.10.2026)
+
+### Auftrag
+- Das missverständliche DSEG-Symbol anstelle des Buchstabens „W" korrigieren und die Hover-Angaben einfacher sowie klarer gestalten.
+
+### Umsetzung
+- DSEG7 bleibt ausschließlich für numerische Knotenwerte erhalten.
+- Einheiten `W` und `%` werden in jedem Energiefluss-Knoten separat mit `JetBrains Mono`, normalem Zeichenabstand und ruhiger Gewichtung gerendert.
+- Hover-Watt-Pills trennen Zahl und Einheit ebenfalls; der Zahlenwert bleibt DSEG7, das `W` ist klares Mono.
+- Inspector-Werte verwenden vollständig `JetBrains Mono`, da zusammengesetzte Angaben wie `800 W · 43 %` in einer Segmentanzeige schlechter lesbar sind. Dieser Abschnitt ersetzt damit nur für den Hover-Inspector die frühere DSEG-Festlegung.
+- Eindeutige Unit-Testids ergänzt: `flow-*-unit`, `flow-*-percent-unit`, `flow-pill-*-unit`.
+
+### Verifikation
+- Berechnete Schriftfamilie für Knoten-W, Prozentzeichen, Hover-W und Inspector: `JetBrains Mono`; keine DSEG-Vererbung auf Einheiten.
+- Detail- und mobile Auto-Ansicht inklusive Hover-Pill geprüft; klare `W`-Darstellung und kein Seiten-Overflow.
+- Production Build erfolgreich; EnergyFlow-Regressionstest an die klare Inspector-Typografie angepasst.

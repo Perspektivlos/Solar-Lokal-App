@@ -69,7 +69,7 @@ async def run(page, origin):
         for node in ('hoymiles', 'victron', 'battery', 'sun2000', 'grid', 'house'):
             await page.get_by_test_id('flow-'+node).hover()
             await page.get_by_test_id('flow-inspector').wait_for()
-            check('inspector '+node, await page.get_by_test_id('flow-inspector').locator('dd').evaluate_all("els=>els.every(e=>getComputedStyle(e).fontFamily.includes('DSEG7-Classic'))"))
+            check('inspector '+node, await page.get_by_test_id('flow-inspector').locator('dd').evaluate_all("els=>els.every(e=>getComputedStyle(e).fontFamily.includes('JetBrains Mono')&&!getComputedStyle(e).fontFamily.includes('DSEG7-Classic'))"))
         await page.mouse.move(0, 0)
         check('unique IDs', await page.evaluate("(()=>{const a=[...document.querySelectorAll('[data-testid]')].map(e=>e.dataset.testid);return new Set(a).size===a.length})()"))
         for width, height in ((1920, 800), (390, 844)):

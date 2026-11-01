@@ -220,11 +220,11 @@ function NodeCard({ node, dim, reduced, onHover }) {
       </text>
       <text x={tx} y={y + (hasComparison ? 7 : 10)} fontSize={powerFontSize} fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" letterSpacing="0.25" fill="#ffffff"
             data-testid={`${testid}-power`} style={active ? { filter: `drop-shadow(0 0 7px ${color}aa)` } : undefined}>
-        {value}<tspan fontSize={hasComparison ? "9" : "12"} fill="rgba(255,255,255,0.45)" dx="3">{unit}</tspan>
+        {value}<tspan fontSize={hasComparison ? "9" : "12"} fontFamily="JetBrains Mono" fontWeight="500" letterSpacing="0" fill="rgba(255,255,255,0.45)" dx="3" data-testid={`${testid}-unit`}>{unit}</tspan>
       </text>
       {hasComparison && (
         <text x={right - 12} y={y + 7} textAnchor="end" fontSize="18" fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" letterSpacing="0.25" fill={color} data-testid={`${testid}-percent`}>
-          {percentText}{known(percent) && <tspan fontSize="10" fill="rgba(255,255,255,0.45)" dx="2">%</tspan>}
+          {percentText}{known(percent) && <tspan fontSize="10" fontFamily="JetBrains Mono" fontWeight="500" letterSpacing="0" fill="rgba(255,255,255,0.45)" dx="2" data-testid={`${testid}-percent-unit`}>%</tspan>}
         </text>
       )}
       {hasComparison ? (
@@ -321,12 +321,15 @@ function Flow({ flow, hover, reduced, onHover, tempo = 1 }) {
   );
 }
 
-function ValuePill({ x, y, text, color, id }) {
+function ValuePill({ x, y, value, color, id }) {
+  const text = `${value} W`;
   const w = 20 + text.length * 7;
   return (
     <g style={{ pointerEvents: "none" }}>
       <rect x={x - w / 2} y={y - 11} width={w} height="22" rx="5" fill="rgba(2,6,16,0.94)" stroke={color} strokeWidth="1" />
-      <text x={x} y={y + 4.5} textAnchor="middle" fontSize="11" fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" letterSpacing="0.25" fill="#ffffff" data-testid={`flow-pill-${id}-value`}>{text}</text>
+      <text x={x} y={y + 4.5} textAnchor="middle" fontSize="11" fontFamily="DSEG7-Classic, JetBrains Mono" fontWeight="700" letterSpacing="0.25" fill="#ffffff" data-testid={`flow-pill-${id}-value`}>
+        {value}<tspan fontSize="9" fontFamily="JetBrains Mono" fontWeight="500" letterSpacing="0" fill="rgba(255,255,255,0.62)" dx="3" data-testid={`flow-pill-${id}-unit`}>W</tspan>
+      </text>
     </g>
   );
 }
@@ -673,7 +676,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
                 {detail.rows.map((r, i) => (
                   <div key={i} className="flex items-baseline justify-between gap-3">
                     <dt className="font-mono text-[10px] text-white/45">{r.l}</dt>
-                    <dd className="font-dseg text-[11px] text-white/90 text-right" data-testid={`flow-inspector-value-${i}`}>{r.v}</dd>
+                    <dd className="font-mono text-[11px] font-medium text-white/90 text-right" data-testid={`flow-inspector-value-${i}`}>{r.v}</dd>
                   </div>
                 ))}
               </dl>
@@ -720,7 +723,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
           ))}
           {activePills.map((f) => {
             const m = pathMid(f.d);
-            return <ValuePill key={f.id} id={f.id} x={m.x} y={m.y} text={`${round(f.watts)} W`} color={f.color} />;
+            return <ValuePill key={f.id} id={f.id} x={m.x} y={m.y} value={round(f.watts)} color={f.color} />;
           })}
         </svg>
         </div>
