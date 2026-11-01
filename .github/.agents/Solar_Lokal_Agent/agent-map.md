@@ -1,6 +1,7 @@
 # Agent-Map für Solar-Lokal-App
 
 > Verbindlicher Vertrag: [`../../solar-lokal-agent-toolbelt.md`](../../solar-lokal-agent-toolbelt.md).
+> Domänenregeln und Testbefehle: [`../../solar-lokal-energy-invariants.md`](../../solar-lokal-energy-invariants.md).
 > Vor workflow- oder domänenweiten Entscheidungen `/agentmemory` verwenden.
 
 ## Überblick
@@ -10,7 +11,7 @@ Diese Agenten sind bewusst in klare Rollen aufgeteilt, damit die Arbeit sauber z
 ## 1) Diagnose-Phase
 
 Agent: haucklab.agent.md
-- Zweck: Debugging-only / Fehleranalyse
+- Zweck: Debugging-only / Fehleranalyse (ohne `edit`; Fix-Auftrag geht an haucklab-fix)
 
 Verwendung bei:
 - Ursache eines Problems nachverfolgen, ohne sofort zu refaktorieren
@@ -28,7 +29,9 @@ Typische Prompts:
 ## 2) Implementierungs-Phase
 
 Agent: haucklab-fix.agent.md
-- Zweck: Fix + Update + Cleanup
+- Zweck: Fix + Update + Cleanup in Backend und Frontend
+- Backend-Regeln: [`references/backend.md`](references/backend.md)
+- Frontend-Regeln: [`references/frontend.md`](references/frontend.md)
 
 Verwendung bei:
 - Codeänderungen und Fehlerbehebungen umsetzen
@@ -87,18 +90,9 @@ Typische Trainingsaufgaben aus dem Repo:
 
 ## 5) Verifikationsregeln
 
-Backend:
-- Nächstliegender relevanter Pytest-Lauf
-- Beispiel:
-  - cd backend
-  - MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. pytest -q
-
-Frontend
-- Relevanter Build oder Test-Lauf
-- Beispiel:
-  - cd frontend
-  - ./node_modules/.bin/craco build
-  - oder gezielter Testlauf
+Die gültigen Backend- und Frontend-Befehle stehen in
+[`../../solar-lokal-energy-invariants.md`](../../solar-lokal-energy-invariants.md#validierung).
+`tests/test_solar_dashboard.py` braucht einen laufenden Dienst und wird sonst abgewählt.
 
 Relevanz
 - Bei Energie-/Batterie-/PV-Logik: Datenfluss-Check vor Fix
@@ -116,8 +110,8 @@ Wenn du konkret ändern musst
 Wenn du das Agenten-Setup verbessern willst
 → haucklab-self
 
-Wenn du eine domänenweite Sicherheit/Logikprüfung brauchst
-→ solar-app
+Wenn du eine Review eines Diffs oder PRs brauchst
+→ Skill `Code Reviewer`
 
 ## Grundsatz
 
@@ -125,8 +119,8 @@ Die Agenten sollen jeweils eine klare Aufgabe übernehmen, statt alles gleichzei
 
 ## Werkzeuggürtel
 
-Alle Solar-Lokal-Agenten arbeiten mit `read`, `search`, `todo`, `execute` und
-`edit`. Die Extension `solar-lokal-toolbelt` ergänzt
+Alle Solar-Lokal-Agenten arbeiten mit `read`, `search`, `todo` und `execute`;
+`edit` haben nur `haucklab-fix` und `haucklab-self`. Die Extension `solar-lokal-toolbelt` ergänzt
 `solar_lokal_memory_read` und `solar_lokal_memory_append`; diese Werkzeuge
 werden nur für verifizierte Lernpunkte verwendet. Kein Agent darf Memory als
 Ersatz für Codebelege oder Tests behandeln.

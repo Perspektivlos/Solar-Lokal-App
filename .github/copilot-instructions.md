@@ -8,6 +8,8 @@ Werkzeug-, Rollen- und Handoff-Vertrag. `/agentmemory` verwaltet ausschließlich
 verifizierte Lernnotizen; Memory ersetzt weder Tests noch aktuelle
 Repository-Dokumentation. Die Extension `solar-lokal-toolbelt` stellt dafür
 `solar_lokal_memory_read` und `solar_lokal_memory_append` bereit.
+Energiemodell, API-Vertrag, MQTT-Entscheidung und Testbefehle stehen gebündelt in
+[`solar-lokal-energy-invariants.md`](solar-lokal-energy-invariants.md).
 
 ## Projektübersicht
 
@@ -19,7 +21,7 @@ Die Anwendung ist bewusst lokal und ressourcenschonend ausgelegt. Diese Eigensch
 
 ### Backend
 
-Befehle werden standardmäßig aus dem Repository-Root ausgeführt. `pytest.ini` ergänzt `backend` zum `PYTHONPATH`.
+Backend-Befehle werden aus `backend/` ausgeführt; `PYTHONPATH=.` macht die Module importierbar. Eine `pytest.ini` gibt es nicht.
 
 ```bash
 cd backend
@@ -34,7 +36,7 @@ flake8 backend/
 Die Tests importieren `server.py`; deshalb müssen `MONGO_URL` und `DB_NAME` gesetzt sein. Der API-/Integrationstest in `backend/tests/test_solar_dashboard.py` verwendet `REACT_APP_BACKEND_URL` und fällt standardmäßig auf die bereitgestellte Preview-URL zurück. Diesen Test nur ausführen, wenn der Dienst erreichbar ist:
 
 ```bash
-MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest backend/tests/test_solar_dashboard.py -v
+MONGO_URL=mongodb://localhost DB_NAME=test PYTHONPATH=. python -m pytest tests/test_solar_dashboard.py -v
 ```
 
 ### Frontend
@@ -83,6 +85,7 @@ Die Victron-MPPT-Leistung liegt auf der DC-Seite und darf nicht zusätzlich als 
 
 - Agenten schreiben Antworten, Berichte, Rückfragen und Handoffs auf Deutsch. Code, API-Namen, Dateinamen, Befehle und unvermeidbare Fachbegriffe bleiben unverändert.
 - MQTT-Parsing defensiv implementieren: JSON, verpackte `{"value": ...}`-Payloads, numerische Strings und Text akzeptieren. Fehlende oder fehlerhafte Gerätefelder sollen sichere Defaults liefern und den Poller nicht beenden.
+- MQTT läuft vorerst bewusst auf Port 1883 ohne TLS im LAN (Default in `DEFAULT_CONFIG`). Nicht eigenmächtig auf 8883/TLS umstellen; Credentials, ACLs und LAN-Begrenzung weiterhin prüfen.
 - Die von der UI verwendeten Herkunftsmarker (`_via_mqtt`, `_fallback` und `online`) erhalten, damit Demo-, MQTT-Live-, HTTP-Fallback- und Offline-Daten unterschieden werden können.
 - Das etablierte Antwortformat mit vier Hoymiles-Kanälen und drei Shelly-Phasen beibehalten. Änderungen am API-Format erfordern passende Anpassungen an Frontend-Verbrauchern und Backend-Tests.
 - Die Konfiguration wird als MongoDB-Dokument mit `_id: "main"` gespeichert und rekursiv mit `DEFAULT_CONFIG` gemerged. Fehlende verschachtelte Defaults müssen erhalten bleiben; veraltete zusätzliche Schlüssel dürfen keinen Fehler verursachen.
@@ -100,6 +103,6 @@ Die Victron-MPPT-Leistung liegt auf der DC-Seite und darf nicht zusätzlich als 
 - Build- und Deployment-Skript: `deploy/proxmox/build-app.sh`
 - InfluxDB-/Grafana-Einrichtung: `deploy/proxmox/grafana/INFLUXDB-GRAFANA-SETUP.md`
 - Produktverhalten und unterstützte Hardware: `README.md`
-- Repository-spezifische Copilot-Agenten: `.github/.agents/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
+- Repository-spezifische Copilot-Agenten: `.github/.agents/Solar_Lokal_Agent/agent-map.md` (`haucklab` für Diagnose, `haucklab-fix` für Umsetzung, `haucklab-self` für Änderungen am Agenten-Workflow)
 
 Keine Secrets aus `.env`, MQTT-Zugangsdaten, InfluxDB-Tokens oder lokale Deployment-Konfiguration committen.
