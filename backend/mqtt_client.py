@@ -187,6 +187,7 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     ch0 = _obj("HM1500/ch0")
     p_ac = float(total.get("P_AC", ch0.get("P_AC", 0)) or 0)
     yield_day_wh = float(total.get("YieldDay", ch0.get("YieldDay", 0)) or 0)  # Wh
+    max_power_w = float(total.get("MaxPower", 0) or 0)
     available = int(raw.get("HM1500/available", 0) or 0)
     # Leistungslimit: ack_pwr_limit (vom WR bestätigt), Fallback power_limit_read
     limit = raw.get("HM1500/ack_pwr_limit", raw.get("HM1500/power_limit_read", 100))
@@ -205,6 +206,7 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     return {
         "online": available > 0,
         "total_power": round(p_ac, 1),
+        "max_power_w": round(max_power_w, 1) if max_power_w > 0 else None,
         "limit_percent": round(float(limit or 100)),
         "yield_day_kwh": round(yield_day_wh / 1000.0, 3),
         "channels": channels,

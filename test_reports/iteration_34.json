@@ -1,0 +1,75 @@
+{
+  "summary": "Unified device metrics tested through the public app URL. Backend 17/17 pass; exact real-response UI values 29/29 pass. Demo nominal 1500 W, Victron 3480 W, compact PV 4980 W, polling, signed W, missing SUN nominal, utilization clamping, inspectors and flow controls work. Five UI findings remain: wrong net-battery direction, fabricated percentages for missing power/SoC emblem, two text-overlap issues, and missing individual Hoymiles detail metric IDs. No runtime errors or horizontal page overflow at 1920x800 and 390x844.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "EnergyFlow battery direction",
+        "issue": "With DC charge=100 W, SUN discharge=700 W and net battery=-600 W, the node says Laden despite displaying -600 W. Inspector correctly says Entladen. The direction prioritizes chargeActive instead of the net balance.",
+        "selector": "[data-testid='flow-battery-peak']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "utilizationPercent / missing metrics",
+        "issue": "Null Hoymiles or MPPT power displays W as unavailable but utilization as 0%, including the Victron detail row. Number(null) and Number('') become zero. Direct helper tests also fail for both missing and empty power. Null battery SoC correctly displays the main percent as unavailable, but the flow battery emblem still shows 0 because summary.battery_soc falls back to zero.",
+        "selector": "[data-testid='device-metric-hoymiles-percent'], [data-testid='device-metric-mppt-1-percent'], [data-testid='victron-1-percent'], [data-testid='flow-battery']",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Hoymiles detail metric testability",
+        "issue": "New Total AC and Auslastung values have only shared ahoy-power-percent parent ID; individual critical values have no unique IDs. ahoy-power and ahoy-percent both return zero matches. Existing IDs are otherwise unique.",
+        "selector": "[data-testid='ahoy-power-percent']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "EnergyFlow detail and compact node footers",
+        "issues": ["Desktop Grid footer extends 14.9 SVG units outside its device housing; SUN footer extends 4 units. Hoymiles/Victron footer text overlaps the status beacon. Fixed 205-unit node width does not accommodate the new Nenn/SoC/direction strings; visible in desktop screenshots and scaled down on mobile."]
+      },
+      {
+        "screen": "Hoymiles detail card at 390x844",
+        "issues": ["Auslastung overlaps Nennleistung. Label has 92px content width in a 66px column beginning at x=123, while Nennleistung begins at x=201. Dashboard nests a two-column metric group in the first half of another two-column group; screenshot confirms the collision."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_device_metrics.py",
+    "/app/backend/tests/test_mqtt_client.py",
+    "/app/test_reports/pytest/pytest_device_metrics_34.xml",
+    "/app/tests/device_metric_math_regression.mjs",
+    "/app/tests/device_metrics_ui_regression.py"
+  ],
+  "action_items": [
+    "Derive battery direction from summary.battery_power, not whether any DC charging is active; keep individual flow directions tied to their own streams.",
+    "Reject null/undefined/empty power before Number conversion in utilizationPercent. Preserve unknown SoC in BatteryRing instead of displaying zero.",
+    "Fit or wrap node footer labels and reserve space for the status beacon; verify both flow views and directions.",
+    "Flatten or responsively reflow the nested Hoymiles metric grids so Auslastung and Nennleistung do not overlap on mobile.",
+    "Add unique IDs to individual Hoymiles detail W and percentage values, then retest the identified issues.",
+    "Review HTTP Trucki normalization: collectors.fetch_trucki currently omits max_power_w even if provided by /status. This is a code-review observation, not validated against physical hardware."
+  ],
+  "critical_code_review_comments": [
+    "mppt.js:18 converts null and empty string to zero before validating, fabricating utilization for unknown measurements.",
+    "EnergyFlow.jsx:391 chooses Laden whenever chargeActive is true, even when discharge exceeds charge. Lines 345 and BatteryRing also substitute zero for missing SoC.",
+    "EnergyFlow.jsx:227 renders an unbounded footer string from x=left+62 inside a 205-unit node and places the beacon on that same baseline.",
+    "Dashboard.jsx:327-332 nests grid-cols-2 in grid-cols-2 at mobile widths, creating narrow overlapping label columns; MetricBig calls have no individual data-testid.",
+    "collectors.py:90-101 returns a whitelist that discards available max_power_w; HTTP fallback cannot display a nominal value supplied by the device without forwarding it. Physical HTTP fallback was not exercised."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_device_metrics.py",
+    "/app/tests/device_metric_math_regression.mjs",
+    "/app/tests/device_metrics_ui_regression.py",
+    "/app/test_reports/pytest/pytest_device_metrics_34.xml",
+    "/app/test_reports/iteration_34.json"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17)",
+    "frontend": "Live numeric checks 100% (29/29); controlled edge checks 85.7% (24/28). Layout and individual-ID acceptance fail; helper unit checks 77.8% (7/9)."
+  },
+  "seed_data_creation": "None. Existing hardware values are DEMO/MOCKED; application APIs are real. Edge UI scenarios are explicitly MOCKED browser-only /api/live fixtures based on a public response. No config/control/database writes or application-source changes.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Initial exact numeric script captured the first of two StrictMode initial live responses, causing artificial mismatch failures. Corrected test captures all responses and selects the actually rendered snapshot: 29/29 exact checks pass. Both subsequent real polling cycles pass. An initial edge request used an unsupported relative URL; corrected to the current public origin and all edge scenarios executed. Screenshots are under screenshots-metrics-34. UI tests executed inline through browser automation; saved reusable runner passes Python syntax compilation but cannot run standalone in this container because playwright is not installed. Node helper test executed and intentionally exits 1 on two confirmed failures. No auth, settings/control changes, unrelated APIs or physical hardware tests performed.",
+  "rca of the issue": "Confirmed functional roots: coercion of unknown values to zero and direction chosen from gross charge rather than net battery power. Confirmed layout roots: fixed-size SVG footer with added text and nested mobile two-column grids. Reproduce direction using charge=100/discharge=700/net=-600; reproduce unknown percentage using ahoy.total_power=null or mppt.pv_power=null; reproduce layout by visiting detail flow at 1920x800 and card-ahoy at 390x844. Fix application logic/layout in the main agent, then rerun retained regressions."
+}

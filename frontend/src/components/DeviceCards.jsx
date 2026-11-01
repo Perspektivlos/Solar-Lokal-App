@@ -3,6 +3,7 @@
  * Karten: Solar PV · Batterie 48V · Hausverbrauch · Stromnetz. */
 import { Sun, BatteryCharging, Home, Cable } from "lucide-react";
 import { COLOR, formatNum } from "./solar-ui";
+import { HOYMILES_NOMINAL_W, VICTRON_PEAK_W, mpptPeakW, utilizationPercent } from "../lib/mppt";
 
 const HOUSE_ACCENT = "#38bdf8";
 
@@ -36,7 +37,34 @@ function SubRow({ label, value, sub, color, testid }) {
   );
 }
 
-function DeviceCard({ accent, icon: Icon, title, desc, badge, bigValue, bigUnit, bigNote, rows, testid }) {
+const known = (value) => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+const signedPower = (value) => {
+  if (!known(value)) return "–";
+  const n = Number(value);
+  return `${n > 0 ? "+" : n < 0 ? "−" : ""}${formatNum(Math.abs(n), 0)}`;
+};
+
+function DeviceMetricRow({ label, power, percent, peak, color, direction, signed = false, testid }) {
+  const powerText = signed ? signedPower(power) : (known(power) ? formatNum(power, 0) : "–");
+  const percentText = known(percent) ? formatNum(percent, 0) : "–";
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-1.5 border-t border-white/[0.06]" data-testid={testid}>
+      <div className="min-w-0">
+        <div className="font-mono text-[11px] text-white/60 truncate">{label}</div>
+        <div className="font-mono text-[9px] text-white/35 mt-0.5" data-testid={`${testid}-peak`}>
+          Nenn/Peak {known(peak) ? `${formatNum(peak, 0)} W` : "–"}{direction ? ` · ${direction}` : ""}
+        </div>
+      </div>
+      <div className="flex items-baseline gap-2 font-mono whitespace-nowrap">
+        <span className="text-[14px] font-semibold" style={{ color }} data-testid={`${testid}-power`}>{powerText}<span className="text-[10px] text-white/35 ml-1">W</span></span>
+        <span className="text-[14px] font-semibold text-white/90" data-testid={`${testid}-percent`}>{percentText}{known(percent) && <span className="text-[10px] text-white/35 ml-1">%</span>}</span>
+      </div>
+    </div>
+  );
+}
+
+function DeviceCard({ accent, icon: Icon, title, desc, badge, bigValue, bigUnit, bigPercent, percentLabel, peakW, peakLabel = "Nenn/Peak", bigNote, rows, testid }) {
+  const hasComparison = bigPercent !== undefined || peakW !== undefined;
   return (
     <div
       className="relative rounded-xl overflow-hidden h-full flex flex-col card-lift"
@@ -62,17 +90,32 @@ function DeviceCard({ accent, icon: Icon, title, desc, badge, bigValue, bigUnit,
         {badge && <Badge label={badge.label} color={badge.color} />}
       </div>
       <div className="px-4 pb-1">
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-dseg text-[2.1rem] leading-none" style={{ color: accent, textShadow: `0 0 12px ${accent}88` }} data-testid={`${testid}-value`}>
-            {bigValue}
-          </span>
-          <span className="font-mono text-xs text-white/40">{bigUnit}</span>
+        <div className={`grid ${hasComparison ? "grid-cols-2" : "grid-cols-1"} gap-3`}>
+          <div className="min-w-0">
+            <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">Leistung</div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-dseg text-[2.1rem] leading-none" style={{ color: accent, textShadow: `0 0 12px ${accent}88` }} data-testid={`${testid}-value`}>{bigValue}</span>
+              <span className="font-mono text-xs text-white/40" data-testid={`${testid}-unit`}>{bigUnit}</span>
+            </div>
+          </div>
+          {hasComparison && (
+            <div className="min-w-0 border-l border-white/[0.07] pl-3">
+              <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-white/40" data-testid={`${testid}-percent-label`}>{percentLabel || "Auslastung"}</div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-dseg text-[2.1rem] leading-none text-white" data-testid={`${testid}-percent`}>{known(bigPercent) ? formatNum(bigPercent, 0) : "–"}</span>
+                {known(bigPercent) && <span className="font-mono text-xs text-white/40">%</span>}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="font-mono text-[10.5px] text-white/50 mt-1">{bigNote}</div>
+        <div className="font-mono text-[10px] text-white/45 mt-1.5 flex flex-wrap justify-between gap-x-3 gap-y-1">
+          {hasComparison && <span data-testid={`${testid}-peak`}>{peakLabel} {known(peakW) ? `${formatNum(peakW, 0)} W` : "–"}</span>}
+          <span data-testid={`${testid}-note`}>{bigNote}</span>
+        </div>
       </div>
       <div className="px-4 pb-3 mt-1.5">
         {rows.map((r, i) => (
-          <SubRow key={i} {...r} />
+          r.metric ? <DeviceMetricRow key={i} {...r} /> : <SubRow key={i} {...r} />
         ))}
       </div>
     </div>
@@ -87,6 +130,10 @@ export default function DeviceCards({ live, today, display }) {
   const grid = summary?.grid_power ?? 0;
   const battery = summary?.battery_power ?? 0;
   const importing = grid >= 0;
+  const hoymilesPeak = known(ahoy?.max_power_w) && Number(ahoy.max_power_w) > 0 ? Number(ahoy.max_power_w) : HOYMILES_NOMINAL_W;
+  const solarPeak = hoymilesPeak + VICTRON_PEAK_W;
+  const batterySoc = known(trucki?.soc) ? Math.max(0, Math.min(100, Number(trucki.soc))) : null;
+  const truckiPeak = known(trucki?.max_power_w) && Number(trucki.max_power_w) > 0 ? Number(trucki.max_power_w) : null;
 
   const pvActive = (summary?.pv_power ?? 0) > 5;
   const battState = battery > 20 ? "Laden" : battery < -20 ? "Entladung" : "Leerlauf";
@@ -96,17 +143,17 @@ export default function DeviceCards({ live, today, display }) {
     {
       testid: "device-card-solar", accent: COLOR.pv, icon: Sun, title: "Solar PV", desc: labels.solar,
       badge: { label: pvActive ? "Aktiv" : "Inaktiv", color: pvActive ? COLOR.pv : "#64748b" },
-      bigValue: formatNum(summary?.pv_power, 0), bigUnit: "W", bigNote: `Tagesertrag ${formatNum(today?.pv_kwh, 2)} kWh`,
+      bigValue: formatNum(summary?.pv_power, 0), bigUnit: "W", bigPercent: utilizationPercent(summary?.pv_power, solarPeak), peakW: solarPeak, bigNote: `Tagesertrag ${formatNum(today?.pv_kwh, 2)} kWh`,
       rows: [
-        { label: "Hoymiles HM-1500", value: `${formatNum(ahoy?.total_power, 0)} W`, sub: `${formatNum(ahoy?.limit_percent, 0)} %`, color: COLOR.pv },
-        { label: `${mppts[0]?.name || "Victron MPPT #1"} (DC)`, value: `${formatNum(mppts[0]?.pv_power, 0)} W` },
-        { label: `${mppts[1]?.name || "Victron MPPT #2"} (DC)`, value: `${formatNum(mppts[1]?.pv_power, 0)} W` },
+        { metric: true, testid: "device-metric-hoymiles", label: "Hoymiles HM-1500", power: ahoy?.total_power, percent: utilizationPercent(ahoy?.total_power, hoymilesPeak), peak: hoymilesPeak, color: COLOR.pv },
+        { metric: true, testid: "device-metric-mppt-1", label: `${mppts[0]?.name || "Victron MPPT #1"} (DC)`, power: mppts[0]?.pv_power, percent: utilizationPercent(mppts[0]?.pv_power, mpptPeakW(0)), peak: mpptPeakW(0), color: COLOR.victron },
+        { metric: true, testid: "device-metric-mppt-2", label: `${mppts[1]?.name || "Victron MPPT #2"} (DC)`, power: mppts[1]?.pv_power, percent: utilizationPercent(mppts[1]?.pv_power, mpptPeakW(1)), peak: mpptPeakW(1), color: COLOR.victron },
       ],
     },
     {
       testid: "device-card-battery", accent: COLOR.battery, icon: BatteryCharging, title: "Batterie 48V", desc: labels.battery,
       badge: { label: `${formatNum(trucki?.soc, 0)} % SoC`, color: COLOR.battery },
-      bigValue: formatNum(Math.abs(battery), 0), bigUnit: "W", bigNote: battState,
+      bigValue: signedPower(battery), bigUnit: "W", bigPercent: batterySoc, percentLabel: "SoC", peakW: truckiPeak, peakLabel: "SUN Nenn", bigNote: battState,
       rows: [
         { label: "Spannung / Strom", value: `${formatNum(trucki?.battery_voltage, 1)} V / ${formatNum(battCurrent, 1)} A`, color: COLOR.victron },
         { label: "Trucki Sun-2000", value: `${formatNum(trucki?.ac_display_w, 0)} W`, sub: `Lim ${formatNum(trucki?.max_power_w, 0)} W`, color: COLOR.pv },
@@ -126,10 +173,16 @@ export default function DeviceCards({ live, today, display }) {
     {
       testid: "device-card-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, title: "Stromnetz", desc: labels.grid,
       badge: { label: importing ? "Bezug" : "Einspeisung", color: importing ? COLOR.grid_imp : COLOR.grid_exp },
-      bigValue: formatNum(Math.abs(grid), 0), bigUnit: "W", bigNote: `Bezug ${formatNum(today?.grid_import_kwh, 2)} · Export ${formatNum(today?.grid_export_kwh, 2)} kWh`,
+      bigValue: signedPower(grid), bigUnit: "W", bigPercent: null, percentLabel: "Bezugsanteil", peakW: null, bigNote: `Bezug ${formatNum(today?.grid_import_kwh, 2)} · Export ${formatNum(today?.grid_export_kwh, 2)} kWh`,
       rows: phases.map((p) => ({
+        metric: true,
+        testid: `device-metric-grid-${p.phase}`,
         label: `${p.phase} (${formatNum(p.voltage, 1)} V)`,
-        value: `${p.power >= 0 ? "+" : "−"}${formatNum(Math.abs(p.power), 0)} W`,
+        power: p.power,
+        percent: null,
+        peak: null,
+        signed: true,
+        direction: p.power >= 0 ? "Bezug" : "Einspeisung",
         color: p.power >= 0 ? COLOR.grid_imp : COLOR.grid_exp,
       })),
     },

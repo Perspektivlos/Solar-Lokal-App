@@ -81,6 +81,7 @@ async def fetch_ahoy(ip: str, inverter_id: int = 0) -> Optional[Dict[str, Any]]:
     return {
         "online": True,
         "total_power": total,
+        "max_power_w": (inv or {}).get("max_power_w") or (inv or {}).get("max_power"),
         "limit_percent": (inv or {}).get("power_limit_read", 100),
         "channels": channels,
     }
@@ -95,6 +96,7 @@ async def fetch_trucki(ip: str) -> Optional[Dict[str, Any]]:
         "soc": data.get("soc", 0),
         "battery_voltage": data.get("battery_voltage", 0),
         "battery_power": data.get("battery_power", 0),
+        "max_power_w": data.get("max_power_w", data.get("max_power")),
         "ac_output": bool(data.get("ac_output", False)),
         "zepc": bool(data.get("zepc", False)),
     }

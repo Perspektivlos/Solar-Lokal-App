@@ -13,6 +13,7 @@ import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
 import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
 import { Cable, AlertTriangle, Activity, Sun, BatteryCharging, Star } from "lucide-react";
+import { HOYMILES_NOMINAL_W, utilizationPercent } from "../lib/mppt";
 
 const INTRO_SECTIONS = [
   {
@@ -182,6 +183,8 @@ export default function Dashboard() {
   const vLeader = mppts.reduce((a, m) => ((m.yield_today || 0) > (a?.yield_today || 0) ? m : a), mppts[0]);
   const phases = shelly?.phases || [];
   const maxPh = phases.reduce((a, p) => (Math.abs(p.power || 0) > Math.abs(a?.power || 0) ? p : a), phases[0]);
+  const hoymilesPeak = Number(ahoy?.max_power_w) > 0 ? Number(ahoy.max_power_w) : HOYMILES_NOMINAL_W;
+  const hoymilesUtil = utilizationPercent(ahoy?.total_power, hoymilesPeak);
 
   const batteryDetails = [
     { label: "Zweck & Funktion", body: `Puffert PV-Überschuss im LiFePO4-Speicher (16S) über das Trucki2Shelly-Gateway. Aktuell ${batteryKind === "LADEN" ? "lädt" : batteryKind === "ENTLADEN" ? "entlädt" : "im Leerlauf"} mit ${formatNum(Math.abs(summary.battery_power), 0)} W netto bei ${formatNum(trucki?.soc, 0)} % SoC.` },
@@ -321,8 +324,12 @@ export default function Dashboard() {
           <div className="lg:col-span-7">
             <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div className="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3">
-                  <MetricBig label="Total AC" value={formatNum(ahoy.total_power, 0)} unit="W" color="text-yellow-300 neon-text-yellow" size="sm" />
+                <div className="lg:col-span-1 grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-1" data-testid="ahoy-power-percent">
+                    <div data-testid="ahoy-power"><MetricBig label="Total AC" value={formatNum(ahoy.total_power, 0)} unit="W" color="text-yellow-300 neon-text-yellow" size="sm" /></div>
+                    <div data-testid="ahoy-percent"><MetricBig label="Auslastung" value={hoymilesUtil == null ? "–" : formatNum(hoymilesUtil, 0)} unit={hoymilesUtil == null ? "" : "%"} color="text-white" size="sm" /></div>
+                  </div>
+                  <div className="font-mono text-[10px] text-white/45" data-testid="ahoy-peak">Nennleistung {formatNum(hoymilesPeak, 0)} W</div>
                   <Stat label="Limit" value={ahoy.limit_percent} unit="%" />
                 </div>
                 <div className="lg:col-span-3">
@@ -401,13 +408,17 @@ export default function Dashboard() {
                 })}
                 <div className="glass-inset p-3" style={{ borderLeft: `3px solid ${shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}` }}>
                   <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Σ Total</div>
-                  <div className={`font-mono text-2xl font-semibold tracking-tight mt-1.5 ${shelly.total_power >= 0 ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`}>
-                    <span className="opacity-70">{shelly.total_power >= 0 ? "+" : "−"}</span>{formatNum(Math.abs(shelly.total_power), 1)}
-                    <span className="text-sm ml-1 text-white/45 font-normal">W</span>
+                  <div className="flex items-baseline justify-between gap-3 mt-1.5">
+                    <div className={`font-mono text-2xl font-semibold tracking-tight ${shelly.total_power >= 0 ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`} data-testid="shelly-total-power">
+                      <span className="opacity-70">{shelly.total_power >= 0 ? "+" : "−"}</span>{formatNum(Math.abs(shelly.total_power), 1)}
+                      <span className="text-sm ml-1 text-white/45 font-normal">W</span>
+                    </div>
+                    <div className="font-mono text-2xl font-semibold tracking-tight text-white" data-testid="shelly-total-percent">–</div>
                   </div>
                   <div className="font-mono text-[10px] text-white/55 mt-3">
                     {shelly.total_power >= 0 ? "Bezug aus dem Netz" : "Einspeisung ins Netz"}
                   </div>
+                  <div className="font-mono text-[9px] text-white/35 mt-1" data-testid="shelly-total-peak">Nennleistung – · Bezugsanteil nicht verfügbar</div>
                 </div>
               </div>
             </GlassCard>

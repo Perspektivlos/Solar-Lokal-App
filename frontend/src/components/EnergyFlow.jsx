@@ -8,7 +8,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Activity } from "lucide-react";
 import { useMotion } from "../lib/motion";
-import { MPPT_ARRAY, mpptPeakW as mpptPeak } from "../lib/mppt";
+import { MPPT_ARRAY, mpptPeakW as mpptPeak, HOYMILES_NOMINAL_W, VICTRON_PEAK_W, utilizationPercent } from "../lib/mppt";
 
 const COLOR = {
   pv: "#FACC15",        // Hoymiles (AC-Solar)
@@ -23,6 +23,13 @@ const NODE_W = 205;
 const NODE_H = 82;
 
 const round = (w) => Math.round(w || 0);
+const known = (value) => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+const powerReadout = (value, signed = false) => {
+  if (!known(value)) return "–";
+  const number = Number(value);
+  const sign = signed && number !== 0 ? (number > 0 ? "+" : "−") : "";
+  return `${sign}${Math.round(Math.abs(number)).toLocaleString("de-DE")}`;
+};
 
 // Fluss-Dauer aus Leistung: viel Watt -> schneller. 0W≈2.4s … ≥3000W≈0.6s.
 function flowDurSec(watts) {
@@ -87,10 +94,11 @@ function SunEmblem({ cx, cy, color, active, anim }) {
   );
 }
 
-function BatteryRing({ cx, cy, color, soc, active, anim }) {
+function BatteryRing({ cx, cy, color, soc, active, anim, testid }) {
   const r = 15;
   const circ = 2 * Math.PI * r;
-  const filled = (circ * Math.max(0, Math.min(100, soc))) / 100;
+  const hasSoc = known(soc);
+  const filled = hasSoc ? (circ * Math.max(0, Math.min(100, Number(soc)))) / 100 : 0;
   return (
     <g>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="3" />
@@ -103,7 +111,7 @@ function BatteryRing({ cx, cy, color, soc, active, anim }) {
           {anim && <animateTransform attributeName="transform" type="rotate" from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`} dur="3s" repeatCount="indefinite" />}
         </g>
       )}
-      <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fontWeight="600" fill="rgba(255,255,255,0.85)">{round(soc)}</text>
+      <text x={cx} y={cy + 3.5} textAnchor="middle" fontSize="9" fontFamily="JetBrains Mono" fontWeight="600" fill="rgba(255,255,255,0.85)" data-testid={testid}>{hasSoc ? round(soc) : "–"}</text>
     </g>
   );
 }
@@ -154,7 +162,7 @@ function Emblem({ node, reduced }) {
   const ey = node.y;
   const anim = node.active && !reduced;
   if (node.emblem === "sun") return <SunEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
-  if (node.emblem === "battery") return <BatteryRing cx={ex} cy={ey} color={node.color} soc={node.soc} active={node.active} anim={anim} />;
+  if (node.emblem === "battery") return <BatteryRing cx={ex} cy={ey} color={node.color} soc={node.soc} active={node.active} anim={anim} testid={`${node.testid}-soc-ring`} />;
   if (node.emblem === "grid") return <GridWave cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} uid={node.key} />;
   if (node.emblem === "bolt") return <BoltEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
   return <HouseEmblem cx={ex} cy={ey} color={node.color} active={node.active} anim={anim} />;
@@ -163,7 +171,7 @@ function Emblem({ node, reduced }) {
 // ---------- Knoten-Karte ----------
 
 function NodeCard({ node, dim, reduced, onHover }) {
-  const { x, y, color, active, value, unit, label, sub, testid, badge, util, peakUtil, warn } = node;
+  const { x, y, color, active, value, unit, label, sub, testid, badge, util, peakUtil, warn, peakW, percent, percentLabel, peakLabel = "Nenn" } = node;
   const left = x - NODE_W / 2;
   const top = y - NODE_H / 2;
   const right = left + NODE_W;
@@ -171,6 +179,10 @@ function NodeCard({ node, dim, reduced, onHover }) {
   const tx = left + 62;
   const bw = badge ? 13 + badge.length * 4.9 : 0;
   const bx = right - 8 - bw;
+  const hasComparison = percent !== undefined || peakW !== undefined;
+  const percentText = known(percent) ? Math.round(Number(percent)).toLocaleString("de-DE") : "–";
+  const peakText = known(peakW) && Number(peakW) > 0 ? `${Math.round(Number(peakW)).toLocaleString("de-DE")} W` : "–";
+  const metricTail = [percentLabel, node.direction].filter(Boolean).join(" · ");
   return (
     <g data-testid={testid}
        onMouseEnter={() => onHover(node.key)} onMouseLeave={() => onHover(null)} onClick={() => onHover(node.key)}
@@ -203,12 +215,20 @@ function NodeCard({ node, dim, reduced, onHover }) {
       <text x={tx} y={top + 23} fontSize="9" fontFamily="Chakra Petch, JetBrains Mono" fontWeight="600" letterSpacing="0.5" fill="rgba(226,232,240,0.62)">
         {String(label).toUpperCase()}
       </text>
-      <text x={tx} y={y + 10} fontSize="24" fontFamily="JetBrains Mono" fontWeight="600" fill="#ffffff"
-            style={active ? { filter: `drop-shadow(0 0 7px ${color}aa)` } : undefined}>
-        {value}
-        <tspan fontSize="12" fill="rgba(255,255,255,0.45)" dx="4">{unit}</tspan>
+      <text x={tx} y={y + (hasComparison ? 7 : 10)} fontSize={hasComparison ? "18" : "24"} fontFamily="JetBrains Mono" fontWeight="600" fill="#ffffff"
+            data-testid={`${testid}-power`} style={active ? { filter: `drop-shadow(0 0 7px ${color}aa)` } : undefined}>
+        {value}<tspan fontSize={hasComparison ? "10" : "12"} fill="rgba(255,255,255,0.45)" dx="3">{unit}</tspan>
       </text>
-      {sub && (
+      {hasComparison && (
+        <text x={right - 12} y={y + 7} textAnchor="end" fontSize="18" fontFamily="JetBrains Mono" fontWeight="600" fill={color} data-testid={`${testid}-percent`}>
+          {percentText}{known(percent) && <tspan fontSize="10" fill="rgba(255,255,255,0.45)" dx="2">%</tspan>}
+        </text>
+      )}
+      {hasComparison ? (
+        <text x={tx} y={top + NODE_H - 10} fontSize="7.5" fontFamily="JetBrains Mono" fill="rgba(203,213,225,0.58)" data-testid={`${testid}-peak`}>
+          {peakLabel} {peakText}{metricTail ? ` · ${metricTail}` : ""}
+        </text>
+      ) : sub && (
         <text x={tx} y={top + NODE_H - 12} fontSize="9.5" fontFamily="JetBrains Mono" fill="rgba(203,213,225,0.58)">
           {sub}
         </text>
@@ -323,7 +343,8 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const charge = summary?.battery_charge_w || 0;
   const discharge = summary?.battery_discharge_w || 0;
   const house = summary?.house_power || 0;
-  const soc = summary?.battery_soc || 0;
+  const soc = summary?.battery_soc;
+  const socMetric = known(summary?.battery_soc) ? Math.max(0, Math.min(100, Number(summary.battery_soc))) : null;
 
   const importActive = grid > 20;
   const exportActive = grid < -20;
@@ -356,9 +377,6 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   if (importActive) gridLabel = "Bezug";
   else if (exportActive) gridLabel = "Einspeisung";
 
-  let batterySub = `${round(soc)}% · ↑${round(charge)} ↓${round(discharge)}W`;
-  if (trucki?.zepc && trucki?.ac_setpoint_w) batterySub = `${round(soc)}% · ZEPC ${round(trucki.ac_setpoint_w)}W`;
-
   // Geräte-Aktivierung steuert, welche Knoten erscheinen (Default: an).
   const en = (k) => devices?.[k]?.enabled !== false;
   const victronEnabled = en("victron");
@@ -367,6 +385,11 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const batteryEnabled = en("trucki");
 
   const mppts = victron?.mppts || [];
+  const hoymilesPeak = known(ahoy?.max_power_w) && Number(ahoy.max_power_w) > 0 ? Number(ahoy.max_power_w) : HOYMILES_NOMINAL_W;
+  const victronPeak = VICTRON_PEAK_W > 0 ? VICTRON_PEAK_W : null;
+  const compactPvPeak = (hoymilesEnabled ? hoymilesPeak : 0) + (victronEnabled ? (victronPeak || 0) : 0);
+  const sunPeak = known(trucki?.max_power_w) && Number(trucki.max_power_w) > 0 ? Number(trucki.max_power_w) : null;
+  const batteryDirection = battery > 20 ? "Laden" : battery < -20 ? "Entladen" : "Leerlauf";
 
   // Kompakt/Detail-Ansicht (Auto: Handy=Kompakt, Desktop=Detail), in localStorage gemerkt.
   const [viewPref, setViewPref] = useState(() => {
@@ -400,7 +423,6 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   // Akku->Sun-2000->Haus (Entladen über Trucki-Regler), Netz<->Haus.
   const nodeList = [];
   let flowDefs = [];
-  const sun2000Sub = dischargeActive ? `Regler · Lim ${round(trucki?.max_power_w || 0)}W` : "Standby";
   if (compact) {
     // Landscape: 2 Zeilen (oben PV/Akku, unten Netz/Sun-2000, Haus zentral).
     // Portrait (Mobil): Ecken + Mitte – oben PV/Akku, mittig Haus, unten Netz/Sun-2000.
@@ -409,17 +431,20 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       : { pv: [130, 72], battery: [900, 105], sun2000: [900, 315], house: [530, 250], grid: [160, 315] };
     const pvEnabled = victronEnabled || hoymilesEnabled;
     if (pvEnabled) nodeList.push({ key: "pv", x: P.pv[0], y: P.pv[1], color: COLOR.pv, active: pvProducing, emblem: "sun",
-      label: "Solar PV", badge: "AC+DC", value: round(pv), unit: "W", testid: "flow-pv",
-      sub: pvProducing ? `AC ${round(pvAc)} · DC ${round(pvDc)} W` : pvNightSub });
+      label: "Solar PV", badge: "AC+DC", value: powerReadout(pv), unit: "W", testid: "flow-pv",
+      peakW: compactPvPeak || null, percent: utilizationPercent(pv, compactPvPeak), percentLabel: "Ausl." });
     if (gridEnabled) nodeList.push({ key: "grid", x: P.grid[0], y: P.grid[1], color: gridColor, active: importActive || exportActive, emblem: "grid",
-      label: "Stromnetz", badge: "PRO 3EM", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
+      label: "Stromnetz", badge: "PRO 3EM", value: powerReadout(grid, true), unit: "W", testid: "flow-grid",
+      peakW: null, percent: null, direction: gridLabel === "Einspeisung" ? "Einspeis." : gridLabel });
     nodeList.push({ key: "house", x: P.house[0], y: P.house[1], color: COLOR.house, active: houseActive, emblem: "house",
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
     if (batteryEnabled) {
       nodeList.push({ key: "battery", x: P.battery[0], y: P.battery[1], color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
-        label: "Batterie 48V", badge: "48V", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
+        label: "Batterie 48V", badge: "48V", value: powerReadout(battery, true), unit: "W", soc, testid: "flow-battery",
+        peakW: null, percent: socMetric, percentLabel: "SoC", direction: batteryDirection });
       nodeList.push({ key: "sun2000", x: P.sun2000[0], y: P.sun2000[1], color: COLOR.dc, active: dischargeActive, emblem: "bolt",
-        label: "Sun-2000", badge: "TRUCKI", value: round(discharge), unit: "W", sub: sun2000Sub, testid: "flow-sun2000" });
+        label: "Sun-2000", badge: "TRUCKI", value: powerReadout(discharge), unit: "W", testid: "flow-sun2000",
+        peakW: sunPeak, percent: socMetric, percentLabel: "SoC", direction: dischargeActive ? "Entl." : "Standby" });
     }
     flowDefs = [
       { id: "pv-house", from: "pv", to: "house", color: COLOR.pv, active: pvAcActive, watts: pvAc },
@@ -430,20 +455,23 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     ];
   } else {
     if (hoymilesEnabled) nodeList.push({ key: "hoymiles", x: 130, y: 72, color: COLOR.pv, active: pvAcActive, emblem: "sun",
-      label: "Hoymiles", badge: "AHOY-DTU", value: round(pvAc), unit: "W", testid: "flow-hoymiles",
-      sub: pvAcActive ? `HM1500 · ${ahoy?.limit_percent ?? 100}%` : pvNightSub });
+      label: "Hoymiles", badge: "AHOY-DTU", value: powerReadout(pvAc), unit: "W", testid: "flow-hoymiles",
+      peakW: hoymilesPeak, percent: utilizationPercent(pvAc, hoymilesPeak), percentLabel: "Ausl." });
     if (victronEnabled) nodeList.push({ key: "victron", x: 365, y: 72, color: COLOR.dc, active: pvDc > 5, emblem: "sun",
-      label: "Victron MPPT", badge: "VENUS-OS", value: round(pvDc), unit: "W", testid: "flow-victron",
-      sub: pvDc > 5 ? `DC · ${mppts.length}× String` : (isNight ? pvNightSub : "inaktiv") });
+      label: "Victron MPPT", badge: "VENUS-OS", value: powerReadout(pvDc), unit: "W", testid: "flow-victron",
+      peakW: victronPeak, percent: utilizationPercent(pvDc, victronPeak), percentLabel: "Ausl." });
     if (gridEnabled) nodeList.push({ key: "grid", x: 160, y: 315, color: gridColor, active: importActive || exportActive, emblem: "grid",
-      label: "Stromnetz", badge: "PRO 3EM", value: round(Math.abs(grid)), unit: "W", sub: gridLabel, testid: "flow-grid" });
+      label: "Stromnetz", badge: "PRO 3EM", value: powerReadout(grid, true), unit: "W", testid: "flow-grid",
+      peakW: null, percent: null, direction: gridLabel === "Einspeisung" ? "Einspeis." : gridLabel });
     nodeList.push({ key: "house", x: 530, y: 250, color: COLOR.house, active: houseActive, emblem: "house",
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
     if (batteryEnabled) {
       nodeList.push({ key: "battery", x: 900, y: 105, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
-        label: "Batterie 48V", badge: "48V", value: round(Math.abs(battery)), unit: "W", sub: batterySub, soc, testid: "flow-battery" });
+        label: "Batterie 48V", badge: "48V", value: powerReadout(battery, true), unit: "W", soc, testid: "flow-battery",
+        peakW: null, percent: socMetric, percentLabel: "SoC", direction: batteryDirection });
       nodeList.push({ key: "sun2000", x: 900, y: 315, color: COLOR.dc, active: dischargeActive, emblem: "bolt",
-        label: "Sun-2000", badge: "TRUCKI", value: round(discharge), unit: "W", sub: sun2000Sub, testid: "flow-sun2000" });
+        label: "Sun-2000", badge: "TRUCKI", value: powerReadout(discharge), unit: "W", testid: "flow-sun2000",
+        peakW: sunPeak, percent: socMetric, percentLabel: "SoC", direction: dischargeActive ? "Entl." : "Standby" });
     }
     flowDefs = [
       { id: "hoymiles-house", from: "hoymiles", to: "house", color: COLOR.pv, active: pvAcActive, watts: pvAc },
@@ -484,6 +512,8 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       const rows = [{ l: "Gesamt", v: `${round(pv)} W` }, { l: "AC · Hoymiles", v: `${round(pvAc)} W` }];
       if (acV != null) rows.push({ l: "· Ø Spannung", v: `${f1(acV)} V` });
       rows.push({ l: "DC · Victron", v: `${round(pvDc)} W` });
+      rows.push({ l: "Nenn/Peak", v: compactPvPeak > 0 ? `${compactPvPeak} W` : "–" });
+      rows.push({ l: "Auslastung", v: utilizationPercent(pv, compactPvPeak) == null ? "–" : `${round(utilizationPercent(pv, compactPvPeak))} %` });
       if (dcV != null) rows.push({ l: "· Ø PV-Spannung", v: `${f1(dcV)} V` });
       if (!pvProducing && isNight) rows.push({ l: "Sonnenaufgang", v: `in ${sunriseStr}` });
       return { title: "PV-Block", badge: "AC+DC", color: COLOR.pv, rows };
@@ -520,6 +550,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       if (dcV != null) rows.push({ l: "Ø PV-Spannung", v: `${f1(dcV)} V` });
       rows.push({ l: "Ertrag heute", v: `${f1(mppts.reduce((a, m) => a + (m.yield_today || 0), 0))} kWh` });
       rows.push({ l: "Modulfelder", v: "4× 425 + 4× 445 Wp" });
+      rows.push({ l: "Peak / Auslastung", v: `${victronPeak || "–"} W · ${utilizationPercent(pvDc, victronPeak) == null ? "–" : `${round(utilizationPercent(pvDc, victronPeak))} %`}` });
       return { title: "Victron MPPT", badge: "VENUS-OS", color: COLOR.dc, rows };
     }
     if (key === "sun2000") {
@@ -527,6 +558,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
         { l: "AC-Ausgang", v: `${round(discharge)} W` },
         { l: "Soll / Ist", v: `${round(trucki?.target_w || 0)} / ${round(trucki?.ac_display_w || 0)} W` },
         { l: "Limit", v: `${round(trucki?.max_power_w || 0)} W` },
+        { l: "Nenn / SoC", v: `${sunPeak ? `${round(sunPeak)} W` : "–"} · ${socMetric == null ? "–" : `${round(socMetric)} %`}` },
         { l: "ZEPC", v: trucki?.zepc ? "EIN" : "AUS" },
         { l: "AC-Output", v: trucki?.ac_output ? "EIN" : "AUS" },
       ];
@@ -535,6 +567,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     if (key === "hoymiles") {
       const rows = [
         { l: "AC Leistung", v: `${round(pvAc)} W` },
+        { l: "Nenn / Auslastung", v: `${round(hoymilesPeak)} W · ${round(utilizationPercent(pvAc, hoymilesPeak))} %` },
         { l: "Limit", v: `${ahoy?.limit_percent ?? 100} %` },
       ];
       ahoyCh.forEach((c) => rows.push({ l: `Kanal ${c.ch}`, v: `${round(c.power)} W · ${f1(c.voltage)} V` }));
@@ -544,15 +577,16 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       return { title: "Hoymiles HM1500", badge: "AHOY-DTU", color: COLOR.pv, rows };
     }
     if (key === "grid") {
-      const rows = [{ l: "Σ Leistung", v: `${round(Math.abs(grid))} W` }, { l: "Status", v: gridLabel }];
+      const rows = [{ l: "Σ Leistung", v: `${powerReadout(grid, true)} W` }, { l: "Nenn / Anteil", v: "– / –" }, { l: "Status", v: gridLabel }];
       phasesArr.forEach((p) => rows.push({ l: p.phase, v: `${f1(p.voltage)} V · ${f1(p.current)} A` }));
       return { title: "Netz · Shelly 3EM", badge: "PRO 3EM", color: gridColor, rows };
     }
     if (key === "battery") {
       const kind = charge > discharge ? "Laden" : discharge > 0 ? "Entladen" : "Leerlauf";
-      const rows = [{ l: "Ladezustand", v: `${round(soc)} %` }];
+      const rows = [{ l: "Ladezustand", v: socMetric == null ? "–" : `${round(socMetric)} %` }];
       if (trucki?.battery_voltage != null) rows.push({ l: "Spannung", v: `${f1(trucki.battery_voltage)} V` });
       rows.push({ l: "Leistung", v: `${round(Math.abs(battery))} W · ${kind}` });
+      rows.push({ l: "Nenn / SoC", v: `– · ${socMetric == null ? "–" : `${round(socMetric)} %`}` });
       rows.push({ l: "DC-Ladung", v: `${round(charge)} W` });
       if (trucki?.temperature != null) rows.push({ l: "Temperatur", v: `${round(trucki.temperature)} °C` });
       rows.push({ l: "ZEPC", v: trucki?.zepc ? "EIN" : "AUS" });

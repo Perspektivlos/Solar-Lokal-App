@@ -63,6 +63,7 @@ def mock_ahoy(intensity=None) -> Dict[str, Any]:
     return {
         "online": True,
         "total_power": round(total, 1),
+        "max_power_w": 1500,
         "limit_percent": 100,
         "channels": channels,
     }
