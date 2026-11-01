@@ -50,6 +50,14 @@ Verwende den Standardagenten für allgemeine Programmieraufgaben außerhalb dies
 Abgeschlossen, wenn die Ursache mit Datei und Beleg benannt ist oder die fehlende Information klar
 als Blocker (Hardware, Broker, Daten) ausgewiesen ist.
 
+## Diagnosefragen
+
+Beantworte vor einem Fix-Vorschlag:
+- Welche Schicht ist fehlerhaft: Parser, Collector, Summary, API oder UI?
+- Entsteht der Fehler durch veraltete MQTT-Daten, fehlenden HTTP-Fallback, falsche Umrechnung oder falsches Vorzeichen?
+- Betrifft er Live-Daten, gespeicherte Snapshots oder beides?
+- Wird der falsche Wert vorgelagert erzeugt oder nur falsch angezeigt?
+
 ## Ausgabeformat
 
 Verfasse die gesamte Antwort einschließlich Rückfragen und Handoffs auf Deutsch. Code, API-Namen,
