@@ -20,7 +20,7 @@ export default function VictronCard({ victron }) {
               <div><span className="text-[10px] text-white/55">Peak</span><br/><span data-testid={`victron-${m.id}-peak`}>{mpptPeakW((victron.mppts || []).indexOf(m)) || "–"} W</span></div>
               <div><span className="text-[10px] text-white/55">U</span><br/>{formatNum(m.pv_voltage, 1)} V</div>
               <div><span className="text-[10px] text-white/55">VBatt</span><br/>{formatNum(m.battery_voltage, 2)} V</div>
-              <div><span className="text-[10px] text-white/55">Day</span><br/>{formatNum(m.yield_today, 2)} kWh</div>
+              <div><span className="text-[10px] text-white/55">Day</span><br/><span data-testid={`victron-${m.id}-yield-day`}>{formatNum(m.yield_today, 2)} kWh</span></div>
             </div>
           </div>
         ))}

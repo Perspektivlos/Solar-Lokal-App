@@ -176,7 +176,7 @@ export default function Dashboard() {
   const batteryKind = batteryStateKind(socDanger, summary.battery_power);
 
   // Rubrik-Details dynamisch aus Live-Werten (gleiche IntroCard-Struktur je Rubrik).
-  const srcLabel = (d) => (d?._via_mqtt ? "MQTT-Live" : d?._fallback ? "HTTP-Fallback" : d?.online === false ? "Offline" : d?.online === true ? "HTTP-Live" : demo_mode ? "Demo/Mock" : "unbekannt");
+  const srcLabel = (d) => (d?._via_mqtt ? "MQTT-Live" : d?.online === false ? "Offline" : d?._fallback ? "HTTP-Fallback" : d?.online === true ? "HTTP-Live" : demo_mode ? "Demo/Mock" : "unbekannt");
   const mppts = victron?.mppts || [];
   const vPv = mppts.reduce((a, m) => a + (m.pv_power || 0), 0);
   const vYield = mppts.reduce((a, m) => a + (m.yield_today || 0), 0);
@@ -199,13 +199,13 @@ export default function Dashboard() {
     { label: "Datenquellen", body: `Quelle aktuell: ${srcLabel(victron)}. Victron-MQTT (VenusOS) mit periodischem Keepalive.${demo_mode ? " Demo-Modus: simulierte Werte." : ""}` },
     { label: "Aktualisierung", body: "Live alle 3 s; Ladezustände (Bulk/Absorption/Float) direkt aus VenusOS." },
     { label: "Layout-Gruppen", body: `Victron-Übersicht (P/U/VBatt/Yield je Regler) · MPPT-Vergleich${vLeader?.name ? ` — aktuell führt ${vLeader.name}` : ""}.` },
-    { label: "Bekannte Einschränkungen", body: "Erträge je Regler hängen von Ausrichtung/Verschattung ab; kurzzeitige Sprünge bei Wolken sind normal." },
+    { label: "Bekannte Einschränkungen", body: "Erträge je Regler hängen von Ausrichtung/Verschattung ab. Leistungssprünge bei Wolken sind normal; der kumulierte Tagesertrag darf dabei nicht sinken." },
     { label: "Mögliche Fehler", body: "Kein Update → VenusOS-MQTT prüfen. ‚FALLBACK'-Badge → HTTP-Erreichbarkeit des GX-Geräts prüfen." },
   ];
   const pvGridDetails = [
     { label: "Zweck & Funktion", body: `Hoymiles HM1500 Mikro-Wechselrichter via Ahoy DTU. Aktuell ${formatNum(ahoy?.total_power, 0)} W AC über ${ahoy?.channels?.length || 0} Kanäle bei Limit ${formatNum(ahoy?.limit_percent, 0)} %. Netz: ${summary.grid_power >= 0 ? "Bezug" : "Einspeisung"} ${formatNum(Math.abs(summary.grid_power), 0)} W, Hausverbrauch ${formatNum(summary.house_power, 0)} W.` },
     { label: "Datenquellen", body: `Quelle aktuell: ${srcLabel(ahoy)}. MQTT bevorzugt, sonst HTTP /api; Netzwerte stammen vom Shelly.${demo_mode ? " Demo-Modus: simulierte Werte." : ""}` },
-    { label: "Aktualisierung", body: demo_mode ? "Live alle 3 s. Im Demo-Modus sind YDay-Gerätezähler nur simulierte Näherungswerte; der belastbare Tagesertrag wird aus dem Messverlauf integriert." : "Live alle 3 s; Tageserträge je Kanal (YDay) seit Mitternacht kumuliert. Die Dashboard-Kennzahl wird unabhängig davon aus dem Messverlauf integriert." },
+    { label: "Aktualisierung", body: demo_mode ? "Live alle 3 s. Demo-YDay-Werte sind deterministische, kumulative Tageszähler und fallen innerhalb eines Tages nicht. Die Dashboard-Kennzahl wird separat aus dem Messverlauf integriert." : "Live alle 3 s; Tageserträge je Kanal (YDay) seit Mitternacht kumuliert. Die Dashboard-Kennzahl wird unabhängig davon aus dem Messverlauf integriert." },
     { label: "Layout-Gruppen", body: "Hoymiles-Kanaltabelle (P/U/I/YDay + Limit) · Einspeisung & Hausverbrauch." },
     { label: "Bekannte Einschränkungen", body: "Hausverbrauch wird rechnerisch aus PV, Netz und Akku ermittelt — bei Mess-Latenz kurzzeitig ungenau." },
     { label: "Mögliche Fehler", body: "Kanäle 0 W trotz Sonne → Ahoy-DTU/Wechselrichter prüfen. ‚FALLBACK' → Ahoy-IP prüfen." },
@@ -337,7 +337,7 @@ export default function Dashboard() {
                     <thead>
                       <tr className="border-b border-white/10 text-[10px] uppercase tracking-[0.2em] text-white/65">
                         <th className="text-left py-1">CH</th><th className="text-right py-1">P</th><th className="text-right py-1">U</th>
-                        <th className="text-right py-1">I</th><th className="text-right py-1">YDay</th>
+                        <th className="text-right py-1">I</th><th className="text-right py-1">YDay kWh</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -347,7 +347,7 @@ export default function Dashboard() {
                           <td className="py-1.5 text-right text-yellow-300 text-sm">{formatNum(c.power, 0)} W</td>
                           <td className="py-1.5 text-right">{formatNum(c.voltage, 1)} V</td>
                           <td className="py-1.5 text-right">{formatNum(c.current, 2)} A</td>
-                          <td className="py-1.5 text-right">{formatNum(c.yield_day, 2)}</td>
+                          <td className="py-1.5 text-right" data-testid={`ahoy-ch-${c.ch}-yield-day`}>{formatNum(c.yield_day, 2)}</td>
                         </tr>
                       ))}
                     </tbody>

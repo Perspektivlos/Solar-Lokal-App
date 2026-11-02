@@ -2,7 +2,7 @@
 import math
 import random
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict
 
 from sun import sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
@@ -14,6 +14,40 @@ def _sun_curve(now: datetime, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON
     if not t:
         return 0.0
     return sun_intensity(now, t[0], t[1])
+
+
+def _solar_hours_today(now: datetime, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON) -> float:
+    """Zeitintegral der Sonnenintensität seit Sonnenaufgang; steigt tagsüber nur an."""
+    times = sun_times(lat, lon, now)
+    if not times or now <= times[0]:
+        return 0.0
+    start, end = times[0], min(now, times[1])
+    if end <= start:
+        return 0.0
+    total = 0.0
+    cursor = start
+    step = timedelta(minutes=5)
+    while cursor < end:
+        nxt = min(cursor + step, end)
+        midpoint = cursor + (nxt - cursor) / 2
+        total += sun_intensity(midpoint, times[0], times[1]) * (nxt - cursor).total_seconds() / 3600.0
+        cursor = nxt
+    return total
+
+
+def _trucki_energy_today(now: datetime, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON) -> float:
+    """Deterministisches Tagesintegral des simulierten SUN-2000-Ausgangs."""
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    total_wh = 0.0
+    cursor = start
+    step = timedelta(minutes=10)
+    while cursor < now:
+        nxt = min(cursor + step, now)
+        midpoint = cursor + (nxt - cursor) / 2
+        discharge_w = max(0.0, 260 - _sun_curve(midpoint, lat, lon) * 210)
+        total_wh += discharge_w * (nxt - cursor).total_seconds() / 3600.0
+        cursor = nxt
+    return total_wh / 1000.0
 
 
 def mock_shelly(intensity=None) -> Dict[str, Any]:
@@ -45,9 +79,11 @@ def mock_shelly(intensity=None) -> Dict[str, Any]:
     }
 
 
-def mock_ahoy(intensity=None) -> Dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    sun = _sun_curve(now) if intensity is None else intensity
+def mock_ahoy(intensity=None, now=None, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON) -> Dict[str, Any]:
+    now = now or datetime.now(timezone.utc)
+    sun = _sun_curve(now, lat, lon) if intensity is None else intensity
+    solar_hours = _solar_hours_today(now, lat, lon)
+    channel_factors = (0.98, 1.01, 0.99, 1.02)
     channels = []
     total = 0.0
     for ch in range(1, 5):
@@ -58,7 +94,7 @@ def mock_ahoy(intensity=None) -> Dict[str, Any]:
             "power": round(p, 1),
             "voltage": round(34 + random.uniform(-2, 2), 1),
             "current": round((p / 34) if p else 0, 2),
-            "yield_day": round(sun * 0.9 + random.uniform(0, 0.05), 3),
+            "yield_day": round(0.35 * solar_hours * channel_factors[ch - 1], 3),
         })
     return {
         "online": True,
@@ -69,9 +105,10 @@ def mock_ahoy(intensity=None) -> Dict[str, Any]:
     }
 
 
-def mock_trucki(intensity=None) -> Dict[str, Any]:
+def mock_trucki(intensity=None, now=None, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON) -> Dict[str, Any]:
     # SoC slowly drifts depending on solar
-    sun = _sun_curve(datetime.now(timezone.utc)) if intensity is None else intensity
+    now = now or datetime.now(timezone.utc)
+    sun = _sun_curve(now, lat, lon) if intensity is None else intensity
     soc = 35 + 50 * sun + 8 * math.sin(time.time() / 300.0)
     soc = max(5, min(98, soc))
     # Trucki/SUN entlädt den Akku ins AC-Netz (DC-gekoppelt: nur Entladung,
@@ -90,15 +127,16 @@ def mock_trucki(intensity=None) -> Dict[str, Any]:
         "target_w": round(discharge, 0),
         "min_power_w": 0,
         "max_power_w": 800,
-        "day_energy_kwh": round(1.5 + sun * 3.5, 2),
-        "total_energy_kwh": round(842.5 + soc * 0.01, 1),
+        "day_energy_kwh": round(_trucki_energy_today(now, lat, lon), 2),
+        "total_energy_kwh": round(842.5 + max(0.0, (now - datetime(2026, 1, 1, tzinfo=timezone.utc)).total_seconds()) / 86400.0 * 0.12, 1),
         "temperature": round(28 + sun * 8 + random.uniform(-1, 1), 0),
     }
 
 
-def mock_victron(intensity=None) -> Dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    sun = _sun_curve(now) if intensity is None else intensity
+def mock_victron(intensity=None, now=None, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON) -> Dict[str, Any]:
+    now = now or datetime.now(timezone.utc)
+    sun = _sun_curve(now, lat, lon) if intensity is None else intensity
+    solar_hours = _solar_hours_today(now, lat, lon)
     mppts = []
     for idx in range(1, 3):
         pv = sun * (700 + random.uniform(-25, 25))
@@ -108,7 +146,7 @@ def mock_victron(intensity=None) -> Dict[str, Any]:
             "pv_power": round(pv, 1),
             "pv_voltage": round(95 + random.uniform(-5, 5), 1),
             "battery_voltage": round(52.4 + random.uniform(-0.2, 0.2), 2),
-            "yield_today": round(sun * 1.2 + random.uniform(0, 0.1), 3),
+            "yield_today": round(0.70 * solar_hours * (0.99 if idx == 1 else 1.01), 3),
             "state": "Bulk" if sun > 0.6 else ("Absorption" if sun > 0.3 else "Float"),
         })
     return {"online": True, "mppts": mppts, "total_power": round(sum(m["pv_power"] for m in mppts), 1)}

@@ -1,0 +1,30 @@
+async def run_test(page, output_dir, page_url):
+    try:
+        await page.set_viewport_size({'width':390,'height':844})
+        await page.get_by_test_id('dashboard').wait_for(timeout=30000)
+        await page.get_by_test_id('card-ahoy').scroll_into_view_if_needed()
+        await page.wait_for_timeout(900)
+        print('Ahoy card styles:',await page.get_by_test_id('card-ahoy').evaluate('(e)=>({opacity:getComputedStyle(e).opacity,rect:e.getBoundingClientRect().toJSON()})'))
+        assert await page.get_by_test_id('ahoy-ch-1-yield-day').is_visible()
+        await page.screenshot(path='/app/test_reports/screenshots-yield-38/automation_output/20261102_002754_55d1fe14bf8c/ahoy-mobile-settled.jpeg', type="jpeg", quality=40, full_page=False)
+        print('PASS mobile Ahoy visible')
+        await page.get_by_test_id('nav-history').click(force=True)
+        await page.get_by_test_id('vp-bal-pv-value').wait_for(timeout=30000)
+        await page.wait_for_timeout(800)
+        print('PASS History navigation')
+        for size in [{'width':1920,'height':800},{'width':390,'height':844}]:
+            await page.set_viewport_size(size)
+            await page.wait_for_timeout(300)
+            today = await page.evaluate('async()=> (await fetch("/api/today?day_offset=0")).json()')
+            text = await page.get_by_test_id('vp-bal-pv-value').inner_text()
+            assert abs(float(text.replace('.','').replace(',','.'))-today['pv_kwh'])<0.0051
+            assert 'Messwertintegriert' in await page.get_by_test_id('vp-balance-method').inner_text()
+            assert await page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
+            print(f'PASS {size["width"]} DayBalance PV matches today, method and no overflow')
+        await page.get_by_test_id('nav-dashboard').click(force=True)
+        await page.get_by_test_id('trucki-yield-day').wait_for(timeout=30000)
+        print('PASS return Dashboard')
+        error_text = await page.evaluate("""() => {const errorElements = Array.from(document.querySelectorAll('.error, [class*="error"], [id*="error"]'));return errorElements.map(el => el.textContent).join(', ');} """)
+        print(f'Found error message: {error_text}' if error_text else 'No error messages found on the page')
+    except Exception as e:
+        print(f'FAIL final integration: {e}')

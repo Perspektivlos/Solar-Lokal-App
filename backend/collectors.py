@@ -96,9 +96,15 @@ async def fetch_trucki(ip: str) -> Optional[Dict[str, Any]]:
         "soc": data.get("soc", 0),
         "battery_voltage": data.get("battery_voltage", 0),
         "battery_power": data.get("battery_power", 0),
+        "target_w": data.get("target_w", data.get("target")),
+        "min_power_w": data.get("min_power_w", data.get("min_power")),
         "max_power_w": data.get("max_power_w", data.get("max_power")),
+        "ac_setpoint_w": data.get("ac_setpoint_w", data.get("ac_setpoint")),
         "ac_output": bool(data.get("ac_output", False)),
         "zepc": bool(data.get("zepc", False)),
+        "day_energy_kwh": data.get("day_energy_kwh", data.get("day_energy")),
+        "total_energy_kwh": data.get("total_energy_kwh", data.get("total_energy")),
+        "temperature": data.get("temperature", data.get("temp")),
     }
 
 
@@ -157,10 +163,7 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         # 2. HTTP fallback
         d = await http_factory()
         if d is None:
-            mocked = mock_fn()
-            mocked["online"] = False
-            mocked["_fallback"] = True
-            return mocked
+            return {"online": False, "_fallback": True, "error": "unreachable"}
         return d
 
     devs = cfg.get("devices")
@@ -181,19 +184,19 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         get_dev(
             fetch_ahoy_from_mqtt,
             lambda: fetch_ahoy(dcfg("ahoy").get("ip", ""), dcfg("ahoy").get("inverter_id", 0)),
-            lambda: mock_ahoy(intensity),
+            lambda: mock_ahoy(intensity, now_dt, lat, lon),
             dcfg("ahoy").get("enabled", False),
         ),
         get_dev(
             fetch_trucki_from_mqtt,
             lambda: fetch_trucki(dcfg("trucki").get("ip", "")),
-            lambda: mock_trucki(intensity),
+            lambda: mock_trucki(intensity, now_dt, lat, lon),
             dcfg("trucki").get("enabled", False),
         ),
         get_dev(
             lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
             lambda: fetch_victron(dcfg("victron").get("ip", "")),
-            lambda: mock_victron(intensity),
+            lambda: mock_victron(intensity, now_dt, lat, lon),
             dcfg("victron").get("enabled", False),
         ),
     )

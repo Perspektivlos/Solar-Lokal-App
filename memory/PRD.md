@@ -409,3 +409,30 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Reale API-Residuen aller fünf Bilanzgleichungen unter 0,002 kWh; neun sichtbare Kenn-/Detailwerte stimmen gerundet exakt mit `/api/today` überein.
 - Browser: 20/20 Gestern-Werte bei fehlendem Vortag „Gestern: –", API-Ausfall ohne stale Wert, keine Recharts-Dimensionswarnung, 1920×800/390×844 ohne Overflow.
 - Production Build erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert.
+
+## Neuer Umsetzungsabschnitt – Stabile und korrekte Geräte-Tageserträge (02.11.2026)
+
+### Auftrag
+- Prüfen, warum Ertragswerte auf den Geräte-/GlassCards ständig wechseln, und sicherstellen, dass korrekte kumulierte Tageswerte ermittelt und dargestellt werden.
+
+### Ursache
+- Die bisherigen Demo-Felder `Ahoy channels[].yield_day`, `Victron mppts[].yield_today` und `Trucki day_energy_kwh` wurden unmittelbar aus der aktuellen Sonnenintensität und teilweise aus Zufallswerten gebildet.
+- Dadurch konnten vermeintliche Tageszähler bei jedem 3-s-Poll schwanken und nach dem Sonnenhöchststand sogar wieder sinken.
+- `Trucki total_energy_kwh` war an den schwankenden SoC gekoppelt und damit ebenfalls nicht monoton.
+
+### Umsetzung
+- Ahoy und Victron verwenden nun ein deterministisches 5-Minuten-Zeitintegral der Sonnenintensität seit Sonnenaufgang. Die Werte steigen tagsüber ausschließlich an, bleiben nach Sonnenuntergang konstant und setzen am UTC-Tageswechsel zurück.
+- Trucki `day_energy_kwh` integriert den simulierten SUN-2000-Ausgang in 10-Minuten-Schritten; `total_energy_kwh` basiert auf einem monotonen Langzeitmodell statt auf SoC.
+- Alle Mock-Integrale verwenden jetzt denselben `now_dt` und die tatsächlich konfigurierte Anlagenposition `lat/lon` aus `collect_live`.
+- NOAA-Tagesgrenze in `sun.event_times` korrigiert: Ein fester UTC-Mittagsanker verhindert den früheren Sprung auf den Folgetag etwa 69 Sekunden vor Mitternacht.
+- Der echte Trucki-HTTP-Adapter reicht `target`, Min/Max, AC-Sollwert, Tages-/Gesamtenergie und Temperatur vollständig durch.
+- Bei Ausfall echter Geräte und deaktiviertem Demo-Modus werden keine erfundenen Mock-Erträge mehr geliefert; das Gerät meldet ehrlich `online: false`/`unreachable`.
+- UI-Einheiten präzisiert: Ahoy-Spalte `YDay kWh`, Trucki-Gesamtwert mit `kWh`; eindeutige Testids für Ahoy-, Victron- und Trucki-Ertragswerte.
+- FlowSummary und DayBalance bleiben unverändert auf den messwertintegrierten `/api/today`-Werten; Geräte-YDay-Zähler sind separate kumulative Quellen.
+
+### Verifikation
+- Testing-Agent iteration_38 fand Tagesgrenzen-, Standort- und HTTP-Durchreichungsfehler; alle drei anschließend behoben.
+- Final **40/40 Backend-Datenchecks bestanden**: Morgen/Mittag/Abend/Nacht monoton, gleicher Timestamp deterministisch, 23:58:50–23:59:59 konstant, Reset um 00:00, Standortreaktion und echte Collector-Felder korrekt.
+- Nicht-Demo-Geräteausfall liefert keine synthetischen Ertragswerte mehr.
+- Browserpoll über 4,2 s: alle sechs sichtbaren Ahoy-/Victron-/Trucki-Ertragswerte gleichbleibend oder steigend; Einheiten korrekt.
+- Desktop 1920×800 und Mobil 390×844 ohne Overflow; Production Build erfolgreich. Hardwarewerte bleiben im expliziten Demo-Modus simuliert.

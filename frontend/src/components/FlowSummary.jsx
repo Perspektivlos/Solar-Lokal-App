@@ -45,7 +45,8 @@ export default function FlowSummary({ live, today, usableKwh }) {
   // Momentane Eigenabdeckung des Hausverbrauchs aus eigener Erzeugung.
   const instantCover = house <= 0 ? 100 : Math.max(0, Math.min(100, ((house - Math.max(0, grid)) / house) * 100));
   // Verlässlicher Tagesertrag: Integration der gespeicherten PV-Leistung seit 00:00 UTC.
-  // Die Geräte-YDay-Zähler sind im Demo-Modus Momentwerte und daher kein Tagesertrag.
+  // Geräte-YDay-Zähler sind separate kumulative Quellen; die Hauptkennzahl bleibt
+  // unabhängig davon die einheitliche Messintegration aller PV-Leistungen.
   const pvTodayKwh = today?.pv_kwh;
   const measuredLabel = live?.demo_mode ? "Simulierter Messverlauf seit 00:00 UTC" : "Messverlauf seit 00:00 UTC";
 

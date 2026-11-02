@@ -34,7 +34,11 @@ def event_times(lat: float, lon: float, dt: datetime, altitude_deg: float) -> Op
     """Zeiten (UTC), zu denen die Sonne die gegebene Höhe (Grad) über-/unterschreitet
     – morgens (aufsteigend) und abends (absteigend). None, wenn an diesem Tag/Ort
     nicht erreicht (Polartag/-nacht, oder Winkel nie erreicht)."""
-    jd = _to_julian(dt)
+    # Solar events belong to a calendar day. Using the full current timestamp
+    # makes NOAA's rounding switch to the next day about 69 s before midnight.
+    utc = dt.astimezone(timezone.utc)
+    day_anchor = datetime(utc.year, utc.month, utc.day, 12, tzinfo=timezone.utc)
+    jd = _to_julian(day_anchor)
     n = round(jd - 2451545.0 + 0.0008)
     Jstar = n - lon / 360.0
     M = (357.5291 + 0.98560028 * Jstar) % 360

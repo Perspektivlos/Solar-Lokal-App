@@ -1,0 +1,52 @@
+{
+  "summary": "Demo-yield regression: 20/25 unique backend cases passed after one rounding-sensitive retry; five retained failures identify three underlying issues. 66/66 dashboard UI checks plus mobile Ahoy visibility, History navigation, DayBalance source/overflow at both widths and return navigation passed. No observed public API 500, runtime exception or settled layout regression at 1920x800 and 390x844. Production code was not modified.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/live (Demo Ahoy/Victron)", "issue": "PV counters reset 69 seconds before UTC midnight. On 2026-06-21 default location, 23:58:50 counters sum to 14.774 kWh per PV device; at 23:58:51 all six channel/MPPT counters become 0. This violates same-day monotonicity and constant-after-sunset requirements. Reproduced at method level, not by changing the live server clock.", "priority": "HIGH"},
+      {"endpoint": "collectors.fetch_trucki HTTP /status adapter", "issue": "HTTP response day_energy_kwh=4.56 and total_energy_kwh=1234.5 are discarded. The adapter returns neither field; it also omits target_w, making TruckiCard hide its entire energy section. MQTT energy pass-through works. Adapter test uses isolated HTTP fixture; physical hardware was not accessed.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "mocks.mock_ahoy/mock_victron/mock_trucki direct calls", "issue": "When intensity is omitted, live power calls _sun_curve(now) without supplied lat/lon although counters use them. Ahoy at June 21 07:00 UTC, lat=40/lon=-100 produces 954.2 W instead of 0 W with random jitter disabled. collect_live supplies the correct explicit intensity, so the public collection path avoids this mismatch."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Ahoy channel table and Trucki total", "issues": ["Ahoy YDay column has no kWh unit in header or cells; Trucki GESAMT likewise lacks a unit. Victron and Trucki TAG correctly state kWh."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_demo_yield_integrals.py",
+    "/app/backend/tests/test_flow_summary.py",
+    "/app/backend/tests/test_today_comparison.py",
+    "/app/backend/tests/test_day_balance_flows.py",
+    "/app/tests/demo_yield_ui_regression.py",
+    "/app/test_reports/pytest/pytest_demo_yield_38.xml",
+    "/app/test_reports/pytest/pytest_demo_today_38.xml"
+  ],
+  "action_items": [
+    "Anchor solar-day selection to the requested calendar date rather than the full changing timestamp; retain PV totals until exact 00:00 UTC and rerun all late-night tests.",
+    "Preserve real Trucki HTTP energy and display fields without replacing them with demo computation.",
+    "Pass lat/lon to _sun_curve when mock functions calculate their own intensity.",
+    "Label Ahoy YDay and Trucki total energy in kWh.",
+    "Review non-demo failed-device fallback: collect_live currently generates MOCKED counters outside explicit demo mode, albeit marked online=false/_fallback=true.",
+    "Make the legacy autarky test account for uncertainty from independently rounded 0.001-kWh API energies; do not change correct application ratios to satisfy a rounding-sensitive assertion."
+  ],
+  "critical_code_review_comments": [
+    "sun.py:38-39 calculates n=round(jd-2451545.0+0.0008), shifting the day at 23:58:50.88 UTC. mocks._solar_hours_today then compares now against tomorrow's sunrise and returns zero.",
+    "collectors.py:90-102 explicitly builds a Trucki dictionary that drops energy fields. This is pre-existing adapter behavior, not demonstrated as a newly introduced change.",
+    "collectors.py:159-163 invokes demo functions after HTTP failure even when demo_mode is false; source-reviewed policy mismatch with the request's explicit-demo-only requirement. No failed physical-device flow was exercised.",
+    "FlowSummary.jsx:48 still calls demo YDay counters Momentwerte/no daily yield, contradicting the new integral calculation. Dashboard Victron explanatory text still says cloud-driven yield jumps are normal; clarify cumulative-counter semantics.",
+    "FlowSummary and DayBalance take today.pv_kwh; routes.today integrates stored power rows and never reads device counters. Source review plus UTC/actual-duration tests confirm no regression to device-counter primary totals."
+  ],
+  "updated_files": ["/app/backend/tests/test_demo_yield_integrals.py", "/app/tests/demo_yield_ui_regression.py", "/app/test_reports/iteration_38.json"],
+  "success_rate": {"backend": "80% (20/25 unique cases after retry; main final run 12/18, supplemental 8/8 includes one retry)", "frontend": "100% (66/66 dashboard assertions plus five successful supplemental integration checkpoints)"},
+  "flaky_tests": [{"test": "test_flow_summary.py::test_autarky_represents_house_demand_without_grid_import", "failure_rate": "1/3 observed executions", "issue": "API ratio 42.7% versus ratio from rounded energy fields 42.857% exceeds test's 0.15 tolerance at low daily consumption. Initial run and retry passed; not classified as an application calculation bug."}],
+  "test_credentials": "No auth flow requested or exercised; no credentials required.",
+  "seed_data_creation": "None. Public APIs/DB are real; hardware data are DEMO/MOCKED. MQTT store, HTTP adapter fixtures and frozen clocks were isolated method-level test fixtures. No database, config, control or hardware writes.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Use frontend/.env public URL and PYTHONPATH=/app/backend. Five retained failures: three late-night PV tests, direct-location power test and Trucki HTTP adapter test. All actual public polling stayed nondecreasing at approximately 00:26 UTC, legitimately zero PV after midnight. Whole-day five-minute samples initially missed the 69-second boundary; final sweep explicitly includes 23:59. UI runner executes namespace={}; exec(compile(open('/app/tests/demo_yield_ui_regression.py').read(), 'demo_yield_ui_regression.py', 'exec'), namespace); await namespace['run'](page). First UI harness mistakenly ignored /api/today?day_offset=0, failed after eight counter checks; corrected URL matching yielded 66/66. First immediate-scroll screenshot caught reveal animation; 900ms settled retest shows Ahoy correctly. Hardware integration tested through adapters only. Relevant backend logs showed normal startup/hot reload, no runtime exceptions. June afternoon integration is approximately 14.774 kWh for each 1.4-kW array, consistent with the simulated sine curve. Trucki integral, exact midnight reset and monotonic total across midnight passed.",
+  "rca of the issue": "PV early reset: Julian-day rounding includes fractional clock time plus 0.0008 days; n advances 69.12 seconds before midnight, sun_times selects tomorrow, solar_hours_today returns 0 because now precedes tomorrow's sunrise. Normalize solar event calculation to a stable calendar-date anchor. Trucki HTTP omission: dictionary projection lists only power/SoC/switch fields, excluding source counters and target_w. Direct location mismatch: mock power calls omit lat/lon while integrated counter calls include them."
+}
