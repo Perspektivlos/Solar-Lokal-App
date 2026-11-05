@@ -1,0 +1,59 @@
+{
+  "summary": "Independent second software acceptance passes: iteration_44 source-only gap bug is closed at exact 1920x800 and390x844. All54 browser groups,240 safe backend cases and production build pass. Local physical MQTT/live and actual Influx writes remain separate pending gates; canonical pages were not switched.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [{
+      "flow": "Local SmartShunt physical proof",
+      "issue": "Public cloud read-only probe still reports Hardwareprüfung nicht bestanden / MQTT-Broker nicht erreichbar (TimeoutError). Structured expected cloud failure is not local LAN proof. Actual physical live and Influx writes were not verified.",
+      "affected_selectors": ["[data-testid='smartshunt-probe-verdict']", "[data-testid='smartshunt-probe-reason']"]
+    }],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/phase2_chart_barriers_review.py",
+    "/app/tests/phase2_duplicate_chart_review.py",
+    "/app/tests/phase2_ui_review.py",
+    "/app/tests/phase2_ui_acceptance.py",
+    "/app/tests/run_backend_acceptance.py",
+    "/app/backend/tests/test_phase2_source_axis.py",
+    "/app/backend/tests/test_phase2_acceptance.py",
+    "/app/test_reports/backend_manifest_45.json",
+    "/app/test_reports/pytest/backend_acceptance_45_batch_6.xml",
+    "/app/test_reports/ui_barrier_results_45.json",
+    "/app/test_reports/ui_duplicate_results_45.json",
+    "/app/test_reports/ui_core_results_45.json",
+    "/app/test_reports/ui_edge_results_45.json",
+    "/app/test_reports/frontend_build_45.log"
+  ],
+  "action_items": [
+    "Renew local physical Phase2 MQTT/live proof and verify actual Influx writes before any canonical switch. MOCKED cloud acceptance does not satisfy that gate.",
+    "Run22 safety-omitted legacy mutation cases only against disposable isolated data; do not claim262/262 backend acceptance. Exact omissions are listed in backend_manifest_45.json."
+  ],
+  "critical_code_review_comments": [
+    "Source-gap branch now copies the current row and nulls only BATTERY_FIELDS, retaining independent AC. Browser path assertions at both sizes prove source601s yields DC/AC/V/SoC M counts[2,1,2,2]; source600s yields[1,1,1,1]. Global poll601s remains[2,2,2,2]; poll600s remains connected.",
+    "All stale/unavailable/new-source-missing/no-source-missing null barriers pass without battery forward-fill. Duplicate current same-source placeholders render continuous visible L segments and exactly one M for all four curves at both sizes. Duplicate assertions were strengthened to check AC and subpath continuity too.",
+    "Retained core29/29 and edges7/7 pass: polling/layout/testids, source inspectors, errors/retry, daily domain coverage, delayed-range race, Phase1 isolation, six unchanged routes and canonical labels. No browser runtime exceptions or current application exceptions in reviewed log excerpts. Build succeeds with existing nonblocking Node/Browserslist warnings."
+  ],
+  "updated_files": [
+    "/app/tests/phase2_chart_barriers_review.py",
+    "/app/tests/phase2_duplicate_chart_review.py",
+    "/app/tests/phase2_ui_review.py",
+    "/app/tests/phase2_ui_acceptance.py",
+    "/app/test_reports/backend_manifest_45.json",
+    "/app/test_reports/pytest/backend_acceptance_45_batch_1.xml through backend_acceptance_45_batch_12.xml",
+    "/app/test_reports/ui_barrier_results_45.json",
+    "/app/test_reports/ui_duplicate_results_45.json",
+    "/app/test_reports/ui_core_results_45.json",
+    "/app/test_reports/ui_edge_results_45.json",
+    "/app/test_reports/frontend_build_45.log",
+    "/app/test_reports/iteration_45.json"
+  ],
+  "success_rate": {"backend": "100% (240/240 unique safe cases;262 collected,22 safety omissions)", "frontend": "100% (54/54 groups: core29,edges7,barriers16,duplicates2)"},
+  "test_credentials": "No authentication required or exercised.",
+  "seed_data_creation": "None. No application source/config/DB mutations, seed/reset/discovery/retention execution or canonical switch. Cloud telemetry and browser adverse/duplicate/gap histories are MOCKED. Backend adversarial cases use isolated objects. Trucki submit was gated on demo_mode=true and returned demo=true; reviewed demo route returns immediately without write or physical command.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Software regression gate is independently green with no new defect. Remaining retest is local hardware/Influx proof only. TEST_ITERATION=46 python /app/tests/run_backend_acceptance.py runs foreground12 safe batches<=20 and preserves prior artifacts. Browser saved run(page) functions executed via compile/read_text to avoid cached modules. Test-only output paths moved44->45; duplicate continuity checks strengthened. No retry needed; no flaky tests observed. Exact requested1920x800 and390x844 used, canonical routes unchanged.",
+  "rca of the issue": "Closed iteration44: a battery-only source gap inserted a shared row without AC, splitting independent AC with connectNulls=false. Corrected source barrier preserves independent AC while nulling battery fields. MOCKED source0/15/616/631 versus poll0/15/30/45 now splits only battery series at both sizes; genuine global poll gaps still split both domains. Local cloud MQTT timeout remains expected environment limitation, not evidence for or against LAN operation."
+}

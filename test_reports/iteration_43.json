@@ -1,0 +1,62 @@
+{
+  "summary": "Independent retest confirms iteration_42 DC-energy fix: primary case returns 0.008kWh DC over30s and0.007kWh AC. All240 safe backend cases pass, including10 new source-axis cases; production build passes. Retained36 browser groups pass at exact1920x800/390x844. New realistic duplicate-poll history test fails at both sizes twice: DC, voltage and SoC curves vanish. Full second acceptance not confirmed; no canonical switch performed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [{
+      "component": "Phase2TrendCharts",
+      "issue": "Valid30s SmartShunt measurements separated by15s duplicate-source null poll placeholders produce invisible DC, voltage and SoC series. Reproduced twice at1920x800 and390x844 with source timestamps0/0/30/30/60, poll timestamps0/15/30/45/60 and constant-1000W/52.5V/70%. SVG source paths contain only M...Z isolated points, no connecting L segments; dot=false makes them invisible. Independent900W AC remains visible. Backend daily energy is now correct, but real-cadence history is not usable.",
+      "selector": "[data-testid='phase2-chart-dc-ac'], [data-testid='phase2-chart-voltage-soc']",
+      "priority": "HIGH"
+    }],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase2_acceptance.py",
+    "/app/backend/tests/test_phase2_source_axis.py",
+    "/app/backend/tests/test_phase2_review.py",
+    "/app/tests/run_backend_acceptance.py",
+    "/app/tests/phase2_ui_review.py",
+    "/app/tests/phase2_ui_acceptance.py",
+    "/app/tests/phase2_duplicate_chart_review.py",
+    "/app/test_reports/backend_manifest_43.json",
+    "/app/test_reports/pytest/phase2_source_axis_43.xml",
+    "/app/test_reports/pytest/backend_acceptance_43_batch_6.xml",
+    "/app/test_reports/ui_core_results_43.json",
+    "/app/test_reports/ui_edge_results_43.json",
+    "/app/test_reports/ui_duplicate_results_43.json"
+  ],
+  "action_items": [
+    "Render SmartShunt DC/V/SoC using unique source measurements, ignoring only identified current duplicate placeholders; keep explicit missing/stale/unavailable and>600s gap barriers. Retain independent AC poll samples. Do not blindly enable connectNulls across real outages.",
+    "Retest duplicate chart fixture at both sizes alongside retained gap/error/race tests before full second acceptance.",
+    "Renew local physical SmartShunt/MQTT live proof and real Influx writes before canonical switchover. Public cloud probe still reports MQTT-Broker nicht erreichbar (TimeoutError); actual Influx writes are disabled/unverified.",
+    "Run22 omitted legacy mutation cases only against disposable isolated data. Manifest lists every omission; do not claim262/262 full-suite success."
+  ],
+  "critical_code_review_comments": [
+    "phase2_routes.py154-164 intentionally preserves independent poll rows while nulling duplicate SmartShunt fields. Phase2TrendCharts.jsx11-14 consumes these raw rows with connectNulls=false and dot=false, treating intentional duplicate placeholders exactly like sensor outages. Three source series become isolated invisible points at30s source/15s poll cadence. Same source-axis distinction as the corrected backend is missing in chart preparation.",
+    "summarize_phase2_points now passes duplicate handling, real barriers,600/601s source-gap boundary and independent DC-source versus AC/PV/house/grid poll timing. All iteration_41/42 retained backend/UI regressions pass.",
+    "No new production backend exception in reviewed current logs; frontend/build emit nonblocking existing Node/webpack deprecation and outdated Browserslist warnings."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase2_source_axis.py",
+    "/app/tests/run_backend_acceptance.py",
+    "/app/tests/phase2_duplicate_chart_review.py",
+    "/app/test_reports/backend_manifest_43.json",
+    "/app/test_reports/pytest/phase2_source_axis_43.xml",
+    "/app/test_reports/pytest/backend_acceptance_43_batch_1.xml through backend_acceptance_43_batch_12.xml",
+    "/app/test_reports/ui_core_results_43.json",
+    "/app/test_reports/ui_edge_results_43.json",
+    "/app/test_reports/ui_duplicate_results_43.json",
+    "/app/test_reports/iteration_43.json"
+  ],
+  "success_rate": {
+    "backend": "100% (240/240 unique safe cases;262 collected,22 safety omissions). Targeted13/13 also passed; not counted twice.",
+    "frontend": "94.7% (36/38 final flow groups: retained core29/29, edges7/7; new duplicate charts0/2)."
+  },
+  "test_credentials": "No authentication exercised or required.",
+  "seed_data_creation": "None. No seed/reset/config/device/history mutations by testing. Cloud telemetry/history are DEMO MOCKED; outage/race/duplicate-chart states are browser-only MOCKED; backend adversarial cases use isolated fake DB/point objects. Trucki submit executed only after confirming public config demo_mode=true and response demo=true; no physical command.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Public URL from frontend/.env. Safe runner now requires TEST_ITERATION=43 (use next iteration to preserve reports): TEST_ITERATION=44 python /app/tests/run_backend_acceptance.py. Twelve foreground pytest batches<=20;240 pass,22 omitted. Existing UI run(page) functions36/36 pass. New /app/tests/phase2_duplicate_chart_review.py run(page) reproduces invisible DC/V/SoC at both exact sizes; final retry gathered all chart paths, no selector issue or flakiness. No application source/config change by tester. Backend bug closure confirmed independently, complete preview acceptance still blocked by chart defect and local hardware prerequisites. Canonical main pages/labels and demo Trucki flow passed, no switch done.",
+  "rca of the issue": "MOCKED history reflects real _history_points output: DC/V/SoC present at unique source0/30/60, null at poll15/45 with repeated source0/30 and current status. Raw chart points plus connectNulls=false split every SmartShunt series into one-point subpaths M...Z. Because dot=false, these valid measurements render no visible source curve. AC retains nonnull values on every poll and renders normally. Mitigation: domain-specific source-aware chart preparation that ignores duplicate placeholders without bridging actual missing/status/gap barriers."
+}

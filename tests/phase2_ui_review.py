@@ -1,5 +1,6 @@
 """Read-only Phase2 UI review; telemetry/error cases are browser-only MOCKED."""
 import json
+from playwright.async_api import expect
 
 async def run(page):
     base = page.url.split('/smartshunt-phase2')[0]
@@ -15,7 +16,7 @@ async def run(page):
     errors=[]
     page.on('pageerror', lambda error: errors.append(str(error)))
     views=[('dashboard','phase2-dashboard-view'),('energiefluss','phase2-energy-view'),('geraete','phase2-devices-view'),('diagnose','phase2-diagnostics-view'),('verlauf','phase2-history-view')]
-    for width,height in [(1920,1080),(390,844)]:
+    for width,height in [(1920,800),(390,844)]:
         await page.set_viewport_size({'width':width,'height':height})
         for tab,view in views:
             try:
@@ -29,10 +30,10 @@ async def run(page):
                 await require(not audit['missing'],str(audit))
                 print('PASS layout/nav/polling/testids',width,tab);results.append((f'{width}-{tab}',True))
                 if width==390 and tab=='energiefluss':
-                    await page.screenshot(path='/app/test_reports/phase2-mobile-energy-41.jpeg',quality=40,full_page=False)
+                    await page.screenshot(path='/app/test_reports/phase2-mobile-energy-45.jpeg',quality=40,full_page=False)
             except Exception as e:
                 print('FAIL layout/nav/polling/testids',width,tab,str(e));results.append((f'{width}-{tab}',False))
-    await page.set_viewport_size({'width':1920,'height':1080})
+    await page.set_viewport_size({'width':1920,'height':800})
     await page.get_by_test_id('phase2-nav-energiefluss').click(force=True)
     await page.get_by_test_id('flow-battery').wait_for()
     async def flow_controls():
@@ -67,12 +68,15 @@ async def run(page):
         await require(await page.get_by_test_id('phase2-chart-dc-ac').is_visible())
         await require(await page.get_by_test_id('phase2-chart-voltage-soc').is_visible())
     await check('five history ranges/two charts/eight values',ranges)
+    await expect(page.get_by_test_id('phase2-history-refresh')).to_be_enabled()
     async def fail_history(route): await route.fulfill(status=503,json={'detail':'TEST_failure'})
     await page.route('**/api/smartshunt-phase2/today',fail_history)
     await page.get_by_test_id('phase2-history-refresh').click(force=True)
     await page.get_by_test_id('phase2-history-error').wait_for()
     print('PASS history error visible');results.append(('history error',True))
-    print('ON ERROR retained daily value:',await page.get_by_test_id('phase2-day-dc-charge').inner_text())
+    error_value=await page.get_by_test_id('phase2-day-dc-charge').inner_text()
+    chart_paths=await page.get_by_test_id('phase2-chart-dc-ac').locator('.recharts-line-curve').count()
+    await check('today outage clears values and charts',lambda:require('–' in error_value and chart_paths==0,str(error_value)))
     await page.unroute('**/api/smartshunt-phase2/today',fail_history)
     await page.get_by_test_id('phase2-history-refresh').click(force=True)
     await page.get_by_test_id('phase2-history-error').wait_for(state='hidden')
@@ -117,6 +121,8 @@ async def run(page):
     await page.wait_for_timeout(600)
     empty_text=await page.get_by_test_id('phase2-day-dc-charge').inner_text()
     await check('missing today measurements must display dash',lambda:require('–' in empty_text,empty_text))
+    coverage_visible=await page.get_by_test_id('phase2-day-coverage').is_visible()
+    await check('missing today has coverage notice',lambda:require(coverage_visible))
     await page.unroute('**/api/smartshunt-phase2/today',empty_today)
     for path in ['/','/verlauf','/geraete','/diagnose','/steuerung','/smartshunt-preview']:
         try:
@@ -140,3 +146,4 @@ async def run(page):
     error_text=await page.evaluate('''() => {const errorElements = Array.from(document.querySelectorAll('.error, [class*="error"], [id*="error"]'));return errorElements.map(el => el.textContent).join(", ");}''')
     print(f'Found error message: {error_text}' if error_text else 'No error messages found on the page')
     print('RESULTS',json.dumps(results))
+    return results

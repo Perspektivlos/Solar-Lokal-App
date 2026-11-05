@@ -1,0 +1,66 @@
+{
+  "summary": "Independent verification closes iteration_43 duplicate-placeholder visibility bug: DC, voltage and SoC have visible L segments at exact 1920x800 and390x844; AC also visible. All240 safe backend cases and production build pass. Retained36 UI groups pass. Additional barrier checks14/16 pass: a pure SmartShunt source gap incorrectly also breaks independent AC at both sizes. Full second acceptance remains qualified; no canonical switchover performed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [{
+      "component": "Phase2TrendCharts.preparePhase2ChartPoints",
+      "issue": "Source-only gap>600s inserts a shared chart row with inverter_ac_power_w undefined. Continuous900W AC at poll0/15/30/45s becomes two subpaths (M count2), although only battery source0/15/616/631s has a601s gap. Expected DC/V/SoC split but AC M count1. Reproduced at both exact viewports with browser-only synthetic source-axis fixture. Normal duplicate cadence and global poll-gap behavior pass.",
+      "selector": "[data-testid='phase2-chart-dc-ac'] .recharts-line-curve",
+      "priority": "MEDIUM"
+    }],
+    "integration_issues": [{
+      "flow": "Local SmartShunt physical proof",
+      "issue": "Read-only cloud probe returns Hardwareprüfung nicht bestanden / MQTT-Broker nicht erreichbar (TimeoutError). This is structured expected cloud failure, not proof of local LAN operation. Physical MQTT and actual Influx writes remain unverified.",
+      "affected_selectors": ["[data-testid='smartshunt-probe-verdict']", "[data-testid='smartshunt-probe-reason']"]
+    }],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/phase2_duplicate_chart_review.py",
+    "/app/tests/phase2_chart_barriers_review.py",
+    "/app/tests/phase2_ui_review.py",
+    "/app/tests/phase2_ui_acceptance.py",
+    "/app/tests/run_backend_acceptance.py",
+    "/app/backend/tests/test_phase2_source_axis.py",
+    "/app/backend/tests/test_phase2_acceptance.py",
+    "/app/test_reports/backend_manifest_44.json",
+    "/app/test_reports/pytest/backend_acceptance_44_batch_6.xml",
+    "/app/test_reports/ui_duplicate_results_44.json",
+    "/app/test_reports/ui_barrier_results_44.json",
+    "/app/test_reports/ui_core_results_44.json",
+    "/app/test_reports/ui_edge_results_44.json",
+    "/app/test_reports/frontend_build_44.log"
+  ],
+  "action_items": [
+    "Keep source-gap barriers battery-only: separate per-domain chart data or provide valid independent AC at inserted source-gap row. Do not enable connectNulls globally; preserve true AC/global poll gaps.",
+    "Retest source-gap-601-independent-AC at both sizes alongside duplicate, stale/unavailable/missing and600/601s boundary cases.",
+    "Perform renewed local physical Phase2 MQTT/live proof and real Influx writes before canonical switch; cloud MOCKED telemetry cannot satisfy this gate.",
+    "Run22 omitted mutation cases only against disposable isolated data; manifest documents exclusions. Do not claim262/262 full-suite acceptance."
+  ],
+  "critical_code_review_comments": [
+    "Phase2TrendCharts.jsx26-27 adds a battery barrier into chartPoints shared by both DC and AC. Omitted inverter_ac_power_w is treated as null by Recharts connectNulls=false, incorrectly transferring SmartShunt validity into Trucki AC. Global poll-gap barrier intentionally clears both and passes.",
+    "Source-aware same-current-source forward fill now renders all three source series; explicit stale/unavailable null rows, fresh-source missing rows and missing-source null rows remain barriers. Both source and poll600s boundaries remain connected;601s breaks battery curves.",
+    "Retained backend source-axis DC integration, alarms/native severity, separate daily coverage, errors/retry, delayed ranges, Phase1 isolation and unchanged canonical labels all pass. Current reviewed server logs show no new application exception; build has nonblocking existing Node/Browserslist warnings."
+  ],
+  "updated_files": [
+    "/app/tests/phase2_duplicate_chart_review.py",
+    "/app/tests/phase2_chart_barriers_review.py",
+    "/app/tests/phase2_ui_review.py",
+    "/app/tests/phase2_ui_acceptance.py",
+    "/app/test_reports/backend_manifest_44.json",
+    "/app/test_reports/pytest/backend_acceptance_44_batch_1.xml through backend_acceptance_44_batch_12.xml",
+    "/app/test_reports/ui_duplicate_results_44.json",
+    "/app/test_reports/ui_barrier_results_44.json",
+    "/app/test_reports/ui_core_results_44.json",
+    "/app/test_reports/ui_edge_results_44.json",
+    "/app/test_reports/frontend_build_44.log",
+    "/app/test_reports/iteration_44.json"
+  ],
+  "success_rate": {"backend": "100% (240/240 executed unique safe cases;262 collected,22 safety omissions)", "frontend": "96.3% (52/54 final groups: core29/29, retained edges7/7, duplicate2/2, added barriers14/16)"},
+  "test_credentials": "No authentication required or exercised.",
+  "seed_data_creation": "None. No application source/config mutations, resets, discovery or retention deletes. Cloud telemetry and adverse/duplicate/barrier histories are MOCKED. Backend adversarial cases use isolated objects. Trucki submit occurred only after confirming demo_mode=true and returned demo=true; no physical command.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "TEST_ITERATION=45 python /app/tests/run_backend_acceptance.py preserves prior reports; foreground12 batches<=20. UI saved run(page) functions use public URL from frontend/.env. Test-only changes: output paths now44; core waits refresh enabled before outage click (initial run raced loading, final29/29). Added barrier handler corrected to(route,request,points=points); persistent browser import initially reused old code, explicit compile/read_text executed current file and completed16 cases. No application changes by tester. iteration43 duplicate failure artifact restored after legacy script initially overwrote it. Original HIGH duplicate bug independently closed; remaining MEDIUM domain-specific AC chart barrier needs retest. All five views have no horizontal overflow at1920x800/390x844; automatic live/history refresh and six canonical/Phase1 routes pass. No canonical switch.",
+  "rca of the issue": "Reproduce browser MOCKED history with current battery/900W AC points at polls0/15/30/45 and source timestamps0/15/616/631. The601s source interval enters preparePhase2ChartPoints source-gap branch, adding a row that nulls battery fields but omits AC. Since both Lines read shared chartPoints and connectNulls=false, AC also gets a null endpoint and splits into2 M subpaths. Fix battery-specific source barrier without damaging independent poll-domain continuity. This is synthetic branch coverage, not a claim of physical source cadence."
+}

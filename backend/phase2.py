@@ -120,8 +120,6 @@ def mock_phase2_history(range_name: str, now: Optional[datetime] = None) -> List
 
 def summarize_phase2_points(points: List[Dict[str, Any]]) -> Dict[str, Any]:
     keys = {
-        "battery_dc_charge_kwh": ("battery_dc_power_w", lambda value: max(0.0, value), "battery_dc"),
-        "battery_dc_discharge_kwh": ("battery_dc_power_w", lambda value: max(0.0, -value), "battery_dc"),
         "inverter_ac_output_kwh": ("inverter_ac_power_w", lambda value: max(0.0, value), "inverter_ac"),
         "pv_ac_kwh": ("pv_ac_power_w", lambda value: max(0.0, value), "pv_ac"),
         "mppt_dc_kwh": ("pv_dc_power_w", lambda value: max(0.0, value), "mppt_dc"),
@@ -130,7 +128,9 @@ def summarize_phase2_points(points: List[Dict[str, Any]]) -> Dict[str, Any]:
         "grid_export_kwh": ("grid_power_w", lambda value: max(0.0, -value), "grid"),
     }
     totals = {key: 0.0 for key in keys}
+    totals.update({"battery_dc_charge_kwh": 0.0, "battery_dc_discharge_kwh": 0.0})
     durations = {domain: 0.0 for _, _, domain in keys.values()}
+    durations["battery_dc"] = 0.0
     for previous, current in zip(points, points[1:]):
         try:
             seconds = (datetime.fromisoformat(current["ts"]) - datetime.fromisoformat(previous["ts"])).total_seconds()
@@ -149,6 +149,41 @@ def summarize_phase2_points(points: List[Dict[str, Any]]) -> Dict[str, Any]:
             counted_domains.add(domain)
         for domain in counted_domains:
             durations[domain] += seconds
+
+    previous_dc = None
+    previous_source_ts = None
+    dc_barrier = False
+    for point in points:
+        source_ts = point.get("battery_source_ts") or point.get("ts")
+        value = _number(point.get("battery_dc_power_w"))
+        status = point.get("status") or "current"
+        is_duplicate_placeholder = (
+            point.get("battery_source_ts") is not None
+            and source_ts == previous_source_ts
+            and status == "current"
+            and value is None
+        )
+        if is_duplicate_placeholder:
+            continue
+        if status != "current" or value is None:
+            dc_barrier = True
+            continue
+        try:
+            measured_at = datetime.fromisoformat(source_ts)
+        except (TypeError, ValueError):
+            dc_barrier = True
+            continue
+        if previous_dc is not None and not dc_barrier:
+            seconds = (measured_at - previous_dc[0]).total_seconds()
+            if 0 < seconds <= MAX_GAP_SECONDS:
+                hours = seconds / 3600.0
+                previous_value = previous_dc[1]
+                totals["battery_dc_charge_kwh"] += (max(0.0, previous_value) + max(0.0, value)) / 2.0 * hours / 1000.0
+                totals["battery_dc_discharge_kwh"] += (max(0.0, -previous_value) + max(0.0, -value)) / 2.0 * hours / 1000.0
+                durations["battery_dc"] += seconds
+        previous_dc = (measured_at, value)
+        previous_source_ts = source_ts
+        dc_barrier = False
     measured_duration = max(durations.values(), default=0.0)
     return {
         **{key: round(value, 3) for key, value in totals.items()},

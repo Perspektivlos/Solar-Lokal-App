@@ -1,0 +1,30 @@
+[
+  [
+    "Phase1 503 never blocks all five direct Phase2 subroutes",
+    true
+  ],
+  [
+    ">600s gaps break all four DC AC voltage SoC curves",
+    true
+  ],
+  [
+    "History 503 clears prior chart and today; retry restores",
+    true
+  ],
+  [
+    "Missing DC daily coverage keeps independent AC value",
+    true
+  ],
+  [
+    "Delayed 1h response cannot overwrite later 3h selection",
+    true
+  ],
+  [
+    "Canonical Sun-2000 Entl. aus Akku labels unchanged",
+    true
+  ],
+  [
+    "History 60-second automatic refresh retains selected range",
+    true
+  ]
+]
