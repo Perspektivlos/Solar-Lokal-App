@@ -21,6 +21,7 @@ from mqtt_client import (
 )
 from mocks import mock_shelly, mock_ahoy, mock_trucki, mock_victron, mock_smartshunt
 from smartshunt import SMARTSHUNT_INSTANCE, unavailable_smartshunt
+from phase2 import build_phase2_model
 from sun import event_times, sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
 
 logger = logging.getLogger("solar")
@@ -229,7 +230,7 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     house_power = pv_ac_power + battery_discharge_w + grid_power
     house_power = max(0.0, house_power)
 
-    return {
+    result = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "demo_mode": demo,
         "sun": {
@@ -254,3 +255,5 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
             "battery_soc": trucki.get("soc", 0),
         },
     }
+    result["phase2"] = build_phase2_model(result)
+    return result

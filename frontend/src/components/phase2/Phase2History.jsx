@@ -1,0 +1,21 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { getSmartShuntPhase2History, getSmartShuntPhase2Today } from "../../lib/api";
+import { fmt } from "../smartshunt/format";
+import { Phase2TrendCharts } from "./Phase2TrendCharts";
+
+const RANGES=["1h","3h","6h","12h","24h"];
+const METRICS=[["dc-charge","DC-Ladung","battery_dc_charge_kwh","battery_dc_measurement_available","#06B6D4"],["dc-discharge","DC-Entladung","battery_dc_discharge_kwh","battery_dc_measurement_available","#06B6D4"],["ac-output","SUN-Ausgang AC","inverter_ac_output_kwh","inverter_ac_measurement_available","#8B5CF6"],["pv-ac","PV AC","pv_ac_kwh","pv_ac_measurement_available","#F59E0B"],["mppt-dc","MPPT DC","mppt_dc_kwh","mppt_dc_measurement_available","#F59E0B"],["house-ac","Haus AC","house_ac_kwh","house_ac_measurement_available","#EC4899"],["grid-import","Netzbezug","grid_import_kwh","grid_measurement_available","#818CF8"],["grid-export","Einspeisung","grid_export_kwh","grid_measurement_available","#10B981"]];
+
+export const Phase2History=()=>{
+  const [range,setRange]=useState("6h"); const [points,setPoints]=useState([]); const [today,setToday]=useState(null); const [loading,setLoading]=useState(true); const [error,setError]=useState("");
+  const requestRef=useRef(0);
+  const load=useCallback(async()=>{const request=++requestRef.current;setLoading(true);setError("");try{const [h,t]=await Promise.all([getSmartShuntPhase2History(range),getSmartShuntPhase2Today()]);if(request===requestRef.current){setPoints(h.points||[]);setToday(t);}}catch{if(request===requestRef.current){setPoints([]);setToday(null);setError("Phase-2-Verlauf konnte nicht geladen werden.");}}finally{if(request===requestRef.current)setLoading(false);}},[range]);
+  useEffect(()=>{load();const id=setInterval(load,60000);return()=>clearInterval(id);},[load]);
+  return <div className="space-y-5" data-testid="phase2-history-view">
+    <section className="glass p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" data-testid="phase2-history-controls"><div><div className="font-mono text-[9px] uppercase tracking-[0.18em] text-cyan-300">DC-/AC-Verlauf getrennt</div><div className="mt-1 text-xs text-white/45">Datenlücken bleiben sichtbar · keine Trucki-Batterie-Fallbacks</div></div><div className="flex flex-wrap gap-1.5">{RANGES.map(r=><button type="button" key={r} onClick={()=>setRange(r)} aria-pressed={range===r} data-testid={`phase2-range-${r}`} className={`h-8 min-w-10 rounded border px-2 font-mono text-[9px] ${range===r?"border-cyan-400/50 bg-cyan-400/15 text-cyan-200":"border-white/10 text-white/45"}`}>{r}</button>)}<button type="button" onClick={load} disabled={loading} data-testid="phase2-history-refresh" aria-label="Verlauf aktualisieren" className="btn-neo grid h-8 w-8 place-items-center"><RefreshCw size={12} className={loading?"animate-spin":""}/></button></div></section>
+    {error&&<div role="alert" className="glass border-l-[3px] border-l-red-400 p-3 text-sm text-red-200" data-testid="phase2-history-error">{error}</div>}
+    <Phase2TrendCharts points={points}/>
+    <section className="glass overflow-hidden" data-testid="phase2-day-balance"><div className="border-b border-white/[0.08] px-4 py-3"><div className="font-semibold">Tagesbilanz · getrennte Messdomänen</div><div className="mt-1 font-mono text-[9px] text-white/40" data-testid="phase2-day-source">{today?.source_note||"–"}</div>{today&&!today.measurement_available&&<div className="mt-2 text-xs text-amber-300" data-testid="phase2-day-coverage">Keine ausreichende Messdauer verfügbar.</div>}</div><div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/[0.06]">{METRICS.map(([id,label,key,available,color])=><div key={id} className="bg-[#090e18] p-4"><div className="text-[9px] uppercase tracking-[0.12em] text-white/35">{label}</div><div className="mt-1 font-mono text-lg" style={{color}} data-testid={`phase2-day-${id}`}>{today?.measurement_available&&today?.[available]?fmt(today?.[key],2):"–"} <span className="text-[10px] text-white/35">kWh</span></div></div>)}</div></section>
+  </div>;
+};

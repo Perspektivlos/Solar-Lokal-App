@@ -1,95 +1,159 @@
 {
-  "project_name": "Victron SmartShunt IP65 300A - Local Venus OS Integration",
-  "route": "/smartshunt-preview",
-  "theme": "SCADA Dark Technical Control Room",
-  "user_choices": {
-    "isolated_route": "/smartshunt-preview",
-    "tabs": [
-      { "id": "overview", "label": "Übersicht" },
-      { "id": "device", "label": "Gerät" },
-      { "id": "diagnostics", "label": "Diagnose" },
-      { "id": "history", "label": "Verlauf" }
-    ],
-    "main_pages_status": "UNCHANGED until explicit approval",
-    "trucki_sun_status": "UNCHANGED - complete visual & logic separation",
-    "cloud_usage": "NONE (Local Venus OS / MQTT read-only)",
-    "write_commands": "NONE (Read-Only Integration)",
-    "acoustic_alarms": "DISABLED (Visual alerts only)",
-    "color_convention": {
-      "pv": "Bernstein (#F59E0B / #D97706)",
-      "house": "Rosa-Rot (#EC4899 / #E11D48)",
-      "battery": "Cyan (#06B6D4 / #0891B2)",
-      "grid": "Indigo/Violett (#6366F1 / #8B5CF6)"
-    }
-  },
-  "sign_convention": {
-    "positive": "Charging (Laden) - Power/Current > 0 (Cyan glow & arrow)",
-    "negative": "Discharging (Entladen) - Power/Current < 0 (Amber/Red glow & arrow)"
-  },
-  "data_states": {
-    "current": "Data age <= 90s, Connected == 1, Identity match valid -> Normal active glow",
-    "stale": "Data age > 90s and <= 180s -> Warning state (Yellow/Amber badge, stale indicator)",
-    "unavailable": "Data age > 180s OR Connected == 0 OR Identity match invalid -> Error/Offline state (Muted/Red badge, greyed out values)"
-  },
-  "identity_verification": {
-    "topic_base": "N/dbus-v1/battery/290/",
-    "instance": 290,
-    "required_match": [
-      "ProductName (Victron SmartShunt IP65 300A / SmartShunt)",
-      "DeviceInstance (290)",
-      "Connected status (1)",
-      "Data freshness (< 180s)"
-    ]
-  },
-  "optional_sensors": {
-    "rule": "Only render Midpoint Voltage (Mittelpunktspannung/Abweichung), Starter Battery Voltage (Starterspannung), and Temperature (Temperatur) if values are actively provided by physical hardware. Hide or mark as N/A when non-existent without breaking card layout."
-  },
-  "device_history": {
-    "rule": "Use native hardware device counters / history values provided by Venus OS / SmartShunt instead of calculating energy, Ah, or cycles on the frontend."
+  "project_name": "SmartShunt Phase 2 SCADA Dashboard",
+  "app_type": "dashboard",
+  "route_prefix": "/smartshunt-phase2",
+  "context_type": "DASHBOARDS & ADMIN PANELS (Industrial SCADA Dark Mode)",
+  "emotional_archetype": "THE PERFORMANCE PRO (Tactical Minimalism & SCADA Command Center)",
+  "general_guidelines": {
+    "anti_ai_slop": true,
+    "theme_mode": "dark",
+    "base_background": "#080C14",
+    "surface_background": "#0F172A",
+    "card_background": "#1E293B",
+    "preview_banner_text": "Phase 2 Vorschau (Isolierter Arbeitsbereich)",
+    "responsive_breakpoints": {
+      "mobile": "390px x 844px (zero horizontal scroll)",
+      "desktop": "1920px x 800px (dense high-visibility SCADA grid)"
+    },
+    "data_testid_convention": "kebab-case, role-based, e.g. smartshunt-phase2-nav-dashboard, dc-power-metric, ac-control-limit-input"
   },
   "typography": {
-    "headings": "Sora, 'Chakra Petch', sans-serif",
-    "body": "Sora, 'IBM Plex Sans', sans-serif",
-    "digital_meters": "'DSEG7-Classic', 'JetBrains Mono', monospace",
-    "technical_mono": "'JetBrains Mono', monospace"
+    "headline_font": "Sora, sans-serif",
+    "technical_data_font": "JetBrains Mono, monospace",
+    "digital_meter_font": "DSEG7, JetBrains Mono, monospace",
+    "body_font": "Inter, sans-serif",
+    "font_scale": {
+      "hero_title": "text-2xl sm:text-3xl font-bold font-display tracking-tight",
+      "section_header": "text-lg sm:text-xl font-semibold font-display text-slate-100",
+      "scada_metric_large": "text-2xl sm:text-4xl font-mono font-bold tracking-tight",
+      "scada_metric_label": "text-xs font-mono uppercase tracking-wider text-slate-400",
+      "body": "text-sm font-normal text-slate-300",
+      "badge_text": "text-xs font-mono font-medium"
+    }
   },
   "colors": {
-    "background": "#04060c",
-    "panel_bg": "rgba(22, 30, 49, 0.82)",
-    "card_border": "rgba(160, 170, 194, 0.20)",
-    "battery_cyan": "#06B6D4",
-    "pv_amber": "#F59E0B",
-    "house_rose": "#EC4899",
-    "grid_violet": "#8B5CF6",
-    "status_ok": "#10B981",
-    "status_warn": "#F59E0B",
-    "status_error": "#EF4444"
+    "backgrounds": {
+      "app": "#080C14",
+      "surface_card": "#0F172A",
+      "card_hover": "#1E293B",
+      "border": "#334155",
+      "border_highlight": "#475569"
+    },
+    "domain_accents": {
+      "pv_solar": {
+        "color_name": "Bernstein / Amber",
+        "hex": "#F59E0B",
+        "glow": "rgba(245, 158, 11, 0.25)",
+        "label": "PV Solar Erzeugung"
+      },
+      "house_load": {
+        "color_name": "Rosa / Magenta",
+        "hex": "#EC4899",
+        "glow": "rgba(236, 72, 153, 0.25)",
+        "label": "Haus Verbrauch (AC)"
+      },
+      "dc_battery_smartshunt": {
+        "color_name": "Cyan (Primary DC Source)",
+        "hex": "#06B6D4",
+        "glow": "rgba(6, 182, 212, 0.3)",
+        "label": "SmartShunt DC Batterie (Maßgebliche DC-Quelle)"
+      },
+      "ac_grid_trucki": {
+        "color_name": "Indigo / Violett (AC Inverter / Control)",
+        "hex": "#8B5CF6",
+        "glow": "rgba(139, 92, 246, 0.25)",
+        "label": "Trucki / SUN AC Inverter & Control (Alleinige AC-Quelle)"
+      }
+    },
+    "status_indicators": {
+      "current": {
+        "label": "Aktuell (<=90s)",
+        "badge_bg": "bg-emerald-950/80 text-emerald-400 border-emerald-800",
+        "dot": "bg-emerald-500 animate-pulse"
+      },
+      "stale": {
+        "label": "Stale (91-180s)",
+        "badge_bg": "bg-amber-950/80 text-amber-400 border-amber-800",
+        "dot": "bg-amber-500"
+      },
+      "unavailable": {
+        "label": "Nicht verfügbar (>180s - Kein stiller Fallback)",
+        "badge_bg": "bg-rose-950/80 text-rose-400 border-rose-800",
+        "dot": "bg-rose-500"
+      }
+    }
   },
-  "responsive_rules": {
-    "mobile_width": "390px viewport target without horizontal scrollbar",
-    "grid_responsive": "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
-    "no_nested_cards": "Flat SCADA panel grid layout without deep nesting",
-    "no_usage_explanations": "Pure technical SCADA display without tutorial/marketing explanatory copy"
+  "visual_enhancers": {
+    "grid_pattern": "Subtle dark technical SCADA grid background (1px grid lines at 5% opacity)",
+    "borders": "1px solid #334155 with inner subtle highlights",
+    "shadows": "shadow-[0_4px_20px_rgba(0,0,0,0.5)]",
+    "dc_vs_ac_separation": {
+      "dc_badge": "Distinct cyan left border & 'DC - SmartShunt' tag",
+      "ac_badge": "Distinct violet left border & 'AC - Trucki/SUN' tag"
+    }
   },
-  "data_testid_policy": "All interactive elements (tabs, refresh button, toggles, filter buttons) and critical informational metrics (voltage, current, power, soc, remaining time, status badge, identity badge) MUST have explicit data-testid attributes.",
-  "image_urls": [
-    "https://images.unsplash.com/photo-1619641805634-b867f535071c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwyfHxiYXR0ZXJ5JTIwZW5lcmd5JTIwc3RvcmFnZSUyMHNjYWRhfGVufDB8fHx8MTc5Mzg3NjQyMHww&ixlib=rb-4.1.0&q=85",
-    "https://images.unsplash.com/photo-1589276534126-adef63a95e05?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHxiYXR0ZXJ5JTIwZW5lcmd5JTIwc3RvcmFnZSUyMHNjYWRhfGVufDB8fHx8MTc5Mzg3NjQyMHww&ixlib=rb-4.1.0&q=85"
-  ],
+  "views_specification": {
+    "view_1_dashboard": {
+      "route": "/smartshunt-phase2",
+      "title": "SmartShunt Phase 2 SCADA Preview Dashboard",
+      "components": [
+        "PreviewHeader with return link to canonical '/' dashboard",
+        "KPI Strip: SmartShunt DC Power (Cyan), Trucki AC Output (Violet), PV Yield (Amber), House Load (Rose)",
+        "SmartShunt Primary Battery Gauge (SoC %, Voltage V, Current A, Remaining Time h:m)",
+        "Trucki/SUN Inverter Status Card (AC Power W, Target W, Zero Feed-in Status, Control Mode)",
+        "Freshness Status Bar (Current / Stale / Unavailable indicators)"
+      ]
+    },
+    "view_2_energiefluss": {
+      "route": "/smartshunt-phase2/energiefluss",
+      "title": "Energiefluss Diagramm (DC/AC Getrennt)",
+      "components": [
+        "Interactive Energy Flow Diagram with animated particle pulses",
+        "Explicit DC Bus node (SmartShunt IP65 300A, Instanz 290)",
+        "Explicit AC Bus node (Trucki/SUN Inverter, ZEPC Nulleinspeisung)",
+        "Live Power Balance Table with strict DC vs AC tag indicators"
+      ]
+    },
+    "view_3_geraete": {
+      "route": "/smartshunt-phase2/geraete",
+      "title": "Geräte & Native Zähler",
+      "components": [
+        "SmartShunt Hardware Card: IP65 300A, Instance 290, USB/VE.Direct, Connected=1",
+        "13 Native Device Counters Grid (Deepest Voltage, Min/Max Ah, Consumed Ah, Synchronizations, etc.)",
+        "Trucki/SUN Inverter Device Card (AC Output, Setpoint, Limit, Zero Export Controller)",
+        "Local Hardware Self-Test and Probe Verification trigger"
+      ]
+    },
+    "view_4_diagnose": {
+      "route": "/smartshunt-phase2/diagnose",
+      "title": "Diagnose & Hardware Alarme",
+      "components": [
+        "SmartShunt Alarm & Threshold Panel (Low Voltage, High Voltage, Low SoC)",
+        "Data Freshness Audit Log (90s / 180s threshold checks)",
+        "Direct PDF and JSON Report Export triggers (Phase 2 direct export, no archive)",
+        "Hardware Probe Communication Diagnostic Terminal"
+      ]
+    },
+    "view_5_verlauf": {
+      "route": "/smartshunt-phase2/verlauf",
+      "title": "Verlauf & Tagesbilanz",
+      "components": [
+        "Separate DC (SmartShunt) and AC (Trucki) Historical Charts",
+        "Daily Energy Balance Summary (Charge Ah vs Discharge Ah, AC Generation kWh)",
+        "Multi-channel trend viewer with toggleable channels"
+      ]
+    }
+  },
+  "export_specification": {
+    "pdf_export": "Direct downloadable hardware verification PDF report containing SmartShunt test results",
+    "json_export": "Direct downloadable hardware verification JSON data containing native counters and telemetry",
+    "rule": "Direct export without archive storage in Phase 2 preview"
+  },
   "instructions_to_main_agent": [
-    "Build the SmartShunt preview strictly at /smartshunt-preview as a standalone tabbed view with tabs: Übersicht, Gerät, Diagnose, Verlauf.",
-    "Do NOT touch main navigation or modify existing Trucki / SUN control routines.",
-    "Ensure read-only MQTT / Venus OS logic (instance 290) is mocked or wired to local endpoints without VRM cloud calls or acoustic alarms.",
-    "Adhere to the exact color scheme: Cyan (#06B6D4) for SmartShunt Battery, Amber (#F59E0B) for PV, Rose/Pink (#EC4899) for House, Violet (#8B5CF6) for Grid.",
-    "Display positive values (+W / +A) as Charging (Laden) and negative values (-W / -A) as Discharging (Entladen).",
-    "Manage 3 data states strictly: Fresh (<=90s), Stale (90s-180s), Unavailable (>180s or Connected=0 or invalid identity).",
-    "Include data-testid on all interactive buttons, tabs, input options, and key metric cells."
-  ],
-  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
-    "Never use generic centered layouts or plain flat white cards.",
-    "Use SCADA dark theme with glassmorphism and subtle metallic hairlines.",
-    "Keep mobile layout (390px) responsive and clean without overflow.",
-    "Avoid decorative AI emojis in icons.",
-    "Ensure all tests can query elements via data-testid."
+    "Ensure /smartshunt-phase2 is an isolated route area with its own sub-navigation bar.",
+    "Do NOT alter the canonical main pages or canonical top navigation.",
+    "Visually tag every metric with either 'DC (SmartShunt)' or 'AC (Trucki/SUN)' to avoid confusion.",
+    "Ensure responsiveness on 390x844 viewports with overflow-x: hidden on all containers.",
+    "Add data-testid to all buttons, tabs, inputs, metrics, and cards for robust E2E testing."
   ]
 }

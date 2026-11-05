@@ -215,6 +215,8 @@ Die Phase-1-Ansicht liegt getrennt unter **`/smartshunt-preview`**. Sie verände
 
 **Hardwareabnahme 05.11.2026:** Der lokale Prüflauf wurde mit `N/b827eb79321c/battery/290/`, SmartShunt IP65 300A, Instanz 290, USB/VE.Direct, `Connected=1`, aktuellen Pflichtmesswerten und 13 nativen Gerätezählern erfolgreich nachgewiesen. Der Lauf bestätigte außerdem, dass keine `W/`-Steuerbefehle gesendet wurden. Phase 1 ist damit hardwareseitig freigegeben; eine Übernahme in Hauptseiten erfolgt erst als eigene Phase 2.
 
+**Phase-2-Kernvorschau:** Unter **`/smartshunt-phase2`** stehen Dashboard, Energiefluss, Geräte, Diagnose und Verlauf mit strikt getrennten SmartShunt-DC- und Trucki/SUN-AC-Werten bereit. Zeitverläufe und Tagesbilanz führen DC-Ladung/-Entladung und AC-Ausgang getrennt; fehlende Messdomänen erscheinen als nicht verfügbar. Die kanonischen Hauptseiten bleiben bis zur zweiten ausdrücklichen Abnahme unverändert. PDF-/JSON-Direktexport ohne Archiv folgt später innerhalb Phase 2.
+
 Im Demo-Modus sind SmartShunt-Telemetrie und -Verlauf **MOCKED**. Für den lokalen Hardwaretest `demo_mode=false`, den vorhandenen MQTT-Zugang und die korrekte Venus-OS-Portal-ID verwenden. Die Hauptseiten übernehmen SmartShunt erst nach ausdrücklicher Freigabe der Vorschau.
 
 ---

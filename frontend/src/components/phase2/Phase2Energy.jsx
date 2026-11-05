@@ -1,0 +1,10 @@
+import EnergyFlow from "../EnergyFlow";
+
+export const Phase2Energy = ({ live }) => <div className="space-y-5" data-testid="phase2-energy-view">
+  <section className="grid grid-cols-1 md:grid-cols-2 gap-3" data-testid="phase2-energy-source-key">
+    <div className="glass border-l-[3px] border-l-cyan-400 px-4 py-3"><span className="font-mono text-[9px] uppercase text-cyan-300">DC · SmartShunt</span><div className="mt-1 text-sm text-white/60">Batterie V / A / W / SoC · Instanz 290</div></div>
+    <div className="glass border-l-[3px] border-l-violet-400 px-4 py-3"><span className="font-mono text-[9px] uppercase text-violet-300">AC · Trucki / SUN</span><div className="mt-1 text-sm text-white/60">Ausgang / Sollwert / Limit / ZEPC</div></div>
+  </section>
+  <EnergyFlow phase2 summary={live.summary} smartshunt={live.smartshunt} trucki={live.trucki} shelly={live.shelly} ahoy={live.ahoy} victron={live.victron} sun={live.sun} timestamp={live.timestamp} devices={{ shelly:{enabled:true}, ahoy:{enabled:true}, victron:{enabled:true}, trucki:{enabled:true} }} />
+  <section className="glass overflow-hidden" data-testid="phase2-power-boundaries"><div className="border-b border-white/[0.08] px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">Messgrenzen</div><div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.07]">{[["Batterie DC",live.battery_dc.power_w,"SmartShunt"],["SUN-Ausgang AC",live.inverter_ac.output_w,"Trucki/SUN"],["Haus AC",live.summary.house_power,"Shelly + AC-Erzeuger"]].map(([label,value,source])=><div key={label} className="p-4"><div className="text-xs text-white/45">{label}</div><div className="mt-1 font-mono text-xl text-white" data-testid={`phase2-boundary-${source.toLowerCase().replace(/[^a-z]+/g,"-")}`}>{value == null ? "–" : Math.round(value).toLocaleString("de-DE")} W</div><div className="mt-1 font-mono text-[9px] text-white/35">Quelle: {source}</div></div>)}</div></section>
+</div>;

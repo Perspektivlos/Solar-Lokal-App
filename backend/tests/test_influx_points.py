@@ -37,6 +37,13 @@ def _sample_payload() -> dict:
             "zepc": True, "temperature": 32.5, "ac_setpoint_w": 320.0, "ac_display_w": 305.0,
             "day_energy_kwh": 2.3, "total_energy_kwh": 410.0,
         },
+        "smartshunt": {
+            "enabled": True, "online": True, "instance": 290, "status": "current",
+            "voltage_v": 52.3, "current_a": -3.9, "power_w": -204.0,
+            "soc_pct": 78.6, "time_to_go_s": 175140, "consumed_ah": -65.5,
+            "optional": {"temperature_c": 24.0},
+            "device_history": {"charge_cycles": 238, "charged_energy_kwh": 1894.7},
+        },
     }
 
 
@@ -56,6 +63,7 @@ def test_builds_all_device_measurements() -> None:
     assert "victron" in names
     assert names.count("victron_mppt") == 2
     assert "trucki" in names
+    assert "smartshunt" in names
 
 
 def test_instant_ratios_self_sufficiency() -> None:
@@ -113,6 +121,14 @@ def test_trucki_settings_fields() -> None:
     trucki = next(p for p in server._build_influx_points(payload) if p._name == "trucki")
     for k in ("target", "min_power", "max_power", "ac_output", "ac_setpoint"):
         assert k in trucki._fields
+
+
+def test_smartshunt_has_dc_fields_and_native_counters() -> None:
+    smart = next(p for p in server._build_influx_points(_sample_payload()) if p._name == "smartshunt")
+    assert smart._tags["instance"] == "290"
+    assert smart._tags["status"] == "current"
+    for key in ("voltage", "current", "power", "soc", "temperature_c", "history_charge_cycles", "history_charged_energy_kwh"):
+        assert key in smart._fields
 
 
 def test_alarms_measurement_present_and_levels() -> None:

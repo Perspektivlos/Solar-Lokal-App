@@ -622,3 +622,36 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Regression der kanonischen Hauptseiten während der Preview-Phase: Werte, Navigation und Trucki/SUN-Steuerung bleiben unverändert.
 - Zweiter lokaler Hardwaretest gegen `N/b827eb79321c/battery/290/#` nach Fertigstellung.
 - Erst nach Screenshot/Prüfprotokoll und ausdrücklicher Phase-2-Abnahme werden die kanonischen Routen auf das neue Quellenmodell umgeschaltet; Dokumentation, Roadmap und Beschreibungen werden danach abschließend aktualisiert.
+
+## Neuer Umsetzungsabschnitt – SmartShunt Phase-2-Kernvorschau (05.11.2026)
+
+### Umgesetzter Stand
+- Neuer isolierter Arbeitsbereich `/smartshunt-phase2` mit fünf Ansichten: Dashboard, Energiefluss, Geräte, Diagnose und Verlauf. Keine Verlinkung in der kanonischen Hauptnavigation.
+- Additives Backend-Shadow-Modell in `backend/phase2.py`: SmartShunt liefert ausschließlich Batterie-DC V/A/W/SoC/Restlaufzeit; Trucki/SUN liefert ausschließlich AC-Ausgang, Sollwerte, Grenzen und ZEPC.
+- Die bestehende AC-Hausbilanz bleibt unverändert. SmartShunt-DC wird nicht direkt in die Hausleistung eingerechnet.
+- Kein stiller Trucki-Fallback bei stale/unavailable SmartShunt; fehlende Batterieinformationen erscheinen als `–`.
+- Haupt-Snapshots führen getrennte SmartShunt-Quellzeit, DC-Werte und Trucki-AC-Werte. Identische SmartShunt-Quellmessungen werden nicht erneut als Energie integriert.
+- Separate Phase-2-APIs: `/api/smartshunt-phase2/live`, `/history` und `/today`, jeweils mit Pydantic-Antwortmodellen.
+- Verlauf und Tagesbilanz trennen SmartShunt-DC-Ladung/-Entladung, SUN-AC-Ausgang, PV AC, MPPT DC, Haus AC und Netz. Lücken über 600 s sowie fehlende Messdomänen werden nicht zu Nullwerten umgedeutet.
+- SmartShunt-Schwellenalarme verwenden die bestehende verschachtelte `alarms`-Konfiguration; native Gerätealarme bleiben erhalten. Hauptalarmfluss bleibt bis zur Abnahme unverändert.
+- Influx-Builder erzeugt ein separates `smartshunt`-Measurement mit Instanz/Status, V/A/W/SoC, optionalen Sensoren und nativen Gerätezählern. Trucki bleibt eigenes AC-/Regelungs-Measurement.
+
+### Oberflächenstatus
+- Dashboard zeigt SmartShunt DC, Trucki/SUN AC, PV und Haus mit festen Quellenkennzeichnungen.
+- Energiefluss verwendet den bestehenden SCADA-Baustein im opt-in Phase-2-Modus; kanonische Sun-2000-/Akku-Texte bleiben im Standardmodus unverändert.
+- Geräteansicht zeigt vollständige SmartShunt-Identität/Zähler plus separaten Trucki-AC-Regelgateway-Block.
+- Diagnose enthält Quellen-Audit, SmartShunt-Alarme, Rohfelder und den lokalen Read-only-Hardwareprüflauf.
+- Verlauf zeigt SmartShunt DC × SUN AC sowie Spannung × SoC, fünf Bereiche und acht getrennte Tageswerte. Fehler löschen/markieren Altwerte, statt sie unbemerkt weiter anzuzeigen.
+
+### Nacharbeit aus Testing-Agent iteration_41
+- Behoben: falscher Alarm-Konfigurationspfad, Nullwertintegration, Tagesintegration nach Chart-Ausdünnung und Mehrfachintegration identischer Quellmessungen.
+- Behoben: unavailable-Inspector zeigte 0 W, Zeitlücken wurden durchverbunden, fehlende Tagesmessungen erschienen als 0 kWh und API-Fehler ließen Altwerte unmarkiert stehen.
+- Behoben: Phase-1-Diagnoseausfall blockiert nicht mehr alle Phase-2-Ansichten; verspätete Bereichsantworten können aktuelle History-Auswahl nicht überschreiben.
+- Kanonische EnergyFlow-Beschriftungen wurden für den Nicht-Phase-2-Modus wieder exakt auf den freigegebenen Stand begrenzt.
+
+### Verifikation und Freigabestatus
+- Retained Phase-2-/SmartShunt-/Influx-/DayBalance-Tests: **60/60 bestanden**.
+- Vollständige Backend-Regression: **249/249 bestanden**; Frontend Production Build erfolgreich.
+- Desktop 1920×800 und Mobil 390×844 ohne horizontalen Overflow; fünf Preview-Ansichten, Unterrouten und Auto-Refresh geprüft.
+- Cloud-Preview-Telemetrie/-Historie ist weiterhin **DEMO/MOCKED**. Die lokale Phase-1-Hardwareabnahme bleibt der reale Gerätenachweis; ein erneuter lokaler Test folgt vor kanonischer Umschaltung.
+- **Noch offen:** zweite Nutzerabnahme der Phase-2-Vorschau, danach Umschaltung der kanonischen Seiten. PDF-/JSON-Direktexport ohne Archiv bleibt das spätere Arbeitspaket 2E.

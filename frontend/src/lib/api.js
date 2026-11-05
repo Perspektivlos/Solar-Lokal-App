@@ -24,3 +24,6 @@ export const discoverAll = () => api.post("/devices/discover-all").then((r) => r
 export const getSmartShuntPreview = () => api.get("/smartshunt/preview").then((r) => r.data);
 export const getSmartShuntHistory = (range = "6h") => api.get("/smartshunt/history", { params: { range } }).then((r) => r.data);
 export const probeSmartShunt = () => api.post("/smartshunt/probe").then((r) => r.data);
+export const getSmartShuntPhase2Live = () => api.get("/smartshunt-phase2/live").then((r) => r.data);
+export const getSmartShuntPhase2History = (range = "6h") => api.get("/smartshunt-phase2/history", { params: { range } }).then((r) => r.data);
+export const getSmartShuntPhase2Today = () => api.get("/smartshunt-phase2/today").then((r) => r.data);

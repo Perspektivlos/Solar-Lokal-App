@@ -28,9 +28,11 @@ from alarms import evaluate_alarms, summarize_alarms, merge_thresholds
 from discovery import discover_device, DEVICE_LABELS, annotate_changes
 from smartshunt import SMARTSHUNT_INSTANCE
 from smartshunt_routes import router as smartshunt_router
+from phase2_routes import router as phase2_router
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(smartshunt_router)
+api_router.include_router(phase2_router)
 
 
 # ---------- Endpoints ----------
