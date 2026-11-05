@@ -1,0 +1,52 @@
+{
+  "summary": "SmartShunt local probe reviewed: 45/52 pytest cases passed across probe, prior SmartShunt review and MQTT/sun regressions. Seven failing cases reproduce three distinct defects. Final browser runs passed all 18 flow groups: real cloud TimeoutError, running/disabled state, verdict/read-only checks, mobile layout, four tabs, MOCKED success/error states, six main-page navigation and Trucki read-only reload. No application/config fixes made.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/smartshunt/probe", "issue": "False-positive acceptance: omitting Dc/0/Power or sending null/invalid Power still returns passed=true. Normalizer calculates power from voltage/current, and probe live_ok checks normalized output instead of required received fields. All three variants reproduced with FakeClient.", "priority": "HIGH"},
+      {"endpoint": "POST /api/smartshunt/probe", "issue": "MQTT connect exception after successful TCP preflight escapes probe_smartshunt. Simulated OSError produces actual HTTP 500 through in-process ASGI instead of HTTP200/passed=false/meaningful checks. Lock is released correctly. Public cloud path remains HTTP200 TimeoutError.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/smartshunt/probe", "issue": "Missing portal returns HTTP200/passed=false but checks=[]; reason exists only in current.status_reason. Missing host and concurrent-lock rejection also use this empty-check helper (source review). No explicit read-only check is included in these early failures."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Devices BatteryCalc / preview instrumentation", "issue": "Existing React console warning: injected data-ve-dynamic span inside option, stack ends in emergent-main.js. Devices remains usable; not introduced by ProbePanel.", "selector": "[data-testid='calc-module-v']", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Missing portal/host or already-running probe", "issue": "Backend supplies empty checks; ProbePanel renders only verdict/meta and never current.status_reason, so user receives no explanation or visible read-only check in the protocol. API behavior reproduced for missing portal; downstream UI omission established by source review, not config mutation.", "affected_selectors": ["[data-testid='smartshunt-probe-result']", "[data-testid='smartshunt-probe-verdict']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_smartshunt_probe_review.py",
+    "/app/backend/tests/test_smartshunt_probe.py",
+    "/app/backend/tests/test_smartshunt_review.py",
+    "/app/tests/smartshunt_probe_ui_review.py",
+    "/app/test_reports/pytest/pytest_probe_review_40.xml",
+    "/app/test_reports/pytest/pytest_probe_route_40.xml",
+    "/app/test_reports/pytest/pytest_probe_regression_40.xml"
+  ],
+  "action_items": [
+    "Require received, valid raw Voltage/Current/Power/Soc fields for probe acceptance; do not count derived Power as received mandatory telemetry.",
+    "Catch MQTT setup/connect/loop and configuration conversion exceptions; return sanitized HTTP200 failed protocol while preserving finally cleanup and lock release.",
+    "Populate explanatory checks and confirmed read-only check for all early failures, including missing host/portal and concurrent probe; alternatively also display current.status_reason in ProbePanel.",
+    "Retest three defects before local hardware acceptance. Physical LAN SmartShunt verification and actual Trucki/SUN write behavior remain manual/local checks; no W commands were sent.",
+    "Investigate pre-existing option instrumentation warning independently if needed."
+  ],
+  "critical_code_review_comments": [
+    "smartshunt_probe.py:106-107 accepts smartshunt.py:150-152 calculated power, bypassing the callback's raw required-field requirement at :90-93 after timeout.",
+    "smartshunt_probe.py:52-54 and :68-104 only have finally cleanup, not an exception-to-result handler. Only socket preflight exceptions are caught; paho connect exceptions reach FastAPI as 500.",
+    "smartshunt_probe.py:36 defaults early-failure checks to []; ProbePanel.jsx:29-45 has no rendering of current.status_reason.",
+    "Exact N/portal/battery/290/# subscription and sole R/portal/keepalive publication confirmed by existing FakeClient safety test. Other-instance messages ignored; no W publications observed in probe tests.",
+    "Prior iteration_39 freshness, offline optional and Connected verification failures now pass. Public preview/history responses use typed models and no Mongo _id. Main source/config preserved."
+  ],
+  "updated_files": ["/app/backend/tests/test_smartshunt_probe_review.py", "/app/tests/smartshunt_probe_ui_review.py", "/app/test_reports/iteration_40.json"],
+  "success_rate": {"backend": "86.5% (45/52 cases; 29/34 first run, 2/4 ASGI outcomes, 14/14 MQTT/sun regressions)", "frontend": "100% of 18 executed final browser flow groups; empty-check integration issue remains from API/source review"},
+  "test_credentials": "No authentication exercised; none required for requested flows.",
+  "seed_data_creation": "None. No database/config mutation, seed/reset or physical control commands. Global preview telemetry/history remain DEMO/MOCKED. Probe public HTTP200/TimeoutError is real; successful MQTT and adversarial outcomes are MOCKED FakeClient tests. Browser success and HTTP500 are MOCKED route responses, removed before navigation.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Export frontend/.env and use PYTHONPATH=/app/backend. New tests intentionally retain failures. Public POST cloud timeout succeeds as structured failure (~4 seconds). ASGI tests monkeypatch config and FakeClient without lifespan/DB/network writes. UI first attempt had a test-only uppercase inner_text assertion mismatch, corrected once; final run passed. Saved run(page)/run_regressions(page) correspond to executed scripts. Tested desktop 1920x1080 per tool constraints and mobile390x844; requested1920x800 not repeated this run. Main-page testing is navigation/load and read-only control reload, not a claim of full physical Trucki/SUN control testing. Logs show only historical resolved implementation exceptions, no new production backend exceptions during public tests; intentional MOCKED500 console entry expected. Probe result is held only in mounted tab state and disappears on tab navigation (observed); persistence was not required.",
+  "rca of the issue": "Power reproduction: valid SmartShunt identity/Connected/USB, voltage52.7/current-4.2/SoC73.4/native cycles222, but missing/null/bad Dc/0/Power -> normalizer derives-221.3W, probe waits then checks normalized values and falsely passes. Connection reproduction: fake successful socket preflight plus FakeClient.connect raising OSError -> finally releases lock, no except converts failure, ASGI500. Missing-portal reproduction: mocked config portal empty -> _failed_result checks=[] -> typed HTTP200 but ProbePanel never displays state reason. Fix in main agent, then rerun retained regression tests."
+}

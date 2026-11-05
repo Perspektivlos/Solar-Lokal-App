@@ -1,5 +1,6 @@
 import { Check, CircleAlert, Minus, RadioTower, ShieldCheck, X } from "lucide-react";
 import { clock, testKey } from "./format";
+import { ProbePanel } from "./ProbePanel";
 
 const CheckIcon = ({ ok }) => ok === true ? <Check size={15} className="text-emerald-300" /> : ok === false ? <X size={15} className="text-red-300" /> : <Minus size={15} className="text-white/40" />;
 
@@ -9,6 +10,7 @@ export const DiagnosticsPanel = ({ payload }) => {
   const raw = data.raw || {};
   return (
     <div className="space-y-5" data-testid="smartshunt-diagnostics-panel">
+      <ProbePanel />
       <section className="glass overflow-hidden" data-testid="smartshunt-diagnostic-checks">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] px-5 py-3">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em]"><ShieldCheck size={15} className="text-cyan-300" /> Integritätsprüfung</div>

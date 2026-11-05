@@ -23,3 +23,4 @@ export const discoverDevice = (key) => api.post(`/devices/${key}/discover`).then
 export const discoverAll = () => api.post("/devices/discover-all").then((r) => r.data);
 export const getSmartShuntPreview = () => api.get("/smartshunt/preview").then((r) => r.data);
 export const getSmartShuntHistory = (range = "6h") => api.get("/smartshunt/history", { params: { range } }).then((r) => r.data);
+export const probeSmartShunt = () => api.post("/smartshunt/probe").then((r) => r.data);

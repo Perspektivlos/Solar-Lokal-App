@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="4" time="0.749" timestamp="2026-11-05T11:35:35.198061+00:00" hostname="agent-env-d9ee6047-22d8-4f82-bb28-a3bebcc9e1d5"><testcase classname="tests.test_smartshunt_probe_review" name="test_route_returns_structured_200_for_mqtt_outcomes[success]" time="0.563" /><testcase classname="tests.test_smartshunt_probe_review" name="test_route_returns_structured_200_for_mqtt_outcomes[connect_error]" time="0.003"><failure message="AssertionError: connect_error: 500 Internal Server Error&#10;assert 500 == 200&#10; +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code">tests/test_smartshunt_probe_review.py:152: in test_route_returns_structured_200_for_mqtt_outcomes
+    assert response.status_code == 200, f'{scenario}: {response.status_code} {response.text}'
+E   AssertionError: connect_error: 500 Internal Server Error
+E   assert 500 == 200
+E    +  where 500 = &lt;Response [500 Internal Server Error]&gt;.status_code</failure></testcase><testcase classname="tests.test_smartshunt_probe_review" name="test_route_returns_structured_200_for_mqtt_outcomes[missing_portal]" time="0.003"><failure message="AssertionError: missing_portal: explanatory checks required&#10;assert []">tests/test_smartshunt_probe_review.py:155: in test_route_returns_structured_200_for_mqtt_outcomes
+    assert data['checks'], f'{scenario}: explanatory checks required'
+E   AssertionError: missing_portal: explanatory checks required
+E   assert []</failure></testcase><testcase classname="tests.test_smartshunt_probe_review" name="test_route_returns_structured_200_for_mqtt_outcomes[auth_rejected]" time="0.003" /></testsuite></testsuites>

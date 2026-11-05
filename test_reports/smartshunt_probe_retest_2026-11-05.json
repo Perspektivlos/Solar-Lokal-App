@@ -1,0 +1,17 @@
+{
+  "source_report": "/app/test_reports/iteration_40.json",
+  "resolved": [
+    "Dc/0/Power must now be received as a valid raw field; derived power cannot pass acceptance",
+    "MQTT connect/setup exceptions now return a sanitized HTTP 200 failed protocol",
+    "missing host, portal ID, concurrent run and early failures now include explanatory and read-only checks",
+    "ProbePanel always displays current.status_reason for failed results"
+  ],
+  "verification": {
+    "targeted_backend": "58/58 passed",
+    "frontend_build": "passed",
+    "cloud_timeout_endpoint": "passed=false with broker and read-only checks",
+    "desktop_1920x800_overflow": "none",
+    "mobile_390x844_overflow": "none"
+  },
+  "physical_hardware_acceptance": "pending local ABNAHMEBEREIT result"
+}

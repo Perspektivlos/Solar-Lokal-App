@@ -1,4 +1,5 @@
 """Isolierte API für die SmartShunt-Phase-1-Vorschau."""
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Literal, Optional
 
@@ -9,6 +10,7 @@ from collectors import collect_live
 from mqtt_client import _mqtt_state
 from server import db, get_config
 from smartshunt import SMARTSHUNT_INSTANCE, mock_smartshunt_history
+from smartshunt_probe import probe_smartshunt
 
 
 router = APIRouter(prefix="/smartshunt", tags=["smartshunt-preview"])
@@ -117,6 +119,20 @@ class SmartShuntHistoryResponse(BaseModel):
     points: List[SmartShuntHistoryPoint]
 
 
+class SmartShuntProbeResponse(BaseModel):
+    probe_id: str
+    tested_at: str
+    passed: bool
+    read_only: bool
+    instance: int
+    topic_base: str
+    duration_ms: int
+    message_count: int
+    field_count: int
+    checks: List[DiagnosticCheck]
+    current: SmartShuntCurrent
+
+
 @router.get("/preview", response_model=SmartShuntPreviewResponse)
 async def smartshunt_preview() -> SmartShuntPreviewResponse:
     cfg = await get_config()
@@ -171,3 +187,12 @@ async def smartshunt_history(range: str = "6h") -> SmartShuntHistoryResponse:
         if len(points) > 600:
             points = points[::max(1, len(points) // 600)]
     return SmartShuntHistoryResponse(range=range_name, demo=demo, points=points)
+
+
+@router.post("/probe", response_model=SmartShuntProbeResponse)
+async def smartshunt_probe() -> SmartShuntProbeResponse:
+    cfg = await get_config()
+    mqtt_cfg = cfg.get("mqtt") or {}
+    vrm_id = str((cfg.get("victron_mqtt") or {}).get("vrm_id") or "")
+    result = await asyncio.to_thread(probe_smartshunt, mqtt_cfg, vrm_id, 10.0)
+    return SmartShuntProbeResponse(**result)

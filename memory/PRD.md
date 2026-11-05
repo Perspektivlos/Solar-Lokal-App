@@ -503,3 +503,26 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - **P0 Nutzerprüfung:** Vorschau mit echter lokaler Venus-OS-Anlage gegen Produktname, `Connected`, USB/VE.Direct und `battery/290` validieren.
 - **P1 nach Freigabe:** SmartShunt als maßgebliche Batteriequelle in Hauptansichten übernehmen; Trucki/SUN weiterhin ausschließlich als AC-Regelquelle behandeln; InfluxDB-/Grafana-Felder ergänzen.
 - **P2:** Mehrinstanz-Erkennung, Langzeitauswertung, Diagnose-/Berichtsverknüpfung und offizielles SmartShunt-Handbuch.
+
+## Neuer Umsetzungsabschnitt – Lokaler SmartShunt-Hardwareprüflauf (05.11.2026)
+
+### Anlass und gewählter Prüfweg
+- Der konfigurierte MQTT-Broker liegt in einem privaten LAN und war aus der Cloud-Preview per TCP/1883 nicht erreichbar. Die reale Hardware konnte deshalb dort nicht seriös abgenommen werden.
+- Der Nutzer wählte ausdrücklich den Prüfweg **„Lokalen Prüfknopf einbauen“**.
+- Im Diagnose-Tab der isolierten SmartShunt-Vorschau steht nun „Echte Daten prüfen“. Der Lauf wird vom Backend ausgeführt, auf dem die lokale App tatsächlich läuft, und benötigt keine Browser-Direktverbindung zum Broker.
+
+### Sicherheits- und Abnahmekriterien
+- `POST /api/smartshunt/probe` öffnet eine kurzlebige MQTT-Verbindung mit der bereits gespeicherten lokalen Brokerkonfiguration.
+- Abonniert wird ausschließlich `N/<Portal-ID>/battery/290/#`. Als einziger Publish ist der lesende Venus-OS-Request `R/<Portal-ID>/keepalive` zulässig. `W/`-Topics und Geräte-/Regelbefehle werden nie gesendet.
+- Der Prüfbericht gilt nur als bestanden, wenn Broker und MQTT verbunden sind und echte gültige Rohfelder für Produktname, Instanz 290, USB/VE.Direct, `Connected=1`, Spannung, Strom, Leistung und SoC sowie mindestens ein nativer Gerätezähler empfangen wurden.
+- Eine aus Spannung × Strom abgeleitete Ersatzleistung reicht für die Abnahme ausdrücklich nicht; `Dc/0/Power` muss gültig vom Gerät empfangen werden.
+- Fehlende Konfiguration, paralleler Prüflauf, TCP-Timeout, MQTT-/Anmeldefehler und unvollständige Telemetrie liefern ein strukturiertes Nicht-bestanden-Protokoll mit sichtbarer Ursache und bestätigtem Schreibschutz statt HTTP 500.
+- Brokerhost, Benutzername und Passwort werden weder im Ergebnis noch in sichtbaren Fehlermeldungen ausgegeben.
+
+### Oberfläche und Verifikation
+- Das lokale Protokoll zeigt Prüfzeit, Laufzeit, Nachrichten-/Feldanzahl, Gesamturteil und jeden Einzelcheck. Bei Erfolg erscheint **ABNAHMEBEREIT**, nicht automatisch „abgenommen“; die ausdrückliche Nutzerfreigabe bleibt erforderlich.
+- Testing-Agent iteration_40 fand drei Fehler: errechnete Ersatzleistung konnte fälschlich bestehen, MQTT-Connect-Ausnahmen erzeugten HTTP 500 und frühe Fehler hatten keine sichtbaren Checks. Alle drei wurden korrigiert.
+- Retest: **58/58** gezielte Probe-, SmartShunt-, MQTT- und API-Prüfungen bestanden; Production Build erfolgreich.
+- Reale Cloud-Ausführung liefert erwartungsgemäß ein sichtbares `MQTT-Broker nicht erreichbar (TimeoutError)` und bestätigt gleichzeitig „Keine W/-Steuerbefehle“.
+- Desktop 1920×800 und Mobil 390×844 ohne horizontalen Seitenüberstand. Hauptseiten und Trucki/SUN bleiben unverändert.
+- **Offen:** Für die physische Abnahme muss der Prüfknopf in der lokal installierten App im gleichen erreichbaren Netz wie Mosquitto/Venus OS ausgeführt werden. Erst ein vollständiges **ABNAHMEBEREIT**-Protokoll kann anschließend ausdrücklich freigegeben werden.

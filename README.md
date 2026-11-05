@@ -210,6 +210,8 @@ Die Phase-1-Ansicht liegt getrennt unter **`/smartshunt-preview`**. Sie verände
 - Vorzeichen: positiv = Laden, negativ = Entladen.
 - Gerätehistorie: SmartShunt-Zähler werden direkt übernommen; sie werden nicht aus Live-Messpunkten neu berechnet.
 - Zusatzsensoren: Mittelpunkt, Temperatur und Starterspannung erscheinen nur, wenn Venus OS reale Werte liefert.
+- Lokale Hardwareprüfung: Im Diagnose-Tab startet **„Echte Daten prüfen“** einen einmaligen Read-only-Test. Er abonniert nur `N/<Portal-ID>/battery/290/#`, fordert `R/<Portal-ID>/keepalive` an und sendet niemals `W/`-Steuerbefehle.
+- Abnahmebedingung: Produkt, Instanz 290, USB/VE.Direct, `Connected=1`, Spannung, Strom, echte `Dc/0/Power`, SoC und mindestens ein nativer Gerätezähler müssen vollständig empfangen werden. Erst dann zeigt das Protokoll **ABNAHMEBEREIT**.
 
 Im Demo-Modus sind SmartShunt-Telemetrie und -Verlauf **MOCKED**. Für den lokalen Hardwaretest `demo_mode=false`, den vorhandenen MQTT-Zugang und die korrekte Venus-OS-Portal-ID verwenden. Die Hauptseiten übernehmen SmartShunt erst nach ausdrücklicher Freigabe der Vorschau.
 

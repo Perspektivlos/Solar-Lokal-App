@@ -13,7 +13,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from smartshunt import SMARTSHUNT_INSTANCE, TELEMETRY_PATHS, build_smartshunt_state, is_valid_telemetry_value
+from smartshunt import SMARTSHUNT_INSTANCE, build_smartshunt_state, ingest_smartshunt_value
 
 try:
     import paho.mqtt.client as mqtt
@@ -98,13 +98,7 @@ def _handle_victron_topic(topic: str, payload: bytes, now_iso: str) -> None:
         except ValueError:
             return
         st = _mqtt_data["victron"]["batteries"].setdefault(inst, {})
-        st["_ts"] = now_iso
-        if path in TELEMETRY_PATHS and is_valid_telemetry_value(value):
-            st[path] = value
-            st.setdefault("_field_ts", {})[path] = now_iso
-            st["_telemetry_ts"] = now_iso
-        elif path not in TELEMETRY_PATHS:
-            st[path] = value
+        ingest_smartshunt_value(st, path, value, now_iso)
 
 
 def _handle_shelly_topic(topic: str, payload: bytes, now_iso: str) -> None:

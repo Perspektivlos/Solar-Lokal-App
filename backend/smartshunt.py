@@ -57,6 +57,16 @@ def is_valid_telemetry_value(value: Any) -> bool:
     return _number(value) is not None
 
 
+def ingest_smartshunt_value(raw: Dict[str, Any], path: str, value: Any, now_iso: str) -> None:
+    raw["_ts"] = now_iso
+    if path in TELEMETRY_PATHS and is_valid_telemetry_value(value):
+        raw[path] = value
+        raw.setdefault("_field_ts", {})[path] = now_iso
+        raw["_telemetry_ts"] = now_iso
+    elif path not in TELEMETRY_PATHS:
+        raw[path] = value
+
+
 def _integer(value: Any) -> Optional[int]:
     number = _number(value, 0)
     return int(number) if number is not None else None
