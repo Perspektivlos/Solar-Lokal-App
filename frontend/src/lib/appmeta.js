@@ -4,7 +4,7 @@
 export const APP_NAME = "HauckLab · Solar'Projekt";
 export const APP_SYSTEM = ["Hoymiles HM-1500 + 2x Victron MPPT", "48V LiFePO4", "Shelly Pro 3EM"];
 export const APP_VERSION = "1.6.0";
-export const APP_LAST_UPDATED = "2026-10-29";
+export const APP_LAST_UPDATED = "2026-11-05";
 
 export const ROADMAP = [
   // --- Erledigt ---
@@ -35,11 +35,14 @@ export const ROADMAP = [
   { status: "planned", date: "Phase 2", title: "Roadmap direkt in der App bearbeiten & speichern" },
   { status: "planned", date: "Phase 2", title: "„Was ist neu?\"-Hinweis beim Versionssprung" },
   { status: "planned", date: "Phase 3", title: "Schwellwert-Farbalarme je Karte / Kachel" },
-  { status: "planned", date: "Phase 3", title: "Akustische / Push-Benachrichtigung bei kritischen Alarmen" },
+  { status: "planned", date: "Phase 3", title: "Push-Benachrichtigung bei kritischen Alarmen" },
   { status: "planned", date: "Phase 3", title: "Erledigt-Historie aus der Versionshistorie ableiten" },
   { status: "planned", date: "Phase 3", title: "Anleitung als Druck- / PDF-Ansicht exportieren" },
   { status: "planned", date: "Phase 3", title: "Weitere Gerätetexte in den Einstellungen editierbar" },
   { status: "planned", date: "Phase 3", title: "Eigenes Synoptik-SVG final ins Grafana-Panel einhängen" },
+  { id: "manufacturer-manuals", status: "planned", date: "Zukunft", title: "Hersteller-Handbücher für alle Geräte in der App hinterlegen" },
+  { id: "influx-grafana-alignment", status: "planned", date: "Zukunft", title: "InfluxDB-Datenmodell und Grafana-Dashboards neu abstimmen und vollständig nutzbar machen" },
+  { id: "potential-improvements", status: "planned", date: "Fortlaufend", title: "Bestätigte potenzielle Verbesserungen priorisiert abarbeiten" },
 ];
 
 export const ROADMAP_GROUPS = [

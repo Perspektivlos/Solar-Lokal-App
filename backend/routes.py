@@ -275,10 +275,13 @@ DEFAULT_ROADMAP = [
     {"id": "sparklines", "status": "planned", "date": "Phase 2", "title": "Mini-Sparklines (15-Min-Trend) in den Geräte-Karten"},
     {"id": "roadmap-extra", "status": "planned", "date": "Phase 2", "title": "Roadmap: Notizen, Links, Tags & Filter je Punkt"},
     {"id": "threshold-alarms", "status": "planned", "date": "Phase 3", "title": "Schwellwert-Farbalarme je Karte / Kachel"},
-    {"id": "alarm-push", "status": "planned", "date": "Phase 3", "title": "Akustische / Push-Benachrichtigung bei kritischen Alarmen"},
+    {"id": "alarm-push", "status": "planned", "date": "Phase 3", "title": "Push-Benachrichtigung bei kritischen Alarmen"},
     {"id": "docs-pdf", "status": "planned", "date": "Phase 3", "title": "Anleitung / Roadmap als Druck- / PDF-Ansicht exportieren"},
     {"id": "more-device-texts", "status": "planned", "date": "Phase 3", "title": "Weitere Gerätetexte in den Einstellungen editierbar"},
     {"id": "synoptic-svg", "status": "planned", "date": "Phase 3", "title": "Eigenes Synoptik-SVG final ins Grafana-Panel einhängen"},
+    {"id": "manufacturer-manuals", "status": "planned", "date": "Zukunft", "title": "Hersteller-Handbücher für alle Geräte in der App hinterlegen"},
+    {"id": "influx-grafana-alignment", "status": "planned", "date": "Zukunft", "title": "InfluxDB-Datenmodell und Grafana-Dashboards neu abstimmen und vollständig nutzbar machen"},
+    {"id": "potential-improvements", "status": "planned", "date": "Fortlaufend", "title": "Bestätigte potenzielle Verbesserungen priorisiert abarbeiten"},
 ]
 
 

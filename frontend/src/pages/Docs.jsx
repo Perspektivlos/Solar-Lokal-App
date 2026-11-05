@@ -207,6 +207,13 @@ function GuideView({ config, devInfo, allOpen }) {
         <Row k="Aktueller Modus" v={demo === undefined ? "–" : demo ? "Demo (simuliert)" : "Live (lokales Netz)"} accent={demo ? "#FACC15" : "#34D399"} />
         <p className="text-white/55 text-[12px]">Im <b>Demo-Modus</b> werden realistische Werte simuliert (kein Netzwerkzugriff). Für den Echtbetrieb in den Geräte-Einstellungen auf <b>Live</b> umschalten.</p>
       </Section>
+
+      <Section testid="guide-workflow" icon={Workflow} title="Arbeitsweise & Preview-Prinzip" accent="#22D3EE" open={isOpen("workflow")} onToggle={() => toggle("workflow")}>
+        <p><b className="text-white/90">Freigabe:</b> Größere Änderungen werden zuerst geplant und erst nach ausdrücklicher Zustimmung umgesetzt.</p>
+        <p><b className="text-white/90">Preview:</b> Neue Funktionen und Optimierungen entstehen zunächst in einer getrennten Vorschau. Bestehende Hauptseiten bleiben bis zur Abnahme unverändert.</p>
+        <p><b className="text-white/90">Übernahme:</b> Nach der Prüfung und Freigabe ersetzt die Vorschau gezielt die bisherige Ansicht; alte Vorschaupfade werden anschließend sauber weitergeleitet oder entfernt.</p>
+        <p><b className="text-white/90">Dokumentation:</b> Zum Abschluss werden App-Texte, Informationen, Anleitungen, technische Details, Roadmap und Beschreibungen auf den neuen Stand gebracht.</p>
+      </Section>
     </div>
   );
 }

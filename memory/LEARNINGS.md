@@ -20,8 +20,8 @@ Gesammelte Erkenntnisse für künftige Sessions (vom Nutzer ausdrücklich gewün
 - Geräte: Kartentexte + nutzbare Akku-kWh stehen in der jeweiligen Gerätekachel (keine eigene „Anlage & Anzeige"-Kachel mehr – vom Nutzer verworfen).
 - Akku: „6× Power Queen 100 Ah", Spannung ~51,6 V (48-V-System). Nutzbare kWh in der App = 9,6 (Platzhalter!). Echte Kapazität hängt von der Modulspannung ab – beim Nutzer nachfragen, nicht raten.
 - Selbst-Test-Verlauf speichert NUR manuelle Läufe (Nutzerwunsch, kein Hintergrund-Test), max. 50 Läufe.
-- Verlauf: aktuelle Seite `/verlauf` bleibt bis zur Freigabe; neue Ansicht als Vorschau unter `/verlauf-preview` (Komponenten in `components/verlauf/`). Kanalfarben: PV #F59E0B, Haus #F43F5E, Akku #22D3EE, Netz #818CF8, Einspeisung #10B981.
-- Demo-Modus: Gerätezähler (yield_day/yield_today) und App-Integration (/api/today) stammen aus verschiedenen Quellen → Bilanzen können im Demo „nicht aufgehen" (erwartet).
+- Verlauf: Die freigegebene Energie-Analyse ist unter `/verlauf` übernommen; `/verlauf-preview` leitet dorthin weiter. Kanalfarben: PV #F59E0B, Haus #F43F5E, Akku #22D3EE, Netz #818CF8, Einspeisung #10B981.
+- Demo-Modus: Gerätezähler (`yield_day`/`yield_today`) sind deterministische kumulative Tageswerte; die Hauptbilanz `/api/today` bleibt eine separate zeitgewichtete Messintegration.
 
 ## Energiefluss-Geometrie (EnergyFlow.jsx, Landscape viewBox 1060×420, Knoten 205×82)
 - Detail: Hoymiles (130,72) + Victron (365,72) nebeneinander oben links; Netz (160,315); Haus (530,250); Batterie (900,105); Sun-2000 (900,315).
@@ -43,3 +43,12 @@ Gesammelte Erkenntnisse für künftige Sessions (vom Nutzer ausdrücklich gewün
 - Notizen/Beschreibung je Roadmap-Punkt → fließt in Bericht.
 - Selbst-Test-Verlauf speichern.
 - (Erledigt 30.10.: Doku/Anleitung druckbar, Akku-Rechner, System-Zeile in der Fußleiste.)
+
+## Verbindliche Arbeitsweise & Zukunft (05.11.2026)
+- Neue Planungen immer als neuen datierten Abschnitt ergänzen; frühere Planungen nie vollständig überschreiben.
+- Nach bestätigter Planung werden neue Funktionen und Optimierungen zuerst nach dem **Preview-Prinzip** umgesetzt. Die Hauptansicht bleibt bis zur ausdrücklichen Nutzerfreigabe bestehen.
+- Reihenfolge: Plan/Freigabe → getrennte Vorschau → Tests → Nutzerabnahme → gezielte Übernahme → Vorschaupfad bereinigen/weiterleiten.
+- Nach jeder Übernahme die gesamte betroffene App-Dokumentation pflegen: sichtbare Texte, Informationen, Anleitungen, technische Details, Roadmap, Projektbericht und Beschreibungen.
+- Zukunft P1: InfluxDB-Datenmodell und Grafana-Dashboards mit realen Feldern/Einheiten neu abstimmen und vollständig funktionsfertig testen.
+- Zukunft P2: Hersteller-Handbücher passend zu den Gerätebereichen hinzufügen.
+- Fortlaufend: bestätigte potenzielle Verbesserungen priorisiert und einzeln per Preview abarbeiten.

@@ -61,12 +61,11 @@ Das Backend fragt die Geräte im lokalen Netzwerk via MQTT (über einen zentrale
 
 *   **Live-Dashboard mit animiertem Fluss**:
     *   Ein interaktives SVG-Flussdiagramm verbindet Solarmodule, Wechselrichter, Batterie, Haus und Stromnetz.
-    *   Die Animationsgeschwindigkeit und die Flussrichtung der Partikel (`stroke-dasharray`) passen sich dynamisch und stufenlos den realen Watt-Leistungen an.
-    *   Richtungspfeile direkt auf den Linien ersetzen überflüssige doppelte Zahlenwerte für maximale Übersicht.
-*   **Batterie Wirkungsgrad-Kachel (Round-Trip-Efficiency)**:
-    *   Errechnet tagesaktuell das Verhältnis der entnommenen AC-Energie zur geladenen DC-Energie:
-        $$\text{Effizienz \%} = \frac{\text{Entladene AC-Energie (SUN) heute in kWh}}{\text{Geladene DC-Energie (MPPT) heute in kWh}} \times 100$$
-    *   Farblich adaptive Anzeige (grün bei hoher Effizienz $\ge 85\%$, cyan $\ge 70\%$, sonst orange) inklusive tagesaktueller kWh-Zähler für Ladung und Entladung.
+    *   Runde, aufleuchtende Photonen laufen auf schmalen farbigen Führungskanälen. Geschwindigkeit, Dichte und Richtung passen sich den realen Watt-Leistungen an.
+    *   DSEG7-Zahlen mit klaren Mono-Einheiten zeigen Live-Leistung, Peak/Nennwert und Auslastung beziehungsweise SoC direkt am Gerät.
+*   **Tagesbilanz für Batterie und Energiequellen**:
+    *   Zeigt messwertintegrierte Lade-/Entladeenergie, PV-Direktverbrauch, Netzbezug und getrennte PV-/Akku-Exportanteile.
+    *   Das Tagesverhältnis Entladung/Ladung ist ausdrücklich **kein Round-Trip-Wirkungsgrad**, weil Entladung aus Energie vorheriger Tage stammen kann.
 *   **Diagnose-Zentrale (Self-Tests & Raw Data)**:
     *   **Automatisierter Selbsttest**: Prüft auf Knopfdruck die Erreichbarkeit und Integrität des Backends, der MongoDB-Datenbank, des Hintergrund-Pollers, des MQTT-Brokers sowie aller 4 Energiekomponenten.
     *   **Rohdaten-Tabellen**: Direkte Einsicht in die zuletzt empfangenen JSON-Payloads und MQTT-Rohdaten aller Hardwaregeräte zur schnellen Fehlerdiagnose.
@@ -78,7 +77,7 @@ Das Backend fragt die Geräte im lokalen Netzwerk via MQTT (über einen zentrale
 
 ## 4. Langzeit-Analyse mit InfluxDB & Grafana
 
-Für detaillierte historische Analysen bietet das Projekt eine vollständige InfluxDB 2.x und Grafana Integration:
+Für detaillierte historische Analysen besitzt das Projekt eine bestehende InfluxDB-2.x-/Grafana-Grundlage. Die abschließende Feldabstimmung, Provisionierung und Praxistauglichkeit der Grafana-Dashboards ist als Zukunftsaufgabe eingeplant.
 
 ### Reiche Datenpunkte (Measurements)
 Im 15-Sekunden-Takt schreibt das Backend detaillierte, mehrdimensionale Datenpunkte in InfluxDB:
@@ -88,11 +87,11 @@ Im 15-Sekunden-Takt schreibt das Backend detaillierte, mehrdimensionale Datenpun
 -   `victron_mppt`: Ertragsdaten und Gerätestatus (Bulk, Absorption, Float) je MPPT-Laderegler.
 -   `trucki`: Detaillierte Batterie-Betriebsdaten (Zellspannung `vbat`, AC-Ausgang, ZEPC-Status, Temperatur).
 
-### Zwei vorgefertigte Grafana-Dashboards (`deploy/proxmox/grafana/`)
+### Zwei vorhandene Grafana-Dashboard-Vorlagen (`deploy/proxmox/grafana/`)
 1.  **Übersichts-Dashboard (`solar-influxdb-dashboard.json`)**: Visualisiert die wichtigsten KPIs des aktuellen Tages, den Leistungsverlauf und den Ladezustand der Batterie.
 2.  **Geräte-Detail-Dashboard (`solar-devices-dashboard.json`)**: Zeigt detaillierte Phasen-Belastungen des Shellys, Modul-Erträge des Hoymiles, Ladekurven der Victron MPPTs sowie Status-Metriken des Trucki-Gateways.
 
-*Styling-Highlights:* Beide Dashboards sind im **App-Neon-Design** gestaltet (PV Gelb `#FACC15`, Netz Rot `#F87171`, Autarkie/Einspeisung Grün `#10B981`, Batterie Cyan `#06B6D4`, Haus Silber `#cbd5e1`), verwenden transparente Panel-Hintergründe und bieten gegenseitige Cross-Links für eine nahtlose Navigation.
+*Status:* Beide Vorlagen verwenden die App-Kanalfarben und gegenseitige Cross-Links. Vor dem produktiven Grafana-Einsatz werden Datenfelder, Einheiten, Retention, Provisionierung und reale Abfragen erneut gemeinsam abgestimmt und vollständig getestet.
 
 ---
 
@@ -183,7 +182,23 @@ Das Projekt liefert automatisierte Skripte im Verzeichnis `deploy/proxmox/`, um 
 
 ---
 
-## 8. Rechtliches & Mitwirkung
+## 8. Arbeitsweise & Zukunftsplanung
+
+### Preview-Prinzip
+1. Größere Änderungen werden zuerst geplant und ausdrücklich bestätigt.
+2. Neue Funktionen und Optimierungen entstehen in einer getrennten Vorschau; die bestehende Hauptansicht bleibt bis zur Abnahme unverändert.
+3. Erst nach Prüfung und Freigabe wird die Vorschau übernommen.
+4. Abschließend werden App-Texte, Informationen, Anleitungen, technische Details, Roadmap und Beschreibungen auf den ausgelieferten Stand gebracht.
+5. Neue Planungen werden als eigener datierter Abschnitt ergänzt und überschreiben keine früheren Planungsstände.
+
+### Geplante Zukunftsaufgaben
+- Hersteller-Handbücher für Hoymiles/AhoyDTU, Victron, Shelly Pro 3EM und Trucki/SUN passend zu den Gerätebereichen hinterlegen.
+- InfluxDB-Datenmodell, Einheiten und Grafana-Dashboards neu abstimmen, vollständig provisionieren und mit realen Abfragen funktionsfertig prüfen.
+- Bestätigte potenzielle Verbesserungen fortlaufend priorisieren, per Preview umsetzen und nach Freigabe dokumentieren.
+
+---
+
+## 9. Rechtliches & Mitwirkung
 
 **Solar-Lokal-App**
 

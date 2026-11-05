@@ -436,3 +436,29 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Nicht-Demo-Geräteausfall liefert keine synthetischen Ertragswerte mehr.
 - Browserpoll über 4,2 s: alle sechs sichtbaren Ahoy-/Victron-/Trucki-Ertragswerte gleichbleibend oder steigend; Einheiten korrekt.
 - Desktop 1920×800 und Mobil 390×844 ohne Overflow; Production Build erfolgreich. Hardwarewerte bleiben im expliziten Demo-Modus simuliert.
+
+## Neuer Planungsabschnitt – Zukunftsaufgaben & verbindliche Arbeitsweise (05.11.2026)
+
+### Neue Zukunftsaufgaben
+- **P1 – InfluxDB & Grafana:** Datenmodell, Measurements, Felder, Einheiten, Retention und Provisionierung neu abstimmen; vorhandene Dashboard-Vorlagen gegen reale Daten prüfen und vollständig funktionsfertig für Grafana bereitstellen.
+- **P2 – Hersteller-Handbücher:** Offizielle Handbücher für Hoymiles/AhoyDTU, Victron SmartSolar/Venus OS, Shelly Pro 3EM und Trucki2Shelly/SUN passend zu den jeweiligen Gerätebereichen hinzufügen.
+- **Fortlaufend – Potenzielle Verbesserungen:** Bestätigte Verbesserungsvorschläge priorisieren, einzeln planen und systematisch abarbeiten.
+
+### Verbindliches Preview-Prinzip
+1. Neue Funktionen und Optimierungen werden nach bestätigtem Plan zunächst in einer getrennten Vorschau umgesetzt.
+2. Die bestehende Hauptansicht bleibt bis zur ausdrücklichen Nutzerabnahme unverändert.
+3. Die Vorschau wird technisch und visuell auf Desktop/Mobil geprüft und dem Nutzer zur Freigabe vorgelegt.
+4. Erst nach Freigabe wird sie gezielt übernommen; alte Vorschaupfade werden anschließend weitergeleitet oder entfernt.
+5. Bugfixes an einer bereits freigegebenen Ansicht werden direkt dort umgesetzt, wenn der Nutzer sie ausdrücklich anfordert; neue angrenzende Funktionen bleiben Preview-pflichtig.
+
+### Dokumentationspflicht nach Übernahme
+- Betroffene sichtbare Texte und Datenbeschreibungen aktualisieren.
+- Anleitung, technische Details, Roadmap und Projektbericht auf den ausgelieferten Stand bringen.
+- Veraltete Aussagen korrigieren, ohne frühere Planungsabschnitte zu löschen.
+- Jede neue Planung als eigenen datierten Abschnitt anhängen; Planungsdateien nicht vollständig überschreiben.
+
+### Sichtbare Umsetzung dieser Vereinbarung
+- In-App-Roadmap um `manufacturer-manuals`, `influx-grafana-alignment` und `potential-improvements` ergänzt und persistent gespeichert.
+- Anleitung enthält den neuen Abschnitt „Arbeitsweise & Preview-Prinzip".
+- Projektbericht listet „Preview vor Übernahme" und „Dokumentation abschließend pflegen" als verbindliche Arbeitsschritte.
+- README beschreibt Preview-Prozess, Zukunftsaufgaben und den realistischen aktuellen Status der InfluxDB-/Grafana-Grundlage.

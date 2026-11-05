@@ -111,8 +111,10 @@ const TimelineAuto = ({ m }) => (
 
 const WORKFLOW = [
   { title: "Erst fragen, dann bauen", desc: "Vor jeder größeren Aufgabe Rückfragen und ausdrückliche Freigabe des Plans – keine ungefragten neuen Funktionen." },
+  { title: "Preview vor Übernahme", desc: "Bestätigte neue Funktionen und Optimierungen werden zuerst separat als Vorschau umgesetzt. Die bestehende Hauptansicht bleibt bis zur ausdrücklichen Abnahme unverändert." },
   { title: "Umsetzen in klaren Phasen", desc: "Zuerst die schwierigen Teile zum Laufen bringen, dann zu einem stimmigen Ganzen zusammenfügen." },
   { title: "Prüfen vor Abnahme", desc: "Jede Funktion wird geprüft – per eigenem Test (Abfragen/Screenshots) oder vollem Testdurchlauf – bevor sie als fertig gilt." },
+  { title: "Dokumentation abschließend pflegen", desc: "Nach der Abnahme werden Texte, Informationen, Anleitungen, technische Details, Roadmap und Beschreibungen an den tatsächlich ausgelieferten Stand angepasst." },
   { title: "Demo-Modus als Standard", desc: "Standardmäßig läuft alles im Demo-Modus, damit keine echte Hardware ungewollt angesprochen wird." },
   { title: "Durchgehend Deutsch & SCADA-Look", desc: "Sprache und Erscheinungsbild bleiben über die ganze App konsistent." },
 ];
