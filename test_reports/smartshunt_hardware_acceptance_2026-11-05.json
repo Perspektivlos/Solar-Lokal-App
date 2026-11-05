@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-05",
+  "evidence": "Screenshot 2026-11-05 211652.png",
+  "decision": "SMARTSHUNT_PHASE_1_ACCEPTED",
+  "overall_result": "Hardwareprüfung bestanden / ABNAHMEBEREIT",
+  "verified": {
+    "mqtt_broker_tcp": true,
+    "mqtt_connected": true,
+    "topic_base": "N/b827eb79321c/battery/290/",
+    "probe_messages": 56,
+    "probe_fields": 54,
+    "live_cached_fields": 67,
+    "data_age_seconds": 0,
+    "product_name": "SmartShunt IP65 300A",
+    "device_instance": 290,
+    "connection": "USB / VE.Direct",
+    "connected": 1,
+    "required_measurements": ["voltage", "current", "power", "soc"],
+    "visible_voltage_v": 52.25,
+    "native_device_counters": 13,
+    "write_commands_sent": false,
+    "read_keepalive_requested": true
+  },
+  "non_blocking_observation": "History/MinimumStarterVoltage is ignored because Settings/HasStarterVoltage=0; no starter-voltage optional sensor is presented as valid.",
+  "next_gate": "Plan and explicitly approve Phase 2 before changing main pages."
+}

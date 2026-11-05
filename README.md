@@ -213,6 +213,8 @@ Die Phase-1-Ansicht liegt getrennt unter **`/smartshunt-preview`**. Sie verände
 - Lokale Hardwareprüfung: Im Diagnose-Tab startet **„Echte Daten prüfen“** einen einmaligen Read-only-Test. Er abonniert nur `N/<Portal-ID>/battery/290/#`, fordert `R/<Portal-ID>/keepalive` an und sendet niemals `W/`-Steuerbefehle.
 - Abnahmebedingung: Produkt, Instanz 290, USB/VE.Direct, `Connected=1`, Spannung, Strom, echte `Dc/0/Power`, SoC und mindestens ein nativer Gerätezähler müssen vollständig empfangen werden. Erst dann zeigt das Protokoll **ABNAHMEBEREIT**.
 
+**Hardwareabnahme 05.11.2026:** Der lokale Prüflauf wurde mit `N/b827eb79321c/battery/290/`, SmartShunt IP65 300A, Instanz 290, USB/VE.Direct, `Connected=1`, aktuellen Pflichtmesswerten und 13 nativen Gerätezählern erfolgreich nachgewiesen. Der Lauf bestätigte außerdem, dass keine `W/`-Steuerbefehle gesendet wurden. Phase 1 ist damit hardwareseitig freigegeben; eine Übernahme in Hauptseiten erfolgt erst als eigene Phase 2.
+
 Im Demo-Modus sind SmartShunt-Telemetrie und -Verlauf **MOCKED**. Für den lokalen Hardwaretest `demo_mode=false`, den vorhandenen MQTT-Zugang und die korrekte Venus-OS-Portal-ID verwenden. Die Hauptseiten übernehmen SmartShunt erst nach ausdrücklicher Freigabe der Vorschau.
 
 ---

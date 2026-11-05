@@ -526,3 +526,23 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Reale Cloud-Ausführung liefert erwartungsgemäß ein sichtbares `MQTT-Broker nicht erreichbar (TimeoutError)` und bestätigt gleichzeitig „Keine W/-Steuerbefehle“.
 - Desktop 1920×800 und Mobil 390×844 ohne horizontalen Seitenüberstand. Hauptseiten und Trucki/SUN bleiben unverändert.
 - **Offen:** Für die physische Abnahme muss der Prüfknopf in der lokal installierten App im gleichen erreichbaren Netz wie Mosquitto/Venus OS ausgeführt werden. Erst ein vollständiges **ABNAHMEBEREIT**-Protokoll kann anschließend ausdrücklich freigegeben werden.
+
+## Neuer Abnahmeabschnitt – SmartShunt Phase 1 hardwareseitig freigegeben (05.11.2026)
+
+### Abnahmenachweis
+- Nachweis: Nutzerscreenshot `Screenshot 2026-11-05 211652.png` aus der lokal installierten SmartShunt-Vorschau.
+- Gesamturteil des lokalen Prüflaufs: **Hardwareprüfung bestanden** und **ABNAHMEBEREIT**.
+- MQTT-Broker per TCP erreichbar und MQTT-Verbindung hergestellt.
+- Exakte Topic-Basis `N/b827eb79321c/battery/290/` wurde empfangen.
+- Prüflauf: **56 Nachrichten / 54 Felder**; fortlaufender MQTT-Empfang zeigte anschließend **67 Felder** und Datenalter **0 s**. Die unterschiedlichen Feldzahlen stammen aus Prüfmoment versus fortlaufendem Cache und sind kein Widerspruch.
+- Produktname **SmartShunt IP65 300A**, VRM-Instanz **290**, Verbindung **USB / VE.Direct** und `Connected=1` bestätigt.
+- Pflichtmesswerte Spannung, Strom, echte Geräteleistung und SoC vollständig; sichtbarer Rohwert `Dc/0/Voltage = 52,25 V`.
+- **13 native Gerätezähler** direkt übernommen.
+- Schreibschutz bestätigt: nur `N/` gelesen und `R/keepalive` angefordert; keine `W/`-Steuerbefehle.
+- Die sichtbare `History/MinimumStarterVoltage` ist kein Abnahmehindernis, weil `Settings/HasStarterVoltage=0` gemeldet wird und Starterspannung gemäß Phase-1-Regel nicht als verfügbarer Zusatzsensor verwendet wird.
+
+### Ausdrückliche Entscheidung
+- **SmartShunt Phase 1 ist technisch, funktional und hardwareseitig abgenommen.**
+- P0 „lokale Live-Prüfung“ ist abgeschlossen.
+- Die bisher freigegebenen Hauptseiten und Trucki/SUN-Regelung bleiben weiterhin unverändert.
+- Phase 2 darf nun separat geplant werden: SmartShunt als maßgebliche Batteriequelle in Dashboard, Energiefluss, Geräte, Diagnose und Verlauf übernehmen sowie InfluxDB/Grafana ergänzen. Die Umsetzung beginnt nicht automatisch mit dieser Abnahme.
