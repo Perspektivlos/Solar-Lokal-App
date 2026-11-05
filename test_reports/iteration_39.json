@@ -1,0 +1,57 @@
+{
+  "summary": "SmartShunt review completed: 20/24 SmartShunt pytest cases and 12/12 MQTT/config regressions passed; final UI run 65/67 passed. Public preview/history APIs, five history ranges, exact integer-second status boundaries, sign handling, native counters, four stable tabs, refresh/error recovery, isolated navigation and demo Trucki control passed. No actual API 500 or runtime exceptions. Four retained failures expose unsafe freshness, unavailable optional readings and disconnected verification. Production source/config unchanged.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "build_smartshunt_state /api/smartshunt/preview", "issue": "Identity-only messages can produce status=current with no telemetry received. Removing all TELEMETRY_PATHS and _telemetry_ts but retaining a fresh _ts returns current rather than unavailable. Deterministically reproduced at method level.", "priority": "HIGH"},
+      {"endpoint": "mqtt_client._handle_victron_topic /api/smartshunt/preview", "issue": "A Soc JSON value:null message resets _telemetry_ts and resurrects 240-second-old voltage/current/power as current. Telemetry timestamps are updated without numeric validity checks, and one shared timestamp makes all stored fields appear fresh.", "priority": "HIGH"},
+      {"endpoint": "build_smartshunt_state.optional /api/smartshunt/preview", "issue": "Connected=0 correctly masks main values but optional temperature remains 24.5 and is displayed as a genuine sensor reading. Same unguarded optional construction applies to expired data and invalid identity.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "build_smartshunt_state.identity", "issue": "Connected=0 still returns identity.valid=true when product/instance/connection match, despite identity.checks.connected=false. The preview consequently displays VERIFIZIERT beside an unavailable device. Full identity verification requested includes Connected."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Existing Devices BatteryCalc / preview instrumentation", "issue": "Main /geraete loads but React logs invalid span-inside-option nesting. Console stack points to data-ve-dynamic spans injected by emergent-main.js, not authored SmartShunt markup. No observed runtime exception; pre-existing/instrumentation warning.", "selector": "[data-testid='battery-calc']", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Unavailable SmartShunt optional sensors", "issue": "With a browser-only MOCKED response matching actual builder behavior (Connected=0, status=unavailable, main values null, optional retained), Device still displays 26.3 °C normally. Main overview values correctly show dashes.", "affected_selectors": ["[data-testid='smartshunt-optional-temperature-c']", "[data-testid='smartshunt-optional-panel']"]},
+      {"flow": "Disconnected full identity verification", "issue": "Browser-only MOCKED backend-shaped Connected=0 payload still displays VERIFIZIERT. Invalid product/instance identity.valid=false correctly displays NICHT BESTÄTIGT.", "affected_selectors": ["[data-testid='smartshunt-identity-badge']", "[data-testid='smartshunt-identity-connected']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_smartshunt.py",
+    "/app/backend/tests/test_smartshunt_review.py",
+    "/app/backend/tests/test_mqtt_client.py",
+    "/app/backend/tests/test_get_config_merge.py",
+    "/app/tests/smartshunt_ui_review.py",
+    "/app/test_reports/pytest/pytest_smartshunt_final_39.xml",
+    "/app/test_reports/pytest/pytest_smartshunt_regression_39.xml"
+  ],
+  "action_items": [
+    "Require a valid measurement timestamp; remove identity/general-message _ts fallback for data freshness.",
+    "Validate incoming telemetry before refreshing age. Avoid making old core metrics fresh through null/malformed or unrelated optional updates; track freshness sufficiently per measurement.",
+    "Mask or explicitly mark optional sensor readings unavailable when disconnected, expired or identity-invalid. Preserve native historical counters separately where appropriate.",
+    "Include Connected in full verification, or distinguish product identity from the full verified-device badge so disconnected devices are not presented as fully verified.",
+    "Before live deployment, filter SmartShunt history/events by demo/live mode and provide retention for the new collections. Enforce fixed instance 290.",
+    "Investigate existing Devices option instrumentation warning separately; do not attribute it to SmartShunt. Retest the four retained backend failures and two UI integration failures after fixes."
+  ],
+  "critical_code_review_comments": [
+    "smartshunt.py:96 uses _telemetry_ts OR _ts. mqtt_client.py:101-104 refreshes _telemetry_ts for any recognized sensor path without validating value. These are the reproduced freshness roots.",
+    "smartshunt.py:133-139 constructs optional readings regardless of visible/status. DevicePanel.jsx:30,52 renders them without an unavailable or identity guard.",
+    "smartshunt.py:103 omits Connected from identity_valid while DevicePanel.jsx:37 labels that flag VERIFIZIERT; checks.connected disagrees with the badge.",
+    "Source-review only: routes.py:290 queries all SmartShunt events and :321 queries snapshots by timestamp only, although stored rows have demo. Switching from demo to live can present simulated history/events as live. No config switch or database mutation was performed to reproduce this.",
+    "Source-review only: retention_loop cleans snapshots/alarm_events, never smartshunt_snapshots/smartshunt_alarm_events. New data collections grow without retention.",
+    "Source-review only: ConfigUpdate.smartshunt is unvalidated Dict, collectors.py:207 and routes.py:242 accept a configurable instance. build_smartshunt_state checks against the supplied instance rather than fixed 290; this conflicts with Phase-1 identity constraints.",
+    "routes.py exceeds 700 lines; split SmartShunt endpoints/models into a focused module. Preview current/diagnostics remain unconstrained Dict models, so nested schema regressions will not be caught by response-model validation."
+  ],
+  "updated_files": ["/app/backend/tests/test_smartshunt_review.py", "/app/tests/smartshunt_ui_review.py", "/app/test_reports/iteration_39.json"],
+  "success_rate": {"backend": "88.9% (32/36 unique cases; SmartShunt 20/24, MQTT/config 12/12)", "frontend": "97.0% (65/67 final checks)"},
+  "test_credentials": "No authentication requested or exercised; no credentials required.",
+  "seed_data_creation": "None. SmartShunt physical telemetry and history are DEMO/MOCKED in the backend; public FastAPI endpoints and MongoDB flows are real. UI stale/unavailable/identity/events and HTTP-503 failures were browser-only MOCKED and unregistered before regression navigation. No database/config changes or physical commands. Trucki API/UI commands were sent only after confirming demo_mode=true and are simulated nonpersistent responses.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Export frontend/.env and use PYTHONPATH=/app/backend for pytest. Final SmartShunt run has four deterministic failures; original nine tests all pass. Execute UI runner with namespace={}; exec(compile(open('/app/tests/smartshunt_ui_review.py').read(), 'smartshunt_ui_review.py', 'exec'), namespace); await namespace['run'](page). Initial UI 64/67 had one false failure counting Cloudflare /cdn-cgi/rum analytics POST as a device write; filter corrected to /api/ and complete rerun reached 65/67. All visible preview controls have unique testids. Desktop 1920x800 and mobile 390x844 all four tabs have no page overflow or clipped controls; screenshot review shows no overlap. No acoustic controls or SmartShunt write API calls observed; MQTT keepalive remains an R/ read request, not W/. Physical MQTT/hardware and live Mongo history persistence were not exercised because hardware is unreachable and mode/config was preserved. Backend logs show historical implementation-time IndentationErrors resolved by 11:03; no exceptions during this testing run. Console 503 messages are intentional failure injection; Devices nesting warning is separate preview instrumentation.",
+  "rca of the issue": "Identity-only: fresh generic _ts is substituted when no telemetry timestamp exists. Invalid telemetry revival: handler stores null Soc and unconditionally sets a new global telemetry timestamp, so other 240-second-old fields become current. Optional sensor leak: numeric candidate values are retained independently of the visible guard that masks primary measurements. Verification mismatch: identity_valid is product_ok AND instance_ok AND connection_ok, while connected is considered only for status. Retained pytest cases provide exact reproductions; UI unavailable mocks mirror the actual builder structure and demonstrate downstream effects."
+}

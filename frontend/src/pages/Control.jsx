@@ -187,7 +187,7 @@ export default function Control() {
     }
   };
 
-  useEffect(() => { loadDevice(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { loadDevice(); }, []);
 
   const runHoy = async (action, value) => {
     setBusy(true); setHoyResult({ pending: true, action });

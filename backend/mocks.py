@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict
 
 from sun import sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
+from smartshunt import mock_smartshunt
 
 
 def _sun_curve(now: datetime, lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON) -> float:

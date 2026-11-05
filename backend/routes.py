@@ -26,8 +26,11 @@ from server import (
 from collectors import collect_live
 from alarms import evaluate_alarms, summarize_alarms, merge_thresholds
 from discovery import discover_device, DEVICE_LABELS, annotate_changes
+from smartshunt import SMARTSHUNT_INSTANCE
+from smartshunt_routes import router as smartshunt_router
 
 api_router = APIRouter(prefix="/api")
+api_router.include_router(smartshunt_router)
 
 
 # ---------- Endpoints ----------
@@ -510,6 +513,11 @@ async def integrations_status() -> Dict[str, Any]:
             "last_msg": _mqtt_data["victron"]["_ts"],
             "system_pv_power": _mqtt_data["victron"]["system"].get("Dc/Pv/Power"),
             "instances": inst_summary,
+            "smartshunt": {
+                "instance": SMARTSHUNT_INSTANCE,
+                "last_msg": (_mqtt_data["victron"].get("batteries") or {}).get(SMARTSHUNT_INSTANCE, {}).get("_ts"),
+                "fields": len([k for k in ((_mqtt_data["victron"].get("batteries") or {}).get(SMARTSHUNT_INSTANCE, {})).keys() if not k.startswith("_")]),
+            },
         },
     }
 
@@ -697,5 +705,6 @@ async def diagnostics_raw() -> Dict[str, Any]:
             "system": _mqtt_data["victron"]["system"],
             "grid": _mqtt_data["victron"]["grid"],
             "instances": {str(k): v for k, v in _mqtt_data["victron"]["instances"].items()},
+            "batteries": {str(k): v for k, v in (_mqtt_data["victron"].get("batteries") or {}).items()},
         },
     }

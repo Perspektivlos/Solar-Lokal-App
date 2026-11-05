@@ -21,7 +21,9 @@ def test_daily_balance_chart_contract():
         assert set(row) == {'period', 'pv_kwh', 'self_kwh', 'import_kwh', 'export_kwh'}
         for field in ['pv_kwh', 'self_kwh', 'import_kwh', 'export_kwh']:
             assert isinstance(row[field], (float, int)) and math.isfinite(row[field]) and row[field] >= 0
-        assert row['self_kwh'] == round(max(0, row['pv_kwh'] - row['export_kwh']), 2)
+        # Gesamteinspeisung kann auch Akkuenergie enthalten; Eigenverbrauch bleibt
+        # deshalb lediglich auf die reale PV-Erzeugung begrenzt.
+        assert row['self_kwh'] <= row['pv_kwh'] + 0.01
     print('daily chart API values:', rows)
 
 

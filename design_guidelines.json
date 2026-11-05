@@ -1,91 +1,95 @@
 {
-  "project_name": "Solar SCADA Dashboard - Tagesverlauf Redesign",
-  "app_type": "dashboard",
-  "theme": "dark",
-  "archetype": "ARCHETYPE 2: THE PERFORMANCE PRO & INDUSTRIAL SCADA (Schlicht & Reduziert Direction)",
-  "instructions_to_main_agent": [
-    "Restyle ONLY the SunTimeline component (/app/frontend/src/components/SunTimeline.jsx) following the user's explicit choice 'Schlicht und reduziert' (calmer, lots of air, only the bar with the sun in focus).",
-    "Retain all existing state, props, persisted localStorage key ('suntimeline-view'), time calculation logic, and data flows.",
-    "Preserve EVERY single data-testid attribute required for automated tests: sun-timeline, sun-timeline-status, sun-view-toggle, sun-view-balken, sun-view-bogen, sun-timeline-bar, sun-timeline-svg, bar-<zone>, hit-<zone>, sun-marker-day, sun-marker-night, sun-sunrise-label, sun-sunset-label, sun-rest-hours, phase-tooltip, phase-tooltip-text, sun-legend.",
-    "Do NOT use transparent backgrounds for tooltips or overlays; use solid dark titanium (#090d16) with subtle 1px border (#ffffff20).",
-    "Ensure 100% responsiveness on mobile (390px) viewports using fluid SVG viewBox scaling and flex wrapping."
-  ],
-  "sun_timeline_spec": {
-    "design_direction": "Schlicht und reduziert (Reduced SCADA Minimalist)",
-    "container_and_spacing": {
-      "card_class": "glass-strong rounded-xl border border-white/10 bg-[#070c18]/90 overflow-hidden",
-      "padding": "px-5 py-4 sm:px-6 sm:py-5 space-y-4",
-      "header_layout": "flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] pb-3"
-    },
-    "typography": {
-      "card_title": "font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70 flex items-center gap-2",
-      "status_text": "font-mono text-[11px] text-cyan-300/80 tracking-wide font-normal",
-      "rest_hours_number": "font-mono text-3xl sm:text-4xl font-light text-white tracking-tight",
-      "rest_hours_label": "font-mono text-[9px] uppercase tracking-[0.22em] text-white/40",
-      "time_labels": "font-mono text-[10px] font-medium tracking-tight",
-      "legend_labels": "font-mono text-[9px] uppercase tracking-[0.15em] text-white/50"
-    },
-    "colors_and_tones": {
-      "card_bg": "#070c18",
-      "bar_track_bg": "#0b1222",
-      "bar_track_border": "rgba(255, 255, 255, 0.10)",
-      "day_progress_fill": "linear-gradient(90deg, #f59e0b 0%, #facc15 50%, #f59e0b 100%)",
-      "past_day_overlay": "rgba(255, 255, 255, 0.12)",
-      "twilight_zones": {
-        "astro": "#4338ca",
-        "blue": "#3b82f6",
-        "golden": "#f59e0b"
-      },
-      "glows": "Toned down dramatically: remove thick heavy drop-shadow glows (drop-shadow-10px); use ultra-soft filter drop-shadow(0 0 3px color) or clean solid fills to avoid muddy visual noise."
-    },
-    "view_toggle_style": {
-      "container": "inline-flex rounded-lg p-0.5 bg-black/40 border border-white/10",
-      "button_active": "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-md px-2 py-1 transition-all shadow-none",
-      "button_inactive": "text-white/40 hover:text-white/80 hover:bg-white/5 rounded-md px-2 py-1 transition-colors"
-    },
-    "bar_view_geometry": {
-      "svg_viewbox": "0 0 600 135",
-      "bar_x_start": 50,
-      "bar_x_end": 550,
-      "bar_y": 70,
-      "bar_height": 10,
-      "bar_radius": 5,
-      "rest_hours_position": "Top centered above bar at y=32 with clean 'REST-SONNE' subtext at y=46",
-      "marker_style": {
-        "sun_day": "Precision circle r=6 with solid #FDE047 fill and delicate 1px outer ring (r=9, opacity 0.25). Toned down pulse animation.",
-        "moon_night": "Precision circle r=6 with #7DD3FC fill and clean crescent overlay #070c18."
-      },
-      "ticks": "Subtle 1px vertical tick lines on hour marks inside bar height",
-      "time_labels_position": "y=102 centered underneath respective timestamps (Sunrise ↑, Noon, Sunset ↓)"
-    },
-    "arc_view_geometry": {
-      "svg_viewbox": "0 0 600 185",
-      "center_x": 300,
-      "base_y": 140,
-      "radius_x": 230,
-      "radius_y": 100,
-      "arc_stroke_width": 2.5,
-      "rest_hours_position": "Centered under arc curve at y=82 with subtext at y=98"
-    },
-    "legend_treatment": {
-      "layout": "flex items-center justify-center gap-6 pt-3 border-t border-white/[0.05]",
-      "indicator": "w-2 h-2 rounded-full",
-      "label": "font-mono text-[9px] uppercase tracking-[0.15em] text-white/50"
-    },
-    "tooltip_treatment": {
-      "container": "fill-[#090d16] stroke-white/20 stroke-1 rx-6",
-      "text": "font-mono text-[10px] fill-white text-center"
-    },
-    "mobile_behaviour_390px": {
-      "responsive_svg": "w-full h-auto max-h-[220px]",
-      "header_stacking": "flex-wrap gap-2 for status text and view toggle on screen widths < 390px",
-      "hit_area": "Invisible hit rects with minimum height 24px and touch target accuracy for mobile fingers"
+  "project_name": "Victron SmartShunt IP65 300A - Local Venus OS Integration",
+  "route": "/smartshunt-preview",
+  "theme": "SCADA Dark Technical Control Room",
+  "user_choices": {
+    "isolated_route": "/smartshunt-preview",
+    "tabs": [
+      { "id": "overview", "label": "Übersicht" },
+      { "id": "device", "label": "Gerät" },
+      { "id": "diagnostics", "label": "Diagnose" },
+      { "id": "history", "label": "Verlauf" }
+    ],
+    "main_pages_status": "UNCHANGED until explicit approval",
+    "trucki_sun_status": "UNCHANGED - complete visual & logic separation",
+    "cloud_usage": "NONE (Local Venus OS / MQTT read-only)",
+    "write_commands": "NONE (Read-Only Integration)",
+    "acoustic_alarms": "DISABLED (Visual alerts only)",
+    "color_convention": {
+      "pv": "Bernstein (#F59E0B / #D97706)",
+      "house": "Rosa-Rot (#EC4899 / #E11D48)",
+      "battery": "Cyan (#06B6D4 / #0891B2)",
+      "grid": "Indigo/Violett (#6366F1 / #8B5CF6)"
     }
   },
+  "sign_convention": {
+    "positive": "Charging (Laden) - Power/Current > 0 (Cyan glow & arrow)",
+    "negative": "Discharging (Entladen) - Power/Current < 0 (Amber/Red glow & arrow)"
+  },
+  "data_states": {
+    "current": "Data age <= 90s, Connected == 1, Identity match valid -> Normal active glow",
+    "stale": "Data age > 90s and <= 180s -> Warning state (Yellow/Amber badge, stale indicator)",
+    "unavailable": "Data age > 180s OR Connected == 0 OR Identity match invalid -> Error/Offline state (Muted/Red badge, greyed out values)"
+  },
+  "identity_verification": {
+    "topic_base": "N/dbus-v1/battery/290/",
+    "instance": 290,
+    "required_match": [
+      "ProductName (Victron SmartShunt IP65 300A / SmartShunt)",
+      "DeviceInstance (290)",
+      "Connected status (1)",
+      "Data freshness (< 180s)"
+    ]
+  },
+  "optional_sensors": {
+    "rule": "Only render Midpoint Voltage (Mittelpunktspannung/Abweichung), Starter Battery Voltage (Starterspannung), and Temperature (Temperatur) if values are actively provided by physical hardware. Hide or mark as N/A when non-existent without breaking card layout."
+  },
+  "device_history": {
+    "rule": "Use native hardware device counters / history values provided by Venus OS / SmartShunt instead of calculating energy, Ah, or cycles on the frontend."
+  },
+  "typography": {
+    "headings": "Sora, 'Chakra Petch', sans-serif",
+    "body": "Sora, 'IBM Plex Sans', sans-serif",
+    "digital_meters": "'DSEG7-Classic', 'JetBrains Mono', monospace",
+    "technical_mono": "'JetBrains Mono', monospace"
+  },
+  "colors": {
+    "background": "#04060c",
+    "panel_bg": "rgba(22, 30, 49, 0.82)",
+    "card_border": "rgba(160, 170, 194, 0.20)",
+    "battery_cyan": "#06B6D4",
+    "pv_amber": "#F59E0B",
+    "house_rose": "#EC4899",
+    "grid_violet": "#8B5CF6",
+    "status_ok": "#10B981",
+    "status_warn": "#F59E0B",
+    "status_error": "#EF4444"
+  },
+  "responsive_rules": {
+    "mobile_width": "390px viewport target without horizontal scrollbar",
+    "grid_responsive": "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
+    "no_nested_cards": "Flat SCADA panel grid layout without deep nesting",
+    "no_usage_explanations": "Pure technical SCADA display without tutorial/marketing explanatory copy"
+  },
+  "data_testid_policy": "All interactive elements (tabs, refresh button, toggles, filter buttons) and critical informational metrics (voltage, current, power, soc, remaining time, status badge, identity badge) MUST have explicit data-testid attributes.",
+  "image_urls": [
+    "https://images.unsplash.com/photo-1619641805634-b867f535071c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwyfHxiYXR0ZXJ5JTIwZW5lcmd5JTIwc3RvcmFnZSUyMHNjYWRhfGVufDB8fHx8MTc5Mzg3NjQyMHww&ixlib=rb-4.1.0&q=85",
+    "https://images.unsplash.com/photo-1589276534126-adef63a95e05?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHxiYXR0ZXJ5JTIwZW5lcmd5JTIwc3RvcmFnZSUyMHNjYWRhfGVufDB8fHx8MTc5Mzg3NjQyMHww&ixlib=rb-4.1.0&q=85"
+  ],
+  "instructions_to_main_agent": [
+    "Build the SmartShunt preview strictly at /smartshunt-preview as a standalone tabbed view with tabs: Übersicht, Gerät, Diagnose, Verlauf.",
+    "Do NOT touch main navigation or modify existing Trucki / SUN control routines.",
+    "Ensure read-only MQTT / Venus OS logic (instance 290) is mocked or wired to local endpoints without VRM cloud calls or acoustic alarms.",
+    "Adhere to the exact color scheme: Cyan (#06B6D4) for SmartShunt Battery, Amber (#F59E0B) for PV, Rose/Pink (#EC4899) for House, Violet (#8B5CF6) for Grid.",
+    "Display positive values (+W / +A) as Charging (Laden) and negative values (-W / -A) as Discharging (Entladen).",
+    "Manage 3 data states strictly: Fresh (<=90s), Stale (90s-180s), Unavailable (>180s or Connected=0 or invalid identity).",
+    "Include data-testid on all interactive buttons, tabs, input options, and key metric cells."
+  ],
   "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
-    "Never replace existing mock or real data bindings; keep all API poll loops, props, and calculation logic intact.",
-    "Do not use generic SaaS flat cards. Use SCADA / control room aesthetic: machined metallic bevels, deep obsidian surface depth, crisp telemetry.",
-    "All interactive and key informational elements MUST include a data-testid attribute.",
-    "Do not use complete transparent background in header, overlays, or floating panels."
+    "Never use generic centered layouts or plain flat white cards.",
+    "Use SCADA dark theme with glassmorphism and subtle metallic hairlines.",
+    "Keep mobile layout (390px) responsive and clean without overflow.",
+    "Avoid decorative AI emojis in icons.",
+    "Ensure all tests can query elements via data-testid."
   ]
 }

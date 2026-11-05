@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.127" timestamp="2026-11-05T11:10:20.361480+00:00" hostname="agent-env-d9ee6047-22d8-4f82-bb28-a3bebcc9e1d5"><testcase classname="tests.test_smartshunt_review" name="test_connected_zero_not_fully_verified_identity" time="0.001"><failure message="AssertionError: Connected is required by the full identity verification&#10;assert True is False">tests/test_smartshunt_review.py:71: in test_connected_zero_not_fully_verified_identity
+    assert state['identity']['valid'] is False, 'Connected is required by the full identity verification'
+E   AssertionError: Connected is required by the full identity verification
+E   assert True is False</failure></testcase></testsuite></testsuites>

@@ -73,6 +73,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await db.alarm_events.create_index("ts")
     except Exception as e:
         logger.warning("alarm_events index create failed: %s", e)
+    try:
+        await db.smartshunt_snapshots.create_index("ts")
+        await db.smartshunt_alarm_events.create_index("ts")
+        await db.smartshunt_snapshots.create_index("expire_at", expireAfterSeconds=0)
+        await db.smartshunt_alarm_events.create_index("expire_at", expireAfterSeconds=0)
+    except Exception as e:
+        logger.warning("smartshunt index create failed: %s", e)
     global _poll_task, _keepalive_task, _retention_task
     _poll_task = asyncio.create_task(poller_loop())
     _keepalive_task = asyncio.create_task(victron_keepalive_loop())
@@ -213,6 +220,8 @@ _retention_task: Optional[asyncio.Task] = None
 
 # Aktuell aktive Alarme (id -> alarm) für Zustandswechsel-Erkennung (raised/resolved)
 _active_alarms: Dict[str, Any] = {}
+_smartshunt_active_alerts: Dict[str, Any] = {}
+_smartshunt_last_snapshot_ts: Optional[str] = None
 
 
 async def _log_alarm_transitions(active_list: list, demo: bool) -> None:
@@ -253,6 +262,47 @@ async def _log_alarm_transitions(active_list: list, demo: bool) -> None:
             logger.warning("alarm_events insert failed: %s", e)
 
 
+async def _persist_smartshunt(state: Dict[str, Any], retention_days: Optional[int]) -> None:
+    """Persistiert nur SmartShunt-Werte; Trucki/SUN und Haupt-Snapshots bleiben getrennt."""
+    global _smartshunt_active_alerts, _smartshunt_last_snapshot_ts
+    now = datetime.now(timezone.utc).isoformat()
+    latest = {**state, "stored_at": now}
+    await db.smartshunt_latest.update_one({"_id": "current"}, {"$set": latest}, upsert=True)
+
+    source_ts = state.get("last_update")
+    if state.get("status") == "current" and source_ts and source_ts != _smartshunt_last_snapshot_ts:
+        snapshot = {
+            "ts": source_ts,
+            "status": state.get("status"),
+            "voltage_v": state.get("voltage_v"),
+            "current_a": state.get("current_a"),
+            "power_w": state.get("power_w"),
+            "soc_pct": state.get("soc_pct"),
+            "time_to_go_s": state.get("time_to_go_s"),
+            "demo": bool(state.get("demo")),
+        }
+        if retention_days and retention_days > 0:
+            snapshot["expire_at"] = datetime.now(timezone.utc) + timedelta(days=retention_days)
+        await db.smartshunt_snapshots.insert_one(snapshot)
+        _smartshunt_last_snapshot_ts = source_ts
+
+    current = {a["code"]: a for a in (state.get("alerts") or [])}
+    events = []
+    for code, alert in current.items():
+        if code not in _smartshunt_active_alerts:
+            events.append({"ts": now, "event": "raised", **alert, "demo": bool(state.get("demo"))})
+    for code, alert in _smartshunt_active_alerts.items():
+        if code not in current:
+            events.append({"ts": now, "event": "resolved", **alert, "demo": bool(state.get("demo"))})
+    _smartshunt_active_alerts = current
+    if events:
+        if retention_days and retention_days > 0:
+            expiry = datetime.now(timezone.utc) + timedelta(days=retention_days)
+            for event in events:
+                event["expire_at"] = expiry
+        await db.smartshunt_alarm_events.insert_many(events)
+
+
 async def poller_loop() -> None:
     _poller_state["running"] = True
     while True:
@@ -283,6 +333,9 @@ async def poller_loop() -> None:
                 "battery_soc": data["summary"]["battery_soc"],
             }
             await db.snapshots.insert_one(snap)
+            ret_cfg = cfg.get("retention") or {}
+            retention_days = int(ret_cfg.get("days", 30)) if ret_cfg.get("enabled", True) else None
+            await _persist_smartshunt(data.get("smartshunt") or {}, retention_days)
             _poller_state["last_write"] = snap["ts"]
             _poller_state["count"] += 1
             # InfluxDB optional write (reicher Punkte-Satz pro Gerät)

@@ -192,13 +192,30 @@ Das Projekt liefert automatisierte Skripte im Verzeichnis `deploy/proxmox/`, um 
 5. Neue Planungen werden als eigener datierter Abschnitt ergänzt und überschreiben keine früheren Planungsstände.
 
 ### Geplante Zukunftsaufgaben
-- Hersteller-Handbücher für Hoymiles/AhoyDTU, Victron, Shelly Pro 3EM und Trucki/SUN passend zu den Gerätebereichen hinterlegen.
+- Hersteller-Handbücher für Hoymiles/AhoyDTU, Victron SmartSolar/Venus OS/SmartShunt, Shelly Pro 3EM und Trucki/SUN passend zu den Gerätebereichen hinterlegen.
 - InfluxDB-Datenmodell, Einheiten und Grafana-Dashboards neu abstimmen, vollständig provisionieren und mit realen Abfragen funktionsfertig prüfen.
 - Bestätigte potenzielle Verbesserungen fortlaufend priorisieren, per Preview umsetzen und nach Freigabe dokumentieren.
 
 ---
 
-## 9. Rechtliches & Mitwirkung
+## 9. SmartShunt-IP65-Vorschau
+
+Die Phase-1-Ansicht liegt getrennt unter **`/smartshunt-preview`**. Sie verändert weder Dashboard/Hauptnavigation noch die Trucki/SUN-Regelung.
+
+- Quelle: lokales Venus OS MQTT, fest `N/<Portal-ID>/battery/290/#`; kein VRM-Cloudzugriff.
+- Betriebsart: ausschließlich lesen; keine SmartShunt-Steuerbefehle und keine akustischen Alarme.
+- API: `GET /api/smartshunt/preview` und `GET /api/smartshunt/history?range=1h|3h|6h|12h|24h`.
+- Verifikation: Produktname SmartShunt + Instanz 290 + USB/VE.Direct + `Connected=1`.
+- Datenzustände: aktuell bis 90 s, veraltet bis 180 s, danach beziehungsweise bei falscher Identität/Trennung nicht verfügbar.
+- Vorzeichen: positiv = Laden, negativ = Entladen.
+- Gerätehistorie: SmartShunt-Zähler werden direkt übernommen; sie werden nicht aus Live-Messpunkten neu berechnet.
+- Zusatzsensoren: Mittelpunkt, Temperatur und Starterspannung erscheinen nur, wenn Venus OS reale Werte liefert.
+
+Im Demo-Modus sind SmartShunt-Telemetrie und -Verlauf **MOCKED**. Für den lokalen Hardwaretest `demo_mode=false`, den vorhandenen MQTT-Zugang und die korrekte Venus-OS-Portal-ID verwenden. Die Hauptseiten übernehmen SmartShunt erst nach ausdrücklicher Freigabe der Vorschau.
+
+---
+
+## 10. Rechtliches & Mitwirkung
 
 **Solar-Lokal-App**
 

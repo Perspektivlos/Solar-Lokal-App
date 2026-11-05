@@ -1,12 +1,9 @@
-# Daily autonomy regression: actual route formula, clamps and yesterday's public response.
-import ast
-import asyncio
+# Daily autonomy regression: zeitgewichtete Flussintegration, clamps und Vortags-API.
 from datetime import datetime, timezone, timedelta
-from pathlib import Path
-from types import SimpleNamespace
-from typing import Any, Dict
 
 import pytest
+import server  # noqa: F401
+import routes
 
 from test_flow_summary import fetch
 
@@ -21,27 +18,7 @@ def test_actual_today_route_autarky_bounds(house, grid, expected):
              'pv_power': 100, 'house_power': house,
              'grid_power': grid, 'battery_power': -400} for n in (10, 5)]
 
-    class Cursor:
-        def find(self, *args):
-            return self
-
-        def sort(self, *args):
-            return self
-
-        def limit(self, *args):
-            return self
-
-        async def to_list(self, *args):
-            return rows
-
-    tree = ast.parse((Path(__file__).parents[1] / 'routes.py').read_text())
-    route = next(n for n in tree.body if isinstance(n, ast.AsyncFunctionDef) and n.name == 'today')
-    route.decorator_list = []
-    module = ast.fix_missing_locations(ast.Module(body=[route], type_ignores=[]))
-    namespace = {'datetime': datetime, 'timezone': timezone, 'timedelta': timedelta,
-                 'Dict': Dict, 'Any': Any, 'db': SimpleNamespace(snapshots=Cursor())}
-    exec(compile(module, 'routes.py', 'exec'), namespace)
-    data = asyncio.run(namespace['today']())
+    data = routes._summarize_energy_rows(rows)
     assert data['autarky_pct'] == expected
     assert 0 <= data['autarky_pct'] <= 100
 

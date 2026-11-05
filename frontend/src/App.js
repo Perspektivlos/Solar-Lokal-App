@@ -13,6 +13,7 @@ import KpiPreview from "./pages/KpiPreview";
 import ScadavisPreview from "./pages/ScadavisPreview";
 import Docs from "./pages/Docs";
 import Report from "./pages/Report";
+import SmartShuntPreview from "./pages/SmartShuntPreview";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/scadavis-preview" element={<ScadavisPreview />} />
           <Route path="/report-preview" element={<Report />} />
           <Route path="/bericht" element={<Report />} />
+          <Route path="/smartshunt-preview" element={<SmartShuntPreview />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors theme="dark" />

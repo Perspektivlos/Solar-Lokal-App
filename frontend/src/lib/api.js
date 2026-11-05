@@ -21,3 +21,5 @@ export const getRoadmap = () => api.get("/roadmap").then((r) => r.data);
 export const putRoadmap = (items) => api.put("/roadmap", { items }).then((r) => r.data);
 export const discoverDevice = (key) => api.post(`/devices/${key}/discover`).then((r) => r.data);
 export const discoverAll = () => api.post("/devices/discover-all").then((r) => r.data);
+export const getSmartShuntPreview = () => api.get("/smartshunt/preview").then((r) => r.data);
+export const getSmartShuntHistory = (range = "6h") => api.get("/smartshunt/history", { params: { range } }).then((r) => r.data);

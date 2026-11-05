@@ -13,6 +13,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
+from smartshunt import SMARTSHUNT_INSTANCE, TELEMETRY_PATHS, build_smartshunt_state, is_valid_telemetry_value
+
 try:
     import paho.mqtt.client as mqtt
 except Exception:  # pragma: no cover
@@ -29,6 +31,7 @@ _mqtt_data: Dict[str, Any] = {
     "trucki": {"raw": {}, "_ts": None},
     "victron": {
         "instances": {},   # {288: {"Pv/V":..., "Yield/Power":..., "_ts": iso}}
+        "batteries": {},   # {290: SmartShunt Rohpfade + Zeitstempel}
         "system": {},      # battery_voltage, grid_power per phase, consumption, etc.
         "grid": {},        # Ac/Power, Ac/Lx/Power, ...
         "_ts": None,
@@ -89,6 +92,19 @@ def _handle_victron_topic(topic: str, payload: bytes, now_iso: str) -> None:
         _mqtt_data["victron"]["system"][path] = value
     elif service == "grid":
         _mqtt_data["victron"]["grid"][path] = value
+    elif service == "battery":
+        try:
+            inst = int(inst_raw)
+        except ValueError:
+            return
+        st = _mqtt_data["victron"]["batteries"].setdefault(inst, {})
+        st["_ts"] = now_iso
+        if path in TELEMETRY_PATHS and is_valid_telemetry_value(value):
+            st[path] = value
+            st.setdefault("_field_ts", {})[path] = now_iso
+            st["_telemetry_ts"] = now_iso
+        elif path not in TELEMETRY_PATHS:
+            st[path] = value
 
 
 def _handle_shelly_topic(topic: str, payload: bytes, now_iso: str) -> None:
@@ -347,6 +363,15 @@ def fetch_victron_from_mqtt(cfg_victron: Dict[str, Any]) -> Optional[Dict[str, A
     }
 
 
+def fetch_smartshunt_from_mqtt(instance: int = SMARTSHUNT_INSTANCE) -> Dict[str, Any]:
+    raw = _mqtt_data["victron"]["batteries"].get(int(instance), {})
+    return build_smartshunt_state(
+        raw,
+        instance=int(instance),
+        mqtt_connected=bool(_mqtt_state.get("connected")),
+    )
+
+
 # ---------- Connection lifecycle ----------
 
 def _mqtt_disconnect() -> None:
@@ -386,6 +411,7 @@ def _mqtt_setup(cfg_mqtt: Dict[str, Any], cfg_victron: Dict[str, Any]) -> None:
             client_.subscribe("Trucki/#")
             if victron_enabled:
                 client_.subscribe(f"N/{vrm_id}/#")
+                client_.subscribe(f"N/{vrm_id}/battery/{SMARTSHUNT_INSTANCE}/#")
                 try:
                     client_.publish(f"R/{vrm_id}/keepalive", "", qos=0)
                 except Exception:

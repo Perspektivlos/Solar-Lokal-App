@@ -17,8 +17,10 @@ from mqtt_client import (
     fetch_ahoy_from_mqtt,
     fetch_trucki_from_mqtt,
     fetch_victron_from_mqtt,
+    fetch_smartshunt_from_mqtt,
 )
-from mocks import mock_shelly, mock_ahoy, mock_trucki, mock_victron
+from mocks import mock_shelly, mock_ahoy, mock_trucki, mock_victron, mock_smartshunt
+from smartshunt import SMARTSHUNT_INSTANCE, unavailable_smartshunt
 from sun import event_times, sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
 
 logger = logging.getLogger("solar")
@@ -201,6 +203,14 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         ),
     )
 
+    smartshunt_instance = SMARTSHUNT_INSTANCE
+    if demo:
+        smartshunt = mock_smartshunt(now_dt)
+    elif not mqtt_enabled:
+        smartshunt = unavailable_smartshunt("Lokale MQTT-Verbindung ist deaktiviert", smartshunt_instance)
+    else:
+        smartshunt = fetch_smartshunt_from_mqtt(smartshunt_instance)
+
     # DC-gekoppeltes System (vom Nutzer bestätigt):
     #  - Victron-MPPTs laden den Akku (DC), speisen NICHT direkt ins Haus.
     #  - Hoymiles HM1500 speist AC direkt ins Haus/Netz.
@@ -231,6 +241,7 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         "ahoy": ahoy,
         "trucki": trucki,
         "victron": victron,
+        "smartshunt": smartshunt,
         "summary": {
             "pv_power": round(pv_power, 1),
             "pv_ac_power": round(pv_ac_power, 1),

@@ -462,3 +462,44 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Anleitung enthält den neuen Abschnitt „Arbeitsweise & Preview-Prinzip".
 - Projektbericht listet „Preview vor Übernahme" und „Dokumentation abschließend pflegen" als verbindliche Arbeitsschritte.
 - README beschreibt Preview-Prozess, Zukunftsaufgaben und den realistischen aktuellen Status der InfluxDB-/Grafana-Grundlage.
+
+## Neuer Umsetzungsabschnitt – SmartShunt IP65 300A · Phase-1-Vorschau (05.11.2026)
+
+### Auftrag und feste Grenzen
+- Victron SmartShunt IP65 300A lokal und ausschließlich lesend über Venus OS/MQTT anbinden.
+- Phase 1 verwendet fest die verifizierte VRM-Instanz **290** und Topic-Basis `N/<Portal-ID>/battery/290/#`.
+- Keine VRM-Cloud, keine SmartShunt-Schreibbefehle, keine akustischen Alarme und keine Änderung der Trucki/SUN-Steuerung.
+- Die freigegebenen Hauptseiten und die Hauptnavigation bleiben unverändert. Die gesamte neue Oberfläche liegt isoliert unter `/smartshunt-preview`.
+
+### Backend und Datenqualität
+- Neues Modul `backend/smartshunt.py` normalisiert Produktidentität, Livewerte, optionale Sensoren, Gerätealarme und native SmartShunt-Historienzähler.
+- `mqtt_client.py` speichert `battery/290` getrennt von den Victron-MPPT-Instanzen. Nur numerisch gültige Telemetrie aktualisiert den Messzeitstempel; Null-/Fehlwerte und Identitäts-/History-Nachrichten können alte Messwerte nicht wieder als aktuell markieren.
+- Pro Messfeld werden Zeitstempel geführt. Nicht verfügbare, getrennte oder falsch identifizierte Geräte maskieren Live- und Zusatzsensorwerte, während native Gerätezähler getrennt erhalten bleiben.
+- Vollständige Verifikation verlangt Produktname SmartShunt, Instanz 290, USB/VE.Direct-Verbindung und `Connected=1`.
+- Statusgrenzen: `current` bis einschließlich 90 s, `stale` über 90 bis einschließlich 180 s, `unavailable` über 180 s sowie bei `Connected=0`, falscher Identität oder fehlender gültiger Telemetrie.
+- Vorzeichen: positive Leistung/Strom = Laden, negative Leistung/Strom = Entladen. Keine stille Vermischung mit Trucki/SUN.
+- Der 15-s-Poller speichert SmartShunt-Livepunkte separat in `smartshunt_snapshots`, den letzten normalisierten Stand in `smartshunt_latest` und visuelle Zustands-/Gerätealarme in `smartshunt_alarm_events`.
+- Demo- und Live-Verläufe/Ereignisse sind getrennt. Neue Snapshot-/Event-Dokumente erhalten ein TTL-Ablaufdatum entsprechend der bestehenden Retention-Konfiguration; MongoDB-`_id` wird nie an die API ausgegeben.
+
+### API und Vorschauoberfläche
+- `GET /api/smartshunt/preview`: aktueller Zustand, feste Topic-Basis, Identität, Diagnosechecks, Rohfelder, optionale Sensoren, native Gerätezähler und Alarmereignisse.
+- `GET /api/smartshunt/history?range=1h|3h|6h|12h|24h`: separater SmartShunt-Messverlauf für Spannung, Strom, Leistung und SoC.
+- `/smartshunt-preview` besitzt vier stabile Ansichten: **Übersicht**, **Gerät**, **Diagnose** und **Verlauf**.
+- Übersicht zeigt Spannung, Strom, Leistung, SoC, Restlaufzeit, verbrauchte Ah, Richtung, Datenalter und die sichtbare Quellen-Trennung SmartShunt ↔ Trucki/SUN.
+- Gerät zeigt verifizierte Identität, nur tatsächlich vorhandene Zusatzsensoren und direkt übernommene Gerätezähler.
+- Diagnose zeigt lokale Topic-/Brokerinformationen, Identitäts- und Freshness-Prüfungen, empfangene Rohfelder sowie ausschließlich visuelle Alarmereignisse.
+- Verlauf zeigt Leistung/Strom und Spannung/SoC in zwei getrennten Diagrammen mit fünf Zeitbereichen, Aktualisierung und belastbarem Fehlerzustand.
+
+### Verifikation und aktueller Freigabestatus
+- Testing-Agent iteration_39 deckte vier reale Randfälle auf: Identity-only-Freshness, Nullwert-Reaktivierung, Offline-Zusatzsensoren und `Connected=0` trotz Verifiziert-Badge. Alle vier wurden korrigiert.
+- Retest Backend: **36/36** SmartShunt-, MQTT- und Config-Prüfungen bestanden.
+- Retest Frontend: **67/67** Browserprüfungen bestanden, einschließlich vier Tabs, fünf Zeitbereiche, Auto-/Manuell-Refresh, Fehlerwiederherstellung, Offline-/Stale-Simulation, nativen Zählern, unveränderter Trucki-Demo-Steuerung und Hauptseiten-Regression.
+- Finale Gesamtregression: **203/203 Backendtests bestanden**. Veraltete Tests wurden auf die bereits freigegebene zeitgewichtete Flussintegration und das korrekte rollende 1-h-Verlaufsfenster ausgerichtet; Produktberechnungen der Hauptseiten wurden dabei nicht verändert.
+- Desktop 1920×800 und Mobil 390×844 ohne horizontalen Seitenüberstand, doppelte Test-IDs oder abgeschnittene Bedienelemente. Production Build erfolgreich.
+- **Wichtig:** Die physische Venus-OS-/SmartShunt-Hardware war in der Preview-Umgebung nicht erreichbar. Telemetrie und Verlauf sind dort eindeutig **DEMO/MOCKED**; die FastAPI-/MongoDB-/Frontend-Flüsse sind real.
+- Phase 1 bleibt bis zur ausdrücklichen Nutzerabnahme eine Vorschau. Phase 2 darf erst danach SmartShunt-Werte in Dashboard, Energiefluss, Geräte, Diagnose, Verlauf, InfluxDB oder Grafana übernehmen.
+
+### Nächste Phasen
+- **P0 Nutzerprüfung:** Vorschau mit echter lokaler Venus-OS-Anlage gegen Produktname, `Connected`, USB/VE.Direct und `battery/290` validieren.
+- **P1 nach Freigabe:** SmartShunt als maßgebliche Batteriequelle in Hauptansichten übernehmen; Trucki/SUN weiterhin ausschließlich als AC-Regelquelle behandeln; InfluxDB-/Grafana-Felder ergänzen.
+- **P2:** Mehrinstanz-Erkennung, Langzeitauswertung, Diagnose-/Berichtsverknüpfung und offizielles SmartShunt-Handbuch.
