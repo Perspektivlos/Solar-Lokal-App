@@ -1,0 +1,22 @@
+{
+  "summary": "Frontend-only public-URL review: 78/78 application checks pass across two complete browser runs, plus initial load verification. Solid light beams, round glowing photons, movement/direction, watt scaling, tempo, persistence, reduced motion, DSEG, inspectors, 29 exact device metrics, polling and responsive topology verified. Previously reported +2500 W / 100% overlap is fixed in Detail and Kompakt. Backend testing intentionally skipped.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/tests/energy_flow_scada_ui_regression.py",
+    "/app/tests/device_metrics_ui_regression.py"
+  ],
+  "action_items": ["Optional maintainability follow-up: split the 728-line EnergyFlow.jsx into focused node, flow and inspector modules."],
+  "critical_code_review_comments": [
+    "EnergyFlow.jsx exceeds the 700-line module guideline; no functional blocker identified in the reviewed changes.",
+    "Core photon has opacity animation; halo has both radius and opacity animation. Each moving photon has exactly two circles and one animateMotion, with no segment paths.",
+    "Legacy regression selectors still referenced flow-segments-* and flow-particles. Updated the retained EnergyFlow runner to photon selectors, solid-beam checks and both full-SoC layouts; no application-source changes."
+  ],
+  "updated_files": ["/app/tests/energy_flow_scada_ui_regression.py", "/app/test_reports/iteration_36.json"],
+  "success_rate": {"backend": "Not tested (frontend-only request)", "frontend": "100% (78/78 executed application checks; initial load also passed)"},
+  "seed_data_creation": "None. Hardware values are DEMO/MOCKED. Watt/direction edges were explicitly MOCKED browser-only /api/live responses based on a real public response; no configuration, hardware-control or database writes.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Main flow run: 41/41 pass. Device/value/topology run: 37/37 pass, including 29 exact API-response numeric comparisons and two additional real DEMO polling cycles. One preliminary numeric harness attempt failed before assertions because its reload response list did not match the rendered snapshot; synchronizing to the next polling response resolved this test-harness timing issue. No application failure inferred from that attempt. Standalone Playwright is not installed in this container, so browser automation tool executed equivalent inline checks; both retained runners pass py_compile. At 1920x800 and 390x844 Auto has no document overflow and all SVG node bounding boxes fit the viewBox; mobile Detail remains selectable with contained horizontal scrolling. Beam centerlines sampled at 101 points each do not enter node housings. System reduced motion removes animateMotion and beam-pulse class while retaining five static light cores; restore and flow-off reload persistence pass. Photon count/duration at 100/400/1000/2000 W is 1/2/3/4 and 2.34/2.16/1.8/1.2 seconds at 1x. Grid +/-700 W moves in opposite expected directions. Battery +2500/100% numeric right edge 930.37 versus percent left edge 936.94 in Detail and Kompakt. DSEG font actually loaded. Screenshots are in screenshots-flow-36. No auth or physical hardware testing; manual reduced-motion setting was source-reviewed, not separately clicked.",
+  "rca of the issue": "Previous numeric overlap is resolved by conditional power font sizing: signed six-character readout with three-digit percentage uses 14.5 SVG units, leaving approximately 6.56 units between power/unit and percentage. Confirmed using browser-only MOCKED +2500 W and 100% fixture in both requested views. No unresolved functional issue found."
+}

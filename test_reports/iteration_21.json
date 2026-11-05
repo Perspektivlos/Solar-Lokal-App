@@ -1,0 +1,25 @@
+{
+  "summary": "Frontend-only verification of EnergyFlow Compact/Detail view toggle. All 5 requested scenarios PASSED. Compact mode does NOT crash — no page errors, no fallback to dashboard-loading. Detail mode restores 6 nodes. Auto persistence via localStorage works across in-app nav (Verlauf→Dashboard, aria-pressed='true' preserved). Mobile 390x844 in auto resolves to compact (flow-pv/grid/battery/house render), no horizontal overflow (docW=390=winW). Hover inspector on flow-pv in compact shows title 'PV-Block' with AC·Hoymiles and DC·Victron rows.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard (background charts)", "issues": ["Recharts console warning: 'The width(-1) and height(-1) of chart should be greater than 0' — a ResponsiveContainer somewhere mounts with a zero-sized parent (likely a collapsed/hidden chart container). Non-blocking but should be investigated."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": ["(Optional) Investigate Recharts width/height(-1) warning on initial Dashboard load — likely a ResponsiveContainer inside a hidden/collapsed element."],
+  "critical_code_review_comments": [
+    "EnergyFlow.jsx is 540+ lines; consider splitting NodeCard/Flow/Emblems/Inspector into separate files per the file-size guideline.",
+    "View toggle correctly uses localStorage with try/catch (SSR-safe) and resize listener for narrow detection — clean implementation.",
+    "Flow filtering via `present` Set correctly guards against orphan flows when devices are disabled — robust against edge cases."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100% (5/5 scenarios pass)"},
+  "seed_data_creation": "none (demo_mode=True)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "EnergyFlow toggle verified working. flow-view-auto/compact/detail buttons functional, aria-pressed reflects state, localStorage key 'solar.flowView' persists. Compact nodes: flow-pv, flow-grid, flow-battery, flow-house. Detail nodes: flow-mppt1, flow-mppt2, flow-hoymiles, flow-battery, flow-house, flow-grid. Hover inspector testid='flow-inspector', title='flow-inspector-title'. No crashes observed in any mode.",
+  "rca of the issue": "No crash reproduced. The previously suspected compact-mode crash did not occur in 1920x900 or 390x844 viewports. Zero pageerrors captured during KOMPAKT click and after. Dashboard remained rendered (no fallback to data-testid='dashboard-loading'). Main agent's intermittent fallback was likely a Playwright click-timing/preview-flake issue rather than a real EnergyFlow render crash."
+}

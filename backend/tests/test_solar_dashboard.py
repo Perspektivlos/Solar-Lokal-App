@@ -7,7 +7,7 @@ import time
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://solar-control-5.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://solar-scada-hub--82ba20d7.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
 
 
@@ -246,18 +246,16 @@ class TestIntegrationsStatus:
 # ---------- Background poller ----------
 class TestPoller:
     def test_poller_writes_snapshots(self, client):
-        # Take initial history length, wait > 15s, ensure points >= or grew
+        # Ein rollendes 1h-Fenster darf am linken Rand Punkte verlieren. Entscheidend
+        # ist, dass der Poller einen neueren Messpunkt am rechten Rand ergänzt.
         r1 = client.get(f"{API}/history?range=1h", timeout=15).json()
-        initial = len(r1.get("points", []))
+        initial_points = r1.get("points", [])
+        initial_latest = initial_points[-1]["ts"] if initial_points else ""
         time.sleep(20)
         r2 = client.get(f"{API}/history?range=1h", timeout=15).json()
-        after = len(r2.get("points", []))
-        assert after >= initial, f"Snapshot count decreased: {initial} -> {after}"
-        # Ideally grew by at least 1 in 20s (poller=15s)
-        if after == initial:
-            pytest.skip(f"Poller did not add a snapshot in 20s (still {initial}). May indicate poller issue.")
-
-
+        after_points = r2.get("points", [])
+        assert after_points, "Poller hat keine Snapshots im 1h-Fenster geliefert"
+        assert after_points[-1]["ts"] > initial_latest, "Neuester Snapshot-Zeitstempel ist nicht fortgeschritten"
 # ---------- demo_mode off fallback ----------
 class TestDemoModeFallback:
     def test_demo_off_returns_data_with_offline(self, client):

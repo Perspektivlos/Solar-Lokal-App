@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="18" time="14.507" timestamp="2026-11-02T00:26:41.393022+00:00" hostname="agent-env-d9ee6047-22d8-4f82-bb28-a3bebcc9e1d5"><testcase classname="tests.test_demo_yield_integrals" name="test_same_timestamp_deterministic_and_live_power_varies" time="0.012" /><testcase classname="tests.test_demo_yield_integrals" name="test_counters_monotonic_whole_day" time="0.187"><failure message="AssertionError: (datetime.datetime(2026, 6, 21, 23, 59, tzinfo=datetime.timezone.utc), [3.62, 3.73, 3.657, 3.767, 7.313, 7.461, ...], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ...])&#10;assert False&#10; +  where False = all(&lt;generator object test_counters_monotonic_whole_day.&lt;locals&gt;.&lt;genexpr&gt; at 0xf846c09b42e0&gt;)">tests/test_demo_yield_integrals.py:40: in test_counters_monotonic_whole_day
+    assert all(b &gt;= a for a, b in zip(previous, current)), (now, previous, current)
+E   AssertionError: (datetime.datetime(2026, 6, 21, 23, 59, tzinfo=datetime.timezone.utc), [3.62, 3.73, 3.657, 3.767, 7.313, 7.461, ...], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, ...])
+E   assert False
+E    +  where False = all(&lt;generator object test_counters_monotonic_whole_day.&lt;locals&gt;.&lt;genexpr&gt; at 0xf846c09b42e0&gt;)</failure></testcase><testcase classname="tests.test_demo_yield_integrals" name="test_solar_zero_before_dawn_constant_after_dusk" time="0.002"><failure message="AssertionError: assert [3.62, 3.73, ... 7.313, 7.461] == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]&#10;  &#10;  At index 0 diff: 3.62 != 0.0&#10;  &#10;  Full diff:&#10;    [&#10;  -     0.0,&#10;  -     0.0,...&#10;  &#10;  ...Full output truncated (11 lines hidden), use '-vv' to show">tests/test_demo_yield_integrals.py:47: in test_solar_zero_before_dawn_constant_after_dusk
+    assert counters(DAY.replace(hour=21))[:6] == counters(DAY.replace(hour=23, minute=59))[:6]
+E   AssertionError: assert [3.62, 3.73, ... 7.313, 7.461] == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+E     
+E     At index 0 diff: 3.62 != 0.0
+E     
+E     Full diff:
+E       [
+E     -     0.0,
+E     -     0.0,...
+E     
+E     ...Full output truncated (11 lines hidden), use '-vv' to show</failure></testcase><testcase classname="tests.test_demo_yield_integrals" name="test_solar_units_and_integral_match_1400w_sine" time="0.001" /><testcase classname="tests.test_demo_yield_integrals" name="test_trucki_integral_and_midnight_reset" time="0.006" /><testcase classname="tests.test_demo_yield_integrals" name="test_collect_live_shared_clock_and_location" time="0.002" /><testcase classname="tests.test_demo_yield_integrals" name="test_dusk_counter_boundary_diagnostics" time="0.005"><failure message="AssertionError: assert [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] == [3.62, 3.73, ... 7.313, 7.461]&#10;  &#10;  At index 0 diff: 0.0 != 3.62&#10;  &#10;  Full diff:&#10;    [&#10;  -     3.62,&#10;  -     3.73,...&#10;  &#10;  ...Full output truncated (11 lines hidden), use '-vv' to show">tests/test_demo_yield_integrals.py:93: in test_dusk_counter_boundary_diagnostics
+    assert counters(DAY.replace(hour=23, minute=59))[:6] == counters(DAY.replace(hour=23, minute=55))[:6]
+E   AssertionError: assert [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] == [3.62, 3.73, ... 7.313, 7.461]
+E     
+E     At index 0 diff: 0.0 != 3.62
+E     
+E     Full diff:
+E       [
+E     -     3.62,
+E     -     3.73,...
+E     
+E     ...Full output truncated (11 lines hidden), use '-vv' to show</failure></testcase><testcase classname="tests.test_demo_yield_integrals" name="test_direct_mock_power_uses_requested_location" time="0.000"><failure message="assert 954.2 == 0.0 ± 0.1&#10;  &#10;  comparison failed&#10;  Obtained: 954.2&#10;  Expected: 0.0 ± 0.1">tests/test_demo_yield_integrals.py:102: in test_direct_mock_power_uses_requested_location
+    assert mocks.mock_ahoy(now=now, lat=lat, lon=lon)['total_power'] == pytest.approx(1400*expected, abs=0.1)
+E   assert 954.2 == 0.0 ± 0.1
+E     
+E     comparison failed
+E     Obtained: 954.2
+E     Expected: 0.0 ± 0.1</failure></testcase><testcase classname="tests.test_demo_yield_integrals" name="test_real_mqtt_energy_passthrough" time="0.000" /><testcase classname="tests.test_demo_yield_integrals" name="test_real_http_energy_passthrough" time="0.001"><failure message="AssertionError: {'ac_output': False, 'battery_power': 0, 'battery_voltage': 0, 'max_power_w': None, ...}&#10;assert None == 4.56&#10; +  where None = &lt;built-in method get of dict object at 0xf846c084ce40&gt;('day_energy_kwh')&#10; +    where &lt;built-in method get of dict object at 0xf846c084ce40&gt; = {'ac_output': False, 'battery_power': 0, 'battery_voltage': 0, 'max_power_w': None, ...}.get">tests/test_demo_yield_integrals.py:129: in test_real_http_energy_passthrough
+    assert trucki.get('day_energy_kwh') == 4.56, trucki
+E   AssertionError: {'ac_output': False, 'battery_power': 0, 'battery_voltage': 0, 'max_power_w': None, ...}
+E   assert None == 4.56
+E    +  where None = &lt;built-in method get of dict object at 0xf846c084ce40&gt;('day_energy_kwh')
+E    +    where &lt;built-in method get of dict object at 0xf846c084ce40&gt; = {'ac_output': False, 'battery_power': 0, 'battery_voltage': 0, 'max_power_w': None, ...}.get</failure></testcase><testcase classname="tests.test_demo_yield_integrals" name="test_real_collectors_do_not_overwrite_mqtt_counters" time="0.001" /><testcase classname="tests.test_demo_yield_integrals" name="test_public_live_poll_counters_monotonic" time="13.316" /><testcase classname="tests.test_flow_summary" name="test_today_metrics_contract" time="0.150" /><testcase classname="tests.test_flow_summary" name="test_live_demo_and_battery_contract" time="0.119" /><testcase classname="tests.test_flow_summary" name="test_configured_battery_capacity" time="0.096" /><testcase classname="tests.test_flow_summary" name="test_demo_device_counters_are_valid_daily_yields" time="0.208" /><testcase classname="tests.test_flow_summary" name="test_history_dashboard_seed_contract" time="0.123" /><testcase classname="tests.test_flow_summary" name="test_autarky_represents_house_demand_without_grid_import" time="0.093"><failure message="AssertionError: autarky_pct=42.7, household-based expected=42.9; {'pv_kwh': 0.0, 'consumption_kwh': 0.273, 'grid_import_kwh': 0.156, 'grid_export_kwh': 0.0, 'self_consumption_kwh': 0.0, 'autarky_pct': 42.7, 'self_consumption_pct': 0.0, 'avg_pv_w': 0.0, 'avg_house_w': 610.5, 'battery_charge_kwh': 0.0, 'battery_discharge_kwh': 0.117, 'pv_direct_kwh': 0.0, 'battery_to_house_kwh': 0.117, 'pv_export_kwh': 0.0, 'battery_export_kwh': 0.0, 'battery_discharge_charge_pct': 0.0, 'round_trip_pct': 0.0, 'measurement_available': True, 'sample_count': 110, 'measured_duration_s': 1610.2}&#10;assert 42.7 == 42.85714285714286 ± 0.15&#10;  &#10;  comparison failed&#10;  Obtained: 42.7&#10;  Expected: 42.85714285714286 ± 0.15">tests/test_flow_summary.py:68: in test_autarky_represents_house_demand_without_grid_import
+    assert data['autarky_pct'] == pytest.approx(expected, abs=0.15), (
+E   AssertionError: autarky_pct=42.7, household-based expected=42.9; {'pv_kwh': 0.0, 'consumption_kwh': 0.273, 'grid_import_kwh': 0.156, 'grid_export_kwh': 0.0, 'self_consumption_kwh': 0.0, 'autarky_pct': 42.7, 'self_consumption_pct': 0.0, 'avg_pv_w': 0.0, 'avg_house_w': 610.5, 'battery_charge_kwh': 0.0, 'battery_discharge_kwh': 0.117, 'pv_direct_kwh': 0.0, 'battery_to_house_kwh': 0.117, 'pv_export_kwh': 0.0, 'battery_export_kwh': 0.0, 'battery_discharge_charge_pct': 0.0, 'round_trip_pct': 0.0, 'measurement_available': True, 'sample_count': 110, 'measured_duration_s': 1610.2}
+E   assert 42.7 == 42.85714285714286 ± 0.15
+E     
+E     comparison failed
+E     Obtained: 42.7
+E     Expected: 42.85714285714286 ± 0.15</failure></testcase></testsuite></testsuites>

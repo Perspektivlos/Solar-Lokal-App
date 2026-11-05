@@ -19,7 +19,8 @@ export default function SystemStatusLight() {
       try {
         const s = await getAlarms();
         if (alive) setState({ level: s.level || "ok", count: s.count || 0, critical: s.critical || 0, warning: s.warning || 0 });
-      } catch {
+      } catch (e) {
+        console.debug("Statuslicht-Poll fehlgeschlagen:", e);
         /* Header bleibt beim letzten bekannten Status */
       }
     };

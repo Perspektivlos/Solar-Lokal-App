@@ -1,0 +1,30 @@
+{
+  "summary": "Frontend-only test of v1.6.0 changes: footer system subtitle, Akku-Rechner on Geräte (Trucki tile), Doku print (light/dark, both Roadmap + Anleitung expanded), Report print regression. All requested checks pass. Config restored (usable_kwh 9.6, 4 labels, battery_calc removed via Mongo $unset).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Geräte / Akku-Rechner", "issues": [
+        "Clearing an Ah/Anzahl/% input immediately turns it into 0 (Number('')), so the user cannot clear and retype comfortably; result falls back to 'Modulspannung wählen…' text which is misleading when voltage IS selected",
+        "If user manually edits 'Nutzbare Kapazität (kWh)' after using the calculator, calc-result still shows the calculated value (e.g. 13,8) — two different values visible; consider a hint or reset of calc",
+        "PUT /api/config merges display, so battery_calc cannot be removed via the UI (selecting 'wählen' stores v:0) — acceptable per request"
+      ]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Optional: keep raw string state for calc number inputs to allow empty while typing; show 'Werte prüfen' instead of 'Modulspannung wählen' when v>0 but other field is 0",
+    "Optional: indicate when usable_kwh was manually overridden versus calculator value"
+  ],
+  "critical_code_review_comments": [
+    "Devices.jsx BatteryCalc: fits check uses Math.round(51.2/v) – fine for the 3 offered voltages",
+    "ReportPrint.printPage: if the user cancels print in some browsers afterprint still fires – OK; no fallback timeout if afterprint never fires (Safari older) – printing state could stay true"
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "seed_data_creation": "None. Temporarily saved battery_calc {v:25.6} and usable_kwh 13.8, then restored usable_kwh 9.6 + labels via PUT and removed display.battery_calc via Mongo $unset.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Verified: footer-system (3 parts, 2 dots, hidden <md, no overflow at 390), brand title only; Devices calc 25.6->2S3P/15,36/13,8, 51.2->1S6P/30,72/27,6, 12.8x6 amber warning, persistence after save+reload; label inputs located in correct tiles; display-settings-row absent; Doku print light/dark: header/footer/back/buttons hidden in print media, both views rendered, 4 guide sections expanded, light = white bg + slate text, dark bg #04060c, afterprint cleanup restores tab view; window.print called exactly once; Report print menu works. When stubbing window.print with page.evaluate use an arrow-function string, otherwise counts may be misleading."
+}

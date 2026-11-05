@@ -179,14 +179,15 @@ export default function Control() {
       setDevice(l);
       applyDevice(l);
       setLoadedAt(new Date());
-    } catch {
+    } catch (e) {
+      console.error("Geräte-Werte laden fehlgeschlagen:", e);
       /* Steuerung bleibt mit letzten Werten nutzbar */
     } finally {
       setLoadingDev(false);
     }
   };
 
-  useEffect(() => { loadDevice(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { loadDevice(); }, []);
 
   const runHoy = async (action, value) => {
     setBusy(true); setHoyResult({ pending: true, action });
@@ -202,7 +203,7 @@ export default function Control() {
   };
 
   return (
-    <div className="space-y-6" data-testid="control-page">
+    <div className="space-y-6 page-reveal" data-testid="control-page">
       <IntroCard title="Steuerung" sections={INTRO_SECTIONS} accent="#F87171" testid="intro-control" />
 
       <div className="flex items-start justify-between gap-3 flex-wrap">

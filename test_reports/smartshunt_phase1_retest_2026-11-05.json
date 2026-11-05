@@ -1,0 +1,27 @@
+{
+  "scope": "Victron SmartShunt IP65 300A Phase-1-Vorschau",
+  "date": "2026-11-05",
+  "testing_agent_source": "/app/test_reports/iteration_39.json",
+  "resolved_findings": [
+    "Identity-only-Nachrichten gelten nicht mehr als frische Telemetrie",
+    "Null- oder ungültige Sensorwerte aktualisieren keine Messzeitstempel",
+    "Offline-, abgelaufene und falsch identifizierte Zusatzsensorwerte werden maskiert",
+    "Connected=0 verhindert die vollständige Geräteverifikation",
+    "Demo- und Live-Historien sowie Ereignisse sind getrennt",
+    "Instanz 290 ist in Phase 1 fest vorgegeben",
+    "SmartShunt-Snapshots und Ereignisse verwenden die konfigurierte TTL-Retention",
+    "SmartShunt-Routen besitzen ein eigenes Modul mit verschachtelten Pydantic-Antwortmodellen"
+  ],
+  "results": {
+    "smartshunt_backend_retest": "36/36 passed",
+    "browser_retest": "67/67 passed",
+    "full_backend_regression": "203/203 passed",
+    "frontend_production_build": "passed",
+    "desktop_mobile_overflow": "passed at 1920x800 and 390x844"
+  },
+  "mocked": {
+    "smartshunt_hardware_telemetry": true,
+    "reason": "Die physische lokale Venus-OS-/SmartShunt-Anlage ist aus der Preview-Umgebung nicht erreichbar."
+  },
+  "remaining_user_verification": "Lokale Live-Prüfung von N/<Portal-ID>/battery/290/# vor jeder Phase-2-Übernahme."
+}

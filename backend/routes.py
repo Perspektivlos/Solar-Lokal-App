@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from server import (
     get_config,
@@ -24,8 +25,12 @@ from server import (
 )
 from collectors import collect_live
 from alarms import evaluate_alarms, summarize_alarms, merge_thresholds
+from discovery import discover_device, DEVICE_LABELS, annotate_changes
+from smartshunt import SMARTSHUNT_INSTANCE
+from smartshunt_routes import router as smartshunt_router
 
 api_router = APIRouter(prefix="/api")
+api_router.include_router(smartshunt_router)
 
 
 # ---------- Endpoints ----------
@@ -52,29 +57,112 @@ def _eval_alarms(cfg: Dict[str, Any], data: Dict[str, Any]):
 
 # ---------- Energiebilanz (kWh je Tag/Monat aus Snapshots) ----------
 
-ENERGY_SAMPLE_SECONDS = 15  # Poller-Intervall (siehe server.poller_loop)
+MAX_ENERGY_GAP_SECONDS = 600
 
 
-def _rows_to_balance(rows: List[Dict[str, Any]], sample_seconds: int = ENERGY_SAMPLE_SECONDS) -> List[Dict[str, Any]]:
-    """Wandelt gruppierte Leistungs-Summen (W je Sample) in kWh je Bucket um.
+def _safe_power(row: Dict[str, Any], key: str) -> float:
+    try:
+        return float(row.get(key, 0) or 0)
+    except (TypeError, ValueError):
+        return 0.0
 
-    Energie ≈ Σ(Leistung[W]) · Sample-Intervall[h] / 1000 → kWh. Eigenverbrauch = PV − Einspeisung.
-    """
-    factor = sample_seconds / 3600.0 / 1000.0
-    out: List[Dict[str, Any]] = []
-    for r in rows:
-        pv = round(float(r.get("pv", 0) or 0) * factor, 2)
-        imp = round(float(r.get("imp", 0) or 0) * factor, 2)
-        exp = round(float(r.get("exp", 0) or 0) * factor, 2)
-        self_kwh = round(max(0.0, pv - exp), 2)
-        out.append({
-            "period": r["_id"],
-            "pv_kwh": pv,
-            "import_kwh": imp,
-            "export_kwh": exp,
-            "self_kwh": self_kwh,
-        })
-    return out
+
+def _charge_w(row: Dict[str, Any]) -> float:
+    value = row.get("battery_charge_w")
+    return max(0.0, float(value)) if value is not None else max(0.0, _safe_power(row, "battery_power"))
+
+
+def _discharge_w(row: Dict[str, Any]) -> float:
+    value = row.get("battery_discharge_w")
+    return max(0.0, float(value)) if value is not None else max(0.0, -_safe_power(row, "battery_power"))
+
+
+def _flow_components(row: Dict[str, Any]) -> Dict[str, float]:
+    pv = max(0.0, _safe_power(row, "pv_power"))
+    charge = _charge_w(row)
+    discharge = _discharge_w(row)
+    pv_ac = max(0.0, pv - charge)
+    grid = _safe_power(row, "grid_power")
+    grid_export = max(0.0, -grid)
+    local_ac = pv_ac + discharge
+    export_share = min(1.0, grid_export / local_ac) if local_ac > 0 else 0.0
+    pv_export = pv_ac * export_share
+    battery_export = discharge * export_share
+    return {
+        "pv": pv,
+        "house": max(0.0, _safe_power(row, "house_power")),
+        "grid_import": max(0.0, grid),
+        "grid_export": grid_export,
+        "charge": charge,
+        "discharge": discharge,
+        "pv_direct": max(0.0, pv_ac - pv_export),
+        "battery_to_house": max(0.0, discharge - battery_export),
+        "pv_export": pv_export,
+        "battery_export": battery_export,
+    }
+
+
+def _summarize_energy_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    names = ("pv", "house", "grid_import", "grid_export", "charge", "discharge",
+             "pv_direct", "battery_to_house", "pv_export", "battery_export")
+    totals = {name: 0.0 for name in names}
+    measured_seconds = 0.0
+    for previous, current in zip(rows, rows[1:]):
+        try:
+            start = datetime.fromisoformat(previous["ts"])
+            end = datetime.fromisoformat(current["ts"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        seconds = (end - start).total_seconds()
+        if seconds <= 0 or seconds > MAX_ENERGY_GAP_SECONDS:
+            continue
+        measured_seconds += seconds
+        a, b = _flow_components(previous), _flow_components(current)
+        hours = seconds / 3600.0
+        for name in names:
+            totals[name] += (a[name] + b[name]) / 2.0 * hours
+
+    def kwh(name: str) -> float:
+        return totals[name] / 1000.0
+
+    pv = kwh("pv")
+    house = kwh("house")
+    grid_import = kwh("grid_import")
+    grid_export = kwh("grid_export")
+    charge = kwh("charge")
+    discharge = kwh("discharge")
+    pv_direct = kwh("pv_direct")
+    battery_to_house = kwh("battery_to_house")
+    pv_export = kwh("pv_export")
+    battery_export = kwh("battery_export")
+    self_consumption = max(0.0, min(pv, pv_direct + charge))
+    autarky = ((house - grid_import) / house * 100) if house > 0 else 0.0
+    self_percent = (self_consumption / pv * 100) if pv > 0 else 0.0
+    ratio = (discharge / charge * 100) if charge > 0.05 else 0.0
+    clamp = lambda value: max(0.0, min(100.0, value))
+    duration_h = measured_seconds / 3600.0
+    return {
+        "pv_kwh": round(pv, 3),
+        "consumption_kwh": round(house, 3),
+        "grid_import_kwh": round(grid_import, 3),
+        "grid_export_kwh": round(grid_export, 3),
+        "self_consumption_kwh": round(self_consumption, 3),
+        "autarky_pct": round(clamp(autarky), 1),
+        "self_consumption_pct": round(clamp(self_percent), 1),
+        "avg_pv_w": round(totals["pv"] / duration_h, 1) if duration_h > 0 else 0,
+        "avg_house_w": round(totals["house"] / duration_h, 1) if duration_h > 0 else 0,
+        "battery_charge_kwh": round(charge, 3),
+        "battery_discharge_kwh": round(discharge, 3),
+        "pv_direct_kwh": round(pv_direct, 3),
+        "battery_to_house_kwh": round(battery_to_house, 3),
+        "pv_export_kwh": round(pv_export, 3),
+        "battery_export_kwh": round(battery_export, 3),
+        "battery_discharge_charge_pct": round(clamp(ratio), 1),
+        "round_trip_pct": round(clamp(ratio), 1),
+        "measurement_available": measured_seconds > 0,
+        "sample_count": len(rows),
+        "measured_duration_s": round(measured_seconds, 1),
+    }
 
 
 @api_router.get("/energy/balance")
@@ -83,23 +171,31 @@ async def energy_balance(period: str = "day", limit: int = 14) -> Dict[str, Any]
     limit = max(1, min(int(limit), 60))
     if period == "day":
         start = (datetime.now(timezone.utc) - timedelta(days=limit)).isoformat()
-        bucket = {"$substr": ["$ts", 0, 10]}
     else:
         start = (datetime.now(timezone.utc) - timedelta(days=limit * 31)).isoformat()
-        bucket = {"$substr": ["$ts", 0, 7]}
-    pipeline = [
-        {"$match": {"ts": {"$gte": start}}},
-        {"$group": {
-            "_id": bucket,
-            "pv": {"$sum": "$pv_power"},
-            "imp": {"$sum": {"$cond": [{"$gt": ["$grid_power", 0]}, "$grid_power", 0]}},
-            "exp": {"$sum": {"$cond": [{"$lt": ["$grid_power", 0]}, {"$multiply": ["$grid_power", -1]}, 0]}},
-            "n": {"$sum": 1},
-        }},
-        {"$sort": {"_id": 1}},
-    ]
-    rows = await db.snapshots.aggregate(pipeline).to_list(1000)
-    buckets = _rows_to_balance(rows)[-limit:]
+    projection = {"_id": 0, "ts": 1, "pv_power": 1, "house_power": 1, "grid_power": 1,
+                  "battery_power": 1, "battery_charge_w": 1, "battery_discharge_w": 1}
+    max_rows = min(1000000, max(20000, limit * (6000 if period == "day" else 180000)))
+    cursor = db.snapshots.find({"ts": {"$gte": start}}, projection).sort("ts", -1).limit(max_rows)
+    rows = (await cursor.to_list(max_rows))[::-1]
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    length = 10 if period == "day" else 7
+    for row in rows:
+        key = str(row.get("ts") or "")[:length]
+        if key:
+            grouped.setdefault(key, []).append(row)
+    buckets = []
+    for key, period_rows in grouped.items():
+        summary = _summarize_energy_rows(period_rows)
+        if summary["measurement_available"]:
+            buckets.append({
+                "period": key,
+                "pv_kwh": round(summary["pv_kwh"], 2),
+                "import_kwh": round(summary["grid_import_kwh"], 2),
+                "export_kwh": round(summary["grid_export_kwh"], 2),
+                "self_kwh": round(summary["self_consumption_kwh"], 2),
+            })
+    buckets = buckets[-limit:]
     return {"period": period, "buckets": buckets}
 
 
@@ -151,12 +247,148 @@ async def cfg_put(update: ConfigUpdate) -> Dict[str, Any]:
     return current
 
 
+# ---------- Roadmap (editierbar, lokal persistiert) ----------
+
+# Startinhalt: vollständiger tatsächlicher Projektstand. Wird beim ersten Abruf
+# in db.roadmap gespeichert; danach zählt ausschließlich der gespeicherte Stand.
+DEFAULT_ROADMAP = [
+    {"id": "live-dashboard", "status": "done", "date": "2026-06", "title": "Live-Dashboard mit animiertem Energiefluss"},
+    {"id": "scada-design", "status": "done", "date": "2026-06", "title": "SCADA-Control-Room-Design (DSEG7-LCD, Sora, Neon-Akzente)"},
+    {"id": "device-control", "status": "done", "date": "2026-06", "title": "Geräte-Steuerung: Hoymiles-Limit & Trucki/SUN"},
+    {"id": "alarms", "status": "done", "date": "2026-06", "title": "Status-Alarme + konfigurierbare Schwellwerte"},
+    {"id": "diagnose", "status": "done", "date": "2026-06", "title": "Diagnose / Geräte-Selbsttest"},
+    {"id": "discovery", "status": "done", "date": "2026-06", "title": "Geräte-Erkennung + Firmware-Vergleich"},
+    {"id": "integrations", "status": "done", "date": "2026-06", "title": "Integrationen: Mosquitto MQTT & InfluxDB"},
+    {"id": "local-start", "status": "done", "date": "2026-06", "title": "Lokaler Start ohne MongoDB + DB-Retention"},
+    {"id": "grafana", "status": "done", "date": "2026-10", "title": "Grafana Auto-Provisioning (Datasource + 42-Panel-Dashboard)"},
+    {"id": "scadavis", "status": "done", "date": "2026-10-07", "title": "SCADAvis-Synoptik-Vorschau + Grafana-Panel"},
+    {"id": "suntimeline", "status": "done", "date": "2026-10-07", "title": "Sonnen-Tagesverlauf (Balken & Bogen umschaltbar)"},
+    {"id": "favorites", "status": "done", "date": "2026-10-07", "title": "Favoriten aufs Dashboard pinnen (inkl. MPPT-Strings & Phasen)"},
+    {"id": "favorites-dnd", "status": "done", "date": "2026-10-07", "title": "Favoriten per Drag-&-Drop sortieren"},
+    {"id": "device-cards", "status": "done", "date": "2026-10-29", "title": "Vier große Geräte-KPI-Karten"},
+    {"id": "flow-rework", "status": "done", "date": "2026-10-29", "title": "Energiefluss: Kompakt (5) / Detail (6) / Auto"},
+    {"id": "flow-controls", "status": "done", "date": "2026-10-29", "title": "Fluss an/aus + Tempo-Regler (1x / 1.5x / 2x)"},
+    {"id": "flow-mobile", "status": "done", "date": "2026-10-29", "title": "Hochkant-Energiefluss auf Mobilgeräten"},
+    {"id": "display-settings", "status": "done", "date": "2026-10-29", "title": "Einstellungen: Akkukapazität & Karten-Beschriftungen"},
+    {"id": "docs-footer", "status": "done", "date": "2026-10-29", "title": "Versions-Fußleiste, In-App-Roadmap & Anleitung"},
+    {"id": "roadmap-edit", "status": "done", "date": "2026-10-29", "title": "Roadmap bearbeiten & „Was ist neu?\"-Fenster"},
+    {"id": "report-page", "status": "done", "date": "2026-10-29", "title": "Projektbericht mit Zeitachse & Vorher/Nachher-Vorschau"},
+    {"id": "changelog-auto", "status": "done", "date": "2026-10-29", "title": "Bericht-Änderungsliste automatisch aus der Roadmap"},
+    {"id": "report-print", "status": "done", "date": "2026-10-29", "title": "Projektbericht drucken / als PDF (hell & dunkel)"},
+    {"id": "sparklines", "status": "planned", "date": "Phase 2", "title": "Mini-Sparklines (15-Min-Trend) in den Geräte-Karten"},
+    {"id": "roadmap-extra", "status": "planned", "date": "Phase 2", "title": "Roadmap: Notizen, Links, Tags & Filter je Punkt"},
+    {"id": "threshold-alarms", "status": "planned", "date": "Phase 3", "title": "Schwellwert-Farbalarme je Karte / Kachel"},
+    {"id": "alarm-push", "status": "planned", "date": "Phase 3", "title": "Push-Benachrichtigung bei kritischen Alarmen"},
+    {"id": "docs-pdf", "status": "planned", "date": "Phase 3", "title": "Anleitung / Roadmap als Druck- / PDF-Ansicht exportieren"},
+    {"id": "more-device-texts", "status": "planned", "date": "Phase 3", "title": "Weitere Gerätetexte in den Einstellungen editierbar"},
+    {"id": "synoptic-svg", "status": "planned", "date": "Phase 3", "title": "Eigenes Synoptik-SVG final ins Grafana-Panel einhängen"},
+    {"id": "manufacturer-manuals", "status": "planned", "date": "Zukunft", "title": "Hersteller-Handbücher für alle Geräte in der App hinterlegen"},
+    {"id": "influx-grafana-alignment", "status": "planned", "date": "Zukunft", "title": "InfluxDB-Datenmodell und Grafana-Dashboards neu abstimmen und vollständig nutzbar machen"},
+    {"id": "potential-improvements", "status": "planned", "date": "Fortlaufend", "title": "Bestätigte potenzielle Verbesserungen priorisiert abarbeiten"},
+]
+
+
+class RoadmapUpdate(BaseModel):
+    items: List[Dict[str, Any]]
+
+
+@api_router.get("/roadmap")
+async def roadmap_get() -> Dict[str, Any]:
+    doc = await db.roadmap.find_one({"_id": "main"})
+    if not doc or not doc.get("items"):
+        await db.roadmap.update_one({"_id": "main"}, {"$set": {"items": DEFAULT_ROADMAP}}, upsert=True)
+        return {"items": DEFAULT_ROADMAP}
+    return {"items": doc["items"]}
+
+
+@api_router.put("/roadmap")
+async def roadmap_put(update: RoadmapUpdate) -> Dict[str, Any]:
+    items = [
+        {
+            "id": str(it.get("id") or ""),
+            "title": str(it.get("title") or "").strip(),
+            "status": it.get("status") if it.get("status") in ("done", "wip", "planned") else "planned",
+            "date": str(it.get("date") or ""),
+        }
+        for it in update.items
+        if str(it.get("title") or "").strip()
+    ]
+    await db.roadmap.update_one({"_id": "main"}, {"$set": {"items": items}}, upsert=True)
+    return {"items": items}
+
+
+# ---------- Geräte-Erkennung / Anlagendokumentation ----------
+
+async def _save_device_info(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Persistiert das Erkennungs-Ergebnis als Doku. Bei Fehlern bleiben die
+    zuletzt erfolgreich erkannten Kenndaten erhalten (Plan: auch offline sichtbar)."""
+    key = result["device"]
+    existing = await db.device_info.find_one({"_id": key}) or {}
+    if result["status"] == "error":
+        doc = {
+            "device": key,
+            "device_label": result["device_label"],
+            "status": "error",
+            "error": result.get("error"),
+            "ip": result.get("ip"),
+            "last_attempt_at": result["detected_at"],
+            "fields": existing.get("fields", []),
+            "firmware": existing.get("firmware"),
+            "detected_at": existing.get("detected_at"),
+            "changed_count": 0,
+            "prev_detected_at": existing.get("prev_detected_at"),
+        }
+    else:
+        prev_fields = {f["label"]: f["value"] for f in (existing.get("fields") or [])}
+        changed = annotate_changes(result["fields"], prev_fields)
+        doc = {
+            "device": key,
+            "device_label": result["device_label"],
+            "status": result["status"],
+            "error": None,
+            "fields": result["fields"],
+            "firmware": result.get("firmware"),
+            "ip": result.get("ip"),
+            "detected_at": result["detected_at"],
+            "last_attempt_at": result["detected_at"],
+            "changed_count": changed,
+            "prev_detected_at": existing.get("detected_at"),
+        }
+    await db.device_info.update_one({"_id": key}, {"$set": doc}, upsert=True)
+    return doc
+
+
+@api_router.get("/devices/info")
+async def devices_info() -> Dict[str, Any]:
+    cur = db.device_info.find({}, {"_id": 0})
+    rows = await cur.to_list(50)
+    return {"devices": rows}
+
+
+@api_router.post("/devices/discover-all")
+async def devices_discover_all() -> Dict[str, Any]:
+    cfg = await get_config()
+    keys = list(DEVICE_LABELS.keys())
+    results = await asyncio.gather(*[discover_device(cfg, k) for k in keys])
+    docs = [await _save_device_info(r) for r in results]
+    return {"devices": docs}
+
+
+@api_router.post("/devices/{key}/discover")
+async def devices_discover(key: str) -> Dict[str, Any]:
+    if key not in DEVICE_LABELS:
+        raise HTTPException(404, f"Unbekanntes Gerät: {key}")
+    cfg = await get_config()
+    result = await discover_device(cfg, key)
+    return await _save_device_info(result)
+
+
 @api_router.get("/history")
 async def history(range: str = "1h") -> Dict[str, Any]:
-    minutes = {"1h": 60, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
+    minutes = {"1h": 60, "3h": 180, "6h": 360, "12h": 720, "24h": 1440}.get(range, 60)
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
-    cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(10000)
-    rows = await cur.to_list(10000)
+    cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", -1).limit(10000)
+    rows = (await cur.to_list(10000))[::-1]  # neueste behalten, dann chronologisch
     # downsample if too many points
     if len(rows) > 600:
         step = max(1, len(rows) // 600)
@@ -165,86 +397,19 @@ async def history(range: str = "1h") -> Dict[str, Any]:
 
 
 @api_router.get("/today")
-async def today() -> Dict[str, Any]:
-    """Trapez-integration of power values from UTC midnight."""
+async def today(day_offset: int = 0) -> Dict[str, Any]:
+    """Trapez-integration for one UTC day; day_offset=1 returns yesterday."""
+    day_offset = max(0, min(int(day_offset), 3650))
     now = datetime.now(timezone.utc)
-    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    cur = db.snapshots.find({"ts": {"$gte": midnight.isoformat()}}, {"_id": 0}).sort("ts", 1).limit(20000)
+    today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_start = today_midnight - timedelta(days=day_offset)
+    day_end = min(now, day_start + timedelta(days=1)) if day_offset == 0 else day_start + timedelta(days=1)
+    cur = db.snapshots.find(
+        {"ts": {"$gte": day_start.isoformat(), "$lt": day_end.isoformat()}},
+        {"_id": 0},
+    ).sort("ts", 1).limit(20000)
     rows = await cur.to_list(20000)
-    if not rows:
-        return {
-            "pv_kwh": 0, "consumption_kwh": 0, "grid_import_kwh": 0,
-            "grid_export_kwh": 0, "self_consumption_kwh": 0,
-            "autarky_pct": 0, "self_consumption_pct": 0,
-            "avg_pv_w": 0, "avg_house_w": 0,
-            "battery_charge_kwh": 0, "battery_discharge_kwh": 0,
-            "round_trip_pct": 0,
-        }
-
-    def trapez(values_a: float, values_b: float, t_a: datetime, t_b: datetime) -> float:
-        dt_h = (t_b - t_a).total_seconds() / 3600.0
-        return (values_a + values_b) / 2.0 * dt_h
-
-    def charge_w(row: Dict[str, Any]) -> float:
-        v = row.get("battery_charge_w")
-        return v if v is not None else max(0, row.get("battery_power", 0))
-
-    def discharge_w(row: Dict[str, Any]) -> float:
-        v = row.get("battery_discharge_w")
-        return v if v is not None else max(0, -row.get("battery_power", 0))
-
-    pv_wh = grid_imp_wh = grid_exp_wh = house_wh = 0.0
-    bat_charge_wh = bat_discharge_wh = 0.0
-    for prev, cur_row in zip(rows, rows[1:]):
-        ta = datetime.fromisoformat(prev["ts"])
-        tb = datetime.fromisoformat(cur_row["ts"])
-        if (tb - ta).total_seconds() > 600:
-            continue  # large gap, skip
-        pv_a, pv_b = prev["pv_power"], cur_row["pv_power"]
-        gp_a, gp_b = prev["grid_power"], cur_row["grid_power"]
-        hp_a, hp_b = prev["house_power"], cur_row["house_power"]
-        pv_wh += trapez(pv_a, pv_b, ta, tb)
-        house_wh += trapez(hp_a, hp_b, ta, tb)
-        grid_imp_wh += trapez(max(0, gp_a), max(0, gp_b), ta, tb)
-        grid_exp_wh += trapez(max(0, -gp_a), max(0, -gp_b), ta, tb)
-        bat_charge_wh += trapez(charge_w(prev), charge_w(cur_row), ta, tb)
-        bat_discharge_wh += trapez(discharge_w(prev), discharge_w(cur_row), ta, tb)
-
-    pv_kwh = pv_wh / 1000.0
-    house_kwh = house_wh / 1000.0
-    imp_kwh = grid_imp_wh / 1000.0
-    exp_kwh = grid_exp_wh / 1000.0
-    self_consumption_kwh = max(0, pv_kwh - exp_kwh)
-    autarky = (self_consumption_kwh / house_kwh * 100) if house_kwh > 0 else 0
-    autarky = max(0.0, min(100.0, autarky))
-    self_cons_pct = (self_consumption_kwh / pv_kwh * 100) if pv_kwh > 0 else 0
-    self_cons_pct = max(0.0, min(100.0, self_cons_pct))
-
-    duration_h = (datetime.fromisoformat(rows[-1]["ts"]) - datetime.fromisoformat(rows[0]["ts"])).total_seconds() / 3600.0
-    avg_pv = (pv_wh / duration_h) if duration_h > 0 else 0
-    avg_house = (house_wh / duration_h) if duration_h > 0 else 0
-
-    bat_charge_kwh = bat_charge_wh / 1000.0
-    bat_discharge_kwh = bat_discharge_wh / 1000.0
-    # Round-Trip-Wirkungsgrad = AC-Entladeenergie / DC-Ladeenergie.
-    # Erst ab einer Mindest-Ladeenergie aussagekräftig (Rauschen vermeiden).
-    round_trip = (bat_discharge_kwh / bat_charge_kwh * 100) if bat_charge_kwh > 0.05 else 0
-    round_trip = max(0.0, min(100.0, round_trip))
-
-    return {
-        "pv_kwh": round(pv_kwh, 3),
-        "consumption_kwh": round(house_kwh, 3),
-        "grid_import_kwh": round(imp_kwh, 3),
-        "grid_export_kwh": round(exp_kwh, 3),
-        "self_consumption_kwh": round(self_consumption_kwh, 3),
-        "autarky_pct": round(autarky, 1),
-        "self_consumption_pct": round(self_cons_pct, 1),
-        "avg_pv_w": round(avg_pv, 1),
-        "avg_house_w": round(avg_house, 1),
-        "battery_charge_kwh": round(bat_charge_kwh, 3),
-        "battery_discharge_kwh": round(bat_discharge_kwh, 3),
-        "round_trip_pct": round(round_trip, 1),
-    }
+    return _summarize_energy_rows(rows)
 
 
 @api_router.post("/control/hoymiles")
@@ -348,6 +513,11 @@ async def integrations_status() -> Dict[str, Any]:
             "last_msg": _mqtt_data["victron"]["_ts"],
             "system_pv_power": _mqtt_data["victron"]["system"].get("Dc/Pv/Power"),
             "instances": inst_summary,
+            "smartshunt": {
+                "instance": SMARTSHUNT_INSTANCE,
+                "last_msg": (_mqtt_data["victron"].get("batteries") or {}).get(SMARTSHUNT_INSTANCE, {}).get("_ts"),
+                "fields": len([k for k in ((_mqtt_data["victron"].get("batteries") or {}).get(SMARTSHUNT_INSTANCE, {})).keys() if not k.startswith("_")]),
+            },
         },
     }
 
@@ -473,11 +643,44 @@ async def diagnostics_run() -> Dict[str, Any]:
     n_pass = sum(1 for r in results if r["ok"] is True)
     n_fail = sum(1 for r in results if r["ok"] is False)
     n_skip = sum(1 for r in results if r["ok"] is None)
-    return {
+    run = {
         "timestamp": now_dt.isoformat(),
         "duration_ms": int((time.time() - started) * 1000),
         "summary": {"pass": n_pass, "fail": n_fail, "skip": n_skip, "total": len(results)},
         "tests": results,
+    }
+    # Verlauf: nur manuelle Läufe, die letzten SELFTEST_KEEP behalten
+    await db.selftest_runs.insert_one(dict(run))
+    old = await db.selftest_runs.find({}, {"_id": 1}).sort("timestamp", -1).skip(SELFTEST_KEEP).to_list(None)
+    if old:
+        await db.selftest_runs.delete_many({"_id": {"$in": [o["_id"] for o in old]}})
+    return run
+
+
+SELFTEST_KEEP = 50
+
+
+@api_router.get("/diagnostics/history")
+async def diagnostics_history() -> Dict[str, Any]:
+    """Letzte Selbst-Test-Läufe + je Prüfung: letzter Status, zuletzt OK, zuletzt ausgefallen."""
+    runs = await db.selftest_runs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(SELFTEST_KEEP)
+    checks: Dict[str, Dict[str, Any]] = {}
+    for r in runs:  # neueste zuerst
+        for t in r.get("tests", []):
+            c = checks.setdefault(t["name"], {"name": t["name"], "last_status": t.get("ok"), "last_ok": None,
+                                              "last_fail": None, "last_fail_detail": None, "fails": 0, "runs": 0})
+            c["runs"] += 1
+            if t.get("ok") is True and not c["last_ok"]:
+                c["last_ok"] = r["timestamp"]
+            if t.get("ok") is False:
+                c["fails"] += 1
+                if not c["last_fail"]:
+                    c["last_fail"] = r["timestamp"]
+                    c["last_fail_detail"] = t.get("detail")
+    return {
+        "runs": [{"timestamp": r["timestamp"], "duration_ms": r.get("duration_ms"), "summary": r.get("summary")} for r in runs],
+        "checks": list(checks.values()),
+        "keep": SELFTEST_KEEP,
     }
 
 
@@ -502,5 +705,6 @@ async def diagnostics_raw() -> Dict[str, Any]:
             "system": _mqtt_data["victron"]["system"],
             "grid": _mqtt_data["victron"]["grid"],
             "instances": {str(k): v for k, v in _mqtt_data["victron"]["instances"].items()},
+            "batteries": {str(k): v for k, v in (_mqtt_data["victron"].get("batteries") or {}).items()},
         },
     }

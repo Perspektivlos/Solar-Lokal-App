@@ -1,16 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { getLive, getToday, getHistory, getConfig } from "../lib/api";
+import { getLive, getToday, getHistory, getConfig, putConfig } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import IntroCard from "../components/IntroCard";
 import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
 import MpptCompare from "../components/MpptCompare";
-import KpiStrip from "../components/KpiStrip";
+import DeviceCards from "../components/DeviceCards";
+import FlowSummary from "../components/FlowSummary";
+import { FavoritesStrip } from "../components/FavoritesStrip";
 import GridHouseCard from "../components/GridHouseCard";
 import TruckiCard from "../components/TruckiCard";
 import VictronCard from "../components/VictronCard";
 import { COLOR, formatNum, relativeTime, GlassCard, SourceBadge, Badge, Delta, MetricBig, Stat, SectionHeader } from "../components/solar-ui";
-import { Cable, AlertTriangle, Activity, Sun, BatteryCharging } from "lucide-react";
+import { Cable, AlertTriangle, Activity, Sun, BatteryCharging, Star } from "lucide-react";
+import { HOYMILES_NOMINAL_W, utilizationPercent } from "../lib/mppt";
 
 const INTRO_SECTIONS = [
   {
@@ -58,6 +61,19 @@ export default function Dashboard() {
   const liveRef = useRef(null);
   const [now, setNow] = useState(() => Date.now());
   const [devices, setDevices] = useState({});
+  const [favorites, setFavorites] = useState([]);
+  const [display, setDisplay] = useState(null);
+  const toggleFavorite = (key) => {
+    setFavorites((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      putConfig({ favorites: next }).catch(() => {});
+      return next;
+    });
+  };
+  const reorderFavorites = (next) => {
+    setFavorites(next);
+    putConfig({ favorites: next }).catch(() => {});
+  };
   // Direktlink zur Geräte-Weboberfläche (LAN-IP), sofern konfiguriert.
   const devUrl = (name) => {
     const ip = devices?.[name]?.ip;
@@ -82,7 +98,7 @@ export default function Dashboard() {
   useEffect(() => {
     let alive = true;
     getConfig()
-      .then((c) => { if (alive) setDevices(c?.devices || {}); })
+      .then((c) => { if (alive) { setDevices(c?.devices || {}); setFavorites(c?.favorites || []); setDisplay(c?.display || null); } })
       .catch(() => {});
     return () => { alive = false; };
   }, []);
@@ -152,7 +168,7 @@ export default function Dashboard() {
     );
   }
 
-  const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp } = live;
+  const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp, sun } = live;
   const alarms = Array.isArray(live.alarms) ? live.alarms : [];
   const alarmsFor = (device) => alarms.filter((a) => a.device === device);
   const prev = prevLive;
@@ -160,13 +176,15 @@ export default function Dashboard() {
   const batteryKind = batteryStateKind(socDanger, summary.battery_power);
 
   // Rubrik-Details dynamisch aus Live-Werten (gleiche IntroCard-Struktur je Rubrik).
-  const srcLabel = (d) => (d?._via_mqtt ? "MQTT-Live" : d?._fallback ? "HTTP-Fallback" : d?.online === false ? "Offline" : d?.online === true ? "HTTP-Live" : demo_mode ? "Demo/Mock" : "unbekannt");
+  const srcLabel = (d) => (d?._via_mqtt ? "MQTT-Live" : d?.online === false ? "Offline" : d?._fallback ? "HTTP-Fallback" : d?.online === true ? "HTTP-Live" : demo_mode ? "Demo/Mock" : "unbekannt");
   const mppts = victron?.mppts || [];
   const vPv = mppts.reduce((a, m) => a + (m.pv_power || 0), 0);
   const vYield = mppts.reduce((a, m) => a + (m.yield_today || 0), 0);
   const vLeader = mppts.reduce((a, m) => ((m.yield_today || 0) > (a?.yield_today || 0) ? m : a), mppts[0]);
   const phases = shelly?.phases || [];
   const maxPh = phases.reduce((a, p) => (Math.abs(p.power || 0) > Math.abs(a?.power || 0) ? p : a), phases[0]);
+  const hoymilesPeak = Number(ahoy?.max_power_w) > 0 ? Number(ahoy.max_power_w) : HOYMILES_NOMINAL_W;
+  const hoymilesUtil = utilizationPercent(ahoy?.total_power, hoymilesPeak);
 
   const batteryDetails = [
     { label: "Zweck & Funktion", body: `Puffert PV-Überschuss im LiFePO4-Speicher (16S) über das Trucki2Shelly-Gateway. Aktuell ${batteryKind === "LADEN" ? "lädt" : batteryKind === "ENTLADEN" ? "entlädt" : "im Leerlauf"} mit ${formatNum(Math.abs(summary.battery_power), 0)} W netto bei ${formatNum(trucki?.soc, 0)} % SoC.` },
@@ -181,13 +199,13 @@ export default function Dashboard() {
     { label: "Datenquellen", body: `Quelle aktuell: ${srcLabel(victron)}. Victron-MQTT (VenusOS) mit periodischem Keepalive.${demo_mode ? " Demo-Modus: simulierte Werte." : ""}` },
     { label: "Aktualisierung", body: "Live alle 3 s; Ladezustände (Bulk/Absorption/Float) direkt aus VenusOS." },
     { label: "Layout-Gruppen", body: `Victron-Übersicht (P/U/VBatt/Yield je Regler) · MPPT-Vergleich${vLeader?.name ? ` — aktuell führt ${vLeader.name}` : ""}.` },
-    { label: "Bekannte Einschränkungen", body: "Erträge je Regler hängen von Ausrichtung/Verschattung ab; kurzzeitige Sprünge bei Wolken sind normal." },
+    { label: "Bekannte Einschränkungen", body: "Erträge je Regler hängen von Ausrichtung/Verschattung ab. Leistungssprünge bei Wolken sind normal; der kumulierte Tagesertrag darf dabei nicht sinken." },
     { label: "Mögliche Fehler", body: "Kein Update → VenusOS-MQTT prüfen. ‚FALLBACK'-Badge → HTTP-Erreichbarkeit des GX-Geräts prüfen." },
   ];
   const pvGridDetails = [
     { label: "Zweck & Funktion", body: `Hoymiles HM1500 Mikro-Wechselrichter via Ahoy DTU. Aktuell ${formatNum(ahoy?.total_power, 0)} W AC über ${ahoy?.channels?.length || 0} Kanäle bei Limit ${formatNum(ahoy?.limit_percent, 0)} %. Netz: ${summary.grid_power >= 0 ? "Bezug" : "Einspeisung"} ${formatNum(Math.abs(summary.grid_power), 0)} W, Hausverbrauch ${formatNum(summary.house_power, 0)} W.` },
     { label: "Datenquellen", body: `Quelle aktuell: ${srcLabel(ahoy)}. MQTT bevorzugt, sonst HTTP /api; Netzwerte stammen vom Shelly.${demo_mode ? " Demo-Modus: simulierte Werte." : ""}` },
-    { label: "Aktualisierung", body: "Live alle 3 s; Tageserträge je Kanal (YDay) seit Mitternacht kumuliert." },
+    { label: "Aktualisierung", body: demo_mode ? "Live alle 3 s. Demo-YDay-Werte sind deterministische, kumulative Tageszähler und fallen innerhalb eines Tages nicht. Die Dashboard-Kennzahl wird separat aus dem Messverlauf integriert." : "Live alle 3 s; Tageserträge je Kanal (YDay) seit Mitternacht kumuliert. Die Dashboard-Kennzahl wird unabhängig davon aus dem Messverlauf integriert." },
     { label: "Layout-Gruppen", body: "Hoymiles-Kanaltabelle (P/U/I/YDay + Limit) · Einspeisung & Hausverbrauch." },
     { label: "Bekannte Einschränkungen", body: "Hausverbrauch wird rechnerisch aus PV, Netz und Akku ermittelt — bei Mess-Latenz kurzzeitig ungenau." },
     { label: "Mögliche Fehler", body: "Kanäle 0 W trotz Sonne → Ahoy-DTU/Wechselrichter prüfen. ‚FALLBACK' → Ahoy-IP prüfen." },
@@ -202,23 +220,28 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-8" data-testid="dashboard">
+    <div className="space-y-8 page-reveal" data-testid="dashboard">
       <IntroCard title="Dashboard" subtitle="Live-Überblick aller Anlagen in einem Blick" sections={INTRO_SECTIONS} accent="#FACC15" testid="intro-dashboard" />
 
       {/* Header strip */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white flex-wrap">
             <span className="w-1.5 h-7 rounded-sm" style={{ background: COLOR.pv, boxShadow: `0 0 10px ${COLOR.pv}aa` }} />
             Solar · Live
+            <span
+              className="font-mono text-base sm:text-lg font-medium tracking-[0.18em] text-cyan-300 neon-text-cyan px-2.5 py-1 rounded-md border border-cyan-400/25 bg-cyan-400/[0.06]"
+              data-testid="dashboard-clock"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {new Date(now).toLocaleTimeString("de-DE")}
+            </span>
           </h1>
           <div className="font-mono text-[11px] text-white/60 mt-1.5 flex items-center gap-x-3 gap-y-1.5 flex-wrap" data-testid="dashboard-status-line">
             <span className="inline-flex items-center gap-1.5">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 dot-pulse" />
               Update: {relativeTime(timestamp, now)}
             </span>
-            <span className="text-white/25">·</span>
-            <span>Uhr: {new Date(now).toLocaleTimeString("de-DE")}</span>
             <span className="text-white/25">·</span>
             <span data-testid="status-devices">
               {[shelly, ahoy, trucki, victron].filter((d) => d?.online).length}/4 Geräte online
@@ -232,15 +255,19 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ÜBERSICHT · KPI-Leiste + Energiefluss */}
+      {/* FAVORITEN · angepinnte Geräte-KPIs */}
+      <FavoritesStrip favorites={favorites} live={live} onToggle={toggleFavorite} onReorder={reorderFavorites} />
+
+      {/* ÜBERSICHT · Geräte-Karten + Energiefluss + Kennzahlen */}
       <div data-testid="row-overview" className="space-y-8">
-        <KpiStrip today={today} summary={summary} trail={trail} />
-        <EnergyFlow summary={summary} trucki={trucki} />
+        <DeviceCards live={live} today={today} display={display} />
+        <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} sun={sun} />
+        <FlowSummary live={live} today={today} usableKwh={display?.usable_kwh} />
       </div>
 
       {/* SEKTION · BATTERIE */}
       <div className="space-y-4">
-        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={batteryDetails} alarms={alarmsFor("trucki")} testid="section-battery" />
+        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={batteryDetails} alarms={alarmsFor("trucki")} testid="section-battery" pinned={favorites.includes("trucki")} onPin={() => toggleFavorite("trucki")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
             <TruckiCard trucki={trucki} />
@@ -281,24 +308,28 @@ export default function Dashboard() {
 
       {/* SEKTION · VICTRON */}
       <div className="space-y-4">
-        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} details={victronDetails} alarms={alarmsFor("victron")} testid="section-victron" />
+        <SectionHeader label="Victron" color={COLOR.victron} icon={Sun} href={devUrl("victron")} details={victronDetails} alarms={alarmsFor("victron")} testid="section-victron" pinned={favorites.includes("victron")} onPin={() => toggleFavorite("victron")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="mppt-row">
           <div className="lg:col-span-7">
             <VictronCard victron={victron} />
           </div>
-          <div className="lg:col-span-5"><MpptCompare mppts={victron.mppts} /></div>
+          <div className="lg:col-span-5"><MpptCompare mppts={victron.mppts} favorites={favorites} onToggleFav={toggleFavorite} /></div>
         </div>
       </div>
 
       {/* SEKTION · PV & NETZ */}
       <div className="space-y-4">
-        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} details={pvGridDetails} alarms={alarmsFor("ahoy")} testid="section-pv-grid" />
+        <SectionHeader label="PV & Netz" color={COLOR.pv} icon={Sun} href={devUrl("ahoy")} details={pvGridDetails} alarms={alarmsFor("ahoy")} testid="section-pv-grid" pinned={favorites.includes("ahoy")} onPin={() => toggleFavorite("ahoy")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="pv-grid-row">
           <div className="lg:col-span-7">
             <GlassCard title="Hoymiles HM1500 · Kanäle" accent={COLOR.pv} icon={Sun} badge={<SourceBadge data={ahoy} />} testid="card-ahoy">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div className="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3">
-                  <MetricBig label="Total AC" value={formatNum(ahoy.total_power, 0)} unit="W" color="text-yellow-300 neon-text-yellow" size="sm" />
+                <div className="lg:col-span-1 grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-1" data-testid="ahoy-power-percent">
+                    <div data-testid="ahoy-power"><MetricBig label="Total AC" value={formatNum(ahoy.total_power, 0)} unit="W" color="text-yellow-300 neon-text-yellow" size="sm" /></div>
+                    <div data-testid="ahoy-percent"><MetricBig label="Auslastung" value={hoymilesUtil == null ? "–" : formatNum(hoymilesUtil, 0)} unit={hoymilesUtil == null ? "" : "%"} color="text-white" size="sm" /></div>
+                  </div>
+                  <div className="font-mono text-[10px] text-white/45" data-testid="ahoy-peak">Nennleistung {formatNum(hoymilesPeak, 0)} W</div>
                   <Stat label="Limit" value={ahoy.limit_percent} unit="%" />
                 </div>
                 <div className="lg:col-span-3">
@@ -306,7 +337,7 @@ export default function Dashboard() {
                     <thead>
                       <tr className="border-b border-white/10 text-[10px] uppercase tracking-[0.2em] text-white/65">
                         <th className="text-left py-1">CH</th><th className="text-right py-1">P</th><th className="text-right py-1">U</th>
-                        <th className="text-right py-1">I</th><th className="text-right py-1">YDay</th>
+                        <th className="text-right py-1">I</th><th className="text-right py-1">YDay kWh</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -316,7 +347,7 @@ export default function Dashboard() {
                           <td className="py-1.5 text-right text-yellow-300 text-sm">{formatNum(c.power, 0)} W</td>
                           <td className="py-1.5 text-right">{formatNum(c.voltage, 1)} V</td>
                           <td className="py-1.5 text-right">{formatNum(c.current, 2)} A</td>
-                          <td className="py-1.5 text-right">{formatNum(c.yield_day, 2)}</td>
+                          <td className="py-1.5 text-right" data-testid={`ahoy-ch-${c.ch}-yield-day`}>{formatNum(c.yield_day, 2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -331,7 +362,7 @@ export default function Dashboard() {
 
       {/* SEKTION · SHELLY */}
       <div className="space-y-4">
-        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} details={shellyDetails} alarms={alarmsFor("shelly")} testid="section-shelly" />
+        <SectionHeader label="Shelly" color={shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp} icon={Cable} href={devUrl("shelly")} details={shellyDetails} alarms={alarmsFor("shelly")} testid="section-shelly" pinned={favorites.includes("shelly")} onPin={() => toggleFavorite("shelly")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="shelly-row">
           <div className="lg:col-span-8">
             <GlassCard
@@ -348,7 +379,21 @@ export default function Dashboard() {
                     <div key={p.phase} className="glass-inset p-3" data-testid={`shelly-${p.phase}`}>
                       <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70 flex items-center justify-between">
                         <span>Phase {p.phase}</span>
-                        <Cable size={12} className={isImport ? "text-red-300" : "text-emerald-300"} />
+                        <span className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleFavorite(`phase:${p.phase}`)}
+                            title={favorites.includes(`phase:${p.phase}`) ? "Favorit entfernen" : "Phase anpinnen"}
+                            aria-pressed={favorites.includes(`phase:${p.phase}`)}
+                            data-testid={`shelly-${p.phase}-pin`}
+                            className="transition-opacity"
+                          >
+                            <Star size={12}
+                              style={{ color: favorites.includes(`phase:${p.phase}`) ? COLOR.pv : "rgba(255,255,255,0.35)" }}
+                              fill={favorites.includes(`phase:${p.phase}`) ? COLOR.pv : "none"} />
+                          </button>
+                          <Cable size={12} className={isImport ? "text-red-300" : "text-emerald-300"} />
+                        </span>
                       </div>
                       <div className={`font-mono text-2xl font-semibold tracking-tight mt-1.5 ${isImport ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`}>
                         <span className="opacity-70">{isImport ? "+" : "−"}</span>{formatNum(Math.abs(p.power), 1)}<span className="text-sm ml-1 text-white/45 font-normal">W</span>
@@ -363,13 +408,17 @@ export default function Dashboard() {
                 })}
                 <div className="glass-inset p-3" style={{ borderLeft: `3px solid ${shelly.total_power >= 0 ? COLOR.grid_imp : COLOR.grid_exp}` }}>
                   <div className="font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">Σ Total</div>
-                  <div className={`font-mono text-2xl font-semibold tracking-tight mt-1.5 ${shelly.total_power >= 0 ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`}>
-                    <span className="opacity-70">{shelly.total_power >= 0 ? "+" : "−"}</span>{formatNum(Math.abs(shelly.total_power), 1)}
-                    <span className="text-sm ml-1 text-white/45 font-normal">W</span>
+                  <div className="flex items-baseline justify-between gap-3 mt-1.5">
+                    <div className={`font-mono text-2xl font-semibold tracking-tight ${shelly.total_power >= 0 ? "text-red-300 neon-text-red" : "text-emerald-300 neon-text-green"}`} data-testid="shelly-total-power">
+                      <span className="opacity-70">{shelly.total_power >= 0 ? "+" : "−"}</span>{formatNum(Math.abs(shelly.total_power), 1)}
+                      <span className="text-sm ml-1 text-white/45 font-normal">W</span>
+                    </div>
+                    <div className="font-mono text-2xl font-semibold tracking-tight text-white" data-testid="shelly-total-percent">–</div>
                   </div>
                   <div className="font-mono text-[10px] text-white/55 mt-3">
                     {shelly.total_power >= 0 ? "Bezug aus dem Netz" : "Einspeisung ins Netz"}
                   </div>
+                  <div className="font-mono text-[9px] text-white/35 mt-1" data-testid="shelly-total-peak">Nennleistung – · Bezugsanteil nicht verfügbar</div>
                 </div>
               </div>
             </GlassCard>

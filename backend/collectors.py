@@ -17,8 +17,11 @@ from mqtt_client import (
     fetch_ahoy_from_mqtt,
     fetch_trucki_from_mqtt,
     fetch_victron_from_mqtt,
+    fetch_smartshunt_from_mqtt,
 )
-from mocks import mock_shelly, mock_ahoy, mock_trucki, mock_victron
+from mocks import mock_shelly, mock_ahoy, mock_trucki, mock_victron, mock_smartshunt
+from smartshunt import SMARTSHUNT_INSTANCE, unavailable_smartshunt
+from sun import event_times, sun_times, sun_intensity, DEFAULT_LAT, DEFAULT_LON
 
 logger = logging.getLogger("solar")
 
@@ -80,6 +83,7 @@ async def fetch_ahoy(ip: str, inverter_id: int = 0) -> Optional[Dict[str, Any]]:
     return {
         "online": True,
         "total_power": total,
+        "max_power_w": (inv or {}).get("max_power_w") or (inv or {}).get("max_power"),
         "limit_percent": (inv or {}).get("power_limit_read", 100),
         "channels": channels,
     }
@@ -94,8 +98,15 @@ async def fetch_trucki(ip: str) -> Optional[Dict[str, Any]]:
         "soc": data.get("soc", 0),
         "battery_voltage": data.get("battery_voltage", 0),
         "battery_power": data.get("battery_power", 0),
+        "target_w": data.get("target_w", data.get("target")),
+        "min_power_w": data.get("min_power_w", data.get("min_power")),
+        "max_power_w": data.get("max_power_w", data.get("max_power")),
+        "ac_setpoint_w": data.get("ac_setpoint_w", data.get("ac_setpoint")),
         "ac_output": bool(data.get("ac_output", False)),
         "zepc": bool(data.get("zepc", False)),
+        "day_energy_kwh": data.get("day_energy_kwh", data.get("day_energy")),
+        "total_energy_kwh": data.get("total_energy_kwh", data.get("total_energy")),
+        "temperature": data.get("temperature", data.get("temp")),
     }
 
 
@@ -115,6 +126,29 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     demo = cfg.get("demo_mode", True)
     mqtt_enabled = bool((cfg.get("mqtt") or {}).get("enabled"))
 
+    # Realistische Sonnenzeiten aus Standort (für Demo-Intensität + Payload).
+    loc = cfg.get("location") or {}
+    lat = loc.get("lat", DEFAULT_LAT)
+    lon = loc.get("lon", DEFAULT_LON)
+    now_dt = datetime.now(timezone.utc)
+    st = sun_times(lat, lon, now_dt)
+    sunrise_dt, sunset_dt = st if st else (None, None)
+    intensity = sun_intensity(now_dt, sunrise_dt, sunset_dt)
+    civil = event_times(lat, lon, now_dt, -6.0)       # blaue Stunde / bürgerliche Dämmerung
+    astro = event_times(lat, lon, now_dt, -18.0)       # astronomische Dämmerung (Nacht)
+    golden = event_times(lat, lon, now_dt, 6.0)        # goldene Stunde (Sonne bis 6°)
+    _iso = lambda d: d.isoformat() if d else None
+    sun_payload = {
+        "sunrise": _iso(sunrise_dt),
+        "sunset": _iso(sunset_dt),
+        "civil_dawn": _iso(civil[0]) if civil else None,
+        "civil_dusk": _iso(civil[1]) if civil else None,
+        "astro_dawn": _iso(astro[0]) if astro else None,
+        "astro_dusk": _iso(astro[1]) if astro else None,
+        "golden_morning_end": _iso(golden[0]) if golden else None,
+        "golden_evening_start": _iso(golden[1]) if golden else None,
+    }
+
     async def get_dev(mqtt_fn, http_factory, mock_fn, enabled):
         if not enabled:
             return {"online": False}
@@ -131,10 +165,7 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         # 2. HTTP fallback
         d = await http_factory()
         if d is None:
-            mocked = mock_fn()
-            mocked["online"] = False
-            mocked["_fallback"] = True
-            return mocked
+            return {"online": False, "_fallback": True, "error": "unreachable"}
         return d
 
     devs = cfg.get("devices")
@@ -149,28 +180,36 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
         get_dev(
             fetch_shelly_from_mqtt,
             lambda: fetch_shelly(dcfg("shelly").get("ip", "")),
-            mock_shelly,
+            lambda: mock_shelly(intensity),
             dcfg("shelly").get("enabled", False),
         ),
         get_dev(
             fetch_ahoy_from_mqtt,
             lambda: fetch_ahoy(dcfg("ahoy").get("ip", ""), dcfg("ahoy").get("inverter_id", 0)),
-            mock_ahoy,
+            lambda: mock_ahoy(intensity, now_dt, lat, lon),
             dcfg("ahoy").get("enabled", False),
         ),
         get_dev(
             fetch_trucki_from_mqtt,
             lambda: fetch_trucki(dcfg("trucki").get("ip", "")),
-            mock_trucki,
+            lambda: mock_trucki(intensity, now_dt, lat, lon),
             dcfg("trucki").get("enabled", False),
         ),
         get_dev(
             lambda: fetch_victron_from_mqtt(cfg.get("victron_mqtt") or {}),
             lambda: fetch_victron(dcfg("victron").get("ip", "")),
-            mock_victron,
+            lambda: mock_victron(intensity, now_dt, lat, lon),
             dcfg("victron").get("enabled", False),
         ),
     )
+
+    smartshunt_instance = SMARTSHUNT_INSTANCE
+    if demo:
+        smartshunt = mock_smartshunt(now_dt)
+    elif not mqtt_enabled:
+        smartshunt = unavailable_smartshunt("Lokale MQTT-Verbindung ist deaktiviert", smartshunt_instance)
+    else:
+        smartshunt = fetch_smartshunt_from_mqtt(smartshunt_instance)
 
     # DC-gekoppeltes System (vom Nutzer bestätigt):
     #  - Victron-MPPTs laden den Akku (DC), speisen NICHT direkt ins Haus.
@@ -193,10 +232,16 @@ async def collect_live(cfg: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "demo_mode": demo,
+        "sun": {
+            "sunrise": sunrise_dt.isoformat() if sunrise_dt else None,
+            "sunset": sunset_dt.isoformat() if sunset_dt else None,
+            **sun_payload,
+        },
         "shelly": shelly,
         "ahoy": ahoy,
         "trucki": trucki,
         "victron": victron,
+        "smartshunt": smartshunt,
         "summary": {
             "pv_power": round(pv_power, 1),
             "pv_ac_power": round(pv_ac_power, 1),

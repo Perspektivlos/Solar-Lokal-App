@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="23" time="1.488" timestamp="2026-11-05T11:07:43.108778+00:00" hostname="agent-env-d9ee6047-22d8-4f82-bb28-a3bebcc9e1d5"><testcase classname="tests.test_smartshunt" name="test_current_state_and_positive_charge_sign" time="0.001" /><testcase classname="tests.test_smartshunt" name="test_negative_power_is_discharge" time="0.000" /><testcase classname="tests.test_smartshunt" name="test_status_thresholds_at_90_and_180_seconds" time="0.000" /><testcase classname="tests.test_smartshunt" name="test_connected_zero_or_wrong_identity_is_unavailable" time="0.000" /><testcase classname="tests.test_smartshunt" name="test_optional_values_only_exist_when_reported" time="0.000" /><testcase classname="tests.test_smartshunt" name="test_native_device_history_is_passed_through" time="0.000" /><testcase classname="tests.test_smartshunt" name="test_mqtt_dispatch_stores_battery_instance_and_telemetry_timestamp" time="0.000" /><testcase classname="tests.test_smartshunt" name="test_demo_history_is_ordered_and_complete" time="0.001" /><testcase classname="tests.test_smartshunt" name="test_preview_endpoints_contract" time="0.395" /><testcase classname="tests.test_smartshunt_review" name="test_public_preview_full_contract" time="0.142" /><testcase classname="tests.test_smartshunt_review" name="test_public_history_ranges[1h]" time="0.098" /><testcase classname="tests.test_smartshunt_review" name="test_public_history_ranges[3h]" time="0.094" /><testcase classname="tests.test_smartshunt_review" name="test_public_history_ranges[6h]" time="0.089" /><testcase classname="tests.test_smartshunt_review" name="test_public_history_ranges[12h]" time="0.095" /><testcase classname="tests.test_smartshunt_review" name="test_public_history_ranges[24h]" time="0.092" /><testcase classname="tests.test_smartshunt_review" name="test_public_history_invalid_range_fallback" time="0.121" /><testcase classname="tests.test_smartshunt_review" name="test_public_trucki_demo_control_unchanged" time="0.202" /><testcase classname="tests.test_smartshunt_review" name="test_wrong_connection_and_missing_connected" time="0.000" /><testcase classname="tests.test_smartshunt_review" name="test_identity_messages_are_not_measurement_freshness" time="0.000"><failure message="AssertionError: Identity-only _ts must not qualify as valid telemetry&#10;assert 'current' == 'unavailable'&#10;  &#10;  - unavailable&#10;  + current">tests/test_smartshunt_review.py:75: in test_identity_messages_are_not_measurement_freshness
+    assert state['status'] == 'unavailable', 'Identity-only _ts must not qualify as valid telemetry'
+E   AssertionError: Identity-only _ts must not qualify as valid telemetry
+E   assert 'current' == 'unavailable'
+E     
+E     - unavailable
+E     + current</failure></testcase><testcase classname="tests.test_smartshunt_review" name="test_invalid_telemetry_does_not_refresh_old_measurements" time="0.000"><failure message="AssertionError: A null sensor payload must not revive old voltage/current/power&#10;assert 'current' == 'unavailable'&#10;  &#10;  - unavailable&#10;  + current">tests/test_smartshunt_review.py:86: in test_invalid_telemetry_does_not_refresh_old_measurements
+    assert state['status'] == 'unavailable', 'A null sensor payload must not revive old voltage/current/power'
+E   AssertionError: A null sensor payload must not revive old voltage/current/power
+E   assert 'current' == 'unavailable'
+E     
+E     - unavailable
+E     + current</failure></testcase><testcase classname="tests.test_smartshunt_review" name="test_unavailable_optional_sensors_not_live_measurements" time="0.000"><failure message="AssertionError: Disconnected optional sensors must not remain valid-looking live readings&#10;assert {'temperature_c': 24.5} == {}&#10;  &#10;  Left contains 1 more item:&#10;  {'temperature_c': 24.5}&#10;  &#10;  Full diff:&#10;  - {}&#10;  + {&#10;  +     'temperature_c': 24.5,&#10;  + }">tests/test_smartshunt_review.py:94: in test_unavailable_optional_sensors_not_live_measurements
+    assert state['optional'] == {}, 'Disconnected optional sensors must not remain valid-looking live readings'
+E   AssertionError: Disconnected optional sensors must not remain valid-looking live readings
+E   assert {'temperature_c': 24.5} == {}
+E     
+E     Left contains 1 more item:
+E     {'temperature_c': 24.5}
+E     
+E     Full diff:
+E     - {}
+E     + {
+E     +     'temperature_c': 24.5,
+E     + }</failure></testcase><testcase classname="tests.test_smartshunt_review" name="test_nontelemetry_messages_do_not_reset_existing_age" time="0.000" /><testcase classname="tests.test_smartshunt_review" name="test_mqtt_parser_json_and_instance_separation" time="0.000" /></testsuite></testsuites>

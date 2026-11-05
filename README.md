@@ -1,6 +1,13 @@
 # Solar-Lokal-App
 
-Die **Solar-Lokal-App** ist eine hochgradig modulare, lokale Webanwendung zur Visualisierung, Analyse und intelligenten Steuerung von Energieanlagen (Photovoltaik, Batteriespeicher, Wechselrichter und Stromzähler) im eigenen Heimnetzwerk.
+Die **Solar-Lokal-App** ist eine lokale Steuerzentrale für **autarkes Energiemanagement, Nulleinspeisung & Hardware-Diagnose** – maßgeschneidert für Hoymiles (über AhoyDTU), Victron SmartSolar (über Venus OS), Trucki2Shelly mit Lumentree-SUN-Inverter und einen 48 V-LiFePO4-Speicher.
+
+Die App ruht auf vier ausgewogenen Säulen:
+
+- **Visualisieren** – Live-Dashboard mit animiertem Energiefluss, vier Geräte-Karten und Kennzahlen.
+- **Steuern** – Nulleinspeisung, Hoymiles-Begrenzung und Trucki/SUN-Regelung.
+- **Analysieren** – InfluxDB-Zeitreihen, Grafana-Dashboards sowie Verlauf & Energiebilanz.
+- **Diagnostizieren** – Geräte-Erkennung, Firmware-Vergleich und Selbsttest.
 
 Die App arbeitet komplett **cloudfrei**, ist für den ressourcensparenden Betrieb auf Mini-PCs (z. B. via Proxmox LXC) optimiert und bietet eine moderne Steuerzentrale im **Dark Glassmorphism Sci-Fi-Stil** mit Neon-Akzenten.
 
@@ -54,12 +61,11 @@ Das Backend fragt die Geräte im lokalen Netzwerk via MQTT (über einen zentrale
 
 *   **Live-Dashboard mit animiertem Fluss**:
     *   Ein interaktives SVG-Flussdiagramm verbindet Solarmodule, Wechselrichter, Batterie, Haus und Stromnetz.
-    *   Die Animationsgeschwindigkeit und die Flussrichtung der Partikel (`stroke-dasharray`) passen sich dynamisch und stufenlos den realen Watt-Leistungen an.
-    *   Richtungspfeile direkt auf den Linien ersetzen überflüssige doppelte Zahlenwerte für maximale Übersicht.
-*   **Batterie Wirkungsgrad-Kachel (Round-Trip-Efficiency)**:
-    *   Errechnet tagesaktuell das Verhältnis der entnommenen AC-Energie zur geladenen DC-Energie:
-        $$\text{Effizienz \%} = \frac{\text{Entladene AC-Energie (SUN) heute in kWh}}{\text{Geladene DC-Energie (MPPT) heute in kWh}} \times 100$$
-    *   Farblich adaptive Anzeige (grün bei hoher Effizienz $\ge 85\%$, cyan $\ge 70\%$, sonst orange) inklusive tagesaktueller kWh-Zähler für Ladung und Entladung.
+    *   Runde, aufleuchtende Photonen laufen auf schmalen farbigen Führungskanälen. Geschwindigkeit, Dichte und Richtung passen sich den realen Watt-Leistungen an.
+    *   DSEG7-Zahlen mit klaren Mono-Einheiten zeigen Live-Leistung, Peak/Nennwert und Auslastung beziehungsweise SoC direkt am Gerät.
+*   **Tagesbilanz für Batterie und Energiequellen**:
+    *   Zeigt messwertintegrierte Lade-/Entladeenergie, PV-Direktverbrauch, Netzbezug und getrennte PV-/Akku-Exportanteile.
+    *   Das Tagesverhältnis Entladung/Ladung ist ausdrücklich **kein Round-Trip-Wirkungsgrad**, weil Entladung aus Energie vorheriger Tage stammen kann.
 *   **Diagnose-Zentrale (Self-Tests & Raw Data)**:
     *   **Automatisierter Selbsttest**: Prüft auf Knopfdruck die Erreichbarkeit und Integrität des Backends, der MongoDB-Datenbank, des Hintergrund-Pollers, des MQTT-Brokers sowie aller 4 Energiekomponenten.
     *   **Rohdaten-Tabellen**: Direkte Einsicht in die zuletzt empfangenen JSON-Payloads und MQTT-Rohdaten aller Hardwaregeräte zur schnellen Fehlerdiagnose.
@@ -71,7 +77,7 @@ Das Backend fragt die Geräte im lokalen Netzwerk via MQTT (über einen zentrale
 
 ## 4. Langzeit-Analyse mit InfluxDB & Grafana
 
-Für detaillierte historische Analysen bietet das Projekt eine vollständige InfluxDB 2.x und Grafana Integration:
+Für detaillierte historische Analysen besitzt das Projekt eine bestehende InfluxDB-2.x-/Grafana-Grundlage. Die abschließende Feldabstimmung, Provisionierung und Praxistauglichkeit der Grafana-Dashboards ist als Zukunftsaufgabe eingeplant.
 
 ### Reiche Datenpunkte (Measurements)
 Im 15-Sekunden-Takt schreibt das Backend detaillierte, mehrdimensionale Datenpunkte in InfluxDB:
@@ -81,11 +87,11 @@ Im 15-Sekunden-Takt schreibt das Backend detaillierte, mehrdimensionale Datenpun
 -   `victron_mppt`: Ertragsdaten und Gerätestatus (Bulk, Absorption, Float) je MPPT-Laderegler.
 -   `trucki`: Detaillierte Batterie-Betriebsdaten (Zellspannung `vbat`, AC-Ausgang, ZEPC-Status, Temperatur).
 
-### Zwei vorgefertigte Grafana-Dashboards (`deploy/proxmox/grafana/`)
+### Zwei vorhandene Grafana-Dashboard-Vorlagen (`deploy/proxmox/grafana/`)
 1.  **Übersichts-Dashboard (`solar-influxdb-dashboard.json`)**: Visualisiert die wichtigsten KPIs des aktuellen Tages, den Leistungsverlauf und den Ladezustand der Batterie.
 2.  **Geräte-Detail-Dashboard (`solar-devices-dashboard.json`)**: Zeigt detaillierte Phasen-Belastungen des Shellys, Modul-Erträge des Hoymiles, Ladekurven der Victron MPPTs sowie Status-Metriken des Trucki-Gateways.
 
-*Styling-Highlights:* Beide Dashboards sind im **App-Neon-Design** gestaltet (PV Gelb `#FACC15`, Netz Rot `#F87171`, Autarkie/Einspeisung Grün `#10B981`, Batterie Cyan `#06B6D4`, Haus Silber `#cbd5e1`), verwenden transparente Panel-Hintergründe und bieten gegenseitige Cross-Links für eine nahtlose Navigation.
+*Status:* Beide Vorlagen verwenden die App-Kanalfarben und gegenseitige Cross-Links. Vor dem produktiven Grafana-Einsatz werden Datenfelder, Einheiten, Retention, Provisionierung und reale Abfragen erneut gemeinsam abgestimmt und vollständig getestet.
 
 ---
 
@@ -176,7 +182,42 @@ Das Projekt liefert automatisierte Skripte im Verzeichnis `deploy/proxmox/`, um 
 
 ---
 
-## 8. Rechtliches & Mitwirkung
+## 8. Arbeitsweise & Zukunftsplanung
+
+### Preview-Prinzip
+1. Größere Änderungen werden zuerst geplant und ausdrücklich bestätigt.
+2. Neue Funktionen und Optimierungen entstehen in einer getrennten Vorschau; die bestehende Hauptansicht bleibt bis zur Abnahme unverändert.
+3. Erst nach Prüfung und Freigabe wird die Vorschau übernommen.
+4. Abschließend werden App-Texte, Informationen, Anleitungen, technische Details, Roadmap und Beschreibungen auf den ausgelieferten Stand gebracht.
+5. Neue Planungen werden als eigener datierter Abschnitt ergänzt und überschreiben keine früheren Planungsstände.
+
+### Geplante Zukunftsaufgaben
+- Hersteller-Handbücher für Hoymiles/AhoyDTU, Victron SmartSolar/Venus OS/SmartShunt, Shelly Pro 3EM und Trucki/SUN passend zu den Gerätebereichen hinterlegen.
+- InfluxDB-Datenmodell, Einheiten und Grafana-Dashboards neu abstimmen, vollständig provisionieren und mit realen Abfragen funktionsfertig prüfen.
+- Bestätigte potenzielle Verbesserungen fortlaufend priorisieren, per Preview umsetzen und nach Freigabe dokumentieren.
+
+---
+
+## 9. SmartShunt-IP65-Vorschau
+
+Die Phase-1-Ansicht liegt getrennt unter **`/smartshunt-preview`**. Sie verändert weder Dashboard/Hauptnavigation noch die Trucki/SUN-Regelung.
+
+- Quelle: lokales Venus OS MQTT, fest `N/<Portal-ID>/battery/290/#`; kein VRM-Cloudzugriff.
+- Betriebsart: ausschließlich lesen; keine SmartShunt-Steuerbefehle und keine akustischen Alarme.
+- API: `GET /api/smartshunt/preview` und `GET /api/smartshunt/history?range=1h|3h|6h|12h|24h`.
+- Verifikation: Produktname SmartShunt + Instanz 290 + USB/VE.Direct + `Connected=1`.
+- Datenzustände: aktuell bis 90 s, veraltet bis 180 s, danach beziehungsweise bei falscher Identität/Trennung nicht verfügbar.
+- Vorzeichen: positiv = Laden, negativ = Entladen.
+- Gerätehistorie: SmartShunt-Zähler werden direkt übernommen; sie werden nicht aus Live-Messpunkten neu berechnet.
+- Zusatzsensoren: Mittelpunkt, Temperatur und Starterspannung erscheinen nur, wenn Venus OS reale Werte liefert.
+- Lokale Hardwareprüfung: Im Diagnose-Tab startet **„Echte Daten prüfen“** einen einmaligen Read-only-Test. Er abonniert nur `N/<Portal-ID>/battery/290/#`, fordert `R/<Portal-ID>/keepalive` an und sendet niemals `W/`-Steuerbefehle.
+- Abnahmebedingung: Produkt, Instanz 290, USB/VE.Direct, `Connected=1`, Spannung, Strom, echte `Dc/0/Power`, SoC und mindestens ein nativer Gerätezähler müssen vollständig empfangen werden. Erst dann zeigt das Protokoll **ABNAHMEBEREIT**.
+
+Im Demo-Modus sind SmartShunt-Telemetrie und -Verlauf **MOCKED**. Für den lokalen Hardwaretest `demo_mode=false`, den vorhandenen MQTT-Zugang und die korrekte Venus-OS-Portal-ID verwenden. Die Hauptseiten übernehmen SmartShunt erst nach ausdrücklicher Freigabe der Vorschau.
+
+---
+
+## 10. Rechtliches & Mitwirkung
 
 **Solar-Lokal-App**
 

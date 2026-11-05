@@ -1,7 +1,7 @@
 /* Einheitliche UI-Primitive für das Solar-Dashboard:
    GlassCard, Status-Badges, dominante Live-Metriken, Sparkline, Delta. */
 import { useState } from "react";
-import { Wifi, WifiOff, Radio, TriangleAlert, ArrowDownToLine, ArrowUpFromLine, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
+import { Wifi, WifiOff, Radio, TriangleAlert, ArrowDownToLine, ArrowUpFromLine, ExternalLink, ChevronDown, BookOpen, Star } from "lucide-react";
 
 export const COLOR = {
   pv: "#FACC15",
@@ -27,23 +27,26 @@ export function relativeTime(iso, nowMs) {
   return dt.toLocaleTimeString("de-DE");
 }
 
-const CARD_SHADOW = "0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -20px rgba(140,146,172,0.35)";
-const CARD_SHADOW_DANGER = "inset 0 0 0 1px rgba(239,68,68,0.45), 0 18px 40px -22px rgba(0,0,0,0.75), 0 0 30px -18px rgba(239,68,68,0.30)";
+// Einheitliche Detailkarte im Stil der Geräte-Karten: dunkler Verlauf, Akzent-Rahmen + Oberkante, Icon-Box.
+const cardShadow = (c) => `inset 0 1px 0 rgba(226,232,240,0.05), 0 18px 44px -26px #000, 0 0 26px -14px ${c}`;
 
-// Einheitliche Detailkarte: Header (Titel + Badge) · Akzentbalken · Glow · Body.
 export function GlassCard({ title, accent = "#8C92AC", icon: Icon, badge, testid, children, danger, className = "" }) {
+  const edge = danger ? "#EF4444" : accent;
   return (
     <div
-      className={`glass card-lift group relative overflow-hidden h-full flex flex-col ${className}`}
+      className={`card-lift relative rounded-xl overflow-hidden h-full flex flex-col ${className}`}
       data-testid={testid}
-      style={{ boxShadow: danger ? CARD_SHADOW_DANGER : CARD_SHADOW }}
+      style={{ background: "linear-gradient(150deg, #0d1626 0%, #070c18 100%)", border: `1px solid ${edge}${danger ? "88" : "3a"}`, boxShadow: cardShadow(edge) }}
     >
-      <span className="absolute top-0 left-0 right-0 h-[3px] opacity-90 pointer-events-none z-10" style={{ background: `linear-gradient(90deg, ${accent}, transparent 88%)`, boxShadow: `0 0 14px ${accent}, 0 1px 8px ${accent}aa` }} />
-      <div className="absolute -top-14 -right-14 w-36 h-36 rounded-full opacity-[0.18] blur-3xl pointer-events-none transition-opacity duration-300 group-hover:opacity-30" style={{ background: accent }} />
-      <div className="relative border-b border-[#8C92AC]/12 bg-gradient-to-b from-white/[0.035] to-transparent px-5 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          {Icon && <Icon size={13} strokeWidth={2.4} className="shrink-0 transition-colors duration-300" style={{ color: accent }} />}
-          <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-[#8C92AC] group-hover:text-silver transition-colors duration-300 truncate">{title}</span>
+      <span className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none z-10" style={{ background: `linear-gradient(90deg, ${accent}, transparent 85%)`, boxShadow: `0 0 12px ${accent}` }} />
+      <div className="relative border-b border-white/[0.06] px-5 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {Icon && (
+            <span className="grid place-items-center rounded-md shrink-0" style={{ width: 26, height: 26, background: `${accent}1f`, border: `1px solid ${accent}55` }}>
+              <Icon size={14} color={accent} />
+            </span>
+          )}
+          <span className="font-sans text-[11px] sm:text-[12px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.16em] text-white/85 truncate">{title}</span>
         </div>
         {badge}
       </div>
@@ -122,7 +125,7 @@ export function Spark({ values, color = "#8C92AC", height = 24 }) {
         </linearGradient>
       </defs>
       <polygon points={`0,${height} ${pts} ${w},${height}`} fill={`url(#${gid})`} />
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.25" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
 }
@@ -162,17 +165,38 @@ export function Stat({ label, value, unit, color, testid }) {
 // Sektions-Überschrift (farbiger Balken + optionales Icon + Label) als Gruppentrenner.
 // Optional: `href` = Link-Button zur Geräte-Weboberfläche · `details` = aufklappbares
 // Info-Panel (gleiches Prinzip wie die IntroCard oben), gefiltert auf das Rubrik-Gerät.
-export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, alarms, testid }) {
+export function SectionHeader({ label, color = "#64748b", icon: Icon, href, details, alarms, testid, pinned, onPin }) {
   const [open, setOpen] = useState(false);
   const hasDetails = Array.isArray(details) && details.length > 0;
   const alarmList = Array.isArray(alarms) ? alarms : [];
   const hasCritical = alarmList.some((a) => a.severity === "critical");
   return (
     <div data-testid={testid}>
-      <div className="flex items-center gap-3 pt-1">
-        <span className="w-1 h-5 rounded-sm" style={{ background: color, boxShadow: `0 0 8px ${color}88` }} />
-        {Icon && <Icon size={16} strokeWidth={2.4} style={{ color }} />}
-        <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/80">{label}</span>
+      <div className="relative rounded-xl overflow-hidden flex flex-wrap items-center gap-3 px-4 py-2.5"
+        style={{ background: "linear-gradient(150deg, #0d1626 0%, #070c18 100%)", border: `1px solid ${color}3a`, boxShadow: `inset 0 1px 0 rgba(226,232,240,0.05), 0 14px 34px -24px #000, 0 0 22px -14px ${color}` }}>
+        <span className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none" style={{ background: `linear-gradient(90deg, ${color}, transparent 70%)`, boxShadow: `0 0 10px ${color}` }} />
+        {Icon && (
+          <span className="grid place-items-center rounded-md shrink-0" style={{ width: 26, height: 26, background: `${color}1f`, border: `1px solid ${color}55` }}>
+            <Icon size={14} strokeWidth={2.4} color={color} />
+          </span>
+        )}
+        <span className="font-sans text-xs font-bold uppercase tracking-[0.22em] text-white/85">{label}</span>
+        {onPin && (
+          <button
+            type="button"
+            onClick={onPin}
+            title={pinned ? "Favorit entfernen" : "Als Favorit anpinnen (KPIs oben)"}
+            aria-pressed={!!pinned}
+            data-testid={testid ? `${testid}-pin` : undefined}
+            className="inline-flex items-center justify-center rounded-full border w-6 h-6 transition-colors"
+            style={{
+              borderColor: pinned ? `${color}88` : "rgba(255,255,255,0.12)",
+              background: pinned ? `${color}1f` : "rgba(255,255,255,0.03)",
+            }}
+          >
+            <Star size={12} strokeWidth={2.2} style={{ color: pinned ? color : "rgba(255,255,255,0.45)" }} fill={pinned ? color : "none"} />
+          </button>
+        )}
         {alarmList.length > 0 && (
           <Badge
             kind={hasCritical ? "KRITISCH" : "WARN"}
@@ -210,7 +234,8 @@ export function SectionHeader({ label, color = "#64748b", icon: Icon, href, deta
       </div>
       {hasDetails && open && (
         <div
-          className="glass-strong mt-3 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"
+          className="mt-3 px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 rounded-xl"
+          style={{ background: "linear-gradient(150deg, #0d1626 0%, #070c18 100%)", border: `1px solid ${color}2a` }}
           data-testid={testid ? `${testid}-details` : undefined}
         >
           {details.map((s) => (

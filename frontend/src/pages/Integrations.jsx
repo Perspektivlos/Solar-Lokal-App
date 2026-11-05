@@ -94,7 +94,7 @@ export default function Integrations() {
   };
 
   return (
-    <div className="space-y-6" data-testid="integrations-page">
+    <div className="space-y-6 page-reveal" data-testid="integrations-page">
       <IntroCard title="Integrationen" subtitle="MQTT (Mosquitto) · InfluxDB · Victron-Bridge" sections={INTRO_SECTIONS} accent="#06B6D4" testid="intro-integrations" />
 
       <div className="flex items-center justify-between gap-3 flex-wrap">

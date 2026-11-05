@@ -1,0 +1,20 @@
+{
+  "summary": "Frontend-only verification of (1) Dashboard EnergyFlow hover inspector and (2) Geräte doc-diff. All 6 targeted scenarios PASS. Inspector shows correct title + all required metric rows for flow-battery/flow-grid/flow-pv/flow-house and hides on mouse-away. Doc-diff: shelly card shows '1 geändert' chip, time-line '1 Wert(e) geändert', Firmware-Version row shows 'geändert' badge with 'vorher: 1.4.2'. Unchanged devices (ahoy/trucki/victron) show time-line without 'geändert' and no diff chip. Clicking Erkennen on shelly resets chip and switches time-line to 'unverändert seit letztem Scan'. Mobile 390x844: no horizontal overflow on Dashboard or Geräte (scrollWidth == clientWidth == 390).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "none (demo_mode)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Flow inspector overlay works via real Playwright hover (not visible in static screenshots). Doc-diff requires checking shelly chip BEFORE clicking Erkennen since re-scan resets changed_count to 0. Observed values: shelly inspector 'Σ Leistung 356 W / Bezug / L1 229.9V·0.7A L2 230.7V·0.5A L3 229.5V·0.4A'; battery '28 % / 51.5 V / 245 W Entladen / 28 °C / ZEPC AUS'; PV all 0 W (night, expected); house 'Verbrauch 635 W / PV 0 / Akku 256 / Netz 379'.",
+  "rca of the issue": "n/a - no issues found"
+}

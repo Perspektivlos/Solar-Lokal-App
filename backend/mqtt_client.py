@@ -13,6 +13,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
+from smartshunt import SMARTSHUNT_INSTANCE, build_smartshunt_state, ingest_smartshunt_value
+
 try:
     import paho.mqtt.client as mqtt
 except Exception:  # pragma: no cover
@@ -29,6 +31,7 @@ _mqtt_data: Dict[str, Any] = {
     "trucki": {"raw": {}, "_ts": None},
     "victron": {
         "instances": {},   # {288: {"Pv/V":..., "Yield/Power":..., "_ts": iso}}
+        "batteries": {},   # {290: SmartShunt Rohpfade + Zeitstempel}
         "system": {},      # battery_voltage, grid_power per phase, consumption, etc.
         "grid": {},        # Ac/Power, Ac/Lx/Power, ...
         "_ts": None,
@@ -89,6 +92,13 @@ def _handle_victron_topic(topic: str, payload: bytes, now_iso: str) -> None:
         _mqtt_data["victron"]["system"][path] = value
     elif service == "grid":
         _mqtt_data["victron"]["grid"][path] = value
+    elif service == "battery":
+        try:
+            inst = int(inst_raw)
+        except ValueError:
+            return
+        st = _mqtt_data["victron"]["batteries"].setdefault(inst, {})
+        ingest_smartshunt_value(st, path, value, now_iso)
 
 
 def _handle_shelly_topic(topic: str, payload: bytes, now_iso: str) -> None:
@@ -187,6 +197,7 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     ch0 = _obj("HM1500/ch0")
     p_ac = float(total.get("P_AC", ch0.get("P_AC", 0)) or 0)
     yield_day_wh = float(total.get("YieldDay", ch0.get("YieldDay", 0)) or 0)  # Wh
+    max_power_w = float(total.get("MaxPower", 0) or 0)
     available = int(raw.get("HM1500/available", 0) or 0)
     # Leistungslimit: ack_pwr_limit (vom WR bestätigt), Fallback power_limit_read
     limit = raw.get("HM1500/ack_pwr_limit", raw.get("HM1500/power_limit_read", 100))
@@ -205,6 +216,7 @@ def fetch_ahoy_from_mqtt() -> Optional[Dict[str, Any]]:
     return {
         "online": available > 0,
         "total_power": round(p_ac, 1),
+        "max_power_w": round(max_power_w, 1) if max_power_w > 0 else None,
         "limit_percent": round(float(limit or 100)),
         "yield_day_kwh": round(yield_day_wh / 1000.0, 3),
         "channels": channels,
@@ -345,6 +357,15 @@ def fetch_victron_from_mqtt(cfg_victron: Dict[str, Any]) -> Optional[Dict[str, A
     }
 
 
+def fetch_smartshunt_from_mqtt(instance: int = SMARTSHUNT_INSTANCE) -> Dict[str, Any]:
+    raw = _mqtt_data["victron"]["batteries"].get(int(instance), {})
+    return build_smartshunt_state(
+        raw,
+        instance=int(instance),
+        mqtt_connected=bool(_mqtt_state.get("connected")),
+    )
+
+
 # ---------- Connection lifecycle ----------
 
 def _mqtt_disconnect() -> None:
@@ -384,6 +405,7 @@ def _mqtt_setup(cfg_mqtt: Dict[str, Any], cfg_victron: Dict[str, Any]) -> None:
             client_.subscribe("Trucki/#")
             if victron_enabled:
                 client_.subscribe(f"N/{vrm_id}/#")
+                client_.subscribe(f"N/{vrm_id}/battery/{SMARTSHUNT_INSTANCE}/#")
                 try:
                     client_.publish(f"R/{vrm_id}/keepalive", "", qos=0)
                 except Exception:

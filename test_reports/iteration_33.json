@@ -1,0 +1,26 @@
+{
+  "summary": "Autarky fix verified: 18/18 backend regressions pass. All requested FlowSummary UI checks pass against captured real public API responses, including corrected demo details, two further polling cycles, all 16 unique IDs and overflow checks at 1920x800 and 390x844. No runtime errors or new actionable issues found in reviewed changes.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_flow_summary.py",
+    "/app/backend/tests/test_today_comparison.py",
+    "/app/backend/tests/test_autarky_regression.py",
+    "/app/tests/flow_summary_ui_regression.py",
+    "/app/test_reports/pytest/pytest_flow_summary_33.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_autarky_regression.py",
+    "/app/tests/flow_summary_ui_regression.py",
+    "/app/test_reports/pytest/pytest_flow_summary_33.xml",
+    "/app/test_reports/iteration_33.json"
+  ],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "100% of requested acceptance checks"},
+  "seed_data_creation": "None; no config/database writes. Hardware data is DEMO/MOCKED; application APIs and stored snapshots are real. Method-level UTC/clamping tests use an in-memory cursor fixture against the actual extracted route body.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 32 HIGH autarky issue and demo details contradiction are resolved. API sample: consumption 5.967 kWh, import 3.033 kWh, reported and expected autonomy 49.2%; yesterday 5.767/1.130 kWh yields 80.4%. Actual route tested at zero consumption, no import, excessive import and fractional rounding. Browser PV 1.35 kWh differs from demo counter sum 0.244 kWh; grid 3.04 kWh, autonomy 49.2%, battery 3.96 kWh equals 41.2% of configured 9.6 kWh. Exact value comparisons repeated after polling. Saved UI regression extended; equivalent script executed inline through browser tool. Application source unchanged. Only requested dashboard-related APIs/flows tested; no auth, unrelated CRUD or physical hardware validation.",
+  "rca of the issue": "Previous autonomy numerator incorrectly used PV minus export, conflating PV self-consumption with household self-supply when batteries charge/discharge. routes.py now uses clamped (house_kwh - imp_kwh) / house_kwh and handles zero demand. Demo details no longer assert cumulative YDay counters. Both fixes verified."
+}

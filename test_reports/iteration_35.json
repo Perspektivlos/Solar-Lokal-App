@@ -1,0 +1,40 @@
+{
+  "summary": "Frontend-only EnergyFlow SCADA review through the public URL: 73/74 executed application checks pass, including segment shape/movement, bidirectional grid motion, watt density/speed, tempo, persistence, reduced motion, DSEG loading, inspectors, topology/views, polling, unique IDs and all 29 real-response device metrics. One confirmed full-SoC numeric overlap remains. Backend testing intentionally skipped.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "EnergyFlow battery numeric row",
+        "issue": "With battery_power=2500 W and battery_soc=100, the signed DSEG power including its W unit overlaps the 100% value. SVG power right=942.82 and percent left=936.94: 5.88-unit collision. Both values share the same baseline. This is a browser-only MOCKED edge fixture, not a physical hardware reading.",
+        "selector": "[data-testid='flow-battery-power'], [data-testid='flow-battery-percent']",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/tests/energy_flow_scada_ui_regression.py",
+    "/app/tests/device_metrics_ui_regression.py"
+  ],
+  "action_items": [
+    "Reserve nonoverlapping numeric columns or adjust DSEG sizing for signed four-digit battery power with three-digit SoC. Retest 2500 W / 100% in detail and compact layouts.",
+    "Add individual data-testid attributes to hover Watt-pill text and inspector row values; currently these critical values require scoped DOM selectors.",
+    "Consider splitting EnergyFlow.jsx (723 lines) into focused rendering components when addressing the layout."
+  ],
+  "critical_code_review_comments": [
+    "EnergyFlow.jsx:218-225 uses fixed 18-unit DSEG text positions in a 205-unit housing, with no reserved width or fitting for the signed power and percentage columns. Full SoC adds a third percentage digit and exceeds the available gap.",
+    "EnergyFlow.jsx:327 and :669 lack individual critical-value test IDs. Group/panel IDs exist and all rendered IDs were unique; this is a source-review testability observation, not a runtime failure.",
+    "EnergyFlow.jsx exceeds the 700-line module guideline. No implementation changes made during testing."
+  ],
+  "updated_files": [
+    "/app/tests/energy_flow_scada_ui_regression.py",
+    "/app/test_reports/iteration_35.json"
+  ],
+  "success_rate": {"backend": "Not tested (frontend-only request)", "frontend": "98.6% (73/74 application checks); 29/29 existing numeric metric comparisons pass"},
+  "seed_data_creation": "None. Existing hardware readings are DEMO/MOCKED. Application APIs are real. Browser-only MOCKED /api/live edge fixtures exercised 100/400/1000/2000 W, +/-700 W grid, and 2500 W / 100% SoC. No config, control or database writes.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Browser automation executed the checks in three runs. First run passed 28 checks then a dynamic screenshot-path wrapper failed with 'type is an invalid keyword argument for str()'; literal screenshot paths worked on the continuation. This was a tooling error, not an app error. Continuation passed 15/16 checks; numeric regression passed 30/30 including no runtime errors. 1920x800 and 390x844 auto layouts had no page overflow or node clipping; mobile Detail also switches and contains its horizontal scroll. Loaded DSEG7-Classic verified via document.fonts and computed numeric/inspector/pill styles include JetBrains Mono fallback. Fallback appearance with CDN blocked was not separately exercised. Manual and system reduced motion, flow-off reload persistence, tempo ratios and two polling cycles all passed. Saved runner syntax compilation passed; equivalent checks ran inline in the browser tool, not via standalone Playwright. Screenshots in screenshots-flow-35 include initial, mobile, inspector and battery-100. No auth or physical-device testing.",
+  "rca of the issue": "Reproduce by routing only this browser's /api/live to a real-response-based fixture with summary.battery_power=2500, battery_charge_w=2500 and battery_soc=100, then choose Detail. The power text starts at left+62 and percent is right-aligned at right-12, both at y+7 using 18-unit DSEG. Measured bounding boxes overlap by 5.88 SVG units. Layout needs reserved columns or responsive typography; data logic and animation remain correct."
+}

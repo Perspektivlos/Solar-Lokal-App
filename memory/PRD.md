@@ -128,6 +128,9 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] Grafana Auto-Provisioning: `deploy/grafana/provisioning/` (Datasource `influxdb-solar` + Dashboard-Provider + provisioniertes Dashboard) + `docker-compose.yml` (ENV-gesteuert, `GF_SECURITY_ALLOW_EMBEDDING=true`)
 - [x] Pytest `tests/test_alarm_history.py` (5 Tests) – gesamt 85/85 pass
 
+### Grafana-Dashboards kombiniert & überarbeitet (09.06.2026)
+- [x] Manuelle + provisionierte Variante aus EINER Quelle; neue Reihe „Netzbilanz & PV-Steuerung" (Netz Bezug/Einspeisung, Autarkie/Eigenverbrauch-Verlauf, Hoymiles-Limit, Victron-Akkuspannung je MPPT); 16 Panels/6 Reihen; README aktualisiert
+
 ### Grafana-Embed + Energiebilanz (08.06.2026)
 - [x] Verlauf-Seite: einklappbares **Grafana-iframe-Panel** (`grafana-embed`), nutzt konfigurierbare `grafana_url` (Embedding im Compose aktiviert)
 - [x] Neuer Endpoint `GET /api/energy/balance?period=day|month&limit=` (kWh aus Snapshots aggregiert; PV/Bezug/Einspeisung/Eigenverbrauch)
@@ -151,12 +154,375 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - [x] **Grafana-URL konfigurierbar** – FERTIG 07.06.2026 (config `grafana_url`, Eingabe auf Geräte-Seite, Verlauf-Link nutzt Config)
 - [x] **Alarm-Historie** mit Zeitstempel in Verlauf/Diagnose – FERTIG 08.06.2026 (MongoDB `alarm_events`, `/api/alarms/history`, `AlarmHistory.jsx`)
 - [x] **Grafana Auto-Provisioning** (Datasource + Dashboard per YAML) – FERTIG 08.06.2026 (`deploy/grafana/provisioning/` + `docker-compose.yml`)
-- [x] **Grafana eingebettet** (iframe) auf Verlauf-Seite – FERTIG 08.06.2026
+- [x] **Grafana eingebettet** (iframe) auf Verlauf-Seite – FERTIG 08.06.2026; ENTFERNT 04.10.2026 auf Nutzerwunsch (Link oben reicht), ungenutzte Imports/States bereinigt
 - [x] **Tages-/Monatsbilanz** (kWh-Balken PV/Bezug/Einspeisung/Eigenverbrauch) – FERTIG 08.06.2026 (`/api/energy/balance`, `EnergyBalance.jsx`)
 
 ### Offener Backlog (nächste Kandidaten)
+- [x] **Phase 1: Geräte-Erkennung & Anlagendokumentation** – FERTIG 04.10.2026
+  - Backend `discovery.py` (Mock + Live best-effort je Gerät), Collection `device_info` (persistiert, letzte Werte bleiben bei Fehler erhalten)
+  - Endpoints: `GET /api/devices/info`, `POST /api/devices/{key}/discover`, `POST /api/devices/discover-all`
+  - Frontend: aufklappbare „Typenschild/Doku"-Karten auf Geräte-Seite, „Erkennen" + „Alle erkennen", Status-Badge (Demo/Erkannt/Fehlgeschlagen) + „zuletzt erkannt"
+  - Tests: `tests/test_discovery.py` (unit) + `tests/test_discovery_endpoints.py` (HTTP) – 100% grün
+- [x] **Firmware-Update-Hinweise** – FERTIG 04.10.2026 (discovery.py `_annotate_firmware` + `LATEST_FIRMWARE`; Doku-Feld bekommt Badge current/outdated/unknown, Karte zeigt amber „FW-UPDATE"-Chip; Ahoy & Victron veraltet im Demo). Tests in test_discovery.py.
+- [x] **Phase 2: Dynamischer Plasma-Energiefluss** – FERTIG 04.10.2026 (EnergyFlow.jsx neu: gruppierte Knoten PV-Block/Akku/Netz/Haus mit lebendigen Emblemen – rotierende Plasma-Sonne, SoC-Ladering, Netz-Oszilloskop, Haus; Watt-abhängige Plasma-Ströme mit Photonen-Schwärmen; Knoten erscheinen/verschwinden je nach aktivem Gerät; Hover-Highlighting + Wert-Pills). Testing-Agent 100% (iteration_16).
+- [x] **Fluss-Tooltip (Hover-Inspector)** – FERTIG 04.10.2026 (EnergyFlow.jsx `buildDetail`: Overlay-Panel beim Überfahren eines Knotens mit Spannung/Strom/SoC/Temperatur/Phasen je Knoten; Props shelly/ahoy/victron/trucki). Testing-Agent 100% (iteration_17).
+- [x] **Doku-Vergleich (Änderungserkennung)** – FERTIG 04.10.2026 (discovery.py `annotate_changes` + routes `_save_device_info` `changed_count`/`prev_detected_at`; DeviceDocPanel zeigt „N geändert"-Chip, Feld-Badge „geändert" + „vorher: X", sonst „unverändert seit letztem Scan"). Tests in test_discovery.py.
+- [x] **PV-Knoten nachts: „Sonnenaufgang in X h"** – FERTIG 04.10.2026 (EnergyFlow.jsx, UTC-Sonnenmodell 05–21 Uhr; Knoten-Sub + PV-Inspector-Zeile). Visuell verifiziert.
+- [x] **Tagesverlauf-Sonnenbogen** – FERTIG 04.10.2026 (SunTimeline.jsx: Halbbogen Aufgang→Untergang mit Stundenpunkten, zentrale Rest-Sonnenstunden, Sonne/Mond-Marker; unter dem Energiefluss). Visuell verifiziert.
+- [x] **Saisonale Sonnenzeiten (Standort)** – FERTIG 05.10.2026 (`sun.py` NOAA-Sonnenaufgangsgleichung; Config `location` {lat,lon,name}; `/api/live` liefert `sun.sunrise/sunset` (UTC); Geräte-Seite Standort-Eingabe). Unit-Tests `test_sun.py` (4) grün; curl-Round-trip (DE/Tromsø/Madrid) verifiziert. Demo-PV-Kurve nutzt jetzt dieselben realen Zeiten.
+- [x] **Sonnenbogen-Füllung tagsüber** – FERTIG 05.10.2026 (SunTimeline amber `stroke-dasharray`-Fortschritt von Aufgang→aktueller Position; Zeiten lokal, Marker Sonne/Mond). Live verifiziert (Tag: gefüllter Bogen + aktiver PV-Block).
+- [x] **Dämmerungsphasen im Sonnenbogen (blaue/goldene Stunde)** – FERTIG 05.10.2026 (`sun.event_times` für −6°/+6°; Payload `civil_dawn/dusk`, `golden_morning_end/evening_start`; SunTimeline markiert blaue Tails unter Horizont + goldene Segmente knapp darüber, inkl. Legende). Zeiten geprüft, visuell verifiziert.
+- [x] **Astronomische Dämmerung (−18°) im Sonnenbogen** – FERTIG 05.10.2026 (`event_times(-18°)`; Payload `astro_dawn/astro_dusk`; SunTimeline zeigt dritte, dunkle Indigo-Zone unter der blauen Stunde; Tails visuell begrenzt; Legende mit 3 Phasen). Visuell verifiziert.
+- [x] **Phasen-Zeiten als Hover-Tooltip** – FERTIG 05.10.2026 (SunTimeline: Hit-Flächen pro Dämmerungszone + Tooltip mit Phasenname & genauem Zeitbereich, z. B. „Blaue Stunde · 16:48–17:21"). Testing-Agent 100% (iteration_18).
+- [x] **Energiefluss: Kompakt/Detail-Umschalter + SCADA-Optik-Upgrade** – FERTIG 06.06.2026
+  - View-Umschalter Auto/Kompakt/Detail (Auto: Handy=Kompakt <1024px, Desktop=Detail), in localStorage (`solar.flowView`) gemerkt; Toggle im EnergyFlow-Header (flow-view-auto/compact/detail). Kompakt = 4 aggregierte Knoten (PV-Block/Netz/Akku/Haus), Detail = 6 Geräte-Knoten
+  - MPPT-Inspektor zeigt nur echte Tracker-Messwerte: PV-Leistung, PV-Spannung, abgeleiteter PV-Strom (P/U), Batterie-Spannung, Status, Ertrag. String-Auslastung ergänzt (06.06.2026): MPPT 1 = 4× 425 Wp (1700 Wp), MPPT 2 = 4× 445 Wp (1780 Wp); Knoten zeigt Auslastungs-Balken + „V · %", Inspektor-Zeilen Modulfeld/String-Peak/Auslastung
+  - Design-Agent-Blueprint (`/app/design_guidelines.json`) umgesetzt: maschinierte Titan-Knotenkarten (url(#nodeFill)-Gradient, Metall-Oberkanten-Hairline), taktische Eckwinkel, Geräte-Badges (1-STR·DC/AHOY-DTU/TRUCKI/AC-LAST/PRO 3EM), Status-Beacons, Laser-Reticle-Marken, aufgewertetes Inspektor-Panel (Titan-Glas + Badge)
+  - Getestet (testing_agent iteration_21, 100 % / 5 Szenarien): kein Crash in Kompakt/Detail, Persistenz über In-App-Navigation, Mobile 390px→Kompakt ohne Overflow, Hover-Inspektor PV-Block AC/DC
+  - Bekannt/harmlos: vorbestehende Recharts-Warnung width/height(-1) (verstecktes Sparkline-Container) – nicht blockierend
+  - Feinschliff 06.06.2026: digitale Uhr (Neon-Chip) in die „Solar · Live"-Titelleiste verschoben (`dashboard-clock`), KPI-Sparklines feiner (non-scaling-stroke 1.25px), MPPT-Balken mit Tages-Peak-Marker (Reset bei Datumswechsel) + Inspektor-Zeile „Peak heute"
+  - Typografie/Readout 06.06.2026: **KPI-Werte** jetzt DSEG7-7-Segment-LCD in eingelassenen Panels (Geister-Ziffern, Neon-Glow) via `.font-dseg` (CDN: dseg@0.46.0, Family `DSEG7-Classic`); **Grundschrift** auf **Sora** umgestellt (body; SCADA-Labels bleiben Chakra Petch, Zahlen JetBrains/DSEG)
+  - **Verschattungs-Hinweis** 06.06.2026: MPPT-Knoten zeigt amber Warn-Dreieck + Inspektor-Hinweis, wenn ein String bei guter Produktion (>25 % Peak) >25 %-Punkte Auslastung hinter dem anderen liegt (mögliche Teilverschattung)
+  - **Vorschau-Konzept aufbewahrt**: `/kpi-preview` (Route `KpiPreview.jsx`) mit Schrift-Umschalter (DSEG7/Orbitron/Share Tech Mono/JetBrains) + allgemeinem Schriftvergleich (Space Grotesk/Sora/IBM Plex) – als wiederverwendbares Muster für künftige Design-Previews behalten
+  - **Grafana/InfluxDB-Ausbau** 06.06.2026: Dashboard `solar-scada` komplett überarbeitet auf 7 Reihen / 42 Panels, generiert aus `deploy/grafana/_generate_dashboard.py` (schema-konsistent, beide JSON-Dateien identisch). Deckt alle InfluxDB-Measurements ab (solar, shelly(_phase), hoymiles(_ch), victron(_mppt), trucki, alarms). Genutzte Plugins: Stat, **D3 Gauge** (`briangann-gauge-panel`, 4×: SoC/Autarkie/Eigenverbrauch/HM-Limit), **Pareto** (`isaozler-paretochart-panel`, MPPT-Ertrag) + Built-ins (Timeseries/Bargauge/Piechart/State-Timeline). App-Design (SCADA-Dark, Neon-Farben). README dokumentiert zusätzliche installierte Plugins (SCADAvis/Flow/Solar Flow/Arc/Gantt/Grafmaid) mit Panel-`type` + Einhäng-Anleitung. JSON-Validität & Layout (0 Overlaps) geprüft; Live-Grafana-Rendering der 2 Plugin-Panels ist beim User final zu bestätigen (hier keine Grafana-Instanz).
+  - **Grafana-Fix** 07.10.2026: Fehler „Datasource influxdb-solar was not found" behoben – Proxmox-Provisioning `deploy/proxmox/grafana/influxdb-datasource.yaml` hatte keine feste `uid`; jetzt `uid: influxdb-solar` + Name auf „InfluxDB Solar" angeglichen (beide Provisioning-Dateien tragen nun dieselbe UID, auf die das Dashboard referenziert).
+  - **SCADAvis-Synoptik-Vorschau** 07.10.2026: neue Design-Vorschau-Route `/scadavis-preview` (`ScadavisPreview.jsx`, analog zu `/kpi-preview`) – SVG-Synoptik mit animiertem Energiefluss (SMIL animateMotion), Quellen links (MPPT1/MPPT2/Hoymiles) → DC/AC-Kopplung → Senken rechts (Speicher/Haus/Netz), Szenario-Umschalter Tag/Abend (Einspeisung vs. Bezug, Laden vs. Entladen), SCADA-Dark + DSEG7-Werte. Reine Vorschau (keine Live-Daten) als Entscheidungsgrundlage vor Einhängen des Grafana-Plugins `scadavis-synoptic-panel`. Getestet (Screenshot Desktop 1920 + Mobil 390, 0 Overflow, Szenariowechsel ok).
+  - **SunTimeline Balken/Bogen-Umschalter** 07.10.2026: Tagesverlauf hat jetzt zwei Ansichten – neue **Balken**-Ansicht (horizontale Zeitachse Aufgang→Untergang mit farbigen Dämmerungs-Segmenten astronomisch/blau/golden, Tagband-Gradient, vergangenem Tagesanteil, Stunden-Ticks, Sonne-/Mond-Marker + gestrichelte Jetzt-Linie, Hover-Tooltips) und die bisherige **Bogen**-Ansicht. Umschalter in der Kartenkopfzeile (`sun-view-toggle` → `sun-view-balken`/`sun-view-bogen`); **Balken = Standard**. Auswahl bleibt in localStorage `suntimeline-view`. Testids `sun-timeline-bar` / `sun-timeline-svg`. Getestet (testing_agent iteration_23, 100 %).
+  - **Geräte-Favoriten (anpinnen)** 07.10.2026: Stern-/Pin-Button in jeder Dashboard-Sektion (`section-<x>-pin`); gepinnte Geräte erscheinen als kompakte DSEG7-KPI-Kacheln in neuer **„Favoriten"-Leiste ganz oben** (`FavoritesStrip.jsx`, `favorite-tile-<key>` + `favorite-unpin-<key>`). KPIs: Shelly=Σ Netz (Bezug/Einspeisung), Hoymiles(ahoy)=AC gesamt+Limit, Trucki=SoC+Akku-Leistung, Victron=PV-Leistung+Ertrag. Persistenz **serverseitig** in `config.favorites` (neuer Key in DEFAULT_CONFIG + `ConfigUpdate.favorites: Optional[List[str]]`, Merge in PUT `/api/config` ohne Integrations-Neustart). Mapping: battery→trucki, pv-grid→ahoy. Getestet (testing_agent iteration_23, 100 %, Persistenz über Reload).
+  - **Grafana SCADAvis-Synoptik-Panel** 07.10.2026: Generator `_generate_dashboard.py` um `scadavis()`-Helper (Plugin `scadavis-synoptic-panel`, React-2.x-Optionsmodell: svgUrl/zoomLevel/autoResize/…) erweitert; in Reihe 1 ein zweites volle-Breite „Leistungsfluss · Synoptik"-Panel mit Flux-Bindings (PV/Haus/Netz/Akku als @1–@4). Beide JSON-Dateien regeneriert → **43 Panels, 0 Overlaps**. Eigenes Synoptik-SVG per Panel-Option `svgUrl`/Upload in Grafana final setzbar (ohne SVG zeigt das Plugin seine Demo-Synoptik).
+  - **SunTimeline Balken verschlankt** 07.10.2026: Balken deutlich dünner (BH 42→18, BY 96) und Sonne-/Mond-Marker sitzt jetzt mittig **auf** dem Balken (BY+BH/2, größerer Radius) statt darüber – der Balken läuft hinter der Sonne durch. Getestet (testing_agent iteration_24).
+  - **Granulare Favoriten + Drag&Drop** 07.10.2026: Favoriten unterstützen jetzt neben ganzen Geräten auch **einzelne MPPT-Strings** (`mppt:<idx>`, Pin in `MpptCompare` → `mppt-pin-<i>`) und **Shelly-Phasen** (`phase:<L1|L2|L3>`, Pin an den Phasen-Kacheln → `shelly-<L>-pin`). `FavoritesStrip.favItem()` löst alle Schlüsseltypen zu Live-KPIs auf (MPPT=PV-Leistung+Ertrag, Phase=Leistung Bezug/Einspeisung). Kacheln sind per **nativem HTML5-Drag&Drop** umsortierbar (Grip-Handle, `onReorder`→`putConfig`); Reihenfolge = `config.favorites`-Array und bleibt serverseitig erhalten. Testids: `favorite-tile-<key:→->>` (z. B. `favorite-tile-mppt-0`, `favorite-tile-phase-L1`) + `favorite-unpin-*`. Backend akzeptiert beliebige String-Keys (`favorites: Optional[List[str]]`). Getestet (testing_agent iteration_24, 100 %, inkl. DnD-Reorder + Persistenz über Reload).
+  - **KPI-Leiste umbenannt/neu gefärbt** 29.10.2026 (`KpiStrip.jsx`): Kachel-Labels angepasst – „PV Gesamt"→**„Solar Ertrag Heute"** (jetzt **orange** `#F59E0B` + neue CSS-Klasse `neon-text-orange`, mit Sonnen-Icon am Label-Ende), „PV Aktuell"→**„Solar Erzeugung"**, „Netz Bezug (Gesamt)"→**„Netzbezug Heute"**. Die bisherige dynamische Kachel „Netz Bezug/Einspeisung (Aktuell)" ist nun **„Hauslast"** und zeigt den aktuellen Hausverbrauch `summary.house_power` (W, Testid `kpi-house-load`); ungenutzte Imports `exportNowW`/`isExporting` entfernt. Selbst getestet (Screenshot Desktop 1920 + Mobil 390, kein Overflow; Werte korrekt, z. B. Hauslast 454 W).
+  - **Dashboard-Redesign (Geräte-Karten + Energiefluss + Kennzahlen)** 29.10.2026 – großer genehmigter Umbau der Übersicht:
+    - **4 Geräte-KPI-Karten** (`DeviceCards.jsx`, ersetzen die 6 LCD-Kacheln von `KpiStrip`): Solar PV, Batterie 48V, Hausverbrauch, Stromnetz – je Statusbadge, großer LCD-Wert (DSEG7), Tageswert + 3 Unterzeilen. Testids `device-cards`, `device-card-{solar|battery|house|grid}` (+ `-value`). Werte aus `/api/live` + `/api/today`.
+    - **Energiefluss-Umbau** (`EnergyFlow.jsx`): Kompakt = **5 Knoten** (pv/grid/house/battery/sun2000), Detail = **6 Knoten** (hoymiles/victron/grid/house/battery/sun2000), Auto nach Breite. Neuer **Sun-2000/Trucki-Knoten** (Bolt-Emblem) als Entlade-Regler. Kanten werden generisch über `edge()` aus Knotenpositionen berechnet. Neue Steuerleiste: **Fluss an/aus** (`flow-toggle-anim`, Partikel), **Tempo 1×/1.5×/2×** (`flow-tempo-*`, skaliert Partikeldauer), Ansicht `flow-view-*`. Alles in localStorage (`solar.flowView/flowOn/flowTempo`). Inspector um `victron`+`sun2000` erweitert.
+    - **Kennzahlen-Zeile** (`FlowSummary.jsx`) unter dem Diagramm: Solarertrag heute (`today.pv_kwh`), Akku verfügbar (SoC×konfigurierte nutzbare kWh, als Schätzwert), Netzbezug heute und Autarkie heute. Jede Kachel nennt ihre Datenquelle. Testids `flow-summary` und `summary-{pv|battery|grid|autarky}-{label|value|unit|source}`.
+    - Annahmen lt. Plan: keine erfundenen Werte – statt „Zellendrift"/„50 Hz" werden Tagesenergie bzw. nichts gezeigt; nutzbare Akkukapazität fix 9,6 kWh (später konfigurierbar). Entfernte Features bleiben entfernt.
+    - **Getestet**: testing_agent iteration_25 = 100 % funktional (Ansichtswechsel/Fluss/Tempo/Persistenz/Inspector/Regression). Danach Design-Fixes: NODE_W 182→205 + kleineres Label (keine Label/Badge-Überlappung), kürzerer Nacht-Sub (kein Überlauf), `f1` auf deutsche Dezimalkommas, Fluss-SVG in horizontal scrollbarem Container (Mobil lesbar, kein Seiten-Overflow), Inspector responsiv + Tap-to-dismiss, Tempo-Whitelist-Guard. Per Screenshot Desktop+Mobil verifiziert.
+  - **Phase-2-Teil: Einstellungen (Kapazität + Gerätetexte) & Mobil-Hochkant-Fluss** 29.10.2026:
+    - **Konfigurierbare Anzeige** (`config.display`): neuer Config-Block `{usable_kwh, labels:{solar,battery,house,grid}}` (DEFAULT_CONFIG + `ConfigUpdate.display`, nicht in `integration_keys` → kein Neustart). Einstell-Karte „Anlage & Anzeige" auf der Geräte-Seite (`Devices.jsx`, `display-settings-row`): Zahlen-Input `input-usable-kwh` + 4 Text-Inputs `input-label-{solar|battery|house|grid}`; wird mit dem bestehenden „Speichern" persistiert. `DeviceCards` liest `display.labels` (Prop `display`), `FlowSummary` liest `display.usable_kwh` (Prop `usableKwh`); Dashboard lädt/reicht `display` durch. Verifiziert: UI-Save → Persistenz über frischen Seitenaufruf (11,5 kWh / „8x LiFePO4 280Ah") → Karte & Kennzahl aktualisiert; danach auf Demo-Defaults zurückgesetzt.
+    - **Mobil-Hochkant-Energiefluss**: statt seitlich scrollbarem Diagramm jetzt echte vertikale Anordnung bei schmalen Screens (`portrait = narrow && compact`): Portrait-viewBox 480×840, zwei Spalten gestapelt (links PV→Haus→Netz, rechts Akku→Sun-2000), kein horizontaler Scroll, Crosshair-Deko nur im Landscape. Desktop/Landscape unverändert. Per Screenshot Mobil 390 (viewBox 480×840, kein Seiten-Overflow) + Desktop verifiziert.
+  - **Versions-Fußleiste, In-App-Roadmap & Anleitung (v1.4.0)** 29.10.2026:
+    - **Zentrale Datenquelle** `src/lib/appmeta.js`: `APP_VERSION` (1.4.0), `APP_LAST_UPDATED`, `ROADMAP` (Status `done|wip|planned` + Datum) + `ROADMAP_GROUPS`. Einziger Pflegeort beim Ausliefern.
+    - **Fixe Fußleiste** `VersionFooter.jsx` (in `Layout.jsx`, ersetzt den alten Footer; `main` → `pb-20` als Abstand): App-Name, Version (Link → `/doku`), Modus-Badge Demo/Live (aus `/api/config`), Stand-Datum, „Neu"-Pille bei neuer Version (localStorage `solar.seenVersion`). Emergent-Badge + Copyright bleiben. Testids `version-footer`, `footer-version`, `footer-mode`, `footer-version-new`, `footer-emergent-badge`.
+    - **Doku-Seite** `pages/Docs.jsx` als Layout-Kindroute `/doku` (nicht im Nav): Tabs `Roadmap` (3 Spalten Erledigt/In Arbeit/Geplant aus `appmeta`) und `Anleitung` (4 aufklappbare Abschnitte: App-Bedienung, Anlage & Geräte, Energie-/Verkabelungsmodell, lokales Setup) mit eingeblendeten Live-Werten aus `/api/config` (Kapazität, Labels, Demo/Live) und `/api/devices/info` (Firmware, zuletzt erkannt). Testids `docs-page`, `docs-tab-{roadmap|guide}`, `roadmap-col-{done|wip|planned}`, `guide-{app|devices|model|setup}`.
+    - **Fix**: `firmware` aus `/api/devices/info` ist ein Objekt `{status,current,latest}` → `fw()` extrahiert jetzt `current` (vorher React-Child-Crash).
+    - **README**: Einleitungstext ersetzt durch „Autarkes Energiemanagement, Nulleinspeisung & Hardware-Diagnose …" mit vier Säulen (Visualisieren/Steuern/Analysieren/Diagnostizieren); Rest unverändert.
+    - **Verifiziert** (Screenshots Desktop+Mobil): Fußleiste überall, Version→/doku, Roadmap 18/1/9, Anleitung-Akkordeon + Live-Firmware, kein Seiten-Overflow, Content nicht hinter fixer Leiste. Alte `RoadmapDialog.jsx` nicht mehr verwendet.
+  - **Editierbare Roadmap (installationsweit) & „Was ist neu?" (v1.5.0)** 29.10.2026:
+    - **Backend-Persistenz**: eigene Mongo-Collection `roadmap` (Doc `_id:"main"`), einmaliges Seed (28 Punkte, realer Projektstand: 20 erledigt / 8 geplant) aus `DEFAULT_ROADMAP` in `routes.py`. Endpunkte `GET /api/roadmap` (seedet bei leer) + `PUT /api/roadmap {items:[...]}` (ganze Liste ersetzen, dauerhaft). Pydantic `RoadmapItem {id,title,status,date,completed_at?}` + `RoadmapUpdate`. Status beim Wechsel auf `done` setzt `completed_at` (für „Was ist neu?").
+    - **Editor** in `Docs.jsx` (Roadmap-Tab): Bearbeiten-Schalter `roadmap-edit-toggle`; je Punkt Titel-Input (`roadmap-item-title`), Status-Select (Erledigt/In Arbeit/Geplant), Löschen mit Inline-Bestätigung (`roadmap-item-delete`), Grip-Handle; **natives HTML5-Drag&Drop** zwischen/innerhalb der 3 Spalten; „+ Punkt"-Button je Spalte (`roadmap-add-{done|wip|planned}`). Jede Änderung wird (debounced) via `putRoadmap` persistiert. Kein Login – jeder lokale Zugriff darf editieren. Anleitung-Tab unverändert.
+    - **„Was ist neu?"-Overlay** (`WhatsNew.jsx`, in `Layout.jsx`): öffnet automatisch bei Versionssprung (localStorage `solar.seenVersion`) **nur** wenn seit letztem Besuch neu auf „done" gesetzte Punkte existieren (Abgleich gegen `solar.seenDoneIds`). Wegklickbar (`whatsnew-close`), merkt Version+done-IDs. Erneut öffnbar über die **„Neu"-Pille an der Versionsnummer** in `VersionFooter` (`footer-version-new` → `onOpenWhatsNew`). Testids `whatsnew-dialog`/`whatsnew-item`.
+    - **Verifiziert**: Backend GET seedet 28 / PUT persistiert (curl, externe URL); UI (Screenshot 1920): Bearbeiten-Modus + Hinzufügen (28→29), Auto-„Was ist neu?" mit 19 Punkten bei simuliertem Versions-/done-Sprung, Footer v1.5.0. Roadmap nach Test auf sauberen Seed zurückgesetzt. Entfernte Features (Watt-Labels, 48h-Prognose, CSV) weiterhin nicht eingeführt.
+  - **Projektbericht-Seite „Was wir erreicht haben"** 29.10.2026 (`pages/Report.jsx`, Routen `/report-preview` + `/bericht`, **nicht im Menü**): eigenständige, von oben nach unten lesbare Lese-Seite im SCADA-Dark-Look. Sechs Abschnitte: (1) Kopf/Überblick mit Titel, Version/Stand und 5 KPI-Kacheln (erledigt/in Arbeit/geplant aus `ROADMAP`, Gerätetypen, Ausbaustufen); (2) **Funktions-Changelog** farbcodiert – Hinzugefügt (grün), Abgelöst/ersetzt als „vorher→nachher" (gelb), Komplett entfernt/abgelehnt mit Begründung (rot, inkl. 48h-Prognose, Watt-Labels, CSV); (3) senkrechte **Zeitachse** der Meilensteine; (4) **Arbeitsweise** (erst fragen+Freigabe, dann bauen, dann prüfen; Demo-Standard); (5) **Erkenntnisse/Stolpersteine** (Grafana-UID, Firmware-Objekt, Mobil-Hochformat, de-DE-Zahlen); (6) **Technik-Überblick** (Geräte + Bausteine, lokal). Sticky Sprungmarken-Leiste mit Scroll-Spy (`report-nav-*`), „Zurück nach oben"-Button (`report-back-to-top`), Scroll-Reveal via IntersectionObserver (`[data-reveal]`/`.reveal-in` in index.css, reduced-motion-fest), `.no-scrollbar`-Helper. Inhalt fest kuratiert (Stand v1.5.0), rein lesend – keine Bearbeitung/Steuerung/Export, keine neuen Integrationen. Testids `report-page`, `report-kpi-*`, `report-nav-*`, `report-back`, `report-back-to-top`. Verifiziert (Screenshots Desktop 1920 + Mobil 390: alle Abschnitte, Sprungmarken-Navigation, Back-to-top; 0 Seiten-Overflow – nur die bewusst scrollbare Nav-Leiste).
+  - **Meilenstein-Vorschau (Vorher/Nachher-Mini-Mockups)** 29.10.2026 (`components/MiniMock.jsx`): jeder der 6 Zeitachsen-Einträge im Bericht zeigt ein kompaktes **SVG-Mini-Mockup-Paar** (Vorher → Nachher, viewBox 120×76, SCADA-Dark) statt KI-Screenshots – scharf, konsistent, responsiv. 12 Szenen: blank/dashboard, grafana-error/grafana-grid, dash-nofav/dash-fav, six-tiles/four-cards, popup/footer-docs, roadmap-static/roadmap-edit. „Nachher" mit Cyan-Akzentrahmen; Bildunterschriften „Vorher · …"/„Nachher · …" mit farbigem Punkt + Pfeil dazwischen. Testid `report-mock-pair-{i}`. Verifiziert (Screenshots Desktop 1920 + Mobil 390: 6 Paare, 0 Overflow).
+  - **Bericht v1.6.0: Auto-Changelog, Druck/PDF & Doku-Link** 29.10.2026:
+    - **„Hinzugefügt" automatisch aus der Roadmap** (`Report.jsx`): lädt `GET /api/roadmap`, zeigt alle `done`-Punkte (neueste zuerst, Datum de-DE) + Anzahl + Badge „Automatisch aus der Roadmap" (`report-added-source`, `report-added-count`, `report-added-item`). Optionale Beschreibung/Icon je Roadmap-ID über `ADDED_INFO`; neue Punkte erscheinen auch ohne Eintrag (Standard-Icon). KPI-Kacheln (erledigt/in Arbeit/geplant) ebenfalls live. Fallback: statisches `appmeta.ROADMAP`. Abgelöst/Entfernt/Zeitachse bleiben kuratiert.
+    - **Druck/PDF** (`components/ReportPrint.jsx`): Knopf „Drucken / PDF" (`report-print-btn`) im Bericht-Kopf mit Auswahl **Hell · druckerfreundlich** (`report-print-light`) oder **Dunkel · wie am Bildschirm** (`report-print-dark`) → setzt `html[data-print]`, blendet alle Reveals ein, @page A4 (dunkel randlos) und öffnet den Browser-Druckdialog. Print-CSS in `index.css` (`@media print`): Kopfleiste/Back-to-top ausgeblendet, Karten ohne Seitenumbruch, Hell-Modus mappt Text-/Rahmen-/Akzentfarben auf druckbare Töne.
+    - **Link „Projektbericht"** nur auf der Doku-Seite (`docs-report-link` → `/bericht`).
+    - Seed + Preview-Roadmap: neue erledigte Punkte `report-page`, `changelog-auto` (vorher geplant), `report-print`. Version → **1.6.0**.
+    - Verifiziert per Screenshot (Desktop 1920, Mobil 390, Print-Emulation hell + dunkel, 0 Overflow im Bericht).
+  - **Zeitachse automatisch aus der Roadmap** 29.10.2026 (`Report.jsx`, `MiniMock.jsx` Variante `auto`): die 6 kuratierten Meilensteine bleiben (je `ids` = abgedeckte Roadmap-Punkte, `sort` = ISO-Datum). Alle übrigen erledigten Roadmap-Punkte (mit ID) werden **je Datum zu einem Eintrag gruppiert** und chronologisch eingereiht (**älteste oben**, gleiche Daten: kuratiert zuerst; Nicht-Datumswerte ans Ende). Auto-Eintrag: Datum + Badge „automatisch", Titel „N neue Funktionen", **Standard-Vorschaubild** (grüne Checklisten-Kachel, „Aus der Roadmap") + Punktliste. Grüner Zeitachsen-Punkt statt Cyan. KPI „Ausbaustufen" = Länge der gesamten Zeitachse. Testids `report-timeline-auto-<datum>`, `report-timeline-auto-item`; `report-mock-pair-{0..5}` unverändert. Druck-CSS (hell) ergänzt. Verifiziert per Screenshot (Desktop 1920, Mobil 390 ohne Overflow, Druck hell) inkl. temporärem Test-Punkt „11/2026" → eigener Eintrag am Ende (danach wieder entfernt).
+  - **Visuelle Anpassungen** 30.10.2026: (1) **Tagesverlauf** (`SunTimeline`) vom Dashboard auf die Seite **Verlauf** verschoben – ganz unten nach Alarm-Historie; `History.jsx` lädt dafür `getLive()` (alle 60 s). (2) **Nav-Aktiv-Balken** (`Layout.jsx`) halb so breit (`left/right-[calc(25%+6px)]`). (3) **Energiefluss Detail**: Knoten **Victron MPPT** von links-mittig (155,210) **mittig über Hausverbrauch** (530,80) verschoben; Fluss Victron→Batterie folgt automatisch. Per Screenshot verifiziert (Desktop + Mobil).
+  - **Energiefluss Detail neu ausbalanciert** 30.10.2026: Hoymiles (130,72) + Victron MPPT (365,72) kompakt nebeneinander oben links, Stromnetz (130,348) unten links in der Ecke, Batterie (930,72) / Sun-2000 (930,348) symmetrisch rechts, Hausverbrauch (530,250) mittig darunter (Hoymiles→Haus-Linie läuft frei unter Victron vorbei; Victron→Batterie waagerecht oben). Ränder überall ~28–31 px. Per Screenshot verifiziert.
+  - **Rechte Spalte eingerückt + Kompakt angeglichen** 30.10.2026: Batterie (900,105) / Sun-2000 (900,315) näher zusammen und vom Rand abgerückt (Detail + Kompakt). Kompakt-Landscape nutzt jetzt dieselbe Eck-Anordnung: Solar PV (130,72) oben links, Stromnetz (130,348) unten links, Haus (530,250), Batterie/Sun-2000 rechts wie Detail. Mobil-Hochformat unverändert. Per Screenshot verifiziert (Detail, Kompakt, Mobil 390).
+  - **Stromnetz eingerückt + Mobil-Fluss ausbalanciert** 30.10.2026: Stromnetz (160,315) spiegelt Sun-2000 (900,315) – symmetrisch aus der Ecke gerückt (Detail + Kompakt). Mobil-Hochformat neu: viewBox 480×**640** (vorher 840), Anordnung Ecken + Mitte wie am Desktop – oben PV (118,75) / Batterie (362,75), mittig Haus (240,320), unten Stromnetz (118,565) / Sun-2000 (362,565); gleichmäßige Zeilenabstände, kein Seiten-Overflow. Per Screenshot verifiziert (Detail, Kompakt, Mobil 390).
+  - **Diagnose-Seite umsortiert** 30.10.2026 (`Diagnose.jsx`): Reihenfolge jetzt Überblick (IntroCard) → **StatusBanner** → Titel „Diagnose" + Selbst-Test-Knopf → Geräte-Details-Leiste → **Selbst-Test-Kachel** → Geräte-Rohdaten (Grid) → Alarm-Historie. Per Screenshot verifiziert (Desktop 1920 + Mobil 390, kein Overflow).
+  - **Verlauf aufgeräumt + Tagesverlauf „schlicht & reduziert"** 30.10.2026: Alarm-Historie von der Seite Verlauf entfernt (bleibt auf Diagnose). `SunTimeline` nach Design-Spec (`design_guidelines.json` → `sun_timeline_spec`) neu gestaltet: mehr Luft (px-5/6, space-y-4), ruhiger Kopf (Status cyan, Pill-Toggle), kaum Glow, Legende mit feiner Trennlinie. **Balken-Ansicht jetzt HTML** (Komponente `SunBar`, %-Positionen): große Light-Ziffer Rest-Sonne, 10 px dünner Balken mit Dämmerungssegmenten/Ticks, Präzisions-Marker (Sonne gelb mit Ring-Puls / Mond als Sichel), Zeit-Labels mit Pfeil-Icons, HTML-Tooltip (auch per Tippen). Bogen-Ansicht verfeinert (dünnere Linien, ohne Glow). **Bugfix:** Auf-/Untergangszeiten wurden in SVG nur als Pfeil angezeigt (Ziffern unsichtbar) – jetzt sichtbar. Alle Testids erhalten. Verifiziert (Desktop + Mobil 390, Tooltip, beide Ansichten). Wissensspeicher `/app/memory/LEARNINGS.md` angelegt.
+  - **Texte & Inspector-Position** 30.10.2026: Untertitel im App-Kopf (`Layout.jsx`) → „Hoymiles HM-1500 + 2x Victron MPPT • 48V LiFePO4 • Shelly Pro 3EM"; Energiefluss-Titel (Desktop) → „Echtzeit-Flussvektoren" (Mobil weiter „Fluss"); Hover-Details (`flow-inspector`) erscheinen jetzt **oben mittig** statt oben rechts. Per Screenshot verifiziert.
+  - **Kachel „Anlage & Anzeige" entfernt – Felder zu den Geräten verteilt** 30.10.2026 (`Devices.jsx`): `DEVICES[].cards` ordnet die Dashboard-Kartentexte den Geräten zu – Shelly: „Stromnetz" + „Hausverbrauch", Ahoy: „Solar PV", Trucki: „Batterie 48V" + **Nutzbare Kapazität (kWh)**, Victron: keine. Block `device-display-<key>` mit feiner Trennlinie in der Gerätekachel; Testids `input-label-{grid|house|solar|battery}`, `input-usable-kwh` unverändert; Speichern über „Speichern" wie bisher. Verifiziert: Ändern → Speichern → Reload persistent; danach auf 9,6 kWh / „AC-Lastbilanz" zurückgesetzt. Hinweis: 9,6 kWh ist ein Platzhalter (nicht gemessen).
+  - **Fußleiste, Akku-Rechner, Doku-PDF** 30.10.2026: (1) System-Zeile „Hoymiles HM-1500 + 2x Victron MPPT • 48V LiFePO4 • Shelly Pro 3EM" aus dem Kopf entfernt und in die **Fußleiste** verschoben (ersetzt „HauckLab · Solar'Projekt"; `APP_SYSTEM` in appmeta, `footer-system`, Cyan-Punkt-Trenner, ab md sichtbar). (2) **Akku-Rechner** (`BatteryCalc` in Devices.jsx, Trucki-Kachel, `battery-calc`): Modul-V (12,8/25,6/51,2), Ah, Anzahl, Nutzbar % → nutzbare kWh automatisch in `input-usable-kwh`; zeigt Schaltung (z. B. 2S3P · 51,2 V · 300 Ah), nominal/nutzbar, Warnung wenn Anzahl nicht zu 48 V passt, Hinweis bei manuell überschriebenem kWh-Feld; gespeichert in `config.display.battery_calc`; Doku-Anleitung zeigt Module. (3) **Doku drucken/PDF** (`PrintButton` generalisiert in ReportPrint.jsx, prefix `docs-print`): hell/dunkel, druckt Roadmap **und** Anleitung (alle Abschnitte offen), App-Kopf/Fußleiste/Bedienelemente per `print:hidden` ausgeblendet. Getestet: testing_agent iteration_26 – 100 % Frontend; Design-Hinweise (Feld leeren → 0, Override-Hinweis) behoben.
+  - **Abgelehnt:** Alarm-Ton / akustische Alarme – nicht mehr vorschlagen.
+  - **Trucki-Karte** 30.10.2026: Reihenfolge V zuerst, dann %; beide Werte **gleich groß** (24 px, semibold, Einheiten 14 px gedimmt); Überschrift „VBat & SoC". Per Screenshot verifiziert.
+  - **FlowSummary-Tagesdaten fachlich korrigiert** 30.10.2026: Solar-Hauptwert nutzt wieder die belastbare Trapezintegration `today.pv_kwh` aus gespeicherten PV-Leistungspunkten seit 00:00 UTC statt der im Demo-Modus nicht kumulativen Ahoy/Victron-YDay-Pseudowerte. Solar und Netz nennen die Messverlaufsquelle; „Batterie Kapazität" wurde korrekt zu „Akku verfügbar" umbenannt und als SoC-basierter Schätzwert markiert. Backend-Autarkie korrigiert von `(PV−Export)/Haus` auf die haushaltsbasierte Definition `(Haus−Netzbezug)/Haus`, auf 0–100 % begrenzt. Demo-Detailtext behauptet nicht mehr, YDay-Werte seien kumuliert. Verifiziert: testing_agent iteration_33 – Backend 18/18, UI/API-Rundung, Polling, 16 Testids, Desktop/Mobil vollständig bestanden.
+  - **Einheitliche Gerätekennzahlen – Phase 1** 30.10.2026: Energiefluss und Geräte-/Detailkarten zeigen geeigneten Geräten nun einheitlich **Live-Leistung W + Auslastung/SoC % + ruhige Peak-/Nennleistung W**. PV: HM-1500 nutzt gemeldetes `ahoy.max_power_w` bzw. 1500-W-Modellwert; Victron nutzt 1700/1780 W, Gesamt 3480 W; System-PV 4980 W. Akku/Trucki/SUN zeigt vorzeichenrichtige Leistung + SoC, Shelly/Netz zeigt Richtung und mangels belastbarer Bezugsgröße „–" statt erfundener Prozentwerte. `mqtt_client` und HTTP-Collector reichen vorhandene Nennleistung weiter; Demo liefert 1500 W. `utilizationPercent` begrenzt 0–100 % und lehnt null/leer/ungültig ab. Fehlende SoC-/Peak-Werte bleiben „–" (inkl. Akku-Ring). Detailansichten Hoymiles, Victron, Trucki und Shelly sowie die vier Dashboard-Gerätekarten wurden angeglichen. Testing-Agent iteration_34 bestätigte 17/17 Backend- und 29/29 Live-Checks; gefundene Randfälle (Netto-Laderichtung, Null→0 %, Knotentext/Mobil-Hoymiles, Testids, HTTP-Trucki-Peak) danach behoben. Retest: 9/9 Helfer, 23/23 Backend, Production Build, kontrollierte Edge-Fixtures und 390/1920-Layout grün.
+  - **Sektions-Kacheln im Geräte-Karten-Look** 30.10.2026: `GlassCard` (solar-ui.jsx, nur Dashboard: Trucki, Akku netto, Round-Trip, Victron, MPPT-Vergleich, Hoymiles, Einspeisung & Haus, Shelly, Schieflast) übernimmt den Stil der 4 Geräte-Karten über dem Energiefluss: dunkler Verlauf `#0d1626→#070c18`, Rahmen in Akzentfarbe, 3-px-Oberkante mit Glow, Akzent-Glow-Schatten, Icon-Box im Kopf, Titel weiß/fett. Zahlenschrift unverändert (Nutzerwunsch: nur Farben & Rahmen). Gefahr-Zustand = roter Rahmen/Glow. Per Screenshot verifiziert (Desktop + Mobil).
+  - **Abschnittsleisten im Kachel-Look** 30.10.2026: `SectionHeader` (solar-ui.jsx – Batterie, Victron, PV & Netz, Shelly …) jetzt als Leiste mit dunklem Verlauf, Akzent-Rahmen, 2-px-Akzent-Oberkante mit Glow und Icon-Box; Details-Panel ebenfalls im Verlauf mit Akzent-Rahmen. Pin/Öffnen/Details/Alarm-Badge unverändert.
+  - **Selbst-Test-Verlauf** 30.10.2026: Backend speichert jeden **manuellen** Lauf (`POST /api/diagnostics/run`) in `selftest_runs`, behält die **letzten 50** (`SELFTEST_KEEP`). Neuer Endpoint `GET /api/diagnostics/history` → `runs` (neueste zuerst) + `checks` je Prüfung (last_status, last_ok, last_fail + Detail, fails/runs). Frontend `components/SelftestHistory.jsx` auf /diagnose unter der Selbst-Test-Kachel: Lauf-Leiste (rot = Lauf mit Fehler), Tabelle Prüfung / Zuletzt / Zuletzt OK / Zuletzt ausgefallen („nie") / Ausfälle x/n; Lade- und Leer-Zustand. Getestet: testing_agent iteration_27 (Backend 100 %, Frontend: Mobil-Overflow der Lauf-Leiste + Testid-Sonderzeichen + Ladezustand behoben). Test-Läufe danach gelöscht (Verlauf startet leer).
+  - **Verlauf-Vorschau `/verlauf-preview` (Phase 1)** 30.10.2026 – nach Nutzer-Referenzbildern (Titelleiste, Multilinie, 4 Kanäle, Tagesbilanz): `pages/VerlaufPreview.jsx` + `components/verlauf/` (`shared.js` Farben/Ranges/`bucketize` mit Lücken-Unterbrechung, `TitleBar`, `MultiLine` mit Legenden-Kacheln zum Aus-/Einblenden + Nulllinie + Abtastrate/Zeitzone, `FourChannels` 2×2, `DayBalance` 4 Karten + 2 Verteilungsbalken (immer 100 %, Hinweis wenn Ladung+Einspeisung > Gerätezähler)). Ansicht/Zeitspanne in localStorage (`vp-view`, `vp-range`, Standard Multilinie/24h). Abtastrate 1/3/5/10/15 Min je 1h/3h/6h/12h/24h. PV-Ertrag = Summe Gerätezähler (Hoymiles + MPPT), Direkt = PV − Ladung − Einspeisung, Haus = Direkt + Entladung + Bezug. Backend: `/api/history` kennt jetzt `3h`, behält bei >10.000 Punkten die neuesten. Link „Neue Ansicht (Vorschau)" auf /verlauf (`history-preview-link`). Getestet: testing_agent iteration_28 – Backend 100 %, Frontend 100 %; Design-Hinweise (Mobil-Titel, Bilanz-Hinweis) behoben.
+  - **Verlauf-Vorschau Tagesvergleich** 30.10.2026: Tagesbilanz zeigt jetzt an **allen 19 Kenn- und Detailwerten** die absolute/prozentuale Veränderung gegenüber gestern (kWh bzw. Prozentpunkte). Beide bestehenden 100%-Verteilungsbalken bleiben erhalten und tragen zusätzlich den Vergleich für Eigenverbrauch/Autarkie. Die Akku-Kurve bleibt in Multilinie und 4-Kanal-Ansicht erhalten, ist als durchgezogene Cyan-Kurve klarer sichtbar und unterbricht weiterhin echte Datenlücken. `/api/today?day_offset=1` liefert additiv den gestrigen UTC-Tag; ohne Parameter bleibt der Endpoint kompatibel. Fehlende Gestern-Daten werden als „Gestern: –" statt als erfundene Nullwerte angezeigt. Getestet: testing_agent iteration_29 (Backend 15/15, Kern-UI bestanden) + anschließender Fehlerfall-Retest (19/19 Verfügbarkeitsanzeigen, Akku-Kurve, 2 Balken, kein Desktop-Overflow).
+  - **Verlauf-Vorschau Diagramme wiederhergestellt** 30.10.2026: Multilinien-Ansicht enthält wieder ein eigenes **Akku-Diagramm mit zwei Kurven** (Akku-Leistung Cyan auf linker W-Achse, SoC Lime gestrichelt auf rechter 0–100%-Achse). Die Akku-Kachel der 4-Kanal-Ansicht zeigt dieselbe Doppelkurve. In der Tages-kWh-Bilanz ist zusätzlich das gruppierte Balkendiagramm **„Tageswerte · letzte 14 Tage"** aus `/api/energy/balance` zurück (PV-Ertrag, Eigenverbrauch, Netzbezug, Einspeisung); die beiden Verteilungsbalken bleiben daneben vollständig erhalten. Tagesbalken aktualisieren sich alle 60 s und haben einen separaten Fehlerzustand mit „Erneut laden". Getestet: testing_agent iteration_30 (Backend 18/18, alle angefragten UI-Flows bestanden), anschließender 503-/Retry-Retest und Production Build erfolgreich; Desktop/Mobil ohne Inhalts-Overflow.
+  - **Verlauf Phase 2 – Vorschau übernommen** 30.10.2026: Die freigegebene Energie-Analyse ist jetzt die produktive Seite **`/verlauf`**. Der bestehende Überblick/Intro-Bereich wurde inhaltlich auf Multilinie, 4 Kanäle, Akku/SoC und Tages-kWh aktualisiert; der konfigurierte Grafana-Link sitzt in der Titelleiste. Vorschau- und Zurück-Links wurden entfernt, die alte `VerlaufPreview.jsx` gelöscht und **`/verlauf-preview` leitet per Replace auf `/verlauf` weiter**. Alle Phase-1-Funktionen bleiben erhalten. Tooltip-Regression behoben: ein am Desktop geöffneter Recharts-Tagesbalken-Tooltip wird bei Größenwechsel zurückgesetzt und kann die mobile Seite nicht verbreitern. Getestet: testing_agent iteration_31 (Backend 19/19, alle Kern-Flows bestanden), Hover→Resize-Retest bei 390 px ohne Offender, Production Build erfolgreich.
+  - **Nächste Phase Verlauf:** Phase 3 = vergangene Tage wählbar und Verlauf drucken/PDF. Heute-gegen-gestern ist bereits umgesetzt.
+
+
+
+- [x] **Energiefluss: 6 getrennte Geräte-Knoten** – FERTIG 06.06.2026
+  - Statt aggregiertem „PV-Block" nun einzelne Knoten: MPPT 1, MPPT 2 (Victron DC), Hoymiles HM1500 (AC), Akku (Trucki/SUN), Netz (Shelly 3EM), Haus
+  - DC-gekoppelte Topologie: MPPT1/2 → Akku, Akku → Haus, Hoymiles → Haus, Netz ↔ Haus; eigene Plasma-Flüsse + Watt-Pills je Pfad
+  - Pro-Knoten-Inspektor: MPPT (PV-/Batterie-Spannung, Status, Ertrag), Hoymiles (4 Kanäle, Limit, Ø V / Σ A), Akku (SoC, DC-Ladung, Temp, ZEPC), Netz (L1/L2/L3), Haus (Quellen-Aufschlüsselung)
+  - Node-Testids: flow-mppt1/flow-mppt2/flow-hoymiles/flow-battery/flow-house/flow-grid; viewBox 1060×420, Knoten 182×82; getestet (testing_agent iteration_20, 100 %)
+
+- [x] **Phase 3: Feinschliff** – FERTIG 06.06.2026
+  - Animations-Politur: weicheres Easing (cubic-bezier) für Energiefluss-Hover/Dimming; gestaffelte Seiten-/Karten-Einblendung (`.page-reveal` in index.css, auf allen 6 Seiten-Wurzeln)
+  - **Reduced-Motion als Nutzer-Option** (`lib/motion.jsx` MotionProvider): Tri-State Automatisch/Immer an/Reduziert, in localStorage (`solar.motionPref`) persistiert, Segmented-Control auf Geräte-Seite (`motion-toggle`). Setzt `.reduce-motion` / `.motion-force-on` auf <html>; EnergyFlow & SunTimeline überspringen SMIL-Photonen/`flow-particles` im reduzierten Modus
+  - Mobile/Tablet/Desktop-Responsive-Check: testing_agent iteration_19 – 0 horizontaler Overflow an 390/768/1024 auf allen 6 Routen, Reveals verdecken keine Inhalte; Nav schmalseitig scrollbar gemacht (`min-w-0 flex-1`, Untertitel `hidden sm:block`)
 - [ ] Geräte-Favoriten aufs Dashboard pinnen
-- [ ] Push-Benachrichtigungen / Alarm-Ton bei kritischen Alarmen
+- [ ] Push-Benachrichtigungen bei kritischen Alarmen (akustischer Alarm vom Nutzer abgelehnt)
 - [ ] Energiekosten (€/kWh) für Bezug/Einspeisung
+- [ ] **Gerätekennzahlen Phase 2:** Peak-/Nennleistungen in den Geräte-Einstellungen bearbeitbar machen und Abweichungen zu gemeldeten Gerätedaten anzeigen
+- [ ] **Gerätekennzahlen Phase 3:** Tages-/Monatsauslastung je Gerät sowie Diagnosehinweise für Über-/Unterauslastung
 - P3: CSV-Datenexport – vom Nutzer ABGELEHNT
 - P3: Watt-Label am Energiefluss-Pfeil – vom Nutzer ABGELEHNT
+
+## Neuer Umsetzungsabschnitt – SCADA-DSEG7-Leistungsfluss (30.10.2026)
+
+### Auftrag
+- Die Animation des bestehenden `EnergyFlow` in eine klarere **SCADA-Dark + DSEG7-Optik** überführen, ohne Datenlogik, Topologie, Gerätefarben oder Steuerung zu ändern.
+
+### Umsetzung
+- Runde Photonen wurden durch kantige, entlang der Flussrichtung rotierende **LED-/7-Segment-Balken** ersetzt (`flow-segments-*`). Segmentanzahl und Laufzeit bleiben watt- und tempoabhängig; Netz-Einspeisung läuft weiterhin rückwärts.
+- Leitungen besitzen jetzt einen dunklen Instrumentenkanal, eine dezente Metall-Innenbahn und eine segmentierte Farblaufspur. Der SVG-Untergrund kombiniert tiefdunklen SCADA-Verlauf, 40er-Raster und feine horizontale Scanlines.
+- Knoten-Leistung, Auslastung/SoC, Batterie-Ring, Hover-Watt-Pills und Inspector-Werte nutzen `DSEG7-Classic` mit `JetBrains Mono` als Fallback. Testids ergänzt: `energy-flow-panel`, `flow-segments-*`, `flow-pill-*-value`, `flow-inspector-value-*`.
+- Reduced Motion und „Fluss aus" entfernen weiterhin sämtliche SMIL- und CSS-Bewegungen. Auto/Kompakt/Detail, Tempo, Persistenz, Hover-Inspector und Live-Polling bleiben unverändert.
+- Extremfall +2.500 W / 100 % SoC durch reservierte DSEG-Zahlenspalten behoben; kein Überlappen in Kompakt oder Detail.
+
+### Verifikation
+- Testing-Agent iteration_35: 73/74 Prüfungen bestanden; einzig gefundener Maximalwert-Überstand anschließend korrigiert.
+- Retest: Segmentbewegung gemessen, Gegenrichtung/Toggle/DSEG bestätigt, +2.500 W und 100 % in Detail/Kompakt ohne Überschneidung, neue Testids vorhanden, 390 px ohne Seiten-Overflow.
+- Production Build und 9/9 Gerätekennzahlen-Helfertests erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert.
+
+## Neuer Umsetzungsabschnitt – Lichtbalken & runde Photonen (30.10.2026)
+
+### Auftrag
+- Leitungen im Energiefluss als durchgehenden Lichtstrahl/Lichtbalken darstellen und die Photonen wieder rund sowie sichtbar aufleuchtend ausführen.
+
+### Umsetzung
+- Aktive Flüsse bestehen aus dunklem Leitungsbett, farbigem Halo, solidem Lichtkern und feinem weißem Zentrum; keine gestrichelte Segmentstrecke mehr.
+- Bewegte Elemente sind wieder runde Photonen: farbiger Kern mit heller Kontur plus größerer Halo. Radius und Opazität pulsieren, während die Photonen watt- und tempoabhängig entlang des Pfades laufen.
+- Netzrichtung, Watt-Dichte, Tempo, Fluss-Toggle, Reduced Motion, DSEG7-Telemetrie, SCADA-Hintergrund und alle Gerätekennzahlen bleiben erhalten.
+- Reduced Motion zeigt weiterhin den statischen Lichtbalken, entfernt aber Photon-/Beam-Animationen vollständig.
+
+### Verifikation
+- Testing-Agent iteration_36: **78/78 Frontend-Prüfungen bestanden** – solide Lichtbalken, zwei Kreis-Layer je Photon, Aufleuchten, Bewegung/Gegenrichtung, Watt-Skalierung, Tempo, Persistenz, Reduced Motion und DSEG7.
+- 29/29 Gerätekennzahlen, Live-Polling und +2.500 W/100%-Randfall bestanden; keine Runtime-Fehler, Integrationsfehler, Knotenkollisionen oder Seiten-Overflows bei 1920×800 und 390×844.
+- Production Build erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert; Randfälle wurden ausschließlich browserseitig gemockt.
+
+## Neuer Umsetzungsabschnitt – Lichtbalken als Photon-Hintergrund (30.10.2026)
+
+### Auftrag
+- Die Lichtbalken sollen visuell nur noch als Hintergrundlicht für die bewegten Photonen dienen.
+
+### Umsetzung
+- Der breite Farbschein wurde diffuser und breiter, gleichzeitig deutlich transparenter abgestimmt.
+- Der solide Farbkern wurde von 4–5 auf 3–4 SVG-Einheiten reduziert; sein Puls liegt nur noch zwischen 24 und 42 % Deckkraft.
+- Der weiße Mittelpunkt ist schmaler und ruhiger. Die runden Photonkerne bleiben hell und erreichen sichtbar höhere Deckkraft als der Strahl.
+- Hover verstärkt den Hintergrund weiterhin moderat, ohne die Photonen zu überstrahlen.
+
+### Verifikation
+- Gemessene Deckkraft im Live-Zustand: Hintergrundbalken ca. 0,34, Photonenkern ca. 0,84; Photon bleibt damit klar dominant.
+- Bewegung, Dichte, Richtung und runde Halo-Animation unverändert aktiv.
+- Desktop 1920×800 und Mobil 390×844 visuell geprüft; kein Seiten-Overflow. Production Build erfolgreich.
+
+## Neuer Umsetzungsabschnitt – Schmaler Photon-Führungskanal (30.10.2026)
+
+### Auftrag
+- Den bisherigen Lichtbalken auf einen einfachen, schmalen Kanal reduzieren, auf dem die runden Photonen laufen.
+
+### Umsetzung
+- Breiter Leistungshalo und pulsierender Beam wurden entfernt.
+- Aktive Leitung besteht nur noch aus einem 5,5-Einheiten dunklen Unterkanal, einer 2,1-Einheiten farbigen Führungslinie und einer feinen 0,35-Einheiten Lichtkante.
+- Beim Hover wächst die Farblinie kontrolliert auf maximal 2,6 Einheiten; Photonengröße, Leuchten, Dichte, Geschwindigkeit und Richtung bleiben unverändert.
+- Neuer eindeutiger Selektor `flow-channel-*`; Reduced Motion lässt den statischen Kanal sichtbar und entfernt nur die bewegten Photonen.
+
+### Verifikation
+- Alle fünf aktiven Kanäle im Detailmodus mit 2,1 SVG-Einheiten gemessen; keine frühere `flow-light-beam`-Klasse mehr vorhanden.
+- Photonbewegung erneut gemessen, Reduced Motion geprüft, Desktop/Mobil visuell bestätigt und 390 px ohne Seiten-Overflow.
+- Production Build erfolgreich; wiederverwendbarer EnergyFlow-Regressionstest auf den schmalen Kanal aktualisiert.
+
+## Neuer Umsetzungsabschnitt – Doppelte Akku-Anzeige entfernt (30.10.2026)
+
+### Auftrag
+- Die doppelte SoC-Zahl am Batterie-Knoten des Energieflusses entfernen.
+
+### Umsetzung
+- Die kleine numerische SoC-Anzeige im runden Akku-Emblem wurde durch ein eindeutiges Batteriesymbol ersetzt.
+- Der große Prozentwert rechts bleibt als einzige numerische SoC-Anzeige bestehen und behält die vereinbarte W-&-%-Hierarchie.
+- Der äußere Ring darf den Ladezustand weiterhin rein visuell andeuten; es gibt keine zweite Zahl mehr.
+- Neuer semantischer Selektor `flow-battery-emblem` ersetzt den früheren Zahlenring-Selektor.
+
+### Verifikation
+- Detail-, Kompakt- und mobile Auto-Ansicht geprüft: exakt eine numerische SoC-Anzeige je Batterie-Knoten.
+- Batteriesymbol enthält keinen Text, Prozentwert bleibt sichtbar; 390 px ohne Seiten-Overflow.
+- Production Build erfolgreich.
+
+## Neuer Umsetzungsabschnitt – Energiefluss-Kachel ans App-Design angepasst (30.10.2026)
+
+### Auftrag
+- Die äußere Energiefluss-Kachel an das etablierte Design der übrigen Geräte- und Detailkarten angleichen.
+
+### Umsetzung
+- Frühere helle `glass-strong`-Hülle durch denselben tiefdunklen 150°-Kartenverlauf wie `GlassCard` ersetzt (`#0d1626` → `#070c18`).
+- Radius, Innenkante, Randtransparenz und Schatten entsprechen nun dem gemeinsamen App-Kartensystem.
+- Cyanfarbene 3-px-Akzentoberkante mit Verlauf und Glow ergänzt.
+- Titelbereich verwendet jetzt dieselbe 26×26-px-Iconbox, Typohierarchie, Header-Trennlinie und responsive Innenabstände wie die anderen App-Karten.
+- Bestehende Flusssteuerung, schmale Kanäle, Photonen, DSEG-Werte und Inspector bleiben unverändert.
+
+### Verifikation
+- Berechnete Hintergrundverläufe und 12-px-Radius von Energiefluss- und Solar-Gerätekarte stimmen exakt überein.
+- Auto/Detail und Tempo-Schalter weiter funktionsfähig; Desktop 1920×800 und Mobil 390×844 visuell geprüft.
+- Kein Seiten-Overflow; Production Build erfolgreich.
+
+## Neuer Umsetzungsabschnitt – Klare Watt- und Hover-Einheiten (30.10.2026)
+
+### Auftrag
+- Das missverständliche DSEG-Symbol anstelle des Buchstabens „W" korrigieren und die Hover-Angaben einfacher sowie klarer gestalten.
+
+### Umsetzung
+- DSEG7 bleibt ausschließlich für numerische Knotenwerte erhalten.
+- Einheiten `W` und `%` werden in jedem Energiefluss-Knoten separat mit `JetBrains Mono`, normalem Zeichenabstand und ruhiger Gewichtung gerendert.
+- Hover-Watt-Pills trennen Zahl und Einheit ebenfalls; der Zahlenwert bleibt DSEG7, das `W` ist klares Mono.
+- Inspector-Werte verwenden vollständig `JetBrains Mono`, da zusammengesetzte Angaben wie `800 W · 43 %` in einer Segmentanzeige schlechter lesbar sind. Dieser Abschnitt ersetzt damit nur für den Hover-Inspector die frühere DSEG-Festlegung.
+- Eindeutige Unit-Testids ergänzt: `flow-*-unit`, `flow-*-percent-unit`, `flow-pill-*-unit`.
+
+### Verifikation
+- Berechnete Schriftfamilie für Knoten-W, Prozentzeichen, Hover-W und Inspector: `JetBrains Mono`; keine DSEG-Vererbung auf Einheiten.
+- Detail- und mobile Auto-Ansicht inklusive Hover-Pill geprüft; klare `W`-Darstellung und kein Seiten-Overflow.
+- Production Build erfolgreich; EnergyFlow-Regressionstest an die klare Inspector-Typografie angepasst.
+
+## Neuer Umsetzungsabschnitt – Tagesbilanz fachlich und technisch validiert (01.11.2026)
+
+### Auftrag
+- Prüfen, ob sämtliche Berechnungen der Tages-kWh-Bilanz korrekt sind und fehlerfrei vom Backend an die Oberfläche übertragen werden.
+
+### Festgestellte und behobene Fehler
+- Die PV-Karte verwendete erneut Live-YDay-Gerätezähler statt des messwertintegrierten `today.pv_kwh`.
+- Hausverbrauch wurde im Frontend aus Teilwerten neu abgeleitet statt das gemessene `consumption_kwh` zu verwenden.
+- Gesamter Netzexport wurde pauschal der PV zugerechnet; gesamte Akkuentladung pauschal dem Haus. Das war bei parallelem PV-/Akkubetrieb fachlich falsch.
+- „Round-Trip Wirkungsgrad" war nur das Verhältnis Tagesentladung/Tagesladung und damit kein echter Zykluswirkungsgrad.
+- Historische Tagesbalken ordneten zeitlich getrennten Nacht-Akku-Export der Tages-PV zu und verwendeten ein festes 15-s-Raster statt realer Zeitabstände.
+- Leere oder unvollständige Tage wurden als echte Nullwerte interpretiert; ein API-Ausfall konnte zuvor einen alten Wert stehen lassen.
+
+### Umsetzung
+- Gemeinsame Backend-Berechnung `_summarize_energy_rows`: trapezförmige Integration anhand realer Zeitstempel; nicht-positive Intervalle und Lücken über 600 s werden übersprungen.
+- Neue explizite API-Felder: `pv_direct_kwh`, `battery_to_house_kwh`, `pv_export_kwh`, `battery_export_kwh`, `battery_discharge_charge_pct`.
+- AC-Export wird pro Messzeitpunkt bei gleichzeitigem PV- und Akkubetrieb proportional zur momentanen AC-Leistung aufgeteilt. Diese notwendige Zuordnung ist in der Oberfläche transparent benannt, da der gemeinsame AC-Bus keine physische Quellenmarkierung liefert.
+- Bilanzidentitäten: `PV = Direkt + Ladung + PV-Export`; `Haus = PV direkt + Akku zum Haus + Netzbezug`; `Export = PV-Export + Akku-Export`; `Entladung = Akku zum Haus + Akku-Export`.
+- `round_trip_pct` bleibt als kompatibler Alias; die Oberfläche bezeichnet den Wert korrekt als „Entlade-/Ladeverhältnis".
+- `/api/energy/balance` gruppiert nun erst nach zeitgewichteter Einzelmessungs-Integration und zeigt „PV lokal genutzt" statt der früher missverständlichen Eigenverbrauchszuordnung.
+- Verfügbarkeitsmetadaten `measurement_available`, `sample_count`, `measured_duration_s`; fehlende Messungen erscheinen als „–"/„Gestern: –". Bei `/today`-Fehlern werden keine veralteten Tageswerte weiter angezeigt.
+- Recharts-Container erhalten stabile `initialDimension`-Werte; dadurch keine `width(-1)/height(-1)`-Initialwarnungen mehr.
+
+### Verifikation
+- Testing-Agent iteration_37 deckte historische Quellenzuordnung und fehlende Messverfügbarkeit auf; beide anschließend korrigiert.
+- Final: **31/31 Backend-Bilanztests** bestanden, einschließlich reiner PV-/Akku-/Netzfälle, proportionalem Parallelbetrieb, Lücken und Offset 0/1.
+- Reale API-Residuen aller fünf Bilanzgleichungen unter 0,002 kWh; neun sichtbare Kenn-/Detailwerte stimmen gerundet exakt mit `/api/today` überein.
+- Browser: 20/20 Gestern-Werte bei fehlendem Vortag „Gestern: –", API-Ausfall ohne stale Wert, keine Recharts-Dimensionswarnung, 1920×800/390×844 ohne Overflow.
+- Production Build erfolgreich. Hardwarewerte bleiben im Demo-Modus simuliert.
+
+## Neuer Umsetzungsabschnitt – Stabile und korrekte Geräte-Tageserträge (02.11.2026)
+
+### Auftrag
+- Prüfen, warum Ertragswerte auf den Geräte-/GlassCards ständig wechseln, und sicherstellen, dass korrekte kumulierte Tageswerte ermittelt und dargestellt werden.
+
+### Ursache
+- Die bisherigen Demo-Felder `Ahoy channels[].yield_day`, `Victron mppts[].yield_today` und `Trucki day_energy_kwh` wurden unmittelbar aus der aktuellen Sonnenintensität und teilweise aus Zufallswerten gebildet.
+- Dadurch konnten vermeintliche Tageszähler bei jedem 3-s-Poll schwanken und nach dem Sonnenhöchststand sogar wieder sinken.
+- `Trucki total_energy_kwh` war an den schwankenden SoC gekoppelt und damit ebenfalls nicht monoton.
+
+### Umsetzung
+- Ahoy und Victron verwenden nun ein deterministisches 5-Minuten-Zeitintegral der Sonnenintensität seit Sonnenaufgang. Die Werte steigen tagsüber ausschließlich an, bleiben nach Sonnenuntergang konstant und setzen am UTC-Tageswechsel zurück.
+- Trucki `day_energy_kwh` integriert den simulierten SUN-2000-Ausgang in 10-Minuten-Schritten; `total_energy_kwh` basiert auf einem monotonen Langzeitmodell statt auf SoC.
+- Alle Mock-Integrale verwenden jetzt denselben `now_dt` und die tatsächlich konfigurierte Anlagenposition `lat/lon` aus `collect_live`.
+- NOAA-Tagesgrenze in `sun.event_times` korrigiert: Ein fester UTC-Mittagsanker verhindert den früheren Sprung auf den Folgetag etwa 69 Sekunden vor Mitternacht.
+- Der echte Trucki-HTTP-Adapter reicht `target`, Min/Max, AC-Sollwert, Tages-/Gesamtenergie und Temperatur vollständig durch.
+- Bei Ausfall echter Geräte und deaktiviertem Demo-Modus werden keine erfundenen Mock-Erträge mehr geliefert; das Gerät meldet ehrlich `online: false`/`unreachable`.
+- UI-Einheiten präzisiert: Ahoy-Spalte `YDay kWh`, Trucki-Gesamtwert mit `kWh`; eindeutige Testids für Ahoy-, Victron- und Trucki-Ertragswerte.
+- FlowSummary und DayBalance bleiben unverändert auf den messwertintegrierten `/api/today`-Werten; Geräte-YDay-Zähler sind separate kumulative Quellen.
+
+### Verifikation
+- Testing-Agent iteration_38 fand Tagesgrenzen-, Standort- und HTTP-Durchreichungsfehler; alle drei anschließend behoben.
+- Final **40/40 Backend-Datenchecks bestanden**: Morgen/Mittag/Abend/Nacht monoton, gleicher Timestamp deterministisch, 23:58:50–23:59:59 konstant, Reset um 00:00, Standortreaktion und echte Collector-Felder korrekt.
+- Nicht-Demo-Geräteausfall liefert keine synthetischen Ertragswerte mehr.
+- Browserpoll über 4,2 s: alle sechs sichtbaren Ahoy-/Victron-/Trucki-Ertragswerte gleichbleibend oder steigend; Einheiten korrekt.
+- Desktop 1920×800 und Mobil 390×844 ohne Overflow; Production Build erfolgreich. Hardwarewerte bleiben im expliziten Demo-Modus simuliert.
+
+## Neuer Planungsabschnitt – Zukunftsaufgaben & verbindliche Arbeitsweise (05.11.2026)
+
+### Neue Zukunftsaufgaben
+- **P1 – InfluxDB & Grafana:** Datenmodell, Measurements, Felder, Einheiten, Retention und Provisionierung neu abstimmen; vorhandene Dashboard-Vorlagen gegen reale Daten prüfen und vollständig funktionsfertig für Grafana bereitstellen.
+- **P2 – Hersteller-Handbücher:** Offizielle Handbücher für Hoymiles/AhoyDTU, Victron SmartSolar/Venus OS, Shelly Pro 3EM und Trucki2Shelly/SUN passend zu den jeweiligen Gerätebereichen hinzufügen.
+- **Fortlaufend – Potenzielle Verbesserungen:** Bestätigte Verbesserungsvorschläge priorisieren, einzeln planen und systematisch abarbeiten.
+
+### Verbindliches Preview-Prinzip
+1. Neue Funktionen und Optimierungen werden nach bestätigtem Plan zunächst in einer getrennten Vorschau umgesetzt.
+2. Die bestehende Hauptansicht bleibt bis zur ausdrücklichen Nutzerabnahme unverändert.
+3. Die Vorschau wird technisch und visuell auf Desktop/Mobil geprüft und dem Nutzer zur Freigabe vorgelegt.
+4. Erst nach Freigabe wird sie gezielt übernommen; alte Vorschaupfade werden anschließend weitergeleitet oder entfernt.
+5. Bugfixes an einer bereits freigegebenen Ansicht werden direkt dort umgesetzt, wenn der Nutzer sie ausdrücklich anfordert; neue angrenzende Funktionen bleiben Preview-pflichtig.
+
+### Dokumentationspflicht nach Übernahme
+- Betroffene sichtbare Texte und Datenbeschreibungen aktualisieren.
+- Anleitung, technische Details, Roadmap und Projektbericht auf den ausgelieferten Stand bringen.
+- Veraltete Aussagen korrigieren, ohne frühere Planungsabschnitte zu löschen.
+- Jede neue Planung als eigenen datierten Abschnitt anhängen; Planungsdateien nicht vollständig überschreiben.
+
+### Sichtbare Umsetzung dieser Vereinbarung
+- In-App-Roadmap um `manufacturer-manuals`, `influx-grafana-alignment` und `potential-improvements` ergänzt und persistent gespeichert.
+- Anleitung enthält den neuen Abschnitt „Arbeitsweise & Preview-Prinzip".
+- Projektbericht listet „Preview vor Übernahme" und „Dokumentation abschließend pflegen" als verbindliche Arbeitsschritte.
+- README beschreibt Preview-Prozess, Zukunftsaufgaben und den realistischen aktuellen Status der InfluxDB-/Grafana-Grundlage.
+
+## Neuer Umsetzungsabschnitt – SmartShunt IP65 300A · Phase-1-Vorschau (05.11.2026)
+
+### Auftrag und feste Grenzen
+- Victron SmartShunt IP65 300A lokal und ausschließlich lesend über Venus OS/MQTT anbinden.
+- Phase 1 verwendet fest die verifizierte VRM-Instanz **290** und Topic-Basis `N/<Portal-ID>/battery/290/#`.
+- Keine VRM-Cloud, keine SmartShunt-Schreibbefehle, keine akustischen Alarme und keine Änderung der Trucki/SUN-Steuerung.
+- Die freigegebenen Hauptseiten und die Hauptnavigation bleiben unverändert. Die gesamte neue Oberfläche liegt isoliert unter `/smartshunt-preview`.
+
+### Backend und Datenqualität
+- Neues Modul `backend/smartshunt.py` normalisiert Produktidentität, Livewerte, optionale Sensoren, Gerätealarme und native SmartShunt-Historienzähler.
+- `mqtt_client.py` speichert `battery/290` getrennt von den Victron-MPPT-Instanzen. Nur numerisch gültige Telemetrie aktualisiert den Messzeitstempel; Null-/Fehlwerte und Identitäts-/History-Nachrichten können alte Messwerte nicht wieder als aktuell markieren.
+- Pro Messfeld werden Zeitstempel geführt. Nicht verfügbare, getrennte oder falsch identifizierte Geräte maskieren Live- und Zusatzsensorwerte, während native Gerätezähler getrennt erhalten bleiben.
+- Vollständige Verifikation verlangt Produktname SmartShunt, Instanz 290, USB/VE.Direct-Verbindung und `Connected=1`.
+- Statusgrenzen: `current` bis einschließlich 90 s, `stale` über 90 bis einschließlich 180 s, `unavailable` über 180 s sowie bei `Connected=0`, falscher Identität oder fehlender gültiger Telemetrie.
+- Vorzeichen: positive Leistung/Strom = Laden, negative Leistung/Strom = Entladen. Keine stille Vermischung mit Trucki/SUN.
+- Der 15-s-Poller speichert SmartShunt-Livepunkte separat in `smartshunt_snapshots`, den letzten normalisierten Stand in `smartshunt_latest` und visuelle Zustands-/Gerätealarme in `smartshunt_alarm_events`.
+- Demo- und Live-Verläufe/Ereignisse sind getrennt. Neue Snapshot-/Event-Dokumente erhalten ein TTL-Ablaufdatum entsprechend der bestehenden Retention-Konfiguration; MongoDB-`_id` wird nie an die API ausgegeben.
+
+### API und Vorschauoberfläche
+- `GET /api/smartshunt/preview`: aktueller Zustand, feste Topic-Basis, Identität, Diagnosechecks, Rohfelder, optionale Sensoren, native Gerätezähler und Alarmereignisse.
+- `GET /api/smartshunt/history?range=1h|3h|6h|12h|24h`: separater SmartShunt-Messverlauf für Spannung, Strom, Leistung und SoC.
+- `/smartshunt-preview` besitzt vier stabile Ansichten: **Übersicht**, **Gerät**, **Diagnose** und **Verlauf**.
+- Übersicht zeigt Spannung, Strom, Leistung, SoC, Restlaufzeit, verbrauchte Ah, Richtung, Datenalter und die sichtbare Quellen-Trennung SmartShunt ↔ Trucki/SUN.
+- Gerät zeigt verifizierte Identität, nur tatsächlich vorhandene Zusatzsensoren und direkt übernommene Gerätezähler.
+- Diagnose zeigt lokale Topic-/Brokerinformationen, Identitäts- und Freshness-Prüfungen, empfangene Rohfelder sowie ausschließlich visuelle Alarmereignisse.
+- Verlauf zeigt Leistung/Strom und Spannung/SoC in zwei getrennten Diagrammen mit fünf Zeitbereichen, Aktualisierung und belastbarem Fehlerzustand.
+
+### Verifikation und aktueller Freigabestatus
+- Testing-Agent iteration_39 deckte vier reale Randfälle auf: Identity-only-Freshness, Nullwert-Reaktivierung, Offline-Zusatzsensoren und `Connected=0` trotz Verifiziert-Badge. Alle vier wurden korrigiert.
+- Retest Backend: **36/36** SmartShunt-, MQTT- und Config-Prüfungen bestanden.
+- Retest Frontend: **67/67** Browserprüfungen bestanden, einschließlich vier Tabs, fünf Zeitbereiche, Auto-/Manuell-Refresh, Fehlerwiederherstellung, Offline-/Stale-Simulation, nativen Zählern, unveränderter Trucki-Demo-Steuerung und Hauptseiten-Regression.
+- Finale Gesamtregression: **203/203 Backendtests bestanden**. Veraltete Tests wurden auf die bereits freigegebene zeitgewichtete Flussintegration und das korrekte rollende 1-h-Verlaufsfenster ausgerichtet; Produktberechnungen der Hauptseiten wurden dabei nicht verändert.
+- Desktop 1920×800 und Mobil 390×844 ohne horizontalen Seitenüberstand, doppelte Test-IDs oder abgeschnittene Bedienelemente. Production Build erfolgreich.
+- **Wichtig:** Die physische Venus-OS-/SmartShunt-Hardware war in der Preview-Umgebung nicht erreichbar. Telemetrie und Verlauf sind dort eindeutig **DEMO/MOCKED**; die FastAPI-/MongoDB-/Frontend-Flüsse sind real.
+- Phase 1 bleibt bis zur ausdrücklichen Nutzerabnahme eine Vorschau. Phase 2 darf erst danach SmartShunt-Werte in Dashboard, Energiefluss, Geräte, Diagnose, Verlauf, InfluxDB oder Grafana übernehmen.
+
+### Nächste Phasen
+- **P0 Nutzerprüfung:** Vorschau mit echter lokaler Venus-OS-Anlage gegen Produktname, `Connected`, USB/VE.Direct und `battery/290` validieren.
+- **P1 nach Freigabe:** SmartShunt als maßgebliche Batteriequelle in Hauptansichten übernehmen; Trucki/SUN weiterhin ausschließlich als AC-Regelquelle behandeln; InfluxDB-/Grafana-Felder ergänzen.
+- **P2:** Mehrinstanz-Erkennung, Langzeitauswertung, Diagnose-/Berichtsverknüpfung und offizielles SmartShunt-Handbuch.
+
+## Neuer Umsetzungsabschnitt – Lokaler SmartShunt-Hardwareprüflauf (05.11.2026)
+
+### Anlass und gewählter Prüfweg
+- Der konfigurierte MQTT-Broker liegt in einem privaten LAN und war aus der Cloud-Preview per TCP/1883 nicht erreichbar. Die reale Hardware konnte deshalb dort nicht seriös abgenommen werden.
+- Der Nutzer wählte ausdrücklich den Prüfweg **„Lokalen Prüfknopf einbauen“**.
+- Im Diagnose-Tab der isolierten SmartShunt-Vorschau steht nun „Echte Daten prüfen“. Der Lauf wird vom Backend ausgeführt, auf dem die lokale App tatsächlich läuft, und benötigt keine Browser-Direktverbindung zum Broker.
+
+### Sicherheits- und Abnahmekriterien
+- `POST /api/smartshunt/probe` öffnet eine kurzlebige MQTT-Verbindung mit der bereits gespeicherten lokalen Brokerkonfiguration.
+- Abonniert wird ausschließlich `N/<Portal-ID>/battery/290/#`. Als einziger Publish ist der lesende Venus-OS-Request `R/<Portal-ID>/keepalive` zulässig. `W/`-Topics und Geräte-/Regelbefehle werden nie gesendet.
+- Der Prüfbericht gilt nur als bestanden, wenn Broker und MQTT verbunden sind und echte gültige Rohfelder für Produktname, Instanz 290, USB/VE.Direct, `Connected=1`, Spannung, Strom, Leistung und SoC sowie mindestens ein nativer Gerätezähler empfangen wurden.
+- Eine aus Spannung × Strom abgeleitete Ersatzleistung reicht für die Abnahme ausdrücklich nicht; `Dc/0/Power` muss gültig vom Gerät empfangen werden.
+- Fehlende Konfiguration, paralleler Prüflauf, TCP-Timeout, MQTT-/Anmeldefehler und unvollständige Telemetrie liefern ein strukturiertes Nicht-bestanden-Protokoll mit sichtbarer Ursache und bestätigtem Schreibschutz statt HTTP 500.
+- Brokerhost, Benutzername und Passwort werden weder im Ergebnis noch in sichtbaren Fehlermeldungen ausgegeben.
+
+### Oberfläche und Verifikation
+- Das lokale Protokoll zeigt Prüfzeit, Laufzeit, Nachrichten-/Feldanzahl, Gesamturteil und jeden Einzelcheck. Bei Erfolg erscheint **ABNAHMEBEREIT**, nicht automatisch „abgenommen“; die ausdrückliche Nutzerfreigabe bleibt erforderlich.
+- Testing-Agent iteration_40 fand drei Fehler: errechnete Ersatzleistung konnte fälschlich bestehen, MQTT-Connect-Ausnahmen erzeugten HTTP 500 und frühe Fehler hatten keine sichtbaren Checks. Alle drei wurden korrigiert.
+- Retest: **58/58** gezielte Probe-, SmartShunt-, MQTT- und API-Prüfungen bestanden; Production Build erfolgreich.
+- Reale Cloud-Ausführung liefert erwartungsgemäß ein sichtbares `MQTT-Broker nicht erreichbar (TimeoutError)` und bestätigt gleichzeitig „Keine W/-Steuerbefehle“.
+- Desktop 1920×800 und Mobil 390×844 ohne horizontalen Seitenüberstand. Hauptseiten und Trucki/SUN bleiben unverändert.
+- **Offen:** Für die physische Abnahme muss der Prüfknopf in der lokal installierten App im gleichen erreichbaren Netz wie Mosquitto/Venus OS ausgeführt werden. Erst ein vollständiges **ABNAHMEBEREIT**-Protokoll kann anschließend ausdrücklich freigegeben werden.

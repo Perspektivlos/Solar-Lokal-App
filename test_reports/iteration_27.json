@@ -1,0 +1,22 @@
+{
+  "summary": "Tested self-test history (backend + /diagnose UI) and the restyled dashboard SectionHeaders. Backend 4/4 pytest passed: POST /api/diagnostics/run shape without _id, persisted newest-first, history aggregation (last_status/last_ok/last_fail/detail/fails/runs) correct, retention keeps exactly the newest 50. Frontend: the selftest-history card works (count text '50 von max. 50 Läufen · nur manuelle Tests', 50 strip bars, all red because MQTT fails in demo; 10 check rows with correct badges, 'nie' and x/n; empty state checked with a mocked empty response). Dashboard section-battery/victron/pv-grid/shelly render the dark gradient, rounded 12px corners, accent border and icon box. Pin, Öffnen link, details toggle and the details panel gradient all work, with no overflow at 1920 or 390. ONE BUG: on mobile 390 the /diagnose page overflows horizontally because selftest-run-strip (50 bars, about 547px wide) does not wrap or scroll. The table itself scrolls correctly inside its card.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SelftestHistory RunStrip", "issue": "At 390px with 50 runs, the run strip (50 x w-2 + 3px gaps ≈ 547px) sticks out of the card (strip right edge 588px, card right edge 366px). documentElement.scrollWidth = 588, so the whole /diagnose page scrolls sideways. Fix: give the strip max-w-full overflow-x-auto (or flex-wrap / flex-1 bars with min-w-0), or limit the visible bars on small screens.", "selector": "[data-testid=selftest-run-strip]", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/diagnose Selbst-Test-Verlauf", "issues": ["data-testids for checks with parentheses contain them literally (selftest-check-mqtt-(mosquitto), selftest-check-ahoy-dtu-(hoymiles)), which is awkward for CSS selectors. Consider stripping non-alphanumeric characters.", "While history is loading (null), the card briefly shows the empty state '0 von max. 50' instead of a loading state. Fetch errors are swallowed silently."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_selftest_history.py", "/app/test_reports/pytest/pytest_selftest.xml"],
+  "action_items": ["Fix the horizontal page overflow on mobile caused by selftest-run-strip in SelftestHistory.jsx (constrain it to the card width with overflow-x-auto or wrapping)."],
+  "critical_code_review_comments": ["routes.py: SELFTEST_KEEP is defined after diagnostics_run. It works at runtime, but move it above the function for readability.", "History sorts by the ISO timestamp string. This is fine while all timestamps use the same UTC isoformat. Consider an index on selftest_runs.timestamp.", "SelftestHistory RunStrip uses the timestamp as the React key. Fine, but runs within the same microsecond would collide (unlikely)."],
+  "updated_files": ["/app/backend/tests/test_selftest_history.py"],
+  "success_rate": {"backend": "100%", "frontend": "90%"},
+  "seed_data_creation": "About 57 self-test runs were created; the selftest_runs collection now holds 50 runs.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "In demo mode MQTT (Mosquitto) always FAILs, so every strip bar is red. To check overflow at 390: scrollWidth of documentElement on /diagnose. Section headers: first child of [data-testid=section-*] holds the gradient bar."
+}

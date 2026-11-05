@@ -1,24 +1,33 @@
-"""Tests für die Energiebilanz-Umrechnung (routes._rows_to_balance)."""
+"""Tests für die aktuelle zeitgewichtete Energiebilanz-Integration."""
+from datetime import datetime, timedelta, timezone
+
 import server  # noqa: F401  (löst späte Bindung, verhindert Zirkularimport beim direkten routes-Import)
 import routes
 
 
 def test_rows_to_balance_kwh_conversion():
-    # 240 Samples à 15s = 3600s = 1h. Bei konstant 1000W -> 1 kWh.
-    rows = [{"_id": "2026-06-08", "pv": 1000 * 240, "imp": 0, "exp": 500 * 240, "n": 240}]
-    out = routes._rows_to_balance(rows)
-    assert out[0]["pv_kwh"] == 1.0
-    assert out[0]["export_kwh"] == 0.5
-    # Eigenverbrauch = PV - Einspeisung
-    assert out[0]["self_kwh"] == 0.5
-    assert out[0]["period"] == "2026-06-08"
+    start = datetime(2026, 6, 8, tzinfo=timezone.utc)
+    rows = [{"ts": (start + timedelta(minutes=5 * index)).isoformat(), "pv_power": 1000,
+             "house_power": 500, "grid_power": -500, "battery_power": 0}
+            for index in range(13)]
+    out = routes._summarize_energy_rows(rows)
+    assert out["pv_kwh"] == 1.0
+    assert out["grid_export_kwh"] == 0.5
+    assert out["self_consumption_kwh"] == 0.5
+    assert out["measurement_available"] is True
 
 
 def test_self_consumption_never_negative():
-    rows = [{"_id": "2026-06-08", "pv": 100, "imp": 0, "exp": 1000 * 240, "n": 240}]
-    out = routes._rows_to_balance(rows)
-    assert out[0]["self_kwh"] == 0.0
+    start = datetime(2026, 6, 8, tzinfo=timezone.utc)
+    rows = [
+        {"ts": start.isoformat(), "pv_power": 100, "house_power": 0, "grid_power": -1000, "battery_power": 0},
+        {"ts": (start + timedelta(minutes=5)).isoformat(), "pv_power": 100, "house_power": 0, "grid_power": -1000, "battery_power": 0},
+    ]
+    out = routes._summarize_energy_rows(rows)
+    assert out["self_consumption_kwh"] == 0.0
 
 
 def test_empty_rows():
-    assert routes._rows_to_balance([]) == []
+    out = routes._summarize_energy_rows([])
+    assert out["measurement_available"] is False
+    assert out["pv_kwh"] == 0.0
