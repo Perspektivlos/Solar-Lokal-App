@@ -5,10 +5,12 @@ import os
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pytest
 import requests
+
+from phase2 import summarize_phase2_points
 
 BASE_URL = os.environ['REACT_APP_BACKEND_URL'].rstrip('/')
 
@@ -20,12 +22,16 @@ def load_function(name, rows=None):
         def limit(self, *args): return self
         async def to_list(self, *args): return rows
     tree = ast.parse((Path(__file__).parents[1] / 'routes.py').read_text())
-    helper_names = {'_safe_power', '_charge_w', '_discharge_w', '_flow_components', '_summarize_energy_rows'}
-    helpers = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in helper_names]
+    helper_names = {'_safe_power', '_charge_w', '_discharge_w', '_flow_components', '_summarize_energy_rows',
+                    '_phase2_points_from_rows'}
+    constants = {'_PHASE2_LEGACY_KEYS', '_SMARTSHUNT_VALUE_KEYS'}
+    helpers = [n for n in tree.body if (isinstance(n, ast.FunctionDef) and n.name in helper_names)
+               or (isinstance(n, ast.Assign) and any(getattr(t, 'id', None) in constants for t in n.targets))]
     node = next(n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == name)
     node.decorator_list = []
     namespace = dict(datetime=datetime, timezone=timezone, timedelta=timedelta,
                      Dict=Dict, List=List, Any=Any, MAX_ENERGY_GAP_SECONDS=600,
+                     Optional=Optional, summarize_phase2_points=summarize_phase2_points,
                      db=SimpleNamespace(snapshots=Cursor()))
     body = helpers if name in helper_names else helpers + [node]
     exec(compile(ast.fix_missing_locations(ast.Module(body=body, type_ignores=[])), 'routes.py', 'exec'), namespace)
@@ -93,7 +99,7 @@ def test_empty_or_single_snapshot(rows):
     data = asyncio.run(load_function('today', rows)())
     assert data['measurement_available'] is False
     assert data['sample_count'] == len(rows)
-    assert all(v == 0 for k, v in data.items() if k not in {'measurement_available', 'sample_count'})
+    assert all(v == 0 for k, v in data.items() if k not in {'measurement_available', 'sample_count', 'source_note'})
 
 
 @pytest.mark.parametrize('charge,expected', [(500, 0), (510, 50), (1000, 50)])

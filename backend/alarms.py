@@ -98,7 +98,7 @@ def evaluate_alarms(
     # SmartShunt ist nach Phase-2-Abnahme maßgebliche Batteriequelle.
     smartshunt = live.get("smartshunt")
     battery_device = "smartshunt" if smartshunt is not None else "trucki"
-    battery = smartshunt or trucki
+    battery = smartshunt if smartshunt is not None else trucki
     _check_voltage(out, battery_device, "batt", "Akku", battery.get("voltage_v") if smartshunt is not None else battery.get("battery_voltage"), t["battery_voltage"])
     soc = battery.get("soc_pct") if smartshunt is not None else battery.get("soc")
     if soc is not None:

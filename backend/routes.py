@@ -105,6 +105,69 @@ def _flow_components(row: Dict[str, Any]) -> Dict[str, float]:
     }
 
 
+# Felder, die _summarize_energy_rows bereits mit Legacy-Semantik liefert.
+_PHASE2_LEGACY_KEYS = {"grid_import_kwh", "grid_export_kwh", "measurement_available",
+                       "measured_duration_s", "sample_count"}
+_SMARTSHUNT_VALUE_KEYS = ("smartshunt_dc_power_w", "smartshunt_voltage_v",
+                          "smartshunt_current_a", "smartshunt_soc_pct")
+
+
+def _phase2_points_from_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Snapshots in Phase-2-Punkte wandeln; jede SmartShunt-Messung zählt nur einmal.
+
+    Gleiche Logik wie phase2_routes._history_points: Nur Zeilen mit Status
+    "current", vorhandenem Messwert und neuem Quellzeitstempel liefern DC-Leistung.
+    """
+    points: List[Dict[str, Any]] = []
+    last_source_ts = None
+    for row in rows:
+        source_ts = row.get("smartshunt_received_at")
+        has_dc_value = any(row.get(key) is not None for key in _SMARTSHUNT_VALUE_KEYS)
+        unique_dc = (row.get("smartshunt_status") == "current" and has_dc_value
+                     and (not source_ts or source_ts != last_source_ts))
+        if unique_dc:
+            last_source_ts = source_ts
+        points.append({
+            "ts": row.get("ts"), "status": row.get("smartshunt_status") or "unavailable",
+            "battery_source_ts": source_ts,
+            "battery_dc_power_w": row.get("smartshunt_dc_power_w") if unique_dc else None,
+            "inverter_ac_power_w": row.get("trucki_ac_output_w"),
+            "pv_ac_power_w": row.get("pv_ac_power_w"), "pv_dc_power_w": row.get("pv_dc_power_w"),
+            "house_ac_power_w": row.get("house_ac_power_w"), "grid_power_w": row.get("grid_power"),
+        })
+    return points
+
+
+def _apply_smartshunt_history(rows: List[Dict[str, Any]]) -> None:
+    """Kanonischen Verlauf auf SmartShunt als Batteriequelle umstellen (in place).
+
+    - Neue Messung: SmartShunt-Werte übernehmen.
+    - Gleiche, weiterhin aktuelle Messung (Poller schneller als SmartShunt):
+      letzte Messwerte wiederholen – es ist dieselbe gültige Messung, kein Schätzwert.
+    - SmartShunt nicht aktuell/fehlend: None (echte Lücke, kein Trucki-Fallback, keine 0).
+    """
+    last_values: Optional[Dict[str, Any]] = None
+    last_source_ts = None
+    for row in rows:
+        if row.get("phase2_source") != "smartshunt":
+            continue
+        status = row.get("smartshunt_status")
+        source_ts = row.get("smartshunt_received_at")
+        values = {key: row.get(key) for key in _SMARTSHUNT_VALUE_KEYS}
+        if status == "current" and any(v is not None for v in values.values()):
+            last_values, last_source_ts = values, source_ts
+        elif status == "current" and last_values is not None and source_ts and source_ts == last_source_ts:
+            values = last_values
+        else:
+            values = {key: None for key in _SMARTSHUNT_VALUE_KEYS}
+        row["legacy_battery_power"] = row.get("battery_power")
+        row["battery_power"] = values["smartshunt_dc_power_w"]
+        row["battery_soc"] = values["smartshunt_soc_pct"]
+        row["battery_voltage_v"] = values["smartshunt_voltage_v"]
+        row["battery_current_a"] = values["smartshunt_current_a"]
+        row["battery_source"] = "smartshunt"
+
+
 def _summarize_energy_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     names = ("pv", "house", "grid_import", "grid_export", "charge", "discharge",
              "pv_direct", "battery_to_house", "pv_export", "battery_export")
@@ -144,14 +207,7 @@ def _summarize_energy_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     ratio = (discharge / charge * 100) if charge > 0.05 else 0.0
     clamp = lambda value: max(0.0, min(100.0, value))
     duration_h = measured_seconds / 3600.0
-    phase2_points = [{
-        "ts": row.get("ts"), "status": row.get("smartshunt_status") or "unavailable",
-        "battery_source_ts": row.get("smartshunt_received_at"),
-        "battery_dc_power_w": row.get("smartshunt_dc_power_w"),
-        "inverter_ac_power_w": row.get("trucki_ac_output_w"),
-        "pv_ac_power_w": row.get("pv_ac_power_w"), "pv_dc_power_w": row.get("pv_dc_power_w"),
-        "house_ac_power_w": row.get("house_ac_power_w"), "grid_power_w": row.get("grid_power"),
-    } for row in rows]
+    phase2_points = _phase2_points_from_rows(rows)
     phase2_totals = summarize_phase2_points(phase2_points)
     return {
         "pv_kwh": round(pv, 3),
@@ -172,7 +228,9 @@ def _summarize_energy_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "battery_discharge_charge_pct": round(clamp(ratio), 1),
         "round_trip_pct": round(clamp(ratio), 1),
         "phase2_measurement_available": phase2_totals.get("measurement_available", False),
-        **phase2_totals,
+        "phase2_measured_duration_s": phase2_totals.get("measured_duration_s", 0.0),
+        # Additive Phase-2-Felder; gleichnamige Legacy-Felder (Netz, Messdauer) bleiben unverändert.
+        **{key: value for key, value in phase2_totals.items() if key not in _PHASE2_LEGACY_KEYS},
         "measurement_available": measured_seconds > 0,
         "sample_count": len(rows),
         "measured_duration_s": round(measured_seconds, 1),
@@ -403,14 +461,7 @@ async def history(range: str = "1h") -> Dict[str, Any]:
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", -1).limit(10000)
     rows = (await cur.to_list(10000))[::-1]  # neueste behalten, dann chronologisch
-    for row in rows:
-        if row.get("phase2_source") == "smartshunt":
-            row["legacy_battery_power"] = row.get("battery_power")
-            row["battery_power"] = row.get("smartshunt_dc_power_w")
-            row["battery_soc"] = row.get("smartshunt_soc_pct")
-            row["battery_voltage_v"] = row.get("smartshunt_voltage_v")
-            row["battery_current_a"] = row.get("smartshunt_current_a")
-            row["battery_source"] = "smartshunt"
+    _apply_smartshunt_history(rows)
     # downsample if too many points
     if len(rows) > 600:
         step = max(1, len(rows) // 600)
