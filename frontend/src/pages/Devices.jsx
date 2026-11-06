@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getConfig, putConfig, getDeviceInfo, discoverDevice, discoverAll } from "../lib/api";
+import { getConfig, putConfig, getDeviceInfo, discoverDevice, discoverAll, getSmartShuntPhase2Live } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import AlarmSettings from "../components/AlarmSettings";
 import DeviceDocPanel from "../components/DeviceDocPanel";
@@ -7,12 +7,13 @@ import { Switch } from "../components/ui/switch";
 import { useMotion } from "../lib/motion";
 import { ScanLine, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Phase2Devices } from "../components/phase2/Phase2Devices";
 
 // cards = Texte der Dashboard-Karten, die zu diesem Gerät gehören
 const DEVICES = [
   { key: "shelly",  label: "Shelly Pro 3EM",                     hint: "3-Phasen Energiemesser",      accent: "#F87171", cards: [{ k: "grid", l: "Stromnetz" }, { k: "house", l: "Hausverbrauch" }] },
   { key: "ahoy",    label: "Ahoy DTU (Hoymiles HM1500)",         hint: "Wechselrichter",               accent: "#FACC15", cards: [{ k: "solar", l: "Solar PV" }] },
-  { key: "trucki",  label: "Trucki2Shelly Gateway",              hint: "Akku-Speicher",                accent: "#06B6D4", cards: [{ k: "battery", l: "Batterie 48V" }] },
+  { key: "trucki",  label: "Trucki2Shelly Gateway",              hint: "SUN-2000 AC-Regelgateway",      accent: "#8B5CF6", cards: [{ k: "battery", l: "AC-Ausgang & Regelung" }] },
   { key: "victron", label: "Victron VenusOS Large",              hint: "2× SmartSolar MPPT 150/35",    accent: "#34D399", cards: [] },
 ];
 
@@ -85,7 +86,7 @@ function BatteryCalc({ calc, usable, onChange }) {
 const INTRO_SECTIONS = [
   {
     label: "Zweck & Funktion",
-    body: "Konfiguration aller vier physischen Geräte: IP-Adresse, Aktiv-Status. Globaler Schalter ‚Demo-Modus' wechselt zwischen Mock-Werten und Live-Abruf aus dem lokalen Netz.",
+    body: "Konfiguration der Netzwerkgeräte plus SmartShunt-Liveansicht. SmartShunt liefert Batterie-DC; Trucki/SUN bleibt getrennte AC-Regelquelle.",
   },
   {
     label: "Parameter pro Gerät",
@@ -122,6 +123,7 @@ export default function Devices() {
   const [expanded, setExpanded] = useState({});
   const [discovering, setDiscovering] = useState({});
   const [discoveringAll, setDiscoveringAll] = useState(false);
+  const [phase2Live, setPhase2Live] = useState(null);
   const { pref: motionPref, setPref: setMotionPref } = useMotion();
 
   useEffect(() => { getConfig().then(setCfg); }, []);
@@ -131,6 +133,12 @@ export default function Devices() {
       (d.devices || []).forEach((x) => { map[x.device] = x; });
       setInfo(map);
     }).catch(() => {});
+  }, []);
+  useEffect(() => {
+    let active = true;
+    const load = () => getSmartShuntPhase2Live().then((value) => { if (active) setPhase2Live(value); }).catch(() => {});
+    load(); const timer = setInterval(load, 5000);
+    return () => { active = false; clearInterval(timer); };
   }, []);
 
   if (!cfg) return <div className="font-mono text-sm text-white/55">Lade Konfiguration...</div>;
@@ -214,6 +222,8 @@ export default function Devices() {
           </button>
         </div>
       </div>
+
+      {phase2Live && <Phase2Devices live={phase2Live} diagnosticsPath="/diagnose" />}
 
       {/* Demo Mode */}
       <div className="glass p-4 flex items-center justify-between" style={{ borderLeft: "3px solid #FACC15" }} data-testid="demo-toggle-row">

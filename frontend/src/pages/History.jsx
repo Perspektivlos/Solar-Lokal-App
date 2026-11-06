@@ -6,12 +6,12 @@ import SunTimeline from "../components/SunTimeline";
 import TitleBar from "../components/verlauf/TitleBar";
 import MultiLine from "../components/verlauf/MultiLine";
 import FourChannels from "../components/verlauf/FourChannels";
-import BatteryHistory from "../components/verlauf/BatteryHistory";
 import DayBalance from "../components/verlauf/DayBalance";
+import { Phase2History } from "../components/phase2/Phase2History";
 import { RANGES, bucketize } from "../components/verlauf/shared";
 
 const INTRO_SECTIONS = [
-  { label: "Zweck & Funktion", body: "Analysiert PV-Erzeugung, Hauslast, Akku und Netz synchron. Akku-Leistung und SoC besitzen getrennte Skalen; die Tagesbilanz zeigt kWh-Werte und den Vergleich zu gestern." },
+  { label: "Zweck & Funktion", body: "Analysiert PV, Haus und Netz auf AC-Seite sowie SmartShunt-Batterie und Trucki/SUN getrennt auf DC-/AC-Seite. Datenlücken bleiben sichtbar." },
   { label: "Ansichten", body: "Multilinie bündelt alle Leistungswerte. Vier Kanäle trennt PV, Haus, Akku und Netz in eigene Diagramme. Die Auswahl bleibt auf diesem Gerät gespeichert." },
   { label: "Zeitbereiche", body: "1h · 3h · 6h · 12h · 24h. Die Abtastrate passt sich automatisch an und echte Datenlücken werden nicht überbrückt." },
   { label: "Tages-kWh", body: "Kennzahlen, Verteilungsbalken und gruppierte Tagesbalken zeigen Erzeugung, Eigenverbrauch, Speicherung, Netzbezug und Einspeisung." },
@@ -41,7 +41,7 @@ export default function History() {
     let alive = true;
     getConfig().then((config) => { if (alive) setGrafanaUrl(config?.grafana_url || ""); }).catch(() => {});
     const load = () => {
-      getLive().then((value) => { if (alive) setLive(value); }).catch(() => {});
+      getLive().then((value) => { if (alive) setLive(value?.phase2 ? { ...value, summary: value.phase2.summary } : value); }).catch(() => {});
       getToday().then((value) => { if (alive) setToday(value); }).catch(() => { if (alive) setToday(null); });
     };
     load();
@@ -76,7 +76,7 @@ export default function History() {
       {view === "multi"
         ? <MultiLine data={data} range={range} live={live} loading={loading} />
         : <FourChannels data={data} live={live} loading={loading} />}
-      {view === "multi" && <BatteryHistory data={data} live={live} loading={loading} />}
+      {view === "multi" && <Phase2History />}
       <DayBalance today={today} yesterday={yesterday} />
       {live && <SunTimeline timestamp={live.timestamp} sun={live.sun} />}
     </div>

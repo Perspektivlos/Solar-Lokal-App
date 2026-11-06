@@ -29,6 +29,7 @@ from discovery import discover_device, DEVICE_LABELS, annotate_changes
 from smartshunt import SMARTSHUNT_INSTANCE
 from smartshunt_routes import router as smartshunt_router
 from phase2_routes import router as phase2_router
+from phase2 import summarize_phase2_points
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(smartshunt_router)
@@ -143,6 +144,15 @@ def _summarize_energy_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     ratio = (discharge / charge * 100) if charge > 0.05 else 0.0
     clamp = lambda value: max(0.0, min(100.0, value))
     duration_h = measured_seconds / 3600.0
+    phase2_points = [{
+        "ts": row.get("ts"), "status": row.get("smartshunt_status") or "unavailable",
+        "battery_source_ts": row.get("smartshunt_received_at"),
+        "battery_dc_power_w": row.get("smartshunt_dc_power_w"),
+        "inverter_ac_power_w": row.get("trucki_ac_output_w"),
+        "pv_ac_power_w": row.get("pv_ac_power_w"), "pv_dc_power_w": row.get("pv_dc_power_w"),
+        "house_ac_power_w": row.get("house_ac_power_w"), "grid_power_w": row.get("grid_power"),
+    } for row in rows]
+    phase2_totals = summarize_phase2_points(phase2_points)
     return {
         "pv_kwh": round(pv, 3),
         "consumption_kwh": round(house, 3),
@@ -161,6 +171,8 @@ def _summarize_energy_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "battery_export_kwh": round(battery_export, 3),
         "battery_discharge_charge_pct": round(clamp(ratio), 1),
         "round_trip_pct": round(clamp(ratio), 1),
+        "phase2_measurement_available": phase2_totals.get("measurement_available", False),
+        **phase2_totals,
         "measurement_available": measured_seconds > 0,
         "sample_count": len(rows),
         "measured_duration_s": round(measured_seconds, 1),
@@ -391,6 +403,14 @@ async def history(range: str = "1h") -> Dict[str, Any]:
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     cur = db.snapshots.find({"ts": {"$gte": since.isoformat()}}, {"_id": 0}).sort("ts", -1).limit(10000)
     rows = (await cur.to_list(10000))[::-1]  # neueste behalten, dann chronologisch
+    for row in rows:
+        if row.get("phase2_source") == "smartshunt":
+            row["legacy_battery_power"] = row.get("battery_power")
+            row["battery_power"] = row.get("smartshunt_dc_power_w")
+            row["battery_soc"] = row.get("smartshunt_soc_pct")
+            row["battery_voltage_v"] = row.get("smartshunt_voltage_v")
+            row["battery_current_a"] = row.get("smartshunt_current_a")
+            row["battery_source"] = "smartshunt"
     # downsample if too many points
     if len(rows) > 600:
         step = max(1, len(rows) // 600)

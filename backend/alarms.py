@@ -95,20 +95,31 @@ def evaluate_alarms(
             elif cur > ct["over"]:
                 _add(out, "shelly", "warning", f"overcurrent-{label}", f"Überstrom {label}: {_fmt(cur, 2)} A (> {_fmt(ct['over'])} A)", cur)
 
-    # Trucki: Akku-Spannung + SoC
-    _check_voltage(out, "trucki", "batt", "Akku", trucki.get("battery_voltage"), t["battery_voltage"])
-    soc = trucki.get("soc")
+    # SmartShunt ist nach Phase-2-Abnahme maßgebliche Batteriequelle.
+    smartshunt = live.get("smartshunt")
+    battery_device = "smartshunt" if smartshunt is not None else "trucki"
+    battery = smartshunt or trucki
+    _check_voltage(out, battery_device, "batt", "Akku", battery.get("voltage_v") if smartshunt is not None else battery.get("battery_voltage"), t["battery_voltage"])
+    soc = battery.get("soc_pct") if smartshunt is not None else battery.get("soc")
     if soc is not None:
         st = t["battery_soc"]
         if soc <= st["under_crit"]:
-            _add(out, "trucki", "critical", "soc-low", f"Akku-Ladezustand kritisch: {_fmt(soc, 0)} % (< {_fmt(st['under_crit'], 0)} %)", soc)
+            _add(out, battery_device, "critical", "soc-low", f"Akku-Ladezustand kritisch: {_fmt(soc, 0)} % (< {_fmt(st['under_crit'], 0)} %)", soc)
         elif soc < st["under"]:
-            _add(out, "trucki", "warning", "soc-low", f"Akku-Ladezustand niedrig: {_fmt(soc, 0)} % (< {_fmt(st['under'], 0)} %)", soc)
+            _add(out, battery_device, "warning", "soc-low", f"Akku-Ladezustand niedrig: {_fmt(soc, 0)} % (< {_fmt(st['under'], 0)} %)", soc)
 
-    # Victron MPPTs: Akku-Spannung je Regler
-    for m in (victron.get("mppts") or []):
-        name = m.get("name") or f"MPPT {m.get('id', '?')}"
-        _check_voltage(out, "victron", f"batt-{m.get('id', '?')}", name, m.get("battery_voltage"), t["battery_voltage"])
+    if smartshunt is not None:
+        existing_codes = {alarm["code"] for alarm in out}
+        for alert in smartshunt.get("alerts") or []:
+            code = f"smartshunt-{alert.get('code', 'device')}"
+            if code not in existing_codes:
+                _add(out, "smartshunt", alert.get("severity", "warning"), code, alert.get("label") or "SmartShunt-Hinweis")
+
+    # Vor Phase 2 bleiben MPPT-Batteriespannungen als Fallback prüfbar.
+    if smartshunt is None:
+        for m in (victron.get("mppts") or []):
+            name = m.get("name") or f"MPPT {m.get('id', '?')}"
+            _check_voltage(out, "victron", f"batt-{m.get('id', '?')}", name, m.get("battery_voltage"), t["battery_voltage"])
 
     # ---------- Verbindung / Datenstrom (nur außerhalb Demo) ----------
     if not demo:
