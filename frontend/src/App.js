@@ -14,6 +14,7 @@ import ScadavisPreview from "./pages/ScadavisPreview";
 import Docs from "./pages/Docs";
 import Report from "./pages/Report";
 import SmartShuntPreview from "./pages/SmartShuntPreview";
+import SmartShuntPhase2 from "./pages/SmartShuntPhase2";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/report-preview" element={<Report />} />
           <Route path="/bericht" element={<Report />} />
           <Route path="/smartshunt-preview" element={<SmartShuntPreview />} />
+          <Route path="/smartshunt-phase2/*" element={<SmartShuntPhase2 />} />
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors theme="dark" />

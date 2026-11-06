@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="0.679" timestamp="2026-11-05T21:08:39.239336+00:00" hostname="agent-env-d9ee6047-22d8-4f82-bb28-a3bebcc9e1d5"><testcase classname="backend.tests.test_phase2_acceptance" name="test_nested_threshold_severity_preserves_native_alerts" time="0.000" /><testcase classname="backend.tests.test_phase2_acceptance" name="test_missing_dc_keeps_ac_coverage_independent" time="0.000" /><testcase classname="backend.tests.test_phase2_acceptance" name="test_unique_dc_samples_integrate_across_duplicate_poll_rows" time="0.001"><failure message="AssertionError: {'battery_dc_charge_kwh': 0.0, 'battery_dc_discharge_kwh': 0.0, 'battery_dc_measured_duration_s': 0.0, 'battery_dc_measurement_available': False, ...}&#10;assert 0.0 == 0.008 ± 0.001&#10;  &#10;  comparison failed&#10;  Obtained: 0.0&#10;  Expected: 0.008 ± 0.001">backend/tests/test_phase2_acceptance.py:47: in test_unique_dc_samples_integrate_across_duplicate_poll_rows
+    assert totals['battery_dc_discharge_kwh'] == pytest.approx(.008,abs=.001), totals
+E   AssertionError: {'battery_dc_charge_kwh': 0.0, 'battery_dc_discharge_kwh': 0.0, 'battery_dc_measured_duration_s': 0.0, 'battery_dc_measurement_available': False, ...}
+E   assert 0.0 == 0.008 ± 0.001
+E     
+E     comparison failed
+E     Obtained: 0.0
+E     Expected: 0.008 ± 0.001</failure></testcase></testsuite></testsuites>

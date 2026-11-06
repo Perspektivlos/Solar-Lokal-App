@@ -1,0 +1,78 @@
+{
+  "collected": 262,
+  "executed": 240,
+  "not_executed_existing_data_safety": [
+    "tests/test_discovery_endpoints.py::test_discover_all",
+    "tests/test_discovery_endpoints.py::test_single_discover_shelly",
+    "tests/test_discovery_endpoints.py::test_single_discover_each[shelly-5]",
+    "tests/test_discovery_endpoints.py::test_single_discover_each[ahoy-5]",
+    "tests/test_discovery_endpoints.py::test_single_discover_each[trucki-3]",
+    "tests/test_discovery_endpoints.py::test_single_discover_each[victron-3]",
+    "tests/test_discovery_endpoints.py::test_devices_info_persisted",
+    "tests/test_refactor_lifespan.py::TestEndpointContracts::test_config_nested_keys_and_partial_put",
+    "tests/test_refactor_lifespan.py::TestEndpointContracts::test_control_endpoints",
+    "tests/test_refactor_lifespan.py::TestEndpointContracts::test_diagnostics",
+    "tests/test_selftest_history.py::TestRun::test_run_shape_no_id",
+    "tests/test_selftest_history.py::TestRun::test_run_persisted_newest_first",
+    "tests/test_selftest_history.py::TestHistoryAggregation::test_checks_aggregation_consistent",
+    "tests/test_selftest_history.py::TestRetention::test_retention_50",
+    "tests/test_solar_dashboard.py::TestConfig::test_put_config_persists_changes",
+    "tests/test_solar_dashboard.py::TestControl::test_hoymiles_limit",
+    "tests/test_solar_dashboard.py::TestControl::test_trucki_zepc_on",
+    "tests/test_solar_dashboard.py::TestDiagnosticsRun::test_diagnostics_run_structure",
+    "tests/test_solar_dashboard.py::TestDiagnosticsRun::test_diagnostics_run_required_checks",
+    "tests/test_solar_dashboard.py::TestDiagnosticsRun::test_diagnostics_ok_field_types",
+    "tests/test_solar_dashboard.py::TestDiagnosticsRun::test_diagnostics_backend_and_mongo_pass",
+    "tests/test_solar_dashboard.py::TestDemoModeFallback::test_demo_off_returns_data_with_offline"
+  ],
+  "batches": [
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_1.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_2.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_3.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_4.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_5.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_6.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_7.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_8.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_9.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_10.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_11.xml",
+      "exit_code": 0
+    },
+    {
+      "junit": "/app/test_reports/pytest/backend_acceptance_45_batch_12.xml",
+      "exit_code": 0
+    }
+  ]
+}

@@ -340,7 +340,7 @@ const avg = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) / a.length : 
 const sumA = (a) => (a.length ? a.reduce((s, x) => s + (x || 0), 0) : null);
 const f1 = (x) => (x == null || isNaN(x) ? "n/a" : (Math.round(x * 10) / 10).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }));
 
-export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp, sun }) {
+export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, victron, timestamp, sun, phase2 = false, smartshunt }) {
   const [hover, setHover] = useState(null);
   const { reduced } = useMotion();
 
@@ -353,7 +353,8 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const pvAc = summary?.pv_ac_power ?? pv;
   const pvDc = summary?.pv_dc_power || 0;
   const grid = summary?.grid_power || 0;
-  const battery = summary?.battery_power || 0;
+  const batteryMetric = summary?.battery_power;
+  const battery = known(batteryMetric) ? Number(batteryMetric) : 0;
   const charge = summary?.battery_charge_w || 0;
   const discharge = summary?.battery_discharge_w || 0;
   const house = summary?.house_power || 0;
@@ -365,6 +366,8 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const pvAcActive = pvAc > 5;
   const chargeActive = charge > 20;
   const dischargeActive = discharge > 20;
+  const inverterAc = phase2 ? (summary?.inverter_ac_power_w || 0) : discharge;
+  const inverterActive = inverterAc > 20;
   const houseActive = house > 5;
   const pvProducing = pv > 5;
 
@@ -396,14 +399,14 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
   const victronEnabled = en("victron");
   const hoymilesEnabled = en("ahoy");
   const gridEnabled = en("shelly");
-  const batteryEnabled = en("trucki");
+  const batteryEnabled = phase2 ? true : en("trucki");
 
   const mppts = victron?.mppts || [];
   const hoymilesPeak = known(ahoy?.max_power_w) && Number(ahoy.max_power_w) > 0 ? Number(ahoy.max_power_w) : HOYMILES_NOMINAL_W;
   const victronPeak = VICTRON_PEAK_W > 0 ? VICTRON_PEAK_W : null;
   const compactPvPeak = (hoymilesEnabled ? hoymilesPeak : 0) + (victronEnabled ? (victronPeak || 0) : 0);
   const sunPeak = known(trucki?.max_power_w) && Number(trucki.max_power_w) > 0 ? Number(trucki.max_power_w) : null;
-  const batteryDirection = battery > 20 ? "Laden" : battery < -20 ? "Entladen" : "Leerlauf";
+  const batteryDirection = !known(batteryMetric) ? "nicht verfügbar" : battery > 20 ? "Laden" : battery < -20 ? "Entladen" : "Leerlauf";
 
   // Kompakt/Detail-Ansicht (Auto: Handy=Kompakt, Desktop=Detail), in localStorage gemerkt.
   const [viewPref, setViewPref] = useState(() => {
@@ -454,17 +457,17 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
     if (batteryEnabled) {
       nodeList.push({ key: "battery", x: P.battery[0], y: P.battery[1], color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
-        label: "Batterie 48V", badge: "48V", value: powerReadout(battery, true), unit: "W", soc, testid: "flow-battery",
+        label: phase2 ? "SmartShunt DC" : "Batterie 48V", badge: phase2 ? "DC · 290" : "48V", value: powerReadout(batteryMetric, true), unit: "W", soc, testid: "flow-battery",
         peakW: null, percent: socMetric, percentLabel: "SoC", direction: batteryDirection });
-      nodeList.push({ key: "sun2000", x: P.sun2000[0], y: P.sun2000[1], color: COLOR.dc, active: dischargeActive, emblem: "bolt",
-        label: "Sun-2000", badge: "TRUCKI", value: powerReadout(discharge), unit: "W", testid: "flow-sun2000",
-        peakW: sunPeak, percent: socMetric, percentLabel: "SoC", direction: dischargeActive ? "Entl." : "Standby" });
+      nodeList.push({ key: "sun2000", x: P.sun2000[0], y: P.sun2000[1], color: phase2 ? "#8B5CF6" : COLOR.dc, active: inverterActive, emblem: "bolt",
+        label: phase2 ? "Sun-2000 AC" : "Sun-2000", badge: "TRUCKI", value: powerReadout(inverterAc), unit: "W", testid: "flow-sun2000",
+        peakW: sunPeak, percent: phase2 ? utilizationPercent(inverterAc, sunPeak) : socMetric, percentLabel: phase2 ? "Ausl." : "SoC", direction: inverterActive ? (phase2 ? "AC-Ausg." : "Entl.") : "Standby" });
     }
     flowDefs = [
       { id: "pv-house", from: "pv", to: "house", color: COLOR.pv, active: pvAcActive, watts: pvAc },
-      { id: "pv-battery", from: "pv", to: "battery", color: COLOR.dc, active: chargeActive, watts: charge },
+      { id: "pv-battery", from: "pv", to: "battery", color: COLOR.dc, active: phase2 ? pvDc > 5 : chargeActive, watts: phase2 ? pvDc : charge },
       { id: "battery-sun2000", from: "battery", to: "sun2000", color: COLOR.battery, active: dischargeActive, watts: discharge },
-      { id: "sun2000-house", from: "sun2000", to: "house", color: COLOR.dc, active: dischargeActive, watts: discharge },
+      { id: "sun2000-house", from: "sun2000", to: "house", color: phase2 ? "#8B5CF6" : COLOR.dc, active: inverterActive, watts: inverterAc },
       { id: "grid-house", from: "grid", to: "house", color: gridColor, active: importActive || exportActive, watts: Math.abs(grid), reverse: exportActive },
     ];
   } else {
@@ -481,17 +484,17 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       label: "Hausverbrauch", badge: "AC-LAST", value: round(house), unit: "W", sub: houseActive ? "Verbrauch" : "Standby", testid: "flow-house" });
     if (batteryEnabled) {
       nodeList.push({ key: "battery", x: 900, y: 105, color: COLOR.battery, active: chargeActive || dischargeActive, emblem: "battery",
-        label: "Batterie 48V", badge: "48V", value: powerReadout(battery, true), unit: "W", soc, testid: "flow-battery",
+        label: phase2 ? "SmartShunt DC" : "Batterie 48V", badge: phase2 ? "DC · 290" : "48V", value: powerReadout(batteryMetric, true), unit: "W", soc, testid: "flow-battery",
         peakW: null, percent: socMetric, percentLabel: "SoC", direction: batteryDirection });
-      nodeList.push({ key: "sun2000", x: 900, y: 315, color: COLOR.dc, active: dischargeActive, emblem: "bolt",
-        label: "Sun-2000", badge: "TRUCKI", value: powerReadout(discharge), unit: "W", testid: "flow-sun2000",
-        peakW: sunPeak, percent: socMetric, percentLabel: "SoC", direction: dischargeActive ? "Entl." : "Standby" });
+      nodeList.push({ key: "sun2000", x: 900, y: 315, color: phase2 ? "#8B5CF6" : COLOR.dc, active: inverterActive, emblem: "bolt",
+        label: phase2 ? "Sun-2000 AC" : "Sun-2000", badge: "TRUCKI", value: powerReadout(inverterAc), unit: "W", testid: "flow-sun2000",
+        peakW: sunPeak, percent: phase2 ? utilizationPercent(inverterAc, sunPeak) : socMetric, percentLabel: phase2 ? "Ausl." : "SoC", direction: inverterActive ? (phase2 ? "AC-Ausg." : "Entl.") : "Standby" });
     }
     flowDefs = [
       { id: "hoymiles-house", from: "hoymiles", to: "house", color: COLOR.pv, active: pvAcActive, watts: pvAc },
-      { id: "victron-battery", from: "victron", to: "battery", color: COLOR.dc, active: chargeActive, watts: charge },
+      { id: "victron-battery", from: "victron", to: "battery", color: COLOR.dc, active: phase2 ? pvDc > 5 : chargeActive, watts: phase2 ? pvDc : charge },
       { id: "battery-sun2000", from: "battery", to: "sun2000", color: COLOR.battery, active: dischargeActive, watts: discharge },
-      { id: "sun2000-house", from: "sun2000", to: "house", color: COLOR.dc, active: dischargeActive, watts: discharge },
+      { id: "sun2000-house", from: "sun2000", to: "house", color: phase2 ? "#8B5CF6" : COLOR.dc, active: inverterActive, watts: inverterAc },
       { id: "grid-house", from: "grid", to: "house", color: gridColor, active: importActive || exportActive, watts: Math.abs(grid), reverse: exportActive },
     ];
   }
@@ -569,10 +572,10 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
     }
     if (key === "sun2000") {
       const rows = [
-        { l: "AC-Ausgang", v: `${round(discharge)} W` },
+        { l: "AC-Ausgang", v: `${round(inverterAc)} W` },
         { l: "Soll / Ist", v: `${round(trucki?.target_w || 0)} / ${round(trucki?.ac_display_w || 0)} W` },
         { l: "Limit", v: `${round(trucki?.max_power_w || 0)} W` },
-        { l: "Nenn / SoC", v: `${sunPeak ? `${round(sunPeak)} W` : "–"} · ${socMetric == null ? "–" : `${round(socMetric)} %`}` },
+        { l: phase2 ? "Nenn / Auslastung" : "Nenn / SoC", v: phase2 ? `${sunPeak ? `${round(sunPeak)} W` : "–"} · ${utilizationPercent(inverterAc, sunPeak) == null ? "–" : `${round(utilizationPercent(inverterAc, sunPeak))} %`}` : `${sunPeak ? `${round(sunPeak)} W` : "–"} · ${socMetric == null ? "–" : `${round(socMetric)} %`}` },
         { l: "ZEPC", v: trucki?.zepc ? "EIN" : "AUS" },
         { l: "AC-Output", v: trucki?.ac_output ? "EIN" : "AUS" },
       ];
@@ -596,20 +599,24 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
       return { title: "Netz · Shelly 3EM", badge: "PRO 3EM", color: gridColor, rows };
     }
     if (key === "battery") {
-      const kind = charge > discharge ? "Laden" : discharge > 0 ? "Entladen" : "Leerlauf";
+      const kind = !known(batteryMetric) ? "nicht verfügbar" : charge > discharge ? "Laden" : discharge > 0 ? "Entladen" : "Leerlauf";
       const rows = [{ l: "Ladezustand", v: socMetric == null ? "–" : `${round(socMetric)} %` }];
-      if (trucki?.battery_voltage != null) rows.push({ l: "Spannung", v: `${f1(trucki.battery_voltage)} V` });
-      rows.push({ l: "Leistung", v: `${round(Math.abs(battery))} W · ${kind}` });
+      const sourceVoltage = phase2 ? smartshunt?.voltage_v : trucki?.battery_voltage;
+      if (sourceVoltage != null) rows.push({ l: "Spannung", v: `${f1(sourceVoltage)} V` });
+      if (phase2 && smartshunt?.current_a != null) rows.push({ l: "Strom", v: `${f1(smartshunt.current_a)} A` });
+      rows.push({ l: "Leistung", v: known(batteryMetric) ? `${round(Math.abs(battery))} W · ${kind}` : "–" });
       rows.push({ l: "Nenn / SoC", v: `– · ${socMetric == null ? "–" : `${round(socMetric)} %`}` });
-      rows.push({ l: "DC-Ladung", v: `${round(charge)} W` });
-      if (trucki?.temperature != null) rows.push({ l: "Temperatur", v: `${round(trucki.temperature)} °C` });
-      rows.push({ l: "ZEPC", v: trucki?.zepc ? "EIN" : "AUS" });
-      return { title: "Akku · Trucki/SUN", badge: "TRUCKI", color: COLOR.battery, rows };
+      rows.push({ l: "DC-Ladung", v: known(summary?.battery_charge_w) ? `${round(charge)} W` : "–" });
+      const sourceTemperature = phase2 ? smartshunt?.optional?.temperature_c : trucki?.temperature;
+      if (sourceTemperature != null) rows.push({ l: "Temperatur", v: `${round(sourceTemperature)} °C` });
+      if (phase2) rows.push({ l: "Datenstatus", v: smartshunt?.status || "unavailable" });
+      else rows.push({ l: "ZEPC", v: trucki?.zepc ? "EIN" : "AUS" });
+      return { title: phase2 ? "Akku · SmartShunt" : "Akku · Trucki/SUN", badge: phase2 ? "DC · 290" : "TRUCKI", color: COLOR.battery, rows };
     }
     const rows = [
       { l: "Verbrauch", v: `${round(house)} W` },
       { l: "von Hoymiles", v: `${round(pvAc)} W` },
-      { l: "aus Akku", v: `${round(discharge)} W` },
+      { l: phase2 ? "aus Akku · AC" : "aus Akku", v: `${round(inverterAc)} W` },
       { l: "aus Netz", v: `${round(Math.max(0, grid))} W` },
     ];
     return { title: "Haus", badge: "AC-LAST", color: COLOR.house, rows };
@@ -628,7 +635,7 @@ export default function EnergyFlow({ summary, trucki, devices, shelly, ahoy, vic
           <span className="grid place-items-center rounded-md shrink-0 w-[26px] h-[26px] bg-cyan-400/[0.12] border border-cyan-400/30">
             <Activity size={14} className="text-cyan-300" />
           </span>
-          <span className="hidden sm:inline">Echtzeit-Flussvektoren</span>
+          <span className="hidden sm:inline">{phase2 ? "Echtzeit-Flussvektoren · DC/AC getrennt" : "Echtzeit-Flussvektoren"}</span>
           <span className="sm:hidden">Fluss</span>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">

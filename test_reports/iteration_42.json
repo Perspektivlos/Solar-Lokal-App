@@ -1,0 +1,62 @@
+{
+  "summary": "Independent Phase2 retest: all retained iteration_41 regressions pass. Backend: 229/230 safe cases pass; one new deterministic DC integration defect fails twice. All 36 final browser flow groups pass at exact 1920x800 and 390x844, including source separation, errors/retry, gap curves, delayed responses, canonical labels and automatic refresh. Second acceptance is NOT confirmed; canonical switch was not performed. No application source/config changes.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "GET /api/smartshunt-phase2/today (_history_points + summarize_phase2_points)",
+        "issue": "Deduplication now drops valid DC energy whenever duplicate poll rows separate fresh SmartShunt samples. Reproduced with current -1000W at t=0/source=0, t=15/source=0, t=30/source=30: duplicate becomes null, so both adjacent intervals are discarded. Actual DC discharge=0kWh, DC duration=0s, availability=false; expected unique-source integration approximately0.008kWh over30s. Independent900W AC correctly remains approximately0.007kWh. A30s source cadence with15s polling can therefore lose the entire DC total despite fresh measurements.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase2_review.py",
+    "/app/backend/tests/test_phase2_acceptance.py",
+    "/app/tests/run_backend_acceptance.py",
+    "/app/tests/phase2_ui_review.py",
+    "/app/tests/phase2_ui_acceptance.py",
+    "/app/test_reports/backend_manifest_42.json",
+    "/app/test_reports/pytest/pytest_phase2_review_42.xml",
+    "/app/test_reports/pytest/backend_acceptance_42_batch_6.xml",
+    "/app/test_reports/pytest/phase2_acceptance_retry_42.xml",
+    "/app/test_reports/ui_core_results_42.json",
+    "/app/test_reports/ui_edge_results_42.json"
+  ],
+  "action_items": [
+    "Integrate unique valid SmartShunt measurements on their own source-time axis while keeping independent AC poll samples. Distinguish duplicate-source placeholders from genuinely missing/unavailable DC endpoints; do not bridge actual unavailable intervals or gaps>600s.",
+    "Retest test_unique_dc_samples_integrate_across_duplicate_poll_rows and all retained Phase2 regressions before confirming the second software acceptance.",
+    "Run renewed local Phase2 hardware/live proof and actual Influx writes before canonical switchover. Cloud probe reports MQTT-Broker nicht erreichbar (TimeoutError); live Influx is disabled/unverified here.",
+    "Run the22 omitted legacy mutation cases only in an isolated disposable environment. Manifest lists each omission; several overwrite config/device docs or diagnostics retention removes existing history. No independent full252/252 claim is justified."
+  ],
+  "critical_code_review_comments": [
+    "phase2_routes.py149-159 suppresses duplicate DC fields but preserves the poll row. phase2.py134-147 integrates only adjacent global rows, so every suppressed row breaks the DC series even when both unique source samples are current and30s apart. This is under-integration introduced by the duplicate-sample correction.",
+    "Retained alarm schema/severity/native alerts, missing endpoint exclusion, raw daily integration, separate DC coverage and poller duplicate suppression pass. Typed public live/history/today payloads and separate SmartShunt/Trucki Influx point generation pass with no ObjectId leaks.",
+    "Browser assertions initially raced loading completion and forced canonical clicks under the sticky header; test-only waits and centered controls resolved them. These were not application defects. Final canonical Sun-2000/Entl./aus Akku assertions pass in compact and detail."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase2_acceptance.py",
+    "/app/tests/run_backend_acceptance.py",
+    "/app/tests/phase2_ui_review.py",
+    "/app/tests/phase2_ui_acceptance.py",
+    "/app/test_reports/backend_manifest_42.json",
+    "/app/test_reports/ui_core_results_42.json",
+    "/app/test_reports/ui_edge_results_42.json",
+    "/app/test_reports/iteration_42.json"
+  ],
+  "success_rate": {
+    "backend": "99.6% (229/230 executed unique cases; 252 collected,22 omitted for existing-data safety). All227 executed preexisting cases pass; supplemental tests2/3 pass.",
+    "frontend": "100% (36/36 final evaluated flow groups: core29, edges7)."
+  },
+  "test_credentials": "No authentication exercised or required.",
+  "seed_data_creation": "None. No seed/reset/config updates/device discovery/history cleanup. Cloud telemetry/history are DEMO MOCKED; adverse UI conditions are browser-only MOCKED; backend adversarial rows use isolated fake DB objects. Trucki submit only after public config confirms demo_mode=true, returning demo=true with no physical command.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Public URL comes from frontend/.env. Run python /app/tests/run_backend_acceptance.py (foreground; batches<=20; manifest and12JUnit files). The retained review suite13/13 passes. New acceptance test3 fails reproducibly twice; no functional fix applied. Execute saved run(page) functions from /smartshunt-phase2; UI review now uses1920x800/390x844. Core29/29 and final edges7/7 pass. Edge runner waits62s to verify history refresh (3history requests observed). Full Phase2 views/direct subroutes, Phase1 503 isolation, History/Today503 clearing/retry, missing/per-domain coverage, four broken SVG gap curves and history race pass. Main six routes load; canonical labels and Trucki demo submit pass. Logs show no new production exception during this run. Physical LAN/MQTT and real Influx writes remain unverified; do not switch main pages yet.",
+  "rca of the issue": "Reproduction: feed _history_points three current poll snapshots at0/15/30s with SmartShunt source timestamps0/0/30s and constant-1000W. Dedup correctly nulls the middle DC value but summarize_phase2_points only pairs neighboring poll rows. Each pair now has one null endpoint, both are rejected, DC duration/energy become0 while AC remains valid. Mitigation: integrate independently ordered unique DC source measurements, preserving explicit validity barriers for true missing/unavailable data and600s gaps; retain AC integration on independent poll samples. Do not simply filter every null, which could bridge real outages."
+}

@@ -9,7 +9,7 @@ import { COLOR, formatNum } from "./solar-ui";
 // Liefert Anzeige-Metadaten + aktuellen KPI-Wert für einen Favoriten-Schlüssel,
 // oder null wenn gerade keine Daten vorliegen.
 function favItem(key, live) {
-  const { shelly, ahoy, trucki, victron, summary } = live || {};
+  const { shelly, ahoy, smartshunt, victron, summary } = live || {};
   if (key === "shelly") {
     const p = shelly?.total_power ?? 0;
     return { label: "Shelly · Netz", icon: Cable, color: p >= 0 ? COLOR.grid_imp : COLOR.grid_exp, value: formatNum(Math.abs(p), 0), unit: "W", sub: p >= 0 ? "Netzbezug" : "Einspeisung" };
@@ -18,8 +18,9 @@ function favItem(key, live) {
     return { label: "Hoymiles · AC", icon: Zap, color: COLOR.pv, value: formatNum(ahoy?.total_power, 0), unit: "W", sub: `Limit ${formatNum(ahoy?.limit_percent, 0)} %` };
   }
   if (key === "trucki") {
-    const bp = summary?.battery_power ?? 0;
-    return { label: "Trucki · Akku", icon: BatteryCharging, color: COLOR.battery, value: formatNum(trucki?.soc, 0), unit: "%", sub: `${bp > 20 ? "Laden" : bp < -20 ? "Entladen" : "Leerlauf"} ${formatNum(Math.abs(bp), 0)} W` };
+    const bp = summary?.battery_power;
+    const state = bp == null ? "Nicht verfügbar" : bp > 20 ? "Laden" : bp < -20 ? "Entladen" : "Leerlauf";
+    return { label: "SmartShunt · Akku", icon: BatteryCharging, color: COLOR.battery, value: formatNum(smartshunt?.soc_pct, 0), unit: "%", sub: `${state}${bp == null ? "" : ` ${formatNum(Math.abs(bp), 0)} W DC`}` };
   }
   if (key === "victron") {
     const mppts = victron?.mppts || [];

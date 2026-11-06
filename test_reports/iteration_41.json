@@ -1,0 +1,51 @@
+{
+  "summary": "Phase2 reviewed via public APIs, typed payload validation, method-level adversarial cases and Playwright. 55/60 backend cases passed; five retained failures expose alarm wiring, duplicate source integration, decimated daily integration and missing-DC handling. Five views/navigation/polling/testids pass at desktop1920x1080 and mobile390x844; four UI data-integrity defects remain. Main six routes and Trucki demo submit pass. Application/config/database were not modified.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint":"GET /api/smartshunt-phase2/live","issue":"Configured SmartShunt threshold alarms never fire: voltage44V/SoC5 returns alarms=[] despite configured low thresholds. Route reads nonexistent alarm_thresholds instead of alarms, then evaluator expects flat battery_under_voltage/soc_low although merge_thresholds returns nested battery_voltage/battery_soc. Native alerts still passed through.","priority":"HIGH"},
+      {"endpoint":"GET /api/smartshunt-phase2/today","issue":"Missing DC endpoints become 0W: -1000W then unavailable/null after300s falsely integrates0.042kWh. Two unavailable DC points report measurement_available=true and 0kWh because AC timestamps count as global coverage. No per-domain duration/availability exists.","priority":"HIGH"},
+      {"endpoint":"GET /api/smartshunt-phase2/today","issue":"Daily totals use _history_points after chart decimation. Deterministic5760-point/15s pulse fixture yields23.963kWh instead of full-resolution2.665kWh. Integrate raw rows before chart-only downsampling.","priority":"HIGH"},
+      {"endpoint":"poller_loop /api/smartshunt-phase2/history and /today","issue":"Same current SmartShunt last_update is written repeatedly with new poll timestamps. Two isolated poll iterations15s apart retain identical source timestamp and -220W twice. Phase1 _persist_smartshunt dedup exists but Phase2 snapshots/history/today bypass it, violating no re-integration of old measurements.","priority":"HIGH"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component":"EnergyFlow Phase2 battery inspector","issue":"Unavailable battery node correctly shows dash, but inspector presents Leistung0W Leerlauf and DC-Ladung0W. Unknown DC values are coerced to0 before inspector rendering.","selector":"[data-testid='flow-inspector']","priority":"HIGH"},
+      {"component":"Phase2TrendCharts","issue":"MOCKED two samples30minutes apart render continuous SVG M...L curves in DC/AC and V/SoC charts. connectNulls=false only breaks explicit nulls; no timestamp-gap separators exist. Contradicts visible 'Datenlücken bleiben sichtbar'.","selector":"[data-testid='phase2-chart-dc-ac']","priority":"HIGH"}
+    ],
+    "integration_issues": [
+      {"flow":"Missing daily measurements","issue":"MOCKED measurement_available=false, duration0 and sample_count0 renders all daily values as0.00kWh without missing-duration notice. Phase2History ignores coverage metadata.","affected_selectors":["[data-testid='phase2-day-balance']","[data-testid='phase2-day-dc-charge']"]},
+      {"flow":"History/today API outage","issue":"After successful load, MOCKED today503 shows error but retains previous3.59kWh and previous chart data with normal appearance. catch only sets error; points/today are not cleared or visibly marked stale. Retry recovers.","affected_selectors":["[data-testid='phase2-history-error']","[data-testid='phase2-day-dc-charge']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_phase2_review.py","/app/backend/tests/test_phase2_smartshunt.py","/app/backend/tests/test_influx_points.py","/app/backend/tests/test_day_balance_flows.py","/app/backend/tests/test_smartshunt.py","/app/backend/tests/test_smartshunt_probe.py","/app/tests/phase2_ui_review.py","/app/test_reports/pytest/pytest_phase2_review_41.xml","/app/test_reports/pytest/pytest_phase2_balance_41.xml","/app/test_reports/pytest/pytest_phase2_smartshunt_41.xml"],
+  "action_items": [
+    "Wire alarms to cfg.alarms and actual nested threshold schema; preserve native alerts and configurable warning/critical levels.",
+    "Integrate full-resolution rows with valid endpoints independently per measurement domain; provide per-domain coverage and missing-duration indicators.",
+    "Deduplicate DC by SmartShunt source timestamp without removing independent AC samples; do not integrate null DC as0W.",
+    "Break chart curves at >600s gaps; show unavailable DC inspector readings as dashes.",
+    "Respect today coverage in UI; clear or explicitly mark retained values stale on API errors.",
+    "Restore canonical EnergyFlow default labels/direction: Sun-2000 AC and AC-Ausg. are currently unconditional changes despite preview isolation requirement.",
+    "Retest retained failures before accepting preview. Physical SmartShunt/MQTT and live Influx writes remain local checks; PDF/JSON exports are explicitly out of current scope."
+  ],
+  "critical_code_review_comments": [
+    "phase2_routes.py105 reads cfg.alarm_thresholds, while server.ConfigUpdate only has alarms; phase2.py161-163 expects flat keys incompatible with merge_thresholds.",
+    "phase2.py123-130 coerces missing readings to0;141 increments coverage for every valid time interval regardless of sensor validity.",
+    "phase2_routes.py141-143 decimates points;158 then reuses those decimated points for daily integration. Source received_at is not projected into history or used by integration.",
+    "server.py344-347 suppress stale status but repeats same still-current reading every15s; dedicated SmartShunt snapshot dedup at273 does not cover Phase2 rows.",
+    "Phase2TrendCharts passes raw points into category XAxis with no gap preprocessing. Null guards alone cannot represent omitted time intervals.",
+    "Source review: EnergyFlow default canonical SUN label changed from Sun-2000 to Sun-2000 AC, direction from Entl. to AC-Ausg.; house inspector label also changed unconditionally. Gate these with phase2 to honor unchanged-main-pages contract.",
+    "Source review: SmartShuntPhase2 couples all five views to Promise.all of Phase2 live plus Phase1 preview; a Phase1 endpoint outage can block otherwise healthy Phase2 data. History range requests also have no stale-response protection.",
+    "Live source separation, house AC balance, typed responses/no_id, unavailable masking and separate Influx measurements pass. Actual Influx network writes not exercised (disabled in preview)."
+  ],
+  "updated_files": ["/app/backend/tests/test_phase2_review.py","/app/tests/phase2_ui_review.py","/app/test_reports/iteration_41.json"],
+  "success_rate": {"backend":"91.7% (55/60 final unique cases; review16/21, Influx/DayBalance27/27, SmartShunt/Probe12/12)","frontend":"25/29 evaluated flow groups after correcting uppercase-title test assertion; four genuine data-integrity failures. No full-suite or physical-hardware claim."},
+  "test_credentials": "No authentication requested/exercised; no credentials needed.",
+  "seed_data_creation": "None. No config changes, seed/reset, database writes/deletes, or physical device controls. Public cloud telemetry/history are MOCKED demo data. Stale/unavailable/error/empty/gap UI payloads are browser-only MOCKED. Poller/DB adversarial cases use isolated fake objects. Trucki command only after confirming demo_mode=true (simulated nonpersistent). Real read-only probe returns structured MQTT TimeoutError, not hardware acceptance.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Use frontend/.env exported and PYTHONPATH=/app/backend. Run saved UI run(page) from public /smartshunt-phase2. Initial runner failure was test-only Playwright route callback receiving Request as second argument; fixed. Flow inspector group initially failed test-only case-sensitive uppercase title; dedicated focused final rerun passes compact/detail/auto/tempo/animation and both inspectors. Final saved runner includes corrected title check. UI core run waited6.5s on every view at both sizes, no route reset/overflow/duplicate testids/missing interactive testids. Desktop used1920x1080 per tool constraint, requested1920x800 was not executed. Mobile energy screenshot reviewed: controls fit. Main route regression is load/navigation plus simulated setpoint submission, not full production control testing. Real public endpoints returned200 and backend log review showed no new production exceptions. Gap test separately injected two30minute-separated points and measured continuous M...L curves. Keep failing tests unchanged until main agent fixes business logic; no app fixes performed.",
+  "rca of the issue": "Alarm schema mismatch causes empty threshold results. Integration uses zero replacement/global timing, chart decimation and poll timestamps instead of source freshness, causing false energy and coverage. UI repeats these assumptions by ignoring coverage and coercing null inspector values. Charts only break explicit nulls, not missing time ranges. API catch retains success data without stale markings. All backend issues reproduced without production database/config changes."
+}

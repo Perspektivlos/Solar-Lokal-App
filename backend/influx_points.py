@@ -123,6 +123,28 @@ def _pt_trucki(trucki: Dict[str, Any]) -> Optional["Point"]:
     return tp
 
 
+def _pt_smartshunt(smartshunt: Dict[str, Any]) -> Optional["Point"]:
+    if not smartshunt or not smartshunt.get("enabled"):
+        return None
+    point = (
+        Point("smartshunt")
+        .tag("instance", str(smartshunt.get("instance", 290)))
+        .tag("status", str(smartshunt.get("status") or "unavailable"))
+        .field("online", 1 if smartshunt.get("online") else 0)
+    )
+    fields = {
+        "voltage": smartshunt.get("voltage_v"), "current": smartshunt.get("current_a"),
+        "power": smartshunt.get("power_w"), "soc": smartshunt.get("soc_pct"),
+        "time_to_go": smartshunt.get("time_to_go_s"), "consumed_ah": smartshunt.get("consumed_ah"),
+    }
+    fields.update(smartshunt.get("optional") or {})
+    fields.update({f"history_{key}": value for key, value in (smartshunt.get("device_history") or {}).items()})
+    for key, value in fields.items():
+        if value is not None:
+            point = point.field(key, float(value))
+    return point
+
+
 def _pts_alarms(data: Dict[str, Any]) -> list:
     """Alarm-Zusammenfassung als Zeitreihe (nur wenn 'alarms' vorhanden).
 
@@ -155,6 +177,7 @@ def _build_influx_points(data: Dict[str, Any]) -> list:
       - victron      : total_power
       - victron_mppt : pro MPPT (tag mppt=<instanz>) pv_power/pv_voltage/battery_voltage/yield_today/state
       - trucki       : vbat/ac_power/soc/zepc/ac_output/settings (setpoint/target/min/max)/energy
+      - smartshunt   : getrennte DC-Batteriewerte, optionale Sensoren und native Zähler
       - alarms       : total/critical/warning/level (nur wenn ausgewertet)
 
     Alle Punkte erhalten den Tag ``mode`` = demo|live zum Filtern in Grafana.
@@ -166,6 +189,9 @@ def _build_influx_points(data: Dict[str, Any]) -> list:
     trucki_pt = _pt_trucki(data.get("trucki") or {})
     if trucki_pt is not None:
         pts.append(trucki_pt)
+    smartshunt_pt = _pt_smartshunt(data.get("smartshunt") or {})
+    if smartshunt_pt is not None:
+        pts.append(smartshunt_pt)
     pts += _pts_alarms(data)
     mode = "demo" if data.get("demo_mode") else "live"
     for p in pts:

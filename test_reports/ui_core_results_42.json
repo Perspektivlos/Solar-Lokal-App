@@ -1,0 +1,118 @@
+[
+  [
+    "1920-dashboard",
+    true
+  ],
+  [
+    "1920-energiefluss",
+    true
+  ],
+  [
+    "1920-geraete",
+    true
+  ],
+  [
+    "1920-diagnose",
+    true
+  ],
+  [
+    "1920-verlauf",
+    true
+  ],
+  [
+    "390-dashboard",
+    true
+  ],
+  [
+    "390-energiefluss",
+    true
+  ],
+  [
+    "390-geraete",
+    true
+  ],
+  [
+    "390-diagnose",
+    true
+  ],
+  [
+    "390-verlauf",
+    true
+  ],
+  [
+    "flow controls and source inspectors",
+    true
+  ],
+  [
+    "local read-only probe gives structured cloud failure",
+    true
+  ],
+  [
+    "five history ranges/two charts/eight values",
+    true
+  ],
+  [
+    "history error",
+    true
+  ],
+  [
+    "today outage clears values and charts",
+    true
+  ],
+  [
+    "history retry",
+    true
+  ],
+  [
+    "stale dashboard masking and independent AC",
+    true
+  ],
+  [
+    "unavailable dashboard masking and independent AC",
+    true
+  ],
+  [
+    "unavailable inspector must not display zero DC power",
+    true
+  ],
+  [
+    "missing today measurements must display dash",
+    true
+  ],
+  [
+    "missing today has coverage notice",
+    true
+  ],
+  [
+    "/",
+    true
+  ],
+  [
+    "/verlauf",
+    true
+  ],
+  [
+    "/geraete",
+    true
+  ],
+  [
+    "/diagnose",
+    true
+  ],
+  [
+    "/steuerung",
+    true
+  ],
+  [
+    "/smartshunt-preview",
+    true
+  ],
+  [
+    "unchanged Trucki demo setpoint submit",
+    true
+  ],
+  [
+    "no browser runtime exceptions",
+    true
+  ]
+]

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, getAlarms } from "../lib/api";
+import { api, getAlarms, getSmartShuntPhase2Live, getSmartShuntPreview } from "../lib/api";
 import IntroCard from "../components/IntroCard";
 import StatusBanner from "../components/StatusBanner";
 import AlarmHistory from "../components/AlarmHistory";
 import SelftestHistory from "../components/SelftestHistory";
 import { Check, X, Minus, PlayCircle, RefreshCw, ChevronRight } from "lucide-react";
+import { Phase2Diagnose } from "../components/phase2/Phase2Diagnose";
 
 const runTests = () => api.post("/diagnostics/run", {}).then((r) => r.data);
 const getRaw = () => api.get("/diagnostics/raw").then((r) => r.data);
@@ -13,7 +14,7 @@ const getHistory = () => api.get("/diagnostics/history").then((r) => r.data);
 const INTRO_SECTIONS = [
   {
     label: "Zweck & Funktion",
-    body: "Tiefenanalyse des Backend-Zustands inklusive Selbst-Test für jeden Integrations-Endpunkt und alle vier Geräte. Zeigt außerdem die rohen MQTT-Feldwerte je Gerät, gefiltert nach Topic-Präfix.",
+    body: "Tiefenanalyse aller Integrationen inklusive SmartShunt-DC- und Trucki/SUN-AC-Quellenprüfung, lokalem Hardwaretest und MQTT-Rohwerten.",
   },
   {
     label: "Selbst-Test · Checks",
@@ -111,18 +112,24 @@ export default function Diagnose() {
   const [raw, setRaw] = useState(null);
   const [alarms, setAlarms] = useState([]);
   const [history, setHistory] = useState(null);
+  const [phase2Live, setPhase2Live] = useState(null);
+  const [smartPayload, setSmartPayload] = useState(null);
 
   const reloadRaw = useCallback(() => { getRaw().then(setRaw).catch(() => {}); }, []);
   const reloadAlarms = useCallback(() => { getAlarms().then((a) => setAlarms(a.alarms || [])).catch(() => {}); }, []);
   const reloadHistory = useCallback(() => { getHistory().then(setHistory).catch(() => {}); }, []);
+  const reloadSmartShunt = useCallback(() => {
+    Promise.all([getSmartShuntPhase2Live(), getSmartShuntPreview()]).then(([live, payload]) => { setPhase2Live(live); setSmartPayload(payload); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     reloadRaw();
     reloadAlarms();
     reloadHistory();
-    const id = setInterval(() => { reloadRaw(); reloadAlarms(); }, 5000);
+    reloadSmartShunt();
+    const id = setInterval(() => { reloadRaw(); reloadAlarms(); reloadSmartShunt(); }, 5000);
     return () => clearInterval(id);
-  }, [reloadRaw, reloadAlarms, reloadHistory]);
+  }, [reloadRaw, reloadAlarms, reloadHistory, reloadSmartShunt]);
 
   const run = async () => {
     setRunning(true);
@@ -136,6 +143,8 @@ export default function Diagnose() {
 
       {/* Live-Statusbanner */}
       <StatusBanner alarms={alarms} />
+
+      {phase2Live && smartPayload && <Phase2Diagnose live={phase2Live} phase1={smartPayload} />}
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3 text-white">

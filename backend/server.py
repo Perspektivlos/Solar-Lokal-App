@@ -222,6 +222,7 @@ _retention_task: Optional[asyncio.Task] = None
 _active_alarms: Dict[str, Any] = {}
 _smartshunt_active_alerts: Dict[str, Any] = {}
 _smartshunt_last_snapshot_ts: Optional[str] = None
+_phase2_last_received_at: Optional[str] = None
 
 
 async def _log_alarm_transitions(active_list: list, demo: bool) -> None:
@@ -304,6 +305,7 @@ async def _persist_smartshunt(state: Dict[str, Any], retention_days: Optional[in
 
 
 async def poller_loop() -> None:
+    global _phase2_last_received_at
     _poller_state["running"] = True
     while True:
         try:
@@ -331,8 +333,31 @@ async def poller_loop() -> None:
                 "battery_discharge_w": data["summary"]["battery_discharge_w"],
                 "house_power": data["summary"]["house_power"],
                 "battery_soc": data["summary"]["battery_soc"],
+                "demo": bool(data.get("demo_mode")),
             }
+            phase2 = data.get("phase2") or {}
+            battery_dc = phase2.get("battery_dc") or {}
+            inverter_ac = phase2.get("inverter_ac") or {}
+            phase2_summary = phase2.get("summary") or {}
+            received_at = battery_dc.get("last_update")
+            new_dc_measurement = battery_dc.get("status") == "current" and bool(received_at) and received_at != _phase2_last_received_at
+            snap.update({
+                "phase2_source": "smartshunt",
+                "smartshunt_status": battery_dc.get("status"),
+                "smartshunt_received_at": battery_dc.get("last_update"),
+                "smartshunt_dc_power_w": battery_dc.get("power_w") if new_dc_measurement else None,
+                "smartshunt_voltage_v": battery_dc.get("voltage_v") if new_dc_measurement else None,
+                "smartshunt_current_a": battery_dc.get("current_a") if new_dc_measurement else None,
+                "smartshunt_soc_pct": battery_dc.get("soc_pct") if new_dc_measurement else None,
+                "trucki_ac_output_w": inverter_ac.get("output_w"),
+                "trucki_ac_setpoint_w": inverter_ac.get("setpoint_w"),
+                "pv_ac_power_w": phase2_summary.get("pv_ac_power"),
+                "pv_dc_power_w": phase2_summary.get("pv_dc_power"),
+                "house_ac_power_w": phase2_summary.get("house_power"),
+            })
             await db.snapshots.insert_one(snap)
+            if new_dc_measurement:
+                _phase2_last_received_at = received_at
             ret_cfg = cfg.get("retention") or {}
             retention_days = int(ret_cfg.get("days", 30)) if ret_cfg.get("enabled", True) else None
             await _persist_smartshunt(data.get("smartshunt") or {}, retention_days)

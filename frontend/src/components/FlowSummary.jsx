@@ -39,9 +39,9 @@ export default function FlowSummary({ live, today, usableKwh }) {
   const cap = usableKwh > 0 ? usableKwh : DEFAULT_USABLE_KWH;
   const grid = s.grid_power ?? 0;
   const house = s.house_power ?? 0;
-  const soc = s.battery_soc ?? 0;
+  const soc = s.battery_soc;
   const importing = grid >= 0;
-  const battKwh = (soc / 100) * cap;
+  const battKwh = soc == null ? null : (soc / 100) * cap;
   // Momentane Eigenabdeckung des Hausverbrauchs aus eigener Erzeugung.
   const instantCover = house <= 0 ? 100 : Math.max(0, Math.min(100, ((house - Math.max(0, grid)) / house) * 100));
   // Verlässlicher Tagesertrag: Integration der gespeicherten PV-Leistung seit 00:00 UTC.
@@ -52,7 +52,7 @@ export default function FlowSummary({ live, today, usableKwh }) {
 
   const tiles = [
     { testid: "summary-pv", accent: "#F59E0B", icon: Sun, label: "Solarertrag heute", value: formatNum(pvTodayKwh, 2), unit: "kWh", sub: measuredLabel },
-    { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Akku verfügbar", value: formatNum(battKwh, 2), unit: "kWh", sub: `${formatNum(soc, 0)} % SoC von ${formatNum(cap, 1)} kWh nutzbar · Schätzwert` },
+    { testid: "summary-battery", accent: COLOR.battery, icon: BatteryCharging, label: "Akku verfügbar", value: formatNum(battKwh, 2), unit: "kWh", sub: soc == null ? "SmartShunt nicht verfügbar" : `${formatNum(soc, 0)} % SmartShunt-SoC von ${formatNum(cap, 1)} kWh nutzbar · Kapazitätsmodell` },
     { testid: "summary-grid", accent: importing ? COLOR.grid_imp : COLOR.grid_exp, icon: Cable, label: "Netzbezug heute", value: formatNum(today?.grid_import_kwh, 2), unit: "kWh", sub: `${measuredLabel} · aktuell ${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W` },
     { testid: "summary-autarky", accent: COLOR.grid_exp, icon: Gauge, label: "Autarkie heute", value: formatNum(today?.autarky_pct, 1), unit: "%", sub: `Tageswert · aktuell ${formatNum(instantCover, 0)} % Eigenabdeckung` },
   ];

@@ -526,3 +526,132 @@ Lokaler Mosquitto MQTT Broker & InfluxDB Daten-Integration.
 - Reale Cloud-Ausführung liefert erwartungsgemäß ein sichtbares `MQTT-Broker nicht erreichbar (TimeoutError)` und bestätigt gleichzeitig „Keine W/-Steuerbefehle“.
 - Desktop 1920×800 und Mobil 390×844 ohne horizontalen Seitenüberstand. Hauptseiten und Trucki/SUN bleiben unverändert.
 - **Offen:** Für die physische Abnahme muss der Prüfknopf in der lokal installierten App im gleichen erreichbaren Netz wie Mosquitto/Venus OS ausgeführt werden. Erst ein vollständiges **ABNAHMEBEREIT**-Protokoll kann anschließend ausdrücklich freigegeben werden.
+
+## Neuer Abnahmeabschnitt – SmartShunt Phase 1 hardwareseitig freigegeben (05.11.2026)
+
+### Abnahmenachweis
+- Nachweis: Nutzerscreenshot `Screenshot 2026-11-05 211652.png` aus der lokal installierten SmartShunt-Vorschau.
+- Gesamturteil des lokalen Prüflaufs: **Hardwareprüfung bestanden** und **ABNAHMEBEREIT**.
+- MQTT-Broker per TCP erreichbar und MQTT-Verbindung hergestellt.
+- Exakte Topic-Basis `N/b827eb79321c/battery/290/` wurde empfangen.
+- Prüflauf: **56 Nachrichten / 54 Felder**; fortlaufender MQTT-Empfang zeigte anschließend **67 Felder** und Datenalter **0 s**. Die unterschiedlichen Feldzahlen stammen aus Prüfmoment versus fortlaufendem Cache und sind kein Widerspruch.
+- Produktname **SmartShunt IP65 300A**, VRM-Instanz **290**, Verbindung **USB / VE.Direct** und `Connected=1` bestätigt.
+- Pflichtmesswerte Spannung, Strom, echte Geräteleistung und SoC vollständig; sichtbarer Rohwert `Dc/0/Voltage = 52,25 V`.
+- **13 native Gerätezähler** direkt übernommen.
+- Schreibschutz bestätigt: nur `N/` gelesen und `R/keepalive` angefordert; keine `W/`-Steuerbefehle.
+- Die sichtbare `History/MinimumStarterVoltage` ist kein Abnahmehindernis, weil `Settings/HasStarterVoltage=0` gemeldet wird und Starterspannung gemäß Phase-1-Regel nicht als verfügbarer Zusatzsensor verwendet wird.
+
+### Ausdrückliche Entscheidung
+- **SmartShunt Phase 1 ist technisch, funktional und hardwareseitig abgenommen.**
+- P0 „lokale Live-Prüfung“ ist abgeschlossen.
+- Die bisher freigegebenen Hauptseiten und Trucki/SUN-Regelung bleiben weiterhin unverändert.
+- Phase 2 darf nun separat geplant werden: SmartShunt als maßgebliche Batteriequelle in Dashboard, Energiefluss, Geräte, Diagnose und Verlauf übernehmen sowie InfluxDB/Grafana ergänzen. Die Umsetzung beginnt nicht automatisch mit dieser Abnahme.
+
+## Neuer Planungsabschnitt – SmartShunt Phase 2 · Hauptintegration mit erneutem Preview-Gate (05.11.2026)
+
+### Status und Nutzerentscheidungen
+- **Nur geplant, noch nicht umgesetzt.** Dieser Abschnitt wartet auf ausdrückliche Planfreigabe.
+- Ziel: SmartShunt wird maßgebliche Quelle für Batterie-Spannung, -Strom, -Leistung, SoC, Restlaufzeit, optionale Sensoren, Gerätealarme und native Historienzähler.
+- Trucki/SUN bleibt alleinige Quelle für AC-Ausgang, Soll-/Ist-Leistung, Limits, ZEPC/Nulleinspeisung und Steuerung.
+- Protokollexport wird als späteres Arbeitspaket innerhalb von Phase 2 umgesetzt: **PDF und JSON**, direkt aus dem bestandenen Prüfergebnis, **ohne MongoDB-Archiv**.
+- Das globale Preview-Prinzip gilt erneut: Die freigegebenen Hauptseiten bleiben während Entwicklung und Prüfung unverändert. Erst eine zweite ausdrückliche Abnahme schaltet die kanonischen Seiten um.
+
+### Verbindliches Quellen- und Einheitenmodell
+- Neue eindeutige Felder vermeiden die bisherige Mehrdeutigkeit von `battery_power`:
+  - `battery_dc_power_w`, `battery_voltage_v`, `battery_current_a`, `battery_soc_pct`, `battery_time_to_go_s`: SmartShunt, DC-seitig.
+  - `battery_data_status`, `battery_data_age_s`, `battery_source="smartshunt"`: Herkunft und Qualität.
+  - `inverter_ac_power_w`, `inverter_ac_setpoint_w`, `inverter_ac_limit_w`: Trucki/SUN, AC-seitig.
+- Vorzeichen SmartShunt: positiv = Laden, negativ = Entladen. Trucki/SUN-AC-Ausgang bleibt separat und wird nicht als SmartShunt-Batterieleistung ausgegeben.
+- Hausleistung bleibt eine AC-Bilanz: Hoymiles-AC + Trucki/SUN-AC-Ausgang + Shelly-Netzleistung. SmartShunt-DC-Leistung darf die Hausleistung nicht direkt verändern.
+- MPPT-DC-Erzeugung, SmartShunt-DC-Speicherumsatz und Trucki/SUN-AC-Ausgang werden nicht stillschweigend zu einer scheinbar verlustfreien Gleichung vermischt.
+- Alte API-Felder bleiben bis zur finalen Umschaltung kompatibel. Neue Preview-Komponenten verwenden ausschließlich die eindeutigen Phase-2-Felder.
+
+### Datenqualitäts- und Fallback-Regeln
+- `current` (≤ 90 s): SmartShunt-Werte werden normal verwendet und gespeichert.
+- `stale` (> 90 bis 180 s): letzte Werte sichtbar mit Datenalter/Amberstatus; keine erneute Energieintegration desselben alten Messpunkts.
+- `unavailable` (> 180 s, `Connected=0`, falsche Identität oder kein gültiger Pflichtwert): Batterie-V/A/W/SoC werden als `–` angezeigt.
+- Es gibt **keinen stillen Rückfall** auf Trucki-Spannung, Trucki-SoC oder daraus errechneten Batteriestrom.
+- Trucki/SUN-Steuerung und AC-Telemetrie bleiben auch bei ausgefallenem SmartShunt vollständig bedien- und sichtbar.
+- Demo- und Live-Daten bleiben in MongoDB, InfluxDB und APIs klar getrennt.
+
+### Arbeitspaket 2A – Backend-Shadow-Datenmodell
+- `collect_live()` liefert zusätzlich zur bestehenden Summary ein eindeutiges Batterie-/Inverter-Modell; die produktive Summary bleibt bis zur Abnahme unverändert.
+- Haupt-Snapshots erhalten additive SmartShunt-Felder und getrennte Trucki/SUN-AC-Felder. Vorhandene historische Snapshots werden nicht rückwirkend umgedeutet.
+- Poller speichert nur neue `current`-SmartShunt-Messpunkte; Stale-Werte werden nicht mehrfach integriert.
+- History-/Today-Endpunkte erhalten einen expliziten Preview-Modus beziehungsweise additive Phase-2-Felder; bestehende Aufrufer behalten ihre aktuelle Semantik.
+- Pydantic-Antwortmodelle verhindern ObjectId- und Schema-Leaks.
+
+### Arbeitspaket 2B – Phase-2-Vorschau der fünf Zielbereiche
+- Eigener, nicht in der Hauptnavigation verlinkter Preview-Arbeitsbereich unter `/smartshunt-phase2` mit Ansichten **Dashboard**, **Energiefluss**, **Geräte**, **Diagnose** und **Verlauf**.
+- Gemeinsame Komponenten werden über einen klaren Quellenmodus wiederverwendet; keine kopierten, später auseinanderlaufenden Hauptseiten.
+- **Dashboard:** Batterie-KPI, verfügbare kWh, Details und Warnzustände stammen vom SmartShunt. Texte „SoC-Schätzung“ und Trucki als Batteriequelle entfallen in der Vorschau.
+- **Energiefluss:** Batterie-Knoten zeigt SmartShunt DC-Leistung/SoC/Spannung. SUN-2000-Knoten zeigt separat Trucki AC-Ausgang, Sollwert, Limit und ZEPC. Inspector benennt jede Quelle und Einheit.
+- **Geräte:** eigener SmartShunt-Geräteblock mit verifizierter Identität, Instanz 290, Status, V/A/W/SoC, Zusatzsensoren und nativen Gerätezählern; Trucki-Block wird klar als AC-Regelgateway bezeichnet und bleibt steuerungsseitig unverändert.
+- **Diagnose:** SmartShunt-Identität, Datenalter, aktive Gerätealarme, Rohfelder und lokaler Hardwareprüflauf werden in die reguläre Diagnoseansicht übernommen; weiterhin nur visuelle Hinweise, kein Alarmton.
+- **Verlauf:** SmartShunt-Leistung/Strom sowie Spannung/SoC werden mit Datenlücken und Statusgrenzen gezeigt. Trucki-AC-Ausgang bleibt als getrennte Vergleichskurve verfügbar und wird nicht als Batterie-DC-Kurve bezeichnet.
+
+### Arbeitspaket 2C – Tagesbilanz und Historiensemantik
+- Neue historische Felder unterscheiden mindestens:
+  - SmartShunt DC-Ladung/-Entladung in kWh,
+  - Trucki/SUN AC-Ausgang in kWh,
+  - MPPT-DC-Erzeugung in kWh,
+  - Haus-/Netzwerte auf AC-Seite.
+- Tagesbilanz benennt AC- und DC-Werte sichtbar. Sie behauptet keine verlustfreie Gleichheit zwischen SmartShunt-Entladung und SUN-2000-AC-Ausgang.
+- Bestehende PV-, Haus-, Netz-, Autarkie- und Eigenverbrauchswerte bleiben erhalten, soweit ihre AC-/PV-Quellen unverändert sind.
+- Frühere Zeiträume ohne SmartShunt-Felder erscheinen als „nicht verfügbar“ und nicht als echte Nullwerte.
+- Eine spätere DC→AC-Wirkungsgradkennzahl darf nur bei zeitlich überlappenden, aktuellen SmartShunt- und Trucki-Messungen berechnet und muss ausdrücklich als Vergleich gekennzeichnet werden.
+
+### Arbeitspaket 2D – Alarme, InfluxDB und Grafana
+- Batterie-Unter-/Überspannung und SoC-Schwellen wechseln von Trucki-Schätzung auf SmartShunt; Trucki behält nur eigene Erreichbarkeits-/AC-/Regelungsdiagnosen.
+- Native SmartShunt-Alarmflags werden mit Quelle, Schweregrad und Datenstatus in die bestehende visuelle Alarmhistorie übernommen.
+- Neues InfluxDB-Measurement `smartshunt` mit Instanz-, Modus- und Statuskennzeichnung; V/A/W/SoC/Restlaufzeit und nur tatsächlich verfügbare Zusatzsensoren/Gerätezähler werden geschrieben.
+- Trucki-Measurement bleibt AC-/Regelungsquelle. Alte Felder werden erst entfernt, wenn alle Grafana-Abfragen migriert und geprüft sind.
+- Grafana erhält getrennte SmartShunt-DC- und Trucki/SUN-AC-Panels; die vollständige allgemeine Grafana-Neuabstimmung bleibt ein eigener Roadmap-Punkt.
+
+### Arbeitspaket 2E – PDF-/JSON-Hardwareprotokoll, später in Phase 2
+- Erscheint nur nach bestandenem lokalen Prüfbericht und exportiert exakt den aktuell im Browser vorliegenden Nachweis.
+- JSON: datierter Download mit Probe-ID, Topic-Basis, Identität, Checks, Feld-/Nachrichtenanzahl, Pflichtwerten, nativen Zählern und Schreibschutzstatus.
+- PDF: druckoptimierte Protokollansicht über das bestehende Print/PDF-Prinzip; kein externer PDF-Dienst und keine neue Cloud-Abhängigkeit.
+- Kein zusätzliches Archiv, keine automatische MongoDB-Speicherung und keine nachträgliche Liste vergangener Nachweise.
+
+### Test- und Abnahmeplan
+- Backendtests für Quellenpriorität, Vorzeichen, Statusgrenzen, fehlende Werte, keine Trucki-Fallbacks und unveränderte AC-Hausbilanz.
+- Historientests für Null-/Stale-Ausschluss, Demo-/Live-Trennung, alte Snapshots ohne SmartShunt und getrennte DC-/AC-kWh.
+- Alarm-/Influx-Vertragstests für SmartShunt-Felder, optionale Werte und unveränderte Trucki-Steuerung.
+- Frontendtests aller fünf Preview-Ansichten bei 1920×800 und 390×844, einschließlich Offline/Stale/falscher Identität und langer Rohwerte.
+- Regression der kanonischen Hauptseiten während der Preview-Phase: Werte, Navigation und Trucki/SUN-Steuerung bleiben unverändert.
+- Zweiter lokaler Hardwaretest gegen `N/b827eb79321c/battery/290/#` nach Fertigstellung.
+- Erst nach Screenshot/Prüfprotokoll und ausdrücklicher Phase-2-Abnahme werden die kanonischen Routen auf das neue Quellenmodell umgeschaltet; Dokumentation, Roadmap und Beschreibungen werden danach abschließend aktualisiert.
+
+## Neuer Umsetzungsabschnitt – SmartShunt Phase-2-Kernvorschau (05.11.2026)
+
+### Umgesetzter Stand
+- Neuer isolierter Arbeitsbereich `/smartshunt-phase2` mit fünf Ansichten: Dashboard, Energiefluss, Geräte, Diagnose und Verlauf. Keine Verlinkung in der kanonischen Hauptnavigation.
+- Additives Backend-Shadow-Modell in `backend/phase2.py`: SmartShunt liefert ausschließlich Batterie-DC V/A/W/SoC/Restlaufzeit; Trucki/SUN liefert ausschließlich AC-Ausgang, Sollwerte, Grenzen und ZEPC.
+- Die bestehende AC-Hausbilanz bleibt unverändert. SmartShunt-DC wird nicht direkt in die Hausleistung eingerechnet.
+- Kein stiller Trucki-Fallback bei stale/unavailable SmartShunt; fehlende Batterieinformationen erscheinen als `–`.
+- Haupt-Snapshots führen getrennte SmartShunt-Quellzeit, DC-Werte und Trucki-AC-Werte. Identische SmartShunt-Quellmessungen werden nicht erneut als Energie integriert.
+- Separate Phase-2-APIs: `/api/smartshunt-phase2/live`, `/history` und `/today`, jeweils mit Pydantic-Antwortmodellen.
+- Verlauf und Tagesbilanz trennen SmartShunt-DC-Ladung/-Entladung, SUN-AC-Ausgang, PV AC, MPPT DC, Haus AC und Netz. Lücken über 600 s sowie fehlende Messdomänen werden nicht zu Nullwerten umgedeutet.
+- SmartShunt-Schwellenalarme verwenden die bestehende verschachtelte `alarms`-Konfiguration; native Gerätealarme bleiben erhalten. Hauptalarmfluss bleibt bis zur Abnahme unverändert.
+- Influx-Builder erzeugt ein separates `smartshunt`-Measurement mit Instanz/Status, V/A/W/SoC, optionalen Sensoren und nativen Gerätezählern. Trucki bleibt eigenes AC-/Regelungs-Measurement.
+
+### Oberflächenstatus
+- Dashboard zeigt SmartShunt DC, Trucki/SUN AC, PV und Haus mit festen Quellenkennzeichnungen.
+- Energiefluss verwendet den bestehenden SCADA-Baustein im opt-in Phase-2-Modus; kanonische Sun-2000-/Akku-Texte bleiben im Standardmodus unverändert.
+- Geräteansicht zeigt vollständige SmartShunt-Identität/Zähler plus separaten Trucki-AC-Regelgateway-Block.
+- Diagnose enthält Quellen-Audit, SmartShunt-Alarme, Rohfelder und den lokalen Read-only-Hardwareprüflauf.
+- Verlauf zeigt SmartShunt DC × SUN AC sowie Spannung × SoC, fünf Bereiche und acht getrennte Tageswerte. Fehler löschen/markieren Altwerte, statt sie unbemerkt weiter anzuzeigen.
+
+### Nacharbeit aus Testing-Agent iteration_41
+- Behoben: falscher Alarm-Konfigurationspfad, Nullwertintegration, Tagesintegration nach Chart-Ausdünnung und Mehrfachintegration identischer Quellmessungen.
+- Behoben: unavailable-Inspector zeigte 0 W, Zeitlücken wurden durchverbunden, fehlende Tagesmessungen erschienen als 0 kWh und API-Fehler ließen Altwerte unmarkiert stehen.
+- Behoben: Phase-1-Diagnoseausfall blockiert nicht mehr alle Phase-2-Ansichten; verspätete Bereichsantworten können aktuelle History-Auswahl nicht überschreiben.
+- Kanonische EnergyFlow-Beschriftungen wurden für den Nicht-Phase-2-Modus wieder exakt auf den freigegebenen Stand begrenzt.
+
+### Verifikation und Freigabestatus
+- Retained Phase-2-/SmartShunt-/Influx-/DayBalance-Tests: **60/60 bestanden**.
+- Vollständige Backend-Regression: **249/249 bestanden**; Frontend Production Build erfolgreich.
+- Desktop 1920×800 und Mobil 390×844 ohne horizontalen Overflow; fünf Preview-Ansichten, Unterrouten und Auto-Refresh geprüft.
+- Cloud-Preview-Telemetrie/-Historie ist weiterhin **DEMO/MOCKED**. Die lokale Phase-1-Hardwareabnahme bleibt der reale Gerätenachweis; ein erneuter lokaler Test folgt vor kanonischer Umschaltung.
+- **Noch offen:** zweite Nutzerabnahme der Phase-2-Vorschau, danach Umschaltung der kanonischen Seiten. PDF-/JSON-Direktexport ohne Archiv bleibt das spätere Arbeitspaket 2E.

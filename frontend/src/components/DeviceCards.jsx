@@ -9,7 +9,7 @@ const HOUSE_ACCENT = "#38bdf8";
 
 const DEFAULT_LABELS = {
   solar: "Hoymiles + 2× MPPT",
-  battery: "6× Power Queen 100 Ah",
+  battery: "SmartShunt IP65 300A · DC",
   house: "AC-Lastbilanz",
   grid: "Shelly Pro 3EM (L1/L2/L3)",
 };
@@ -109,7 +109,7 @@ function DeviceCard({ accent, icon: Icon, title, desc, badge, bigValue, bigUnit,
           )}
         </div>
         <div className="font-mono text-[10px] text-white/45 mt-1.5 flex flex-wrap justify-between gap-x-3 gap-y-1">
-          {hasComparison && <span data-testid={`${testid}-peak`}>{peakLabel} {known(peakW) ? `${formatNum(peakW, 0)} W` : "–"}</span>}
+          {known(peakW) && <span data-testid={`${testid}-peak`}>{peakLabel} {formatNum(peakW, 0)} W</span>}
           <span data-testid={`${testid}-note`}>{bigNote}</span>
         </div>
       </div>
@@ -123,21 +123,19 @@ function DeviceCard({ accent, icon: Icon, title, desc, badge, bigValue, bigUnit,
 }
 
 export default function DeviceCards({ live, today, display }) {
-  const { shelly, ahoy, trucki, victron, summary } = live;
+  const { shelly, ahoy, trucki, victron, smartshunt, summary } = live;
   const labels = { ...DEFAULT_LABELS, ...(display?.labels || {}) };
   const mppts = victron?.mppts || [];
   const phases = shelly?.phases || [];
   const grid = summary?.grid_power ?? 0;
-  const battery = summary?.battery_power ?? 0;
+  const battery = summary?.battery_power;
   const importing = grid >= 0;
   const hoymilesPeak = known(ahoy?.max_power_w) && Number(ahoy.max_power_w) > 0 ? Number(ahoy.max_power_w) : HOYMILES_NOMINAL_W;
   const solarPeak = hoymilesPeak + VICTRON_PEAK_W;
-  const batterySoc = known(trucki?.soc) ? Math.max(0, Math.min(100, Number(trucki.soc))) : null;
-  const truckiPeak = known(trucki?.max_power_w) && Number(trucki.max_power_w) > 0 ? Number(trucki.max_power_w) : null;
+  const batterySoc = known(smartshunt?.soc_pct) ? Math.max(0, Math.min(100, Number(smartshunt.soc_pct))) : null;
 
   const pvActive = (summary?.pv_power ?? 0) > 5;
-  const battState = battery > 20 ? "Laden" : battery < -20 ? "Entladung" : "Leerlauf";
-  const battCurrent = trucki?.battery_voltage ? battery / trucki.battery_voltage : 0;
+  const battState = !known(battery) ? "Nicht verfügbar" : battery > 20 ? "Laden" : battery < -20 ? "Entladung" : "Leerlauf";
 
   const cards = [
     {
@@ -152,12 +150,12 @@ export default function DeviceCards({ live, today, display }) {
     },
     {
       testid: "device-card-battery", accent: COLOR.battery, icon: BatteryCharging, title: "Batterie 48V", desc: labels.battery,
-      badge: { label: `${formatNum(trucki?.soc, 0)} % SoC`, color: COLOR.battery },
-      bigValue: signedPower(battery), bigUnit: "W", bigPercent: batterySoc, percentLabel: "SoC", peakW: truckiPeak, peakLabel: "SUN Nenn", bigNote: battState,
+      badge: { label: known(batterySoc) ? `${formatNum(batterySoc, 0)} % SoC` : "Nicht verfügbar", color: COLOR.battery },
+      bigValue: signedPower(battery), bigUnit: "W", bigPercent: batterySoc, percentLabel: "SoC", bigNote: `${battState} · ${smartshunt?.status || "unavailable"}`,
       rows: [
-        { label: "Spannung / Strom", value: `${formatNum(trucki?.battery_voltage, 1)} V / ${formatNum(battCurrent, 1)} A`, color: COLOR.victron },
-        { label: "Trucki Sun-2000", value: `${formatNum(trucki?.ac_display_w, 0)} W`, sub: `Lim ${formatNum(trucki?.max_power_w, 0)} W`, color: COLOR.pv },
-        { label: "Tagesenergie", value: `${formatNum(trucki?.day_energy_kwh, 2)} kWh` },
+        { label: "SmartShunt Spannung / Strom", value: `${formatNum(smartshunt?.voltage_v, 2)} V / ${formatNum(smartshunt?.current_a, 2)} A`, color: COLOR.battery },
+        { label: "Trucki/SUN AC-Ausgang", value: `${formatNum(summary?.inverter_ac_power_w, 0)} W`, sub: `Lim ${formatNum(trucki?.max_power_w, 0)} W`, color: "#8B5CF6" },
+        { label: "SmartShunt-Zyklen", value: `${formatNum(smartshunt?.device_history?.charge_cycles, 0)}`, sub: "nativ" },
       ],
     },
     {
@@ -166,7 +164,7 @@ export default function DeviceCards({ live, today, display }) {
       bigValue: formatNum(summary?.house_power, 0), bigUnit: "W", bigNote: `Tagesbedarf ${formatNum(today?.consumption_kwh, 2)} kWh`,
       rows: [
         { label: "Hoymiles (direkt)", value: `${formatNum(ahoy?.total_power, 0)} W`, color: COLOR.pv },
-        { label: "Sun-2000 (aus Akku)", value: `${formatNum(summary?.battery_discharge_w, 0)} W`, color: COLOR.battery },
+        { label: "Sun-2000 AC-Ausgang", value: `${formatNum(summary?.inverter_ac_power_w, 0)} W`, color: "#8B5CF6" },
         { label: "Netz (Shelly 3EM)", value: `${importing ? "+" : "−"}${formatNum(Math.abs(grid), 0)} W`, sub: importing ? "Bezug" : "Einsp.", color: importing ? COLOR.grid_imp : COLOR.grid_exp },
       ],
     },

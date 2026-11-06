@@ -1,0 +1,23 @@
+{
+  "source_report": "/app/test_reports/iteration_41.json",
+  "resolved": [
+    "nested alarm configuration is wired to SmartShunt thresholds",
+    "missing DC endpoints are not integrated as zero",
+    "today integration uses full-resolution rows before chart downsampling",
+    "duplicate SmartShunt source timestamps are not reintegrated",
+    "unavailable battery inspector renders dashes",
+    "chart curves break at gaps over 600 seconds",
+    "missing day coverage renders dashes and an availability notice",
+    "history/today API errors clear stale unmarked values",
+    "canonical EnergyFlow labels remain unchanged outside phase2 mode"
+  ],
+  "verification": {
+    "retained_phase2_suite": "60/60 passed",
+    "full_backend_regression": "249/249 passed",
+    "frontend_production_build": "passed",
+    "desktop_1920x800_overflow": "none",
+    "mobile_390x844_overflow": "none"
+  },
+  "mocked": "Cloud Phase-2 telemetry/history remain demo data; local Phase-1 hardware evidence is real.",
+  "remaining": ["second user acceptance", "canonical route switch", "direct PDF/JSON export without archive"]
+}

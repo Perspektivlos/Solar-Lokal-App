@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { getLive, getToday, getHistory, getConfig, putConfig } from "../lib/api";
 import EnergyFlow from "../components/EnergyFlow";
 import IntroCard from "../components/IntroCard";
-import RoundTripCard from "../components/RoundTripCard";
 import PhaseBalance from "../components/PhaseBalance";
 import MpptCompare from "../components/MpptCompare";
 import DeviceCards from "../components/DeviceCards";
@@ -18,7 +17,7 @@ import { HOYMILES_NOMINAL_W, utilizationPercent } from "../lib/mppt";
 const INTRO_SECTIONS = [
   {
     label: "Zweck & Funktion",
-    body: "Zentraler Live-Überblick aller vier Geräte (Shelly Pro 3EM, Hoymiles via Ahoy DTU, Trucki-Speicher, 2× Victron MPPT). Zeigt aktuellen Energiefluss, 3-Phasen-Verteilung, Akku-SoC und Tageswerte.",
+    body: "Zentraler Live-Überblick mit SmartShunt als DC-Batteriequelle und Trucki/SUN als getrennter AC-Regelquelle. Zeigt Energiefluss, 3-Phasen-Verteilung, Akku-SoC und Tageswerte.",
   },
   {
     label: "Datenquellen",
@@ -34,7 +33,7 @@ const INTRO_SECTIONS = [
   },
   {
     label: "Bekannte Einschränkungen",
-    body: "Trucki-SoC wird aus VBAT linear geschätzt (LiFePO4 16S). House-Power wird rechnerisch ermittelt — kann bei Mess-Latenz kurzzeitig unrealistisch wirken.",
+    body: "SmartShunt-DC und Trucki/SUN-AC werden nicht verlustfrei vermischt. House-Power bleibt eine AC-Bilanz und kann bei Mess-Latenz kurzzeitig abweichen.",
   },
   {
     label: "Mögliche Fehler",
@@ -120,8 +119,9 @@ export default function Dashboard() {
             setTrail(buildTrail(samples));
           }
         }
-        const [l, t] = await Promise.all([getLive(), getToday()]);
+        const [rawLive, t] = await Promise.all([getLive(), getToday()]);
         if (!alive) return;
+        const l = rawLive?.phase2 ? { ...rawLive, summary: rawLive.phase2.summary } : rawLive;
         setPrevLive(liveRef.current);
         liveRef.current = l;
         setLive(l);
@@ -168,11 +168,11 @@ export default function Dashboard() {
     );
   }
 
-  const { shelly, ahoy, trucki, victron, summary, demo_mode, timestamp, sun } = live;
+  const { shelly, ahoy, trucki, victron, smartshunt, summary, demo_mode, timestamp, sun } = live;
   const alarms = Array.isArray(live.alarms) ? live.alarms : [];
   const alarmsFor = (device) => alarms.filter((a) => a.device === device);
   const prev = prevLive;
-  const socDanger = trucki?.soc !== undefined && trucki.soc < 15;
+  const socDanger = smartshunt?.soc_pct !== undefined && smartshunt.soc_pct < 15;
   const batteryKind = batteryStateKind(socDanger, summary.battery_power);
 
   // Rubrik-Details dynamisch aus Live-Werten (gleiche IntroCard-Struktur je Rubrik).
@@ -187,11 +187,11 @@ export default function Dashboard() {
   const hoymilesUtil = utilizationPercent(ahoy?.total_power, hoymilesPeak);
 
   const batteryDetails = [
-    { label: "Zweck & Funktion", body: `Puffert PV-Überschuss im LiFePO4-Speicher (16S) über das Trucki2Shelly-Gateway. Aktuell ${batteryKind === "LADEN" ? "lädt" : batteryKind === "ENTLADEN" ? "entlädt" : "im Leerlauf"} mit ${formatNum(Math.abs(summary.battery_power), 0)} W netto bei ${formatNum(trucki?.soc, 0)} % SoC.` },
-    { label: "Datenquellen", body: `Quelle aktuell: ${srcLabel(trucki)}. MQTT wird bevorzugt, sonst HTTP /status.${demo_mode ? " Demo-Modus: simulierte Werte." : ""}` },
-    { label: "Aktualisierung", body: `Live alle 3 s. SoC wird linear aus VBAT ${formatNum(trucki?.battery_voltage, 2)} V geschätzt (16S LiFePO4).` },
-    { label: "Layout-Gruppen", body: `Trucki-Setpoints (Target ${formatNum(trucki?.target_w, 0)} W · Min/Max ${formatNum(trucki?.min_power_w, 0)}/${formatNum(trucki?.max_power_w, 0)} W) · Akku-Netto (Laden ${formatNum(summary.battery_charge_w, 0)} W / Entladen ${formatNum(summary.battery_discharge_w, 0)} W) · Round-Trip-Effizienz.` },
-    { label: "Bekannte Einschränkungen", body: `SoC ist eine Schätzung (keine Coulomb-Zählung). Zelltemperatur ${formatNum(trucki?.temperature, 0)} °C.${socDanger ? " ⚠ SoC unter 15 % — kritisch." : ""}` },
+    { label: "Zweck & Funktion", body: `SmartShunt misst den LiFePO4-Speicher DC-seitig. Aktuell ${batteryKind === "LADEN" ? "lädt" : batteryKind === "ENTLADEN" ? "entlädt" : "im Leerlauf"} er mit ${formatNum(Math.abs(summary.battery_power), 0)} W bei ${formatNum(smartshunt?.soc_pct, 0)} % SoC.` },
+    { label: "Datenquellen", body: `Batterie: SmartShunt Instanz 290 (${smartshunt?.status || "unavailable"}). AC-Ausgang und Regelung: Trucki/SUN.${demo_mode ? " Demo-Modus: simulierte Werte." : ""}` },
+    { label: "Aktualisierung", body: `Live alle 3 s. Spannung ${formatNum(smartshunt?.voltage_v, 2)} V und SoC stammen direkt aus dem SmartShunt.` },
+    { label: "Layout-Gruppen", body: `SmartShunt DC: Laden ${formatNum(summary.battery_charge_w, 0)} W / Entladen ${formatNum(summary.battery_discharge_w, 0)} W. Trucki/SUN AC: Ausgang ${formatNum(summary.inverter_ac_power_w, 0)} W.` },
+    { label: "Bekannte Einschränkungen", body: `DC-Batterieleistung und AC-Wechselrichterausgang enthalten reale Wandlungsverluste und werden getrennt ausgewiesen.${socDanger ? " ⚠ SoC unter 15 % — kritisch." : ""}` },
     { label: "Mögliche Fehler", body: `AC-Output ${trucki?.ac_output ? "EIN" : "AUS"}, ZEPC ${trucki?.zepc ? "EIN" : "AUS"}. Bei ‚FALLBACK'/‚OFFLINE'-Badge Trucki-IP & MQTT prüfen.` },
   ];
   const victronDetails = [
@@ -244,7 +244,7 @@ export default function Dashboard() {
             </span>
             <span className="text-white/25">·</span>
             <span data-testid="status-devices">
-              {[shelly, ahoy, trucki, victron].filter((d) => d?.online).length}/4 Geräte online
+              {[shelly, ahoy, trucki, victron, smartshunt].filter((d) => d?.online).length}/5 Geräte online
             </span>
           </div>
         </div>
@@ -261,16 +261,16 @@ export default function Dashboard() {
       {/* ÜBERSICHT · Geräte-Karten + Energiefluss + Kennzahlen */}
       <div data-testid="row-overview" className="space-y-8">
         <DeviceCards live={live} today={today} display={display} />
-        <EnergyFlow summary={summary} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} sun={sun} />
+        <EnergyFlow phase2 summary={summary} smartshunt={smartshunt} trucki={trucki} devices={devices} shelly={shelly} ahoy={ahoy} victron={victron} timestamp={timestamp} sun={sun} />
         <FlowSummary live={live} today={today} usableKwh={display?.usable_kwh} />
       </div>
 
       {/* SEKTION · BATTERIE */}
       <div className="space-y-4">
-        <SectionHeader label="Batterie" color={COLOR.battery} icon={BatteryCharging} href={devUrl("trucki")} details={batteryDetails} alarms={alarmsFor("trucki")} testid="section-battery" pinned={favorites.includes("trucki")} onPin={() => toggleFavorite("trucki")} />
+        <SectionHeader label="Batterie · SmartShunt DC / SUN AC" color={COLOR.battery} icon={BatteryCharging} details={batteryDetails} alarms={alarmsFor("smartshunt")} testid="section-battery" pinned={favorites.includes("trucki")} onPin={() => toggleFavorite("trucki")} />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" data-testid="battery-row">
           <div className="lg:col-span-5">
-            <TruckiCard trucki={trucki} />
+            <TruckiCard trucki={trucki} acOnly />
           </div>
 
           <div className="lg:col-span-4">
@@ -291,18 +291,18 @@ export default function Dashboard() {
               />
               <div className="grid grid-cols-2 gap-2 mt-3" data-testid="battery-breakdown">
                 <div className="glass-inset p-2" style={{ borderLeft: "3px solid #FACC15" }}>
-                  <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">Laden · MPPT</div>
+                  <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">Laden · SmartShunt DC</div>
                   <div className="font-mono text-lg font-medium text-yellow-300 mt-0.5" data-testid="battery-charge">{formatNum(summary.battery_charge_w, 0)}<span className="text-xs text-white/40"> W</span></div>
                 </div>
                 <div className="glass-inset p-2" style={{ borderLeft: "3px solid #06B6D4" }}>
-                  <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">Entladen · SUN</div>
+                  <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-white/60">Entladen · SmartShunt DC</div>
                   <div className="font-mono text-lg font-medium text-cyan-300 mt-0.5" data-testid="battery-discharge">{formatNum(summary.battery_discharge_w, 0)}<span className="text-xs text-white/40"> W</span></div>
                 </div>
               </div>
             </GlassCard>
           </div>
 
-          <div className="lg:col-span-3"><RoundTripCard today={today} /></div>
+          <div className="lg:col-span-3"><GlassCard title="SmartShunt · Zustand" accent={COLOR.battery} icon={BatteryCharging} testid="card-smartshunt-status" badge={<Badge kind={smartshunt?.status === "current" ? "NORMAL" : smartshunt?.status === "stale" ? "WARNUNG" : "KRITISCH"} label={smartshunt?.status || "unavailable"} />}><div className="grid grid-cols-2 gap-3"><Stat label="SoC" value={formatNum(smartshunt?.soc_pct,1)} unit="%" testid="smartshunt-main-soc"/><Stat label="Spannung" value={formatNum(smartshunt?.voltage_v,2)} unit="V" testid="smartshunt-main-voltage"/><Stat label="Strom" value={formatNum(smartshunt?.current_a,2)} unit="A" testid="smartshunt-main-current"/><Stat label="SUN AC" value={formatNum(summary.inverter_ac_power_w,0)} unit="W" testid="smartshunt-main-ac"/></div></GlassCard></div>
         </div>
       </div>
 
