@@ -4,11 +4,13 @@ import asyncio
 import os
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from types import SimpleNamespace
 
 import pytest
 import requests
+
+from phase2 import summarize_phase2_points
 
 BASE_URL = os.environ['REACT_APP_BACKEND_URL'].rstrip('/')
 FIELDS = {'pv_kwh', 'consumption_kwh', 'grid_import_kwh', 'grid_export_kwh',
@@ -17,6 +19,15 @@ FIELDS = {'pv_kwh', 'consumption_kwh', 'grid_import_kwh', 'grid_export_kwh',
           'battery_discharge_kwh', 'pv_direct_kwh', 'battery_to_house_kwh',
           'pv_export_kwh', 'battery_export_kwh', 'battery_discharge_charge_pct',
           'round_trip_pct', 'measurement_available', 'sample_count', 'measured_duration_s'}
+# Additive Phase-2-Felder (SmartShunt DC / Trucki-SUN AC getrennt); Legacy-Felder behalten ihre Semantik.
+PHASE2_FIELDS = {'phase2_measurement_available', 'phase2_measured_duration_s',
+                 'inverter_ac_output_kwh', 'pv_ac_kwh', 'mppt_dc_kwh', 'house_ac_kwh',
+                 'battery_dc_charge_kwh', 'battery_dc_discharge_kwh',
+                 'battery_dc_measurement_available', 'battery_dc_measured_duration_s',
+                 'inverter_ac_measurement_available', 'pv_ac_measurement_available',
+                 'mppt_dc_measurement_available', 'house_ac_measurement_available',
+                 'grid_measurement_available', 'source_note'}
+ALL_FIELDS = FIELDS | PHASE2_FIELDS
 
 
 @pytest.mark.parametrize('params', [{}, {'day_offset': 0}, {'day_offset': 1}])
@@ -24,16 +35,17 @@ def test_today_public_contract(params):
     response = requests.get(f'{BASE_URL}/api/today', params=params, timeout=30)
     assert response.status_code == 200
     data = response.json()
-    assert set(data) == FIELDS
-    assert isinstance(data['measurement_available'], bool)
-    assert all(isinstance(v, (int, float)) and v >= 0 for k, v in data.items() if k != 'measurement_available')
+    assert set(data) == ALL_FIELDS
+    assert all(isinstance(data[k], bool) for k in data if k.endswith('measurement_available'))
+    assert all(isinstance(v, (int, float)) and not isinstance(v, bool) and v >= 0
+               for k, v in data.items() if not k.endswith('measurement_available') and k != 'source_note')
     print(params, data)
 
 
 def test_today_public_default_matches_zero():
     default = requests.get(f'{BASE_URL}/api/today', timeout=30).json()
     explicit = requests.get(f'{BASE_URL}/api/today', params={'day_offset': 0}, timeout=30).json()
-    assert set(default) == set(explicit) == FIELDS
+    assert set(default) == set(explicit) == ALL_FIELDS
     # Poller can add one snapshot between requests; allow only one sample's drift.
     for field in FIELDS - {'measurement_available'}:
         assert abs(default[field] - explicit[field]) <= (5 if field.endswith('_w') else 1)
@@ -77,17 +89,22 @@ def test_today_utc_boundaries_and_energy(offset):
             return self.selected
 
     tree = ast.parse((Path(__file__).parents[1] / 'routes.py').read_text())
-    helper_names = {'_safe_power', '_charge_w', '_discharge_w', '_flow_components', '_summarize_energy_rows'}
-    helpers = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in helper_names]
+    helper_names = {'_safe_power', '_charge_w', '_discharge_w', '_flow_components', '_summarize_energy_rows',
+                    '_phase2_points_from_rows'}
+    constants = {'_PHASE2_LEGACY_KEYS', '_SMARTSHUNT_VALUE_KEYS'}
+    helpers = [n for n in tree.body if (isinstance(n, ast.FunctionDef) and n.name in helper_names)
+               or (isinstance(n, ast.Assign) and any(getattr(t, 'id', None) in constants for t in n.targets))]
     route = next(n for n in tree.body if isinstance(n, ast.AsyncFunctionDef) and n.name == 'today')
     route.decorator_list = []
     module = ast.fix_missing_locations(ast.Module(body=helpers + [route], type_ignores=[]))
     namespace = {'datetime': FrozenDatetime, 'timezone': timezone, 'timedelta': timedelta,
                  'Dict': Dict, 'Any': Any, 'List': list, 'MAX_ENERGY_GAP_SECONDS': 600,
+                 'Optional': Optional, 'summarize_phase2_points': summarize_phase2_points,
                  'db': SimpleNamespace(snapshots=Cursor())}
     exec(compile(module, 'routes.py', 'exec'), namespace)
     actual = asyncio.run(namespace['today'](offset))
-    assert set(actual) == FIELDS
+    assert set(actual) == ALL_FIELDS
+    assert actual['battery_dc_measurement_available'] is False  # Legacy-Zeilen ohne SmartShunt
     assert actual['pv_kwh'] == pytest.approx(0.083, abs=0.001)
     assert actual['consumption_kwh'] == pytest.approx(0.042, abs=0.001)
     assert actual['battery_charge_kwh'] == pytest.approx(0.010, abs=0.001)

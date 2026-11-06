@@ -24,24 +24,27 @@ export const tzLabel = () => {
 export function bucketize(points, range) {
   const ms = BUCKET_MIN[range] * 60000;
   const map = new Map();
+  const FIELDS = { pv: "pv_power", house: "house_power", battery: "battery_power", grid: "grid_power", soc: "battery_soc" };
   for (const p of points) {
     const k = Math.floor(new Date(p.ts).getTime() / ms) * ms;
-    const b = map.get(k) || { t: k, n: 0, pv: 0, house: 0, battery: 0, grid: 0, soc: 0 };
-    b.n += 1;
-    b.pv += p.pv_power || 0;
-    b.house += p.house_power || 0;
-    b.battery += p.battery_power || 0;
-    b.grid += p.grid_power || 0;
-    b.soc += p.battery_soc || 0;
+    const b = map.get(k) || { t: k, sum: {}, n: {} };
+    // Fehlende Messwerte (null/undefined) zählen nicht als 0 in den Mittelwert.
+    for (const [ch, field] of Object.entries(FIELDS)) {
+      const v = p[field];
+      if (v === null || v === undefined || Number.isNaN(Number(v))) continue;
+      b.sum[ch] = (b.sum[ch] || 0) + Number(v);
+      b.n[ch] = (b.n[ch] || 0) + 1;
+    }
     map.set(k, b);
   }
+  const avg = (b, ch) => (b.n[ch] ? Math.round(b.sum[ch] / b.n[ch]) : null);
   const rows = [...map.values()].sort((a, b) => a.t - b.t).map((b) => ({
     t: b.t,
-    PV: Math.round(b.pv / b.n),
-    Haus: Math.round(b.house / b.n),
-    Akku: Math.round(b.battery / b.n),
-    Netz: Math.round(b.grid / b.n),
-    SoC: Math.round(b.soc / b.n),
+    PV: avg(b, "pv"),
+    Haus: avg(b, "house"),
+    Akku: avg(b, "battery"),
+    Netz: avg(b, "grid"),
+    SoC: avg(b, "soc"),
   }));
   // Datenlücken (Backend aus) nicht überbrücken: Leerpunkt einfügen → Kurve unterbrochen
   const out = [];
