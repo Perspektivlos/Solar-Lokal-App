@@ -50,7 +50,7 @@ Das Backend fragt die Geräte im lokalen Netzwerk via MQTT (über einen zentrale
     *   **Kanalgenaues Parsing**: Die App parst die JSON-Payloads je Solarmodul-Kanal (`HM1500/ch1` bis `HM1500/ch4`) für DC-Leistung, Spannung und Stromstärke, anstatt nur den aggregierten Kanal 0 anzuzeigen.
     *   Wirkleistungslimit-Rücklesung direkt aus dem Topic `ack_pwr_limit`.
 *   **Trucki2Shelly Gateway**:
-    *   **Batterieleistung**: Wird aus dem Topic `Trucki/ACDISPLAY` (tatsächlicher Wechselrichter-Ausgang) bezogen, mit Fallback auf `Trucki/ACSETPOINT`. Dies behebt Messwert-Kopplungen, bei denen fälschlicherweise das Rückmeldesignal `Trucki/METER` (Netz-Zähler) genutzt wurde.
+    *   **Batterieleistung**: Wird aus dem Topic `TRUCKI/ACDISPLAY` (tatsächlicher Wechselrichter-Ausgang) bezogen, mit Fallback auf `TRUCKI/ACSETPOINT`. Dies behebt Messwert-Kopplungen, bei denen fälschlicherweise das Rückmeldesignal `TRUCKI/METER` (Netz-Zähler) genutzt wurde.
     *   **Lastkompensation**: Dynamische Schätzung des Ladezustands (SoC) aus der Batteriespannung ($16\text{S } \text{LiFePO}_4$ Kurve), korrigiert um den Spannungsabfall unter Last (Batteriestromstärke).
 *   **Victron SmartSolar MPPTs (VenusOS Large)**:
     *   Direktes Abgreifen der DC-Ertragsdaten pro MPPT-Instanz via MQTT-Bridge-Topics (`N/<vrm_id>/solarcharger/<instance>/...`).

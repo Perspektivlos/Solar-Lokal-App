@@ -15,11 +15,11 @@ const INTRO_SECTIONS = [
   },
   {
     label: "Trucki · AC-Steuerung",
-    body: <span><b>AC-Setpoint (W)</b>: Ziel-Einspeise-Leistung (0–MAX). Sendet zu MQTT-Topic <code className="text-cyan-300">Trucki/ACSETPOINTOVR</code>. <b>ZEPC ON/OFF</b> → <code className="text-cyan-300">Trucki/ZEPCOVR</code>. <b>Restart</b> → <code className="text-cyan-300">Trucki/REBOOTOVR</code>.</span>,
+    body: <span><b>AC-Setpoint (W)</b>: Ziel-Einspeise-Leistung (0–MAX). Sendet zu MQTT-Topic <code className="text-cyan-300">TRUCKI/ACSETPOINTOVR</code>. <b>ZEPC ON/OFF</b> → <code className="text-cyan-300">TRUCKI/ZEPCOVR</code>. <b>Restart</b> → <code className="text-cyan-300">TRUCKI/REBOOTOVR</code>.</span>,
   },
   {
     label: "Trucki · Settings",
-    body: <span><b>TARGET</b>: Soll-Netzbezug für ZEPC (W) → <code className="text-cyan-300">Trucki/TARGETOVR</code> · <b>MIN/MAX</b>: untere und obere Leistungsschranke → <code className="text-cyan-300">Trucki/MINPOWEROVR</code> / <code className="text-cyan-300">MAXPOWEROVR</code>. Überschreiben dauerhaft die im Trucki-Webinterface gesetzten Werte.</span>,
+    body: <span><b>TARGET</b>: Soll-Netzbezug für ZEPC (W) → <code className="text-cyan-300">TRUCKI/TARGETOVR</code> · <b>MIN/MAX</b>: untere und obere Leistungsschranke → <code className="text-cyan-300">TRUCKI/MINPOWEROVR</code> / <code className="text-cyan-300">TRUCKI/MAXPOWEROVR</code>. Überschreiben dauerhaft die im Trucki-Webinterface gesetzten Werte.</span>,
   },
   {
     label: "Rückgabewerte",

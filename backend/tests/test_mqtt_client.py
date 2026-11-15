@@ -37,7 +37,7 @@ def test_trucki_soc_load_compensation_raises_estimate() -> None:
 
 def test_dispatch_routes_trucki_and_shelly() -> None:
     _reset_store()
-    mc._dispatch_mqtt_message("Trucki/VBAT", b"52.8")
+    mc._dispatch_mqtt_message("TRUCKI/VBAT", b"52.8")
     assert mc._mqtt_data["trucki"]["raw"]["VBAT"] == 52.8
 
     shelly_payload = b'{"a_act_power": 100, "b_act_power": 50, "c_act_power": 25, "total_act_power": 175}'
@@ -118,3 +118,24 @@ def test_fetch_ahoy_ac_falls_back_to_ch0() -> None:
     assert res["total_power"] == 542.8
     assert res["limit_percent"] == 100  # kein Limit-Topic -> Default
 
+
+
+def test_trucki_topic_prefix_is_uppercase_and_case_sensitive() -> None:
+    """T2SG-Device-Name an der Anlage ist ``TRUCKI``; MQTT unterscheidet Groß-/Kleinschreibung."""
+    assert mc.TRUCKI_TOPIC_PREFIX == "TRUCKI"
+    _reset_store()
+    mc._dispatch_mqtt_message("TRUCKI/ACDISPLAY", b"321")
+    assert mc._mqtt_data["trucki"]["raw"]["ACDISPLAY"] == 321
+    _reset_store()
+    mc._dispatch_mqtt_message("Trucki/ACDISPLAY", b"321")
+    assert "ACDISPLAY" not in mc._mqtt_data["trucki"]["raw"]
+
+
+def test_trucki_control_topics_use_shared_prefix() -> None:
+    import inspect
+    import server  # noqa: F401  (lädt routes in der vorgesehenen Reihenfolge)
+    import routes
+
+    src = inspect.getsource(routes.control_trucki)
+    assert '"Trucki/' not in src
+    assert "TRUCKI_TOPIC_PREFIX" in src

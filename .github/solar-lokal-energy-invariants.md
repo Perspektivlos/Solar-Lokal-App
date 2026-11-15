@@ -11,6 +11,8 @@ MQTT-/HTTP-Parsing, API-Antworten oder Dashboard-Werten.
 - Trucki/SUN = Batterieentladung ins AC-Netz. Shelly Pro 3EM = Netzbezug/-einspeisung.
 - `Hausverbrauch = Hoymiles PV_AC + SUN-Batterieentladung + Shelly-Netzfluss`
 - Trucki-Entladung nutzt `ACDISPLAY`, Fallback `ACSETPOINT` (`backend/mqtt_client.py`).
+- Trucki-MQTT-Präfix ist `TRUCKI/` (T2SG-Device-Name, case-sensitive), zentral als
+  `TRUCKI_TOPIC_PREFIX` in `backend/mqtt_client.py`. Keine hart codierten `Trucki/`-Topics.
   `METER` bleibt ein separates Netz-/Zähler-Signal.
 - Wert nie aus einem visuellen Symptom ableiten: MQTT-Topic/HTTP-Antwort -> Parser ->
   `collect_live()`/Summary -> API -> Frontend verfolgen.

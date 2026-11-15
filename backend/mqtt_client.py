@@ -15,6 +15,10 @@ from typing import Any, Dict, Optional
 
 from smartshunt import SMARTSHUNT_INSTANCE, build_smartshunt_state, ingest_smartshunt_value
 
+# Trucki2Shelly (T2SG): Topic-Präfix = im T2SG konfigurierter "Device name".
+# MQTT-Topics sind case-sensitive; an der Anlage ist "TRUCKI" gesetzt (TRUCKI/#).
+TRUCKI_TOPIC_PREFIX = "TRUCKI"
+
 try:
     import paho.mqtt.client as mqtt
 except Exception:  # pragma: no cover
@@ -136,7 +140,7 @@ def _handle_ahoy_topic(topic: str, payload: bytes, now_iso: str) -> None:
 
 
 def _handle_trucki_topic(topic: str, payload: bytes, now_iso: str) -> None:
-    sub = topic[len("Trucki/"):]
+    sub = topic[len(TRUCKI_TOPIC_PREFIX) + 1:]
     _mqtt_data["trucki"]["raw"][sub] = _parse_mqtt_payload(payload)
     _mqtt_data["trucki"]["_ts"] = now_iso
 
@@ -152,7 +156,7 @@ def _dispatch_mqtt_message(topic: str, payload: bytes) -> None:
         _handle_shelly_topic(topic, payload, now_iso)
     elif topic.startswith("venus/pv/ahoydtu/"):
         _handle_ahoy_topic(topic, payload, now_iso)
-    elif topic.startswith("Trucki/"):
+    elif topic.startswith(f"{TRUCKI_TOPIC_PREFIX}/"):
         _handle_trucki_topic(topic, payload, now_iso)
 
 
@@ -402,7 +406,7 @@ def _mqtt_setup(cfg_mqtt: Dict[str, Any], cfg_victron: Dict[str, Any]) -> None:
             # Device topics seen in user's network
             client_.subscribe("venus/pv/ahoydtu/#")
             client_.subscribe("venus/grid/shellypro/#")
-            client_.subscribe("Trucki/#")
+            client_.subscribe(f"{TRUCKI_TOPIC_PREFIX}/#")
             if victron_enabled:
                 client_.subscribe(f"N/{vrm_id}/#")
                 client_.subscribe(f"N/{vrm_id}/battery/{SMARTSHUNT_INSTANCE}/#")
