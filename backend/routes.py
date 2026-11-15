@@ -27,6 +27,7 @@ from collectors import collect_live
 from alarms import evaluate_alarms, summarize_alarms, merge_thresholds
 from discovery import discover_device, DEVICE_LABELS, annotate_changes
 from smartshunt import SMARTSHUNT_INSTANCE
+from mqtt_client import TRUCKI_TOPIC_PREFIX
 from smartshunt_routes import router as smartshunt_router
 from phase2_routes import router as phase2_router
 from phase2 import summarize_phase2_points
@@ -519,13 +520,13 @@ async def control_trucki(cmd: TruckiControl) -> Dict[str, Any]:
 
     # Neue Trucki-Firmware: Steuerung via MQTT-OVR-Topics statt HTTP
     topic_map = {
-        "limit":    ("Trucki/ACSETPOINTOVR", str(int(cmd.value or 0))),
-        "zepc_on":  ("Trucki/ZEPCOVR",       "1"),
-        "zepc_off": ("Trucki/ZEPCOVR",       "0"),
-        "restart":  ("Trucki/REBOOTOVR",     "1"),
-        "max":      ("Trucki/MAXPOWEROVR",   str(int(cmd.value or 0))),
-        "min":      ("Trucki/MINPOWEROVR",   str(int(cmd.value or 0))),
-        "target":   ("Trucki/TARGETOVR",     str(int(cmd.value or 0))),
+        "limit":    (f"{TRUCKI_TOPIC_PREFIX}/ACSETPOINTOVR", str(int(cmd.value or 0))),
+        "zepc_on":  (f"{TRUCKI_TOPIC_PREFIX}/ZEPCOVR",       "1"),
+        "zepc_off": (f"{TRUCKI_TOPIC_PREFIX}/ZEPCOVR",       "0"),
+        "restart":  (f"{TRUCKI_TOPIC_PREFIX}/REBOOTOVR",     "1"),
+        "max":      (f"{TRUCKI_TOPIC_PREFIX}/MAXPOWEROVR",   str(int(cmd.value or 0))),
+        "min":      (f"{TRUCKI_TOPIC_PREFIX}/MINPOWEROVR",   str(int(cmd.value or 0))),
+        "target":   (f"{TRUCKI_TOPIC_PREFIX}/TARGETOVR",     str(int(cmd.value or 0))),
     }
     if cmd.action == "limit" and cmd.value is None:
         raise HTTPException(400, "value (W) erforderlich für limit")
